@@ -840,7 +840,7 @@ def getRoadLengthByTypologyData(village_id, workspace, layer):
 
     try:
         # Build WFS request
-        wfs_url = f"http://10.2.114.150:8085/geoserver/{workspace}/ows"
+        wfs_url = f"http://localhost:8080/geoserver/{workspace}/ows"
         params = {
             "service": "WFS",
             "version": "1.0.0",
@@ -933,7 +933,7 @@ def getLULCData(village_id, workspace, layer):
     except tblVillage.DoesNotExist:
         return [["Sr. No.", "Landuse", "Area (sqm)", "Percentage"], ["", "Village not found", "0", "0%"]]
 
-    wfs_url = f"http://10.2.114.150:8085/geoserver/{workspace}/ows"
+    wfs_url = f"http://localhost:8080/geoserver/{workspace}/ows"
     params = {
         "service": "WFS",
         "version": "1.0.0",

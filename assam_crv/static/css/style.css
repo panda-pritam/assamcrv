@@ -406,6 +406,7 @@ footer {
     padding: 6px 0px;
     background-color: #2D3748;
     color: white;
+    margin-top: 0px;
 }
 
 /* login css start */
@@ -1907,18 +1908,26 @@ span.BrdCrmb {
 
     /* For the single select (not multiple) */
    .select2-container--default .select2-selection--single {
-   border: 1px solid #caddf8 !important;
+    border:1px solid rgb(36 95 174 / 49%) !important;
     color: #0b0b0b;
     background: #FFFFFF !important;
     border-radius: 4px !important;
-    
+    box-shadow: 0 2px 4px rgba(36, 95, 174, 0.08) !important;
     transition: all 0.2s ease !important;
     min-height: 42px !important;
     font-family: 'Work Sans' !important;
     font-weight: 400 !important;
 }
 
+.select2-container--default .select2-selection--single:hover {
+    border-color: #245FAE !important;
+    box-shadow: 0 4px 8px rgba(36, 95, 174, 0.12) !important;
+}
 
+.select2-container--default.select2-container--open .select2-selection--single {
+    border-color: #245FAE !important;
+    box-shadow: 0 0 0 2px rgba(36, 95, 174, 0.1) !important;
+}
 
 .select2-dropdown {
     border: 1px solid #245FAE !important;
@@ -2112,7 +2121,6 @@ table.dataTable>thead>tr>th, table.dataTable>thead>tr>td {
     margin-bottom: 0px;
     
 }
-
 #filter label{
     font-size: 16px;
     color: #0b0b0b!important;
@@ -2318,130 +2326,4 @@ button#activityDropdown i {
     color: #245FAE;
     font-size: 16px;
     margin-right: 8px;
-}
-.Selection_Criteria .card_header{
-    margin-bottom: 15px;
-}
-h6.miti_headeign{
-    font-size: 16px;
-    color: #0b0b0b;
-    font-family: 'Work Sans';
-    font-weight: 500;
-    margin-bottom: 0px;
-}
-.table-responsive.miti_table{
-    background-color: #fff;
-    border-radius: 4px;
-    border: 1px solid #CADDF8;
-}
-.table-responsive.miti_table th {
-    background-color: #e1edff;
-    font-size: 14px;
-    font-weight: 500;
-    color: #0b0b0b;
-    
-    vertical-align: middle;
-    font-family: 'Work sans';
-}
-.miti_table select {
-    background-image: url("/static/images/dropdown.svg");
-    background-repeat: no-repeat;
-    background-position: 97% 56%;
-    background-size: 12px 10px;
-    border-radius: 5px;
-    color: #0b0b0b !important;
-    font-size: 15px;
-    font-family: 'Work Sans';
-    font-weight: 400;
-  
-   
-}
-.Selection_Criteria select{
-       background-image: url("/static/images/dropdown.svg");
-    background-repeat: no-repeat;
-    background-position: 97% 56%;
-    background-size: 12px 10px;
-    border-radius: 5px;
-  color: #0b0b0b !important;
-    font-size: 15px;
-    font-family: 'Work Sans';
-    font-weight: 400;
-  
-}
-.Selection_Criteria input{
-      background-color: #fff;
-    border-radius: 4px;
-    border: 1px solid #CADDF8;
-  
-}
-.card_selection.bg-white {
-    padding: 15px;
-     background-color: #fff;
-    border-radius: 4px;
-    border: 1px solid #CADDF8;
-    padding-top: 0px !important;
-}
-button.btn.btn-link.text-primary.p-0.mt-2 {
-    margin-top: 0px;
-    margin-left: 10px;
-    position: relative;
-    bottom: 14px;
-    left: 4px;
-    color: #265bab !important;
-    font-weight: 600;
-    text-decoration: none;
-    border: none;
-}
-.Selection_Criteria label {
-    font-size: 16px;
-    color: #0b0b0b!important;
-}
-.cost_div {
-    background-color: #e1edff;
-    text-align: justify;
-    padding: 6px 11px;
-    margin-top: 24px;
-    border-radius: 4px;
-    border: 1px solid #CADDF8;
-}
-.cost_div p{
-    font-size: 14px;
-    color: #0b0b0b!important;
-}
-.cost_div h4{
-    font-size: 18px;
-    color: #0b0b0b!important;
-    font-weight: 700;
-}
-button.btn.cost_btn.px-4{
-    background-color: #245FAE;
-    color: #fff;
-    font-size: 14px;
-    font-weight: 500;
-    border: none;
-    padding: 6px 15px;
-    border-radius: 4px;
-    
-}
-.bg-blue {
-    background-color: #Eff6ff;
-}
-.bg-gray {
-    background-color: #F7F7F7;
-}
-button.btn.confirm_btn {
-    color: #FFF;
-    background-color: #1A932E;
-    border: none!important;
-}
-#reviewModal .card_header {
-    margin: 0px!important;
-    display: flex;
-    justify-content: space-between;
-}
-.edit_btn {
-    border: 1px solid #AEAEAE;
-}
-.bg-darkgray{
-    background-color:#f0f0f0;
 }

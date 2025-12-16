@@ -172,8 +172,8 @@ LOCALE_PATHS = [
     os.path.join(BASE_DIR, 'locale'),
 ]
 
-GEOS_LIBRARY_PATH = r"D:\OSGeo4W\bin\geos_c.dll"
-GDAL_LIBRARY_PATH = r"D:\OSGeo4W\bin\gdal302.dll"
+GEOS_LIBRARY_PATH = r"C:\OSGeo4W\bin\geos_c.dll"
+GDAL_LIBRARY_PATH = r"C:\OSGeo4W\bin\gdal310.dll"
 
 
 # Max upload size (in bytes) — here ~100 MB

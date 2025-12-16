@@ -148,7 +148,7 @@ def get_layer_bbox_from_wfs(layer_name, village_code, zoom_factor=0.5):
     Returns:
         str or None: Bbox string if successful, None if failed
     """
-    wfs_url = "http://10.2.114.150:8085/geoserver/wfs"
+    wfs_url = "http://localhost:8080/geoserver/wfs"
     params = {
         'service': 'WFS',
         'version': '1.0.0',
@@ -231,7 +231,7 @@ def get_layer_bbox_from_capabilities(layer_name):
     Returns:
         str or None: Bbox string if successful, None if failed
     """
-    capabilities_url = "http://10.2.114.150:8085/geoserver/wms"
+    capabilities_url = "http://localhost:8080/geoserver/wms"
     params = {
         'service': 'WMS',
         'version': '1.1.1',
@@ -424,7 +424,7 @@ def fetch_geoserver_map(layers, width, height, village_id=None):
     if village_code and 'assam:village_boundary' not in user_filtered_layers:
         user_filtered_layers.insert(0, 'assam:village_boundary')
     
-    wms_url = "http://10.2.114.150:8085/geoserver/wms"
+    wms_url = "http://localhost:8080/geoserver/wms"
     final_image = None
     
     # 1. Get base layers (no filtering needed) - ALWAYS include these
@@ -708,7 +708,7 @@ def get_geoserver_legend_path(layers, width=20, height=20):
 
 def fetch_geoserver_legends(layers, width=20, height=20):
     """Fetch legends from geoserver for multiple layers"""
-    wms_url = "http://10.2.114.150:8085/geoserver/wms"
+    wms_url = "http://localhost:8080/geoserver/wms"
     legend_images = []
     
     for layer in layers:

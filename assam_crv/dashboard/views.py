@@ -9,9 +9,6 @@ from shapefiles.models import PraBoundary,ExposureRiver
 def home(request):
     return render(request, 'dashboard/dashboard.html')
 
-def mitigation_intervention(request):
-    return render(request, 'mitigation/mitigation_intervention.html')
-
 
 
 from django.db.models import Count, Q, FloatField
