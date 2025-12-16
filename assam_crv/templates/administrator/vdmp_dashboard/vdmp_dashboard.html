@@ -1,0 +1,179 @@
+{% extends "administrator/admin_base.html" %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "VDMP Dashboard" %}{% endblock %}
+
+
+
+{% block content %}
+
+{% trans "VDMP Dashboard" as vdmp_dashboard %}
+{% include "components/breadcrumb.html" with breadcrumb_title=vdmp_dashboard %}
+
+
+
+<!-- Loader Overlay -->
+<div id="loader" class="d-none position-fixed w-100 h-100"
+    style="top:0;left:0;background:rgba(0,0,0,0.5);z-index:9999;">
+    <div class="d-flex justify-content-center align-items-center h-100">
+        <div class="spinner-border text-light" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+</div>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="user__wrapper_admin">
+                <div class="container py-2">
+                    <div class="d-flex justify-content-center">
+                        <div class="form-check form-check-inline" style="font-size: 1.2rem; padding: 0.5rem 1rem;">
+                            <input class="form-check-input" type="radio" name="uploadOption" id="upload_data"
+                                value="file" checked style="transform: scale(1.4); margin-right: 8px;">
+                            <label class="form-check-label" for="upload_data" style="font-weight: 500;">
+                               {% trans "Upload New Data" %}
+                            </label>
+                        </div>
+
+                        <div class="form-check form-check-inline me-4" style="font-size: 1.2rem; padding: 0.5rem 1rem;">
+                            <input class="form-check-input" type="radio" name="uploadOption" id="delete_data"
+                                value="manual" style="transform: scale(1.4); margin-right: 8px;">
+                            <label class="form-check-label" for="delete_data" style="font-weight: 500;">
+                               {% trans "Delete Existing Data" %}
+                            </label>
+                        </div>
+
+                    </div>
+                </div>
+
+                <div id="uploadDiv">
+                    <div class="card shadow-sm border-0">
+                        <div class="card-header d-flex align-items-center justify-content-between">
+                            <h5 class="mb-0">{% trans "Upload New Data" %}</h5>
+                        </div>
+                        <div class="card-body">
+
+                            <div class="mb-3">
+                                <label for="dataType" class="form-label fw-semibold">{% trans "Type of Data" %}</label>
+                                <select class="form-select" id="dataType" name="data_type" required>
+                                    <option value="" selected disabled>{% trans "Choose Data Type" %}</option>
+                                    <option value="household">{% trans "Household" %}</option>
+                                    <option value="transformer">{% trans "Transformer" %}</option>
+                                    <option value="critical_facility">{% trans "Critical Facility" %}</option>
+                                    <option value="commercial">{% trans "Commercial" %}</option>
+                                    <option value="electric_poles">{% trans "Electric Poles" %}</option>
+                                    <option value="villagesOfAllTheDistricts">{% trans "Villages of all the Districts" %}</option>
+                                    <option value="VillageRoadInfo">{% trans "Villages road info" %}</option>
+                                    <option value="VillageRoadInfoErosion">{% trans "Village Road Erosion Info." %}</option>
+                                    <option value="bridge_survey">{% trans "Bridge Survey" %}</option>
+                                    <option value="risk_assesment">{% trans "Risk Assesment" %}</option>
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="fileInput" class="form-label fw-semibold">{% trans "Select File" %}</label>
+                                <input type="file" class="form-control" id="fileInput" accept=".csv,.xlsx,.xls"
+                                    required>
+                                <div class="form-text">{% trans "Please upload only CSV or Excel files." %}</div>
+                                <div class="form-text text-muted">{% trans "Do not add records that already exist in the database." %}</div>
+
+                                <!-- File Upload Requirements -->
+                                <div class="alert alert-info mt-3" role="alert">
+                                    <h6 class="alert-heading"><i class="fas fa-info-circle"></i> {% trans "File Upload Requirements" %}</h6>
+                                    <ul class="mb-0 small">
+                                        <li><strong>{% trans "CSV Format:" %}</strong> {% trans "Save your file as CSV with UTF-8 encoding and comma separation" %}</li>
+                                        <li><strong>{% trans "Remove Empty Rows:" %}</strong> {% trans "Please remove all empty rows from your file before uploading. Empty rows can cause upload failures, increase processing time, and lead to operation errors" %}</li>
+                                        <li><strong>{% trans "Data Validation:" %}</strong> {% trans "Ensure all required fields are properly filled to avoid processing issues" %}</li>
+                                    </ul>
+                                </div>
+
+                            </div>
+
+                            <div class="d-flex justify-content-center mt-4">
+                                <button type="submit" id="uploadnewdata" class="btn btn-success px-4 csvBtn">
+                                    {% trans "Upload" %}
+                                </button>
+                            </div>
+
+                        </div>
+                    </div>
+
+                </div>
+                <div id="deletdiv" style="display: none;">
+                    <div class="card shadow-sm border-0 mt-4">
+                        <div class="card-header d-flex align-items-center justify-content-between">
+                            <h5 class="mb-0">{% trans "Delete Existing Data" %}</h5>
+                        </div>
+
+                        <div class="row p-3">
+                            <div class="col-12 mb-3">
+                                <label for="deletedataType" class="form-label fw-bold">{% trans "Select Data Type" %}</label>
+                                <select class="form-select" id="deletedataType" name="data_type" required>
+                                    <option value="" selected disabled>{% trans "Choose Data Type" %}</option>
+                                    <option value="household">{% trans "Household" %}</option>
+                                    <option value="transformer">{% trans "Transformer" %}</option>
+                                    <option value="critical_facility">{% trans "Critical Facility" %}</option>
+                                    <option value="commercial">{% trans "Commercial" %}</option>
+                                    <option value="electric_poles">{% trans "Electric Poles" %}</option>
+                                    <option value="villagesOfAllTheDistricts">{% trans "Villages of all the Districts" %}</option>
+                                    <option value="VillageRoadInfo">{% trans "Villages road info" %}</option>
+                                    <option value="VillageRoadInfoErosion">{% trans "Village Road Erosion Info." %}</option>
+                                    <option value="bridge_survey">{% trans "Bridge Survey" %}</option>
+                                    <option value="risk_assesment">{% trans "Risk Assesment" %}</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="district" class="form-label fw-bold">{% trans "District" %}</label>
+                                <select id="district" class="form-select drpdwn_slct" required>
+                                    <option value="" selected disabled>{% trans "Select District" %}</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="circle" class="form-label fw-bold">{% trans "Circle" %}</label>
+                                <select id="circle" class="form-select drpdwn_slct" required>
+                                    <option value="" selected disabled>{% trans "Select Circle" %}</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="gram_panchayat" class="form-label fw-bold">{% trans "Gram Panchayat" %}</label>
+                                <select id="gram_panchayat" class="form-select drpdwn_slct" required>
+                                    <option value="" selected disabled>{% trans "Select Gram Panchayat" %}</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="village" class="form-label fw-bold">{% trans "Village" %}</label>
+                                <select id="village" class="form-select drpdwn_slct" required>
+                                    <option value="" selected disabled>{% trans "Select Village" %}</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-text text-danger px-3">
+                            {% trans "Warning: This action is permanent and cannot be undone. Proceed only if you're sure." %}
+                        </div>
+
+                        <div class="d-flex justify-content-center mt-2 mb-3 px-3">
+                            <button type="submit" id="deletedata" class="btn btn-danger">
+                                {% trans "Delete Data" %}
+                            </button>
+                        </div>
+                    </div>
+
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extrajs %}
+<script src="{% static 'js/administrator/vdmp_dashboard/vdmp_dashboard.js' %}"></script>
+{% endblock %}

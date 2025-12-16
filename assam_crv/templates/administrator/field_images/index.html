@@ -1,0 +1,305 @@
+{% extends "administrator/admin_base.html" %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "Field Images Management" %}{% endblock %}
+
+{% block extraheader %}
+<script src="{% static 'js/utils/DataTableFunction.js' %}"></script>
+<script src="{% static 'js/utils/AddSelect2Options.js' %}"></script>
+{% endblock %}
+
+{% block content %}
+
+{% trans "Field Images Management" as field_images_title %}
+{% include "components/breadcrumb.html" with breadcrumb_title=field_images_title %}
+
+<section id="filter">
+    <div class="container-fluid">
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="secondary__heading">{% trans "Field Images" %}</h5>
+            <div class="d-flex gap-2">
+                <button type="button" class="btn btn-primary custom-purple d-flex align-items-center justify-content-center gap-1 csvBtn" data-bs-toggle="modal" data-bs-target="#addFieldImageModal">
+                    <i class="fa fa-plus"></i> <span class="d-none d-md-block">{% trans "Add New Image" %}</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Filter Section -->
+<section id="filter">
+    <div class="container-fluid">
+        <div class="row">
+            <!-- District -->
+        <div class="col-1-5 d-flex flex-column">
+        <label class="form-label fw-medium" for="district">{% trans "District" %}</label>
+            <select name="district" id="rescue_equipment_district_select" class="form-select select2">
+            <option value="" selected disabled>{% trans "Select Districts" %}</option>
+            </select>
+        </div>
+        <!-- Circle -->
+        <div class="col-1-5 d-flex flex-column">
+        <label class="form-label fw-medium" for="circle">{% trans "Circle" %}</label>
+            <select name="circle" id="rescue_equipment_circle" class="form-select select2">
+            <option value="" selected disabled>{% trans "Select Circle" %}</option>
+            </select>
+        </div>
+        <!-- Gram Panchayat -->
+        <div class="col-1-5 d-flex flex-column">
+            <label class="form-label fw-medium" for="gram_panchayat">{% trans "Gram Panchayat" %}</label>
+            <select name="gram_panchayat" id="rescue_equipment_gram_panchayat" class="form-select select2">
+            <option value="" selected disabled>{% trans "Select Gram Panchayat" %}</option>
+            </select>
+        </div>
+        <!-- Village -->
+        <div class="col-1-5 d-flex flex-column">
+            <label class="form-label fw-medium" for="village">{% trans "Village" %}</label> 
+            <select name="village" id="rescue_equipment_village_select" class="form-select select2">
+            <option value="" selected disabled>{% trans "Select Villages" %}</option>
+            </select>
+        </div>
+      <!-- Equipment -->
+            <div class="col-md-4 col-xl-2 col-sm-6 d-flex flex-column">
+                 <label class="form-label fw-medium" for="village">{% trans "Select Category" %}</label> 
+                <select name="category" id="category" class="form-select select2">
+                    <option value="" selected disabled>{% trans "Select Category" %}</option>
+                    <option value="Livelihood">Livelihood</option>
+                    <option value="Educational facilities">Educational facilities</option>
+                    <option value="River bank protection/erosion">River bank protection/erosion</option>
+                    <option value="Infrastructure">Infrastructure</option>
+                    <option value="housing">housing</option>
+                    <option value="PRA and field consultations">PRA and field consultations</option>
+                    <option value="PRA Map">PRA Map</option>
+                </select>
+            </div>
+        </div>
+    </div>
+</section>
+<!-- Summary Section -->
+<div class="container-fluid">
+    <div class="summary-line">
+        <i class="fas fa-info-circle"></i>
+        <span id="summary-text">
+            <img src="{% static 'images/tube-spinner.svg' %}" id="summary-loader" style="width: 20px; height: 20px; margin-right: 8px;" alt="Loading...">
+          </span>
+    </div>
+</div>
+<!-- Field Images Table -->
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="Mitigation__wrapper_admin_village_rescue_eqp custom_height">
+                <div class="mitigation__header d-flex align-items-center justify-content-between card_header">
+                    <h6 class="">{% trans "Field Images List" %}</h6>
+                    <button type="button" class="btn btn-sm csvBtn" onclick="downloadTableAsCSV('field_images_table', 'field_images')" style="background-color: #245FAE; color: white; border: none;">
+                        <i class="fa fa-download DwnldIcon"></i> {% trans "Download CSV" %}
+                    </button>
+                </div>
+                <div class="w-100 Mitigation__table custom-table cstmDataTbl">
+                    <table class="table table-bordered" id="field_images_table">
+                        <thead>
+                            <tr>
+                                <th>{% trans "Sr. No" %}</th>
+                                <th>{% trans "Image" %}</th>
+                                <th>{% trans "Category" %}</th>
+                                <th>{% trans "Name" %}</th>
+                                <th>{% trans "Upload Date" %}</th>
+                                <th>{% trans "District Name" %}</th>
+                                <th>{% trans "Village Name" %}</th>
+                                <th>{% trans "Uploaded By" %}</th>
+                                <th>{% trans "Actions" %}</th>
+                            </tr>
+                        </thead>
+                        <tbody id="field_images_body">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Field Image Modal -->
+<div class="modal fade" id="addFieldImageModal" tabindex="-1" aria-labelledby="addFieldImageModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content removeOutline">
+            <div class="modal-header model-bg">
+                <h5 class="modal-title" id="addFieldImageModalLabel">{% trans "Add Field Image" %}</h5>
+                <button type="button" class="btn-close ms-0 position-absolute end-0 me-3" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="add_field_image_form" class="removeOutline" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="row">
+                        <div class="mb-3 col-6 col-md-4">
+                            <label for="add_district" class="form-label">{% trans "District" %} <span class="text-danger">*</span></label>
+                            <select class="form-select" id="add_district" required>
+                                <option value="" selected disabled>{% trans "Select District" %}</option>
+                            </select>
+                        </div>
+                        <div class="mb-3 col-6 col-md-4">
+                            <label for="add_circle" class="form-label">{% trans "Circle" %} <span class="text-danger">*</span></label>
+                            <select class="form-select" id="add_circle" required>
+                                <option value="" selected disabled>{% trans "Select Circle" %}</option>
+                            </select>
+                        </div>
+                        <div class="mb-3 col-6 col-md-4">
+                            <label for="add_gram_panchayat" class="form-label">{% trans "Gram Panchayat" %} <span class="text-danger">*</span></label>
+                            <select class="form-select" id="add_gram_panchayat" required>
+                                <option value="" selected disabled>{% trans "Select Gram Panchayat" %}</option>
+                            </select>
+                        </div>
+                        <div class="mb-3 col-6 col-md-4">
+                            <label for="add_village" class="form-label">{% trans "Village" %} <span class="text-danger">*</span></label>
+                            <select class="form-select" id="add_village" required>
+                                <option value="" selected disabled>{% trans "Select Village" %}</option>
+                            </select>
+                        </div>
+                        <div class="mb-3 col-6 col-md-4">
+                            <label for="add_category" class="form-label">{% trans "Category" %} <span class="text-danger">*</span></label>
+                            <select class="form-select" id="add_category" required>
+                                <option value="" selected disabled>{% trans "Select Category" %}</option>
+                                <option value="Livelihood">Livelihood</option>
+                                <option value="Educational facilities">Educational facilities</option>
+                                <option value="River bank protection/erosion">River bank protection/erosion</option>
+                                <option value="Infrastructure">Infrastructure</option>
+                                <option value="housing">housing</option>
+                                <option value="PRA and field consultations">PRA and field consultations</option>
+                                <option value="PRA Map">PRA Map</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3 col-6">
+                            <label for="add_image1" class="form-label">{% trans "Image 1" %} <span class="text-danger">*</span></label>
+                            <input type="file" class="form-control" id="add_image1" accept="image/*" required>
+                        </div>
+                        <div class="mb-3 col-6">
+                            <label for="add_image2" class="form-label">{% trans "Image 2 (Optional)" %}</label>
+                            <input type="file" class="form-control" id="add_image2" accept="image/*">
+                        </div>
+                        <div class="mb-3 col-6">
+                            <label for="add_name1" class="form-label">{% trans "Image 1 Name (Optional)" %}</label>
+                            <input type="text" class="form-control" id="add_name1">
+                        </div>
+                        <div class="mb-3 col-6">
+                            <label for="add_name2" class="form-label">{% trans "Image 2 Name (Optional)" %}</label>
+                            <input type="text" class="form-control" id="add_name2">
+                        </div>
+                        <div class="mb-3 col-12">
+                            <div class="form-text">{% trans "Maximum 2 images allowed per category per village. You can upload both at once." %}</div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer justify-content-center">
+                <button type="button" class="btn btn-secondary csvBtn-Grey" data-bs-dismiss="modal">{% trans "Close" %}</button>
+                <button type="button" class="btn btn-primary custom-purple csvBtn" onclick="addFieldImage()">{% trans "Save" %}</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Field Image Modal -->
+<div class="modal fade" id="editFieldImageModal" tabindex="-1" aria-labelledby="editFieldImageModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content removeOutline">
+            <div class="modal-header model-bg">
+                <h5 class="modal-title" id="editFieldImageModalLabel">{% trans "Edit Field Image" %}</h5>
+                <button type="button" class="btn-close ms-0 position-absolute end-0 me-3" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="edit_field_image_form" class="removeOutline">
+                    {% csrf_token %}
+                    <input type="hidden" id="edit_image_id">
+                    <div class="row">
+                        <div class="mb-3 col-6 col-md-4">
+                            <label for="edit_district" class="form-label">{% trans "District" %} <span class="text-danger">*</span></label>
+                            <select class="form-select" id="edit_district" required>
+                                <option value="" selected disabled>{% trans "Select District" %}</option>
+                            </select>
+                        </div>
+                        <div class="mb-3 col-6 col-md-4">
+                            <label for="edit_circle" class="form-label">{% trans "Circle" %} <span class="text-danger">*</span></label>
+                            <select class="form-select" id="edit_circle" required>
+                                <option value="" selected disabled>{% trans "Select Circle" %}</option>
+                            </select>
+                        </div>
+                        <div class="mb-3 col-6 col-md-4">
+                            <label for="edit_gram_panchayat" class="form-label">{% trans "Gram Panchayat" %} <span class="text-danger">*</span></label>
+                            <select class="form-select" id="edit_gram_panchayat" required>
+                                <option value="" selected disabled>{% trans "Select Gram Panchayat" %}</option>
+                            </select>
+                        </div>
+                        <div class="mb-3 col-6 col-md-4">
+                            <label for="edit_village" class="form-label">{% trans "Village" %} <span class="text-danger">*</span></label>
+                            <select class="form-select" id="edit_village" required>
+                                <option value="" selected disabled>{% trans "Select Village" %}</option>
+                            </select>
+                        </div>
+                        <div class="mb-3 col-6 col-md-4">
+                            <label for="edit_category" class="form-label">{% trans "Category" %} <span class="text-danger">*</span></label>
+                            <select class="form-select" id="edit_category" required>
+                                <option value="" selected disabled>{% trans "Select Category" %}</option>
+                                <option value="Livelihood">Livelihood</option>
+                                <option value="Educational facilities">Educational facilities</option>
+                                <option value="River bank protection/erosion">River bank protection/erosion</option>
+                                <option value="Infrastructure">Infrastructure</option>
+                                <option value="housing">housing</option>
+                                <option value="PRA and field consultations">PRA and field consultations</option>
+                                <option value="PRA Map">PRA Map</option>
+                            </select>
+                        </div>
+                        <div class="mb-3 col-6 col-md-4">
+                            <label for="edit_name" class="form-label">{% trans "Image Name" %}</label>
+                            <input type="text" class="form-control" id="edit_name">
+                        </div>
+                        <div class="mb-3 col-12">
+                            <label for="edit_image" class="form-label">{% trans "Image" %}</label>
+                            <input type="file" class="form-control" id="edit_image" accept="image/*">
+                            <div class="form-text">{% trans "Leave empty to keep current image" %}</div>
+                            <div class="mt-2" id="current_image_container">
+                                <img id="current_image" src="" class="img-thumbnail" style="max-height: 200px;">
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary csvBtn-Grey" data-bs-dismiss="modal">{% trans "Close" %}</button>
+                <button type="button" class="btn btn-primary custom-purple csvBtn" onclick="updateFieldImage()">{% trans "Update" %}</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Image Preview Modal -->
+<div class="modal fade" id="imagePreviewModal" tabindex="-1" aria-labelledby="imagePreviewModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content removeOutline">
+        <div class="modal-header justify-content-between">
+          <h5 class="modal-title" id="imagePreviewModalLabel">{% trans "Image Preview" %}</h5>
+          <button type="button" class="btn-close ms-0" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body d-flex justify-content-center align-items-center p-2" style="height:500px; width:100%;">
+          <img id="preview_image" src="" 
+               class="img-fluid rounded shadow"
+               style="max-height:100%; max-width:100%; object-fit:contain;" 
+               alt="Preview Image">
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  
+  
+
+{% endblock %}
+
+{% block extrajs %}
+<script src="{% static 'js/utils/sideBarItemColorChange.js' %}"></script>
+<script src="{% static 'js/utils/downloadTableData.js' %}"></script>
+<script src="{% static 'js/utils/csrf.js' %}"></script>
+<script src="{% static 'js/administrator/field_images/field_images_admin.js' %}"></script>
+<script src="{% static 'js/utils/summery.js' %}"></script>
+{% endblock %}

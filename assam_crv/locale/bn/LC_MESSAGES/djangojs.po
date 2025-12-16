@@ -1,0 +1,738 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-07-22 13:12+0530\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: .\static\js\accounts\profile.js:18 .\static\js\accounts\profile.js:51
+#: .\static\js\accounts\profile.js:60 .\static\js\accounts\profile.js:77
+#: .\static\js\accounts\profile.js:86 .\static\js\accounts\profile.js:122
+#: .\static\js\accounts\profile.js:131
+#: .\static\js\administrator\rescue_equipment.js:73
+#: .\static\js\administrator\rescue_equipment.js:172
+#: .\static\js\administrator\training\training_list.js:33
+#: .\static\js\administrator\vdmp_dashboard\vdmp_dashboard.js:324
+#: .\static\js\administrator\vdmp_progress\vdmp_progress.js:49
+#: .\static\js\administrator\vdmp_progress\vdmp_progress.js:57
+#: .\static\js\administrator\vdmp_progress\vdmp_progress.js:135
+#: .\static\js\administrator\vdmp_progress\vdmp_progress.js:265
+#: .\static\js\administrator\vdmp_progress\vdmp_progress.js:273
+#: .\static\js\administrator\village_profile\village_profile.js:813
+#: .\static\js\training\training_list.js:264
+msgid "Error"
+msgstr "ত্রুটি"
+
+#: .\static\js\accounts\profile.js:19 .\static\js\accounts\profile.js:78
+msgid "All fields are required!"
+msgstr "সবগুলো ঘর পূরণ করা আবশ্যক!"
+
+#: .\static\js\accounts\profile.js:43 .\static\js\accounts\profile.js:114
+#: .\static\js\administrator\rescue_equipment.js:56
+#: .\static\js\administrator\rescue_equipment.js:155
+#: .\static\js\administrator\training\training_list.js:29
+#: .\static\js\administrator\vdmp_progress\vdmp_progress.js:38
+#: .\static\js\administrator\vdmp_progress\vdmp_progress.js:124
+#: .\static\js\administrator\vdmp_progress\vdmp_progress.js:255
+#: .\static\js\administrator\village_profile\village_profile.js:804
+#: .\static\js\training\training_list.js:248
+msgid "Success"
+msgstr "সফলতা"
+
+#: .\static\js\accounts\profile.js:44
+msgid "Profile updated successfully!"
+msgstr "প্রোফাইল সফলভাবে আপডেট হয়েছে!"
+
+#: .\static\js\accounts\profile.js:52
+msgid "Failed to update profile"
+msgstr "প্রোফাইল আপডেট করতে ব্যর্থ হয়েছে"
+
+#: .\static\js\accounts\profile.js:61
+msgid "An error occurred while updating profile"
+msgstr "প্রোফাইল আপডেট করার সময় একটি ত্রুটি ঘটেছে"
+
+#: .\static\js\accounts\profile.js:87
+msgid "New password and confirm password do not match!"
+msgstr "নতুন পাসওয়ার্ড এবং নিশ্চিত পাসওয়ার্ড মিলছে না!"
+
+#: .\static\js\accounts\profile.js:115
+#, fuzzy
+#| msgid "Profile updated successfully!"
+msgid "Password changed successfully!"
+msgstr "পাসওয়ার্ড সফলভাবে পরিবর্তন হয়েছে!"
+
+#: .\static\js\accounts\profile.js:123
+msgid "Failed to change password"
+msgstr "পাসওয়ার্ড পরিবর্তন করতে ব্যর্থ হয়েছে"
+
+#: .\static\js\accounts\profile.js:132
+msgid "An error occurred while changing password"
+msgstr "পাসওয়ার্ড পরিবর্তনের সময় একটি ত্রুটি ঘটেছে"
+
+#: .\static\js\administrator\department\department.js:113
+msgid "Edit Department"
+msgstr "বিভাগ সম্পাদনা করুন"
+
+#: .\static\js\administrator\department\department.js:114
+#: .\static\js\administrator\users\users.js:181
+#: .\static\js\administrator\vdmp_dashboard\vdmp_dashboard.js:125
+#: .\static\js\administrator\village_profile\village_profile.js:101
+#: .\static\js\administrator\village_profile\village_profile.js:127
+#: .\static\js\administrator\village_profile\village_profile.js:159
+#: .\static\js\administrator\village_profile\village_profile.js:199
+#: .\static\js\training\training_list.js:123
+msgid "Update"
+msgstr "আপডেট"
+
+#: .\static\js\administrator\department\department.js:127
+#: .\static\js\administrator\department\department.js:167
+#: .\static\js\administrator\rescue_equipment.js:90
+#: .\static\js\administrator\rescue_equipment.js:185
+#: .\static\js\administrator\vdmp_dashboard\vdmp_dashboard.js:291
+#: .\static\js\administrator\vdmp_progress\vdmp_progress.js:93
+#: .\static\js\administrator\vdmp_progress\vdmp_progress.js:152
+#: .\static\js\administrator\vdmp_progress\vdmp_progress.js:282
+#: .\static\js\rescue_equipments\rescue_equipments.js:127
+#: .\static\js\training\training_list.js:135
+msgid "Are you sure?"
+msgstr "আপনি কি নিশ্চিত?"
+
+#: .\static\js\administrator\department\department.js:128
+msgid "Do you really want to delete this department?"
+msgstr "আপনি কি সত্যিই এই বিভাগটি মুছে ফেলতে চান?"
+
+#: .\static\js\administrator\department\department.js:133
+#: .\static\js\administrator\rescue_equipment.js:191
+#: .\static\js\administrator\vdmp_dashboard\vdmp_dashboard.js:297
+#: .\static\js\administrator\vdmp_progress\vdmp_progress.js:158
+#: .\static\js\administrator\vdmp_progress\vdmp_progress.js:288
+#: .\static\js\administrator\village_profile\village_profile.js:734
+#: .\static\js\training\training_list.js:141
+msgid "Yes, delete it!"
+msgstr "হ্যাঁ, মুছে ফেলুন!"
+
+#: .\static\js\administrator\department\department.js:153
+#: .\static\js\administrator\vdmp_dashboard\vdmp_dashboard.js:311
+msgid "Deleted!"
+msgstr "মুছে ফেলা হয়েছে!"
+
+#: .\static\js\administrator\department\department.js:153
+#, fuzzy
+#| msgid "Profile updated successfully!"
+msgid "Department deleted successfully!"
+msgstr "বিভাগ সফলভাবে মুছে ফেলা হয়েছে!"
+
+#: .\static\js\administrator\department\department.js:156
+#: .\static\js\administrator\department\department.js:160
+#: .\static\js\administrator\department\department.js:209
+#: .\static\js\administrator\department\department.js:213
+#: .\static\js\rescue_equipments\rescue_equipments.js:158
+#: .\static\js\rescue_equipments\rescue_equipments.js:162
+msgid "Error!"
+msgstr "ত্রুটি!"
+
+#: .\static\js\administrator\department\department.js:156
+#: .\static\js\administrator\village_profile\village_profile.js:789
+#: .\static\js\administrator\village_profile\village_profile.js:791
+msgid "Failed to delete"
+msgstr "মুছে ফেলতে ব্যর্থ হয়েছে"
+
+#: .\static\js\administrator\department\department.js:160
+msgid "Failed to delete department."
+msgstr "বিভাগ মুছে ফেলতে ব্যর্থ হয়েছে"
+
+#: .\static\js\administrator\department\department.js:168
+msgid "Do you really want to save this department?"
+msgstr "আপনি কি সত্যিই এই বিভাগটি সংরক্ষণ করতে চান?"
+
+#: .\static\js\administrator\department\department.js:173
+msgid "Yes, save it!"
+msgstr "হ্যাঁ, সংরক্ষণ করুন!"
+
+#: .\static\js\administrator\department\department.js:207
+msgid "Success!"
+msgstr "সফলতা!"
+
+#: .\static\js\administrator\department\department.js:207
+#, fuzzy
+#| msgid "Profile updated successfully!"
+msgid "Department saved successfully!"
+msgstr "বিভাগ সফলভাবে সংরক্ষিত হয়েছে!"
+
+#: .\static\js\administrator\department\department.js:209
+msgid "Something went wrong."
+msgstr "কিছু একটা ভুল হয়েছে।"
+
+#: .\static\js\administrator\department\department.js:213
+msgid "Failed to save department."
+msgstr "বিভাগ সংরক্ষণ করতে ব্যর্থ হয়েছে।"
+
+#: .\static\js\administrator\department\department.js:234
+msgid "Add New Department"
+msgstr "নতুন বিভাগ যোগ করুন"
+
+#: .\static\js\administrator\department\department.js:235
+msgid "Submit"
+msgstr "জমা দিন"
+
+#: .\static\js\administrator\department\department.js:246
+msgid "⚠️ No modules loaded. Cannot proceed with permission assignment."
+msgstr "⚠️ কোনো মডিউল লোড হয়নি। অনুমতি বরাদ্দ করা সম্ভব নয়।"
+
+#: .\static\js\administrator\department\department.js:253
+#: .\static\js\administrator\users\users.js:26
+#: .\static\js\administrator\vdmp_dashboard\vdmp_dashboard.js:21
+#: .\static\js\rescue_equipments\rescue_equipments.js:15
+#: .\static\js\training\training_list.js:16
+msgid "Actions"
+msgstr "ক্রিয়াকলাপ"
+
+#: .\static\js\administrator\rescue_equipment.js:21
+msgid "Saving..."
+msgstr "সংরক্ষণ করা হচ্ছে..."
+
+#: .\static\js\administrator\rescue_equipment.js:62
+#: .\static\js\administrator\rescue_equipment.js:161
+msgid "Unknown error"
+msgstr "অজানা ত্রুটি"
+
+#: .\static\js\administrator\rescue_equipment.js:91
+msgid "Do you want to edit this equipment?"
+msgstr "আপনি কি এই সরঞ্জামটি সম্পাদনা করতে চান?"
+
+#: .\static\js\administrator\rescue_equipment.js:96
+msgid "Yes, edit it!"
+msgstr "হ্যাঁ, সম্পাদনা করুন!"
+
+#: .\static\js\administrator\rescue_equipment.js:97
+#: .\static\js\administrator\rescue_equipment.js:192
+#: .\static\js\administrator\vdmp_dashboard\vdmp_dashboard.js:298
+#: .\static\js\administrator\village_profile\village_profile.js:735
+#: .\static\js\training\training_list.js:142
+msgid "Cancel"
+msgstr "বাতিল করুন"
+
+#: .\static\js\administrator\rescue_equipment.js:122
+msgid "Updating..."
+msgstr "আপডেট করা হচ্ছে..."
+
+#: .\static\js\administrator\rescue_equipment.js:186
+#: .\static\js\administrator\vdmp_dashboard\vdmp_dashboard.js:292
+msgid "Do you really want to delete this equipment?"
+msgstr "আপনি কি সত্যিই এই সরঞ্জামটি মুছে ফেলতে চান?"
+
+#: .\static\js\administrator\training\training_list.js:63
+#, fuzzy
+#| msgid "Profile updated successfully!"
+msgid "Activity added successfully!"
+msgstr "কার্যক্রম সফলভাবে যোগ হয়েছে!"
+
+#: .\static\js\administrator\training\training_list.js:64
+msgid "Failed to add activity."
+msgstr "কার্যক্রম যোগ করতে ব্যর্থ হয়েছে।"
+
+#: .\static\js\administrator\training\training_list.js:139
+msgid "Status updated!"
+msgstr "স্ট্যাটাস আপডেট হয়েছে!"
+
+#: .\static\js\administrator\training\training_list.js:139
+msgid "Status added!"
+msgstr "স্ট্যাটাস যোগ হয়েছে!"
+
+#: .\static\js\administrator\training\training_list.js:139
+msgid "Failed to save status."
+msgstr "স্ট্যাটাস সংরক্ষণ করতে ব্যর্থ হয়েছে।"
+
+#: .\static\js\administrator\users\users.js:8
+#: .\static\js\administrator\vdmp_dashboard\vdmp_dashboard.js:7
+#: .\static\js\administrator\village_profile\village_profile.js:10
+#: .\static\js\rescue_equipments\rescue_equipments.js:5
+#: .\static\js\training\training_list.js:6
+#: .\static\js\vdmp_dashboard\vdmp_dashboard.js:7
+#: .\static\js\vdmp_progress\chart_And_table.js:245
+msgid "Select Districts"
+msgstr "জেলা নির্বাচন করুন"
+#: .\static\js\administrator\users\users.js:9
+#: .\static\js\administrator\vdmp_dashboard\vdmp_dashboard.js:8
+#: .\static\js\administrator\village_profile\village_profile.js:11
+#: .\static\js\rescue_equipments\rescue_equipments.js:7
+#: .\static\js\training\training_list.js:9
+#: .\static\js\utils\AddSelect2Options.js:64
+#: .\static\js\vdmp_dashboard\vdmp_dashboard.js:10
+#: .\static\js\vdmp_progress\chart_And_table.js:248
+msgid "Select Circle"
+msgstr "সার্কেল নির্বাচন করুন"
+
+#: .\static\js\administrator\users\users.js:10
+#: .\static\js\administrator\vdmp_dashboard\vdmp_dashboard.js:9
+#: .\static\js\administrator\village_profile\village_profile.js:12
+#: .\static\js\rescue_equipments\rescue_equipments.js:8
+#: .\static\js\training\training_list.js:8
+#: .\static\js\vdmp_dashboard\vdmp_dashboard.js:9
+#: .\static\js\vdmp_progress\chart_And_table.js:247
+msgid "Select Gram Panchayat"
+msgstr "গ্রাম পঞ্চায়েত নির্বাচন করুন"
+
+#: .\static\js\administrator\users\users.js:11
+#: .\static\js\administrator\vdmp_dashboard\vdmp_dashboard.js:10
+#: .\static\js\rescue_equipments\rescue_equipments.js:6
+#: .\static\js\training\training_list.js:7
+#: .\static\js\utils\AddSelect2Options.js:26
+#: .\static\js\vdmp_dashboard\vdmp_dashboard.js:8
+#: .\static\js\vdmp_progress\chart_And_table.js:246
+msgid "Select Villages"
+msgstr "গ্রাম নির্বাচন করুন"
+
+#: .\static\js\administrator\users\users.js:18
+#: .\static\js\administrator\vdmp_dashboard\vdmp_dashboard.js:17
+msgid "Sr. No"
+msgstr "ক্রমিক নং"
+
+#: .\static\js\administrator\users\users.js:19
+msgid "Department"
+msgstr "বিভাগ"
+
+#: .\static\js\administrator\users\users.js:20
+msgid "Role"
+msgstr "ভূমিকা"
+
+#: .\static\js\administrator\users\users.js:21
+msgid "Username"
+msgstr "ইউজারনেম"
+
+#: .\static\js\administrator\users\users.js:22
+#: .\static\js\administrator\vdmp_dashboard\vdmp_dashboard.js:18
+msgid "District"
+msgstr "জেলা"
+
+#: .\static\js\administrator\users\users.js:23
+msgid "Circle"
+msgstr "সার্কেল"
+
+#: .\static\js\administrator\users\users.js:24
+msgid "Gram Panchayat"
+msgstr "গ্রাম পঞ্চায়েত"
+
+#: .\static\js\administrator\users\users.js:25
+#: .\static\js\administrator\vdmp_dashboard\vdmp_dashboard.js:19
+msgid "Village"
+msgstr "গ্রাম"
+
+#: .\static\js\administrator\users\users.js:180
+msgid "Edit User"
+msgstr "ইউজার সম্পাদনা করুন"
+
+#: .\static\js\administrator\users\users.js:190
+msgid "View User Details"
+msgstr "ইউজারের বিবরণ দেখুন"
+
+#: .\static\js\administrator\users\users.js:200
+msgid "Register"
+msgstr "নিবন্ধন করুন"
+
+#: .\static\js\administrator\users\users.js:201
+msgid "Register New User"
+msgstr "নতুন ইউজার নিবন্ধন করুন"
+
+#: .\static\js\administrator\users\users.js:254
+msgid "User Updated"
+msgstr "ইউজার আপডেট হয়েছে"
+
+#: .\static\js\administrator\users\users.js:254
+msgid "User Registered"
+msgstr "ইউজার নিবন্ধিত হয়েছে"
+
+#: .\static\js\administrator\users\users.js:256
+msgid "The user has been updated successfully."
+msgstr "ইউজার সফলভাবে আপডেট হয়েছে।"
+
+#: .\static\js\administrator\users\users.js:257
+msgid "The user has been registered successfully."
+msgstr "ইউজার সফলভাবে নিবন্ধিত হয়েছে।"
+
+#: .\static\js\administrator\users\users.js:269
+#: .\static\js\administrator\vdmp_dashboard\vdmp_dashboard.js:200
+msgid "Operation Failed"
+msgstr "অপারেশন ব্যর্থ হয়েছে"
+
+#: .\static\js\administrator\users\users.js:270
+#: .\static\js\administrator\vdmp_dashboard\vdmp_dashboard.js:201
+msgid "Please check the form data."
+msgstr "অনুগ্রহ করে ফর্মের ডেটা পরীক্ষা করুন।"
+
+#: .\static\js\administrator\users\users.js:278
+#: .\static\js\administrator\vdmp_dashboard\vdmp_dashboard.js:209
+msgid "Server Error"
+msgstr "সার্ভার ত্রুটি"
+
+#: .\static\js\administrator\users\users.js:279
+#: .\static\js\administrator\vdmp_dashboard\vdmp_dashboard.js:210
+msgid "An unexpected error occurred. Try again later."
+msgstr "অপ্রত্যাশিত একটি ত্রুটি ঘটেছে। পরে আবার চেষ্টা করুন।"
+
+#: .\static\js\administrator\vdmp_dashboard\vdmp_dashboard.js:20
+msgid "Last Updated"
+msgstr "সর্বশেষ আপডেট"
+
+#: .\static\js\administrator\vdmp_dashboard\vdmp_dashboard.js:124
+msgid "Edit Village Summary"
+msgstr "গ্রামের সারাংশ সম্পাদনা করুন"
+
+#: .\static\js\administrator\vdmp_dashboard\vdmp_dashboard.js:135
+#: .\static\js\administrator\village_profile\village_profile.js:277
+#: .\static\js\administrator\village_profile\village_profile.js:286
+#: .\static\js\administrator\village_profile\village_profile.js:298
+#: .\static\js\administrator\village_profile\village_profile.js:313
+msgid "Save"
+msgstr "সংরক্ষণ করুন"
+
+#: .\static\js\administrator\vdmp_dashboard\vdmp_dashboard.js:136
+msgid "Add Village Summary"
+msgstr "গ্রামের সারাংশ যোগ করুন"
+
+#: .\static\js\administrator\vdmp_dashboard\vdmp_dashboard.js:188
+msgid "Summary Updated"
+msgstr "সারাংশ আপডেট হয়েছে"
+
+#: .\static\js\administrator\vdmp_dashboard\vdmp_dashboard.js:188
+msgid "Summary Created"
+msgstr "সারাংশ তৈরি হয়েছে"
+
+#: .\static\js\administrator\vdmp_dashboard\vdmp_dashboard.js:190
+msgid "The village summary has been updated successfully."
+msgstr "গ্রামের সারাংশ সফলভাবে আপডেট হয়েছে।"
+
+#: .\static\js\administrator\vdmp_dashboard\vdmp_dashboard.js:191
+msgid "The village summary has been created successfully."
+msgstr "গ্রামের সারাংশ সফলভাবে তৈরি হয়েছে।"
+
+#: .\static\js\administrator\vdmp_dashboard\vdmp_dashboard.js:312
+msgid "The record was successfully deleted."
+msgstr "রেকর্ড সফলভাবে মুছে ফেলা হয়েছে।"
+
+#: .\static\js\administrator\vdmp_progress\vdmp_progress.js:14
+#: .\static\js\administrator\vdmp_progress\vdmp_progress.js:85
+msgid "Validation Error"
+msgstr "ভ্যালিডেশন ত্রুটি"
+
+#: .\static\js\administrator\vdmp_progress\vdmp_progress.js:15
+#: .\static\js\administrator\vdmp_progress\vdmp_progress.js:86
+msgid "Activity name is required!"
+msgstr "কার্যক্রমের নাম আবশ্যক!"
+
+#: .\static\js\administrator\vdmp_progress\vdmp_progress.js:39
+msgid "VDMP Activity added successfully!"
+msgstr "VDMP কার্যক্রম সফলভাবে যুক্ত হয়েছে!"
+
+#: .\static\js\administrator\vdmp_progress\vdmp_progress.js:50
+msgid "Failed to add VDMP Activity: "
+msgstr "VDMP কার্যক্রম যুক্ত করতে ব্যর্থ: "
+#: .\static\js\administrator\vdmp_progress\vdmp_progress.js:58
+#: .\static\js\administrator\vdmp_progress\vdmp_progress.js:274
+msgid "An unexpected error occurred. Please try again."
+msgstr "একটি অপ্রত্যাশিত ত্রুটি ঘটেছে। অনুগ্রহ করে আবার চেষ্টা করুন।"
+
+#: .\static\js\administrator\vdmp_progress\vdmp_progress.js:94
+msgid "Do you want to update this VDMP Activity?"
+msgstr "আপনি কি এই VDMP কার্যক্রমটি আপডেট করতে চান?"
+
+#: .\static\js\administrator\vdmp_progress\vdmp_progress.js:99
+#: .\static\js\rescue_equipments\rescue_equipments.js:133
+msgid "Yes, update it!"
+msgstr "হ্যাঁ, আপডেট করুন!"
+
+#: .\static\js\administrator\vdmp_progress\vdmp_progress.js:125
+msgid "VDMP Activity updated successfully!"
+msgstr "VDMP কার্যক্রম সফলভাবে আপডেট হয়েছে!"
+
+#: .\static\js\administrator\vdmp_progress\vdmp_progress.js:136
+msgid "Failed to update VDMP Activity: "
+msgstr "VDMP কার্যক্রম আপডেট করতে ব্যর্থ:"
+
+#: .\static\js\administrator\vdmp_progress\vdmp_progress.js:153
+#: .\static\js\administrator\vdmp_progress\vdmp_progress.js:283
+msgid "You won't be able to revert this!"
+msgstr "আপনি এটি পূর্বাবস্থায় ফিরিয়ে আনতে পারবেন না!"
+
+#: .\static\js\administrator\vdmp_progress\vdmp_progress.js:256
+msgid "VDMP Activity Status updated successfully!"
+msgstr "VDMP কার্যক্রমের অবস্থা সফলভাবে আপডেট হয়েছে!"
+
+#: .\static\js\administrator\vdmp_progress\vdmp_progress.js:266
+msgid "Failed to update VDMP Activity Status: "
+msgstr "VDMP কার্যক্রমের অবস্থা আপডেট করতে ব্যর্থ:"
+
+#: .\static\js\administrator\vdmp_progress\vdmp_progress.js:494
+msgid "Select VDMP Activities"
+msgstr "VDMP কার্যক্রম নির্বাচন করুন"
+
+#: .\static\js\administrator\village_profile\village_profile.js:100
+msgid "Edit District"
+msgstr "জেলা সম্পাদনা করুন"
+
+#: .\static\js\administrator\village_profile\village_profile.js:126
+msgid "Edit Circle"
+msgstr "সার্কেল সম্পাদনা করুন"
+
+#: .\static\js\administrator\village_profile\village_profile.js:158
+msgid "Edit Gram Panchayat"
+msgstr "গ্রাম পঞ্চায়েত সম্পাদনা করুন"
+
+#: .\static\js\administrator\village_profile\village_profile.js:198
+msgid "Edit Village"
+msgstr "গ্রাম সম্পাদনা করুন"
+
+#: .\static\js\administrator\village_profile\village_profile.js:276
+msgid "Add District"
+msgstr "জেলা যোগ করুন"
+
+#: .\static\js\administrator\village_profile\village_profile.js:285
+msgid "Add Circle"
+msgstr "সার্কেল যোগ করুন"
+
+#: .\static\js\administrator\village_profile\village_profile.js:297
+msgid "Add Gram Panchayat"
+msgstr "গ্রাম পঞ্চায়েত যোগ করুন"
+
+#: .\static\js\administrator\village_profile\village_profile.js:312
+msgid "Add Village"
+msgstr "গ্রাম যোগ করুন"
+
+#: .\static\js\administrator\village_profile\village_profile.js:354
+msgid "Failed to load districts"
+msgstr "জেলা লোড করতে ব্যর্থ হয়েছে"
+
+#: .\static\js\administrator\village_profile\village_profile.js:398
+msgid "Failed to load circles"
+msgstr "সার্কেল লোড করতে ব্যর্থ হয়েছে"
+
+#: .\static\js\administrator\village_profile\village_profile.js:445
+msgid "Failed to load gram panchayats"
+msgstr "গ্রাম পঞ্চায়েত লোড করতে ব্যর্থ হয়েছে"
+
+#: .\static\js\administrator\village_profile\village_profile.js:497
+msgid "Failed to load villages"
+msgstr "গ্রাম লোড করতে ব্যর্থ হয়েছে"
+
+#: .\static\js\administrator\village_profile\village_profile.js:582
+msgid "District updated successfully"
+msgstr "জেলা সফলভাবে আপডেট হয়েছে"
+
+#: .\static\js\administrator\village_profile\village_profile.js:582
+msgid "District created successfully"
+msgstr "জেলা সফলভাবে তৈরি হয়েছে"
+
+#: .\static\js\administrator\village_profile\village_profile.js:586
+msgid "Failed to save district"
+msgstr "জেলা সংরক্ষণ করতে ব্যর্থ হয়েছে"
+
+#: .\static\js\administrator\village_profile\village_profile.js:590
+msgid "An error occurred while saving the district"
+msgstr "জেলা সংরক্ষণ করার সময় একটি ত্রুটি ঘটেছে"
+
+#: .\static\js\administrator\village_profile\village_profile.js:620
+msgid "Circle updated successfully"
+msgstr "সার্কেল সফলভাবে আপডেট হয়েছে"
+
+#: .\static\js\administrator\village_profile\village_profile.js:620
+msgid "Circle created successfully"
+msgstr "সার্কেল সফলভাবে তৈরি হয়েছে"
+
+#: .\static\js\administrator\village_profile\village_profile.js:623
+msgid "Failed to save circle"
+msgstr "সার্কেল সংরক্ষণ করতে ব্যর্থ হয়েছে"
+
+#: .\static\js\administrator\village_profile\village_profile.js:627
+msgid "An error occurred while saving the circle"
+msgstr "সার্কেল সংরক্ষণ করার সময় একটি ত্রুটি ঘটেছে"
+
+#: .\static\js\administrator\village_profile\village_profile.js:657
+msgid "Gram Panchayat updated successfully"
+msgstr "গ্রাম পঞ্চায়েত সফলভাবে আপডেট হয়েছে"
+
+#: .\static\js\administrator\village_profile\village_profile.js:657
+msgid "Gram Panchayat created successfully"
+msgstr "গ্রাম পঞ্চায়েত সফলভাবে তৈরি হয়েছে"
+
+#: .\static\js\administrator\village_profile\village_profile.js:660
+msgid "Failed to save gram panchayat"
+msgstr "গ্রাম পঞ্চায়েত সংরক্ষণ করতে ব্যর্থ হয়েছে"
+
+#: .\static\js\administrator\village_profile\village_profile.js:664
+msgid "An error occurred while saving the gram panchayat"
+msgstr "গ্রাম পঞ্চায়েত সংরক্ষণ করার সময় একটি ত্রুটি ঘটেছে"
+
+#: .\static\js\administrator\village_profile\village_profile.js:695
+msgid "Village updated successfully"
+msgstr "গ্রাম সফলভাবে আপডেট হয়েছে"
+
+#: .\static\js\administrator\village_profile\village_profile.js:695
+msgid "Village created successfully"
+msgstr "গ্রাম সফলভাবে তৈরি হয়েছে"
+
+#: .\static\js\administrator\village_profile\village_profile.js:698
+msgid "Failed to save village"
+msgstr "গ্রাম সংরক্ষণ করতে ব্যর্থ হয়েছে"
+#: .\static\js\administrator\village_profile\village_profile.js:702
+msgid "An error occurred while saving the village"
+msgstr "গ্রাম সংরক্ষণের সময় একটি ত্রুটি ঘটেছে"
+
+#: .\static\js\administrator\village_profile\village_profile.js:708
+msgid "Are you sure you want to delete this district?"
+msgstr "আপনি কি নিশ্চিত যে আপনি এই জেলাটি মুছে ফেলতে চান?"
+
+#: .\static\js\administrator\village_profile\village_profile.js:709
+msgid ""
+"This will also delete all circles, gram panchayats, and villages associated "
+"with this district."
+msgstr "এটি এই জেলার সাথে সম্পর্কিত সব মহকুমা, গ্রাম পঞ্চায়েত এবং গ্রামও মুছে ফেলবে।"
+
+#: .\static\js\administrator\village_profile\village_profile.js:713
+msgid "Are you sure you want to delete this circle?"
+msgstr "আপনি কি নিশ্চিত যে আপনি এই মহকুমাটি মুছে ফেলতে চান?"
+
+#: .\static\js\administrator\village_profile\village_profile.js:714
+msgid ""
+"This will also delete all gram panchayats and villages associated with this "
+"circle."
+msgstr "এটি এই মহকুমার সাথে সম্পর্কিত সব গ্রাম পঞ্চায়েত এবং গ্রামও মুছে ফেলবে।"
+
+#: .\static\js\administrator\village_profile\village_profile.js:718
+msgid "Are you sure you want to delete this gram panchayat?"
+msgstr "আপনি কি নিশ্চিত যে আপনি এই গ্রাম পঞ্চায়েতটি মুছে ফেলতে চান?"
+
+#: .\static\js\administrator\village_profile\village_profile.js:719
+msgid "This will also delete all villages associated with this gram panchayat."
+msgstr "এটি এই গ্রাম পঞ্চায়েতের সাথে সম্পর্কিত সব গ্রাম মুছে ফেলবে।"
+
+#: .\static\js\administrator\village_profile\village_profile.js:723
+msgid "Are you sure you want to delete this village?"
+msgstr "আপনি কি নিশ্চিত যে আপনি এই গ্রামটি মুছে ফেলতে চান?"
+
+#: .\static\js\administrator\village_profile\village_profile.js:823
+msgid "All"
+msgstr "সব"
+
+#: .\static\js\administrator\village_profile\village_profile.js:827
+msgid "Search..."
+msgstr "অনুসন্ধান করুন..."
+
+#: .\static\js\rescue_equipments\rescue_equipments.js:9
+#: .\static\js\rescue_equipments\rescue_equipments.js:10
+msgid "Select Equipment"
+msgstr "উপকরণ নির্বাচন করুন"
+
+#: .\static\js\rescue_equipments\rescue_equipments.js:128
+msgid "Do you really want to update this data?"
+msgstr "আপনি কি সত্যিই এই ডেটা আপডেট করতে চান?"
+
+#: .\static\js\rescue_equipments\rescue_equipments.js:156
+msgid "Updated!"
+msgstr "আপডেট হয়েছে!"
+
+#: .\static\js\rescue_equipments\rescue_equipments.js:158
+msgid "Failed to update"
+msgstr "আপডেট করতে ব্যর্থ হয়েছে"
+
+#: .\static\js\rescue_equipments\rescue_equipments.js:162
+msgid "Failed to update equipment status"
+msgstr "উপকরণের স্থিতি আপডেট করতে ব্যর্থ হয়েছে"
+
+#: .\static\js\rescue_equipments\rescue_equipments.js:10
+msgid "Select Task Force"
+msgstr "টাস্ক ফোর্স নির্বাচন করুন"
+
+#: .\static\js\rescue_equipments\rescue_equipments.js:197
+msgid "Please fill all required fields"
+msgstr "অনুগ্রহ করে সব প্রয়োজনীয় ঘর পূরণ করুন"
+
+#: .\static\js\rescue_equipments\rescue_equipments.js:227
+msgid "Equipment added successfully!"
+msgstr "উপকরণ সফলভাবে যোগ করা হয়েছে!"
+
+#: .\static\js\rescue_equipments\rescue_equipments.js:234
+msgid "Failed to add equipment"
+msgstr "উপকরণ যোগ করতে ব্যর্থ হয়েছে"
+
+#: .\static\js\training\training_list.js:4
+msgid "training_activities"
+msgstr "প্রশিক্ষণ কার্যক্রম"
+
+#: .\static\js\training\training_list.js:10
+#: .\static\js\vdmp_dashboard\vdmp_dashboard.js:11
+msgid "Select Status"
+msgstr "স্থিতি নির্বাচন করুন"
+
+#: .\static\js\training\training_list.js:70
+msgid "Error loading training activity data:"
+msgstr "প্রশিক্ষণ কার্যক্রমের তথ্য লোড করতে ত্রুটি:"
+
+#: .\static\js\training\training_list.js:71
+msgid "Failed to load data."
+msgstr "তথ্য লোড করতে ব্যর্থ হয়েছে।"
+
+#: .\static\js\training\training_list.js:102
+msgid "Training status not found for ID:"
+msgstr "এই আইডির জন্য প্রশিক্ষণের স্থিতি পাওয়া যায়নি:"
+
+#: .\static\js\training\training_list.js:122
+msgid "Edit Training Activity Status"
+msgstr "প্রশিক্ষণ কার্যক্রমের স্থিতি সম্পাদনা করুন"
+
+#: .\static\js\training\training_list.js:136
+msgid "Do you really want to delete this training activity status?"
+msgstr "আপনি কি সত্যিই এই প্রশিক্ষণ কার্যক্রমের স্থিতি মুছে ফেলতে চান?"
+
+#: .\static\js\training\training_list.js:257
+msgid "Failed to update status!"
+msgstr "স্থিতি আপডেট করতে ব্যর্থ হয়েছে!"
+
+#: .\static\js\utils\AddSelect2Options.js:1
+msgid "Select Option"
+msgstr "বিকল্প নির্বাচন করুন"
+
+#: .\static\js\utils\AddSelect2Options.js:66
+#: .\static\js\utils\AddSelect2Options.js:81
+msgid "Select Village"
+msgstr "গ্রাম নির্বাচন করুন"
+
+#: .\static\js\vdmp_progress\chart_And_table.js:36
+msgid "Not Started"
+msgstr "আরম্ভ হয়নি"
+
+#: .\static\js\vdmp_progress\chart_And_table.js:37
+msgid "In Progress"
+msgstr "চলমান"
+
+#: .\static\js\vdmp_progress\chart_And_table.js:38
+msgid "Completed"
+msgstr "সম্পন্ন হয়েছে"
+
+#: .\static\js\vdmp_progress\chart_And_table.js:49
+msgid "VDMP Activity Progress Status"
+msgstr "ভিডিএমপি কার্যক্রমের অগ্রগতি স্থিতি"
+
+#: .\static\js\vdmp_progress\chart_And_table.js:118
+msgid "Activity"
+msgstr "কার্যক্রম"
+
+#: .\static\js\vdmp_progress\chart_And_table.js:129
+msgid "Count"
+msgstr "গণনা"
+
+#: .\static\js\vdmp_progress\chart_And_table.js:177
+msgid "activities"
+msgstr "কার্যক্রমসমূহ"

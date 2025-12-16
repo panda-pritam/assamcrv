@@ -1,0 +1,123 @@
+{% extends "administrator/admin_base.html" %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "Department Management" %}{% endblock %}
+
+{% block extraheader %}
+{% endblock %}
+
+{% block content %}
+
+{% trans "Department" as dep %}
+{% include "components/breadcrumb.html" with breadcrumb_title=dep %}
+
+<div id="alertContainer"></div>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="Department__wrapper custom_height">
+                <div class="mitigation__header d-flex justify-content-between align-items-center card_header">
+                    <h6 class="">{% trans "Department List" %}</h6>
+                    <button type="button" class="btn btn-primary custom-purple" onclick="openModal()"><i class="fa fa-plus"></i> {% trans "Add New Department" %}</button>
+                </div>
+                <div class="Mitigation__table custom-table cstmDataTbl">
+                    <table class="table table-bordered" id="departments_table">
+                        <thead>
+                        <tr>
+                            <th style="width:5%;">{% trans "Sr. No" %}</th>
+                            <th style="width:20%;">{% trans "Name" %}</th>
+                            <th style="width:15%;">{% trans "Name (Bengali)" %}</th>
+                            <th style="width:15%;">{% trans "Name (Assamese)" %}</th>
+                            <th style="width:25%;">{% trans "Details" %}</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Department Modal -->
+<div class="modal fade" id="departmentModal" tabindex="-1" aria-labelledby="departmentModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header model-bg">
+        <h5 class="modal-title" id="departmentModalLabel">{% trans "Add New Department" %}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form method="post" id="departmentForm">
+        <div class="modal-body">
+          {% csrf_token %}
+          <input type="hidden" id="departmentId" name="department_id" />
+
+          <!-- Department Fields -->
+          <div class="row">
+            <div class="col-md-12 ">
+              <label for="departmentName" class="form-label"><b>{% trans "Name" %}</b></label>
+              <input type="text" class="form-control" id="departmentName" name="name" required />
+            </div>
+            <div class="col-md-6 mt-3">
+              <label for="departmentNameBn" class="form-label"><b>{% trans "Name (Bengali)" %}</b></label>
+              <input type="text" class="form-control" id="departmentNameBn" name="name_bn" />
+            </div>
+            <div class="col-md-6 mt-3">
+              <label for="departmentNameAs" class="form-label"><b>{% trans "Name (Assamese)" %}</b></label>
+              <input type="text" class="form-control" id="departmentNameAs" name="name_as" />
+            </div>
+            <div class="col-md-12 mt-3">
+              <label for="departmentDetails" class="form-label"><b>{% trans "Details" %}</b></label>
+              <textarea class="form-control" id="departmentDetails" name="details" rows="3"></textarea>
+            </div>
+          </div>
+
+          <!-- Permissions Section -->
+          <div class="row mt-3">
+            <div class="col-md-12">
+              <label class="form-label"><b>{% trans "Permissions" %}</b></label>
+              <div class="row">
+                <div class="col-md-5">
+                  <label>{% trans "Available permissions" %}</label>
+                  <select multiple id="availablePermissions" class="form-control drpdwn_slct_permission" size="10">
+
+                  </select>
+                </div>
+
+                <div class="col-md-2 d-flex flex-column justify-content-center align-items-center gap-2 mt-4">
+                  <button type="button" class="btn btn-sm  btn-primary custom-purple" onclick="moveSelected('availablePermissions', 'chosenPermissions')">→</button>
+                  <button type="button" class="btn btn-sm btn-primary custom-purple" onclick="moveSelected('chosenPermissions', 'availablePermissions')">←</button>
+                </div>
+
+                <div class="col-md-5">
+                  <label>{% trans "Chosen permissions" %}</label>
+                  <select multiple id="chosenPermissions" name="permissions[]" class="form-control drpdwn_slct_permission" size="10"></select>
+                </div>
+              </div>
+              <small class="text-muted">
+                {% trans 'Hold down "Control", or "Command" on a Mac, to select more than one.' %}
+              </small>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary csvBtn-Grey" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
+          <button type="submit" class="csvBtn" id="submitBtn">{% trans "Submit" %}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+
+{% endblock %}
+
+{% block extrajs %}
+{{ modules|json_script:"modules-json" }}
+
+<script src="{% static 'js/administrator/department/department.js' %}"></script>
+{% endblock %}

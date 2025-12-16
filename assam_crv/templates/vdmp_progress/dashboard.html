@@ -1,0 +1,217 @@
+{% extends "base.html" %}
+{% load static %}
+{% load i18n %}
+{% block title %}{% trans "VDMP Progress Monitoring" %} {% endblock %}
+{% block extraheader %}
+
+
+{% endblock %}
+{% block content %}
+
+
+{% trans "VDMP Progress Monitoring" as vdmp_title %}
+{% include "components/breadcrumb.html" with breadcrumb_title=vdmp_title show_print_button=True print_function="printVDMPProgressToPDF()" %}
+
+<!-- Hidden User Location Data -->
+
+<div class="visually-hidden">
+  <input type="hidden" id="userDistrictId" value="{{ user_location.district_id|default:'' }}">
+  <input type="hidden" id="userCircleId" value="{{ user_location.circle_id|default:'' }}">
+  <input type="hidden" id="userGramPanchayatId" value="{{ user_location.gram_panchayat_id|default:'' }}">
+  <input type="hidden" id="userVillageId" value="{{ user_location.village_id|default:'' }}">
+
+</div>
+
+
+
+ {% comment %} Chart and Map Div {% endcomment %}
+
+
+    <!-- Tab Content -->
+    <div class="tab-content " id="dataLevelTabContent">
+     
+       <section id="filter">
+          <div class="container-fluid ">
+              <div class="row ">
+                      <!-- District -->
+                <div class="col-md-3 col-xl-3 col-sm-6  d-flex flex-column ">
+                    <label class="form-label fw-medium" for="district">{% trans "Select District" %}</label>
+                    <select name="district" id="district" class="form-select select2">
+                        <option value="" selected disabled>{% trans "Select Districts" %}</option>
+                    </select>
+                </div>
+                <!-- Circle -->
+                <div class="col-md-3 col-xl-3 col-sm-6  d-flex flex-column ">
+                    <label class="form-label fw-medium" for="circle">{% trans "Select Circle" %}</label>
+                    <select name="circle" id="circle" class="form-select select2">
+                        <option value="" selected disabled>{% trans "Select Circle" %}</option>
+                    </select>
+                </div>
+                <!-- Gram Panchayat -->
+                <div class="col-md-3 col-xl-3 col-sm-6  d-flex flex-column ">
+                    <label class="form-label fw-medium" for="gram_panchayat">{% trans "Select Gram Panchayat" %}</label>
+                    <select name="gram_panchayat" id="gram_panchayat" class="form-select select2">
+                        <option value="" selected disabled>{% trans "Select Gram Panchayat" %}</option>
+                    </select>
+                </div>
+                <!-- Village -->
+                <div class="col-md-3 col-xl-3 col-sm-6  d-flex flex-column ">
+                    <label class="form-label fw-medium" for="village">{% trans "Select Village" %}</label>
+                    <select name="village" id="village" class="form-select select2">
+                        <option value="" selected disabled>{% trans "Select Villages" %}</option>
+                    </select>
+                </div>
+                  
+              </div>
+          </div>
+      </section>
+      <!-- Village Level Tab -->
+      <div class="tab-pane fade show active" id="village-level" role="tabpanel">
+        <div class="container-fluid">
+          <div class="summary-line">
+          <i class="fas fa-info-circle"></i>
+          <span id="summary-text">
+            <img src="{% static 'images/tube-spinner.svg' %}" id="summary-loader" style="width: 20px; height: 20px; margin-right: 8px;" alt="Loading...">
+          </span>
+        </div>
+        <div class="row gx-2 gy-3 mt-0">
+          <!-- Chart -->
+          <div class="col-12 mt-2 mt-lg-0">
+            <div class="VDMP_Progress__chart_map_wrapper custom_padd pt-0">
+              <!-- Chart header -->
+              <div class="d-flex align-items-center justify-content-between flex_dir card_header" >
+                <h6 class="" id="chartTitle">{% trans "VDMP Chart" %}</h6>
+                <div class="activity-filter-wrapper" style="position: relative; width: 250px;">
+                  <button class="btn btn-outline-secondary dropdown-toggle w-100 text-start" type="button" id="activityDropdown" data-bs-toggle="dropdown" aria-expanded="false" style="font-size: 14px;">
+                    <span id="activity-display">{% trans "All Activities" %}</span>
+                  </button>
+                  <div class="dropdown-menu p-2" aria-labelledby="activityDropdown" style="width: 300px; max-height: 300px; overflow-y: auto;">
+                    <div class="form-check mb-2">
+                      <input class="form-check-input" type="checkbox" id="select-all-activities" checked>
+                      <label class="form-check-label fw-bold" for="select-all-activities">
+                        {% trans "All Activities" %}
+                      </label>
+                    </div>
+                    <hr class="my-2">
+                    <div id="activity-checkboxes">
+                      <!-- Activity checkboxes will be loaded here -->
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <!-- Chart container -->
+              <div id="VDMP_progress_page_chart" style="height:calc(100% - 2rem); min-height:500px;"></div>
+
+              
+            </div>
+             <!-- Table -->
+              <div class="w-100 margin_top">
+                <div class="col-12">
+                  <div class="custom_padd pt-0 h-auto overflow-auto" style="background-color: #fff; border-radius: 4px; border: 1px solid #CADDF8;">
+                    <div class="mitigation__header d-flex justify-content-between align-items-center card_header">
+                      <h6 class="mb-0 fw-medium">{% trans "VDMP Progress Status" %}</h6>
+                      <ul class="d-flex gap-3 list-unstyled mb-0">
+                        <li><span class="completed_div"></span>{% trans "Completed" %} </li>
+                        {% comment %} <li><span class="notstarted_div"></span> {% trans "In Progress" %}</li> {% endcomment %}
+                        <li><span class="notstarted_div"></span>{% trans "Not Started" %} </li>
+                      </ul>
+                    </div>
+
+                    <div class="table-responsive Mitigation__table custom-table cstmDataTbl vmdp__table">
+                      <table class="table table-bordered" id="VDMP_progress_table">
+                        <thead>
+                          <tr>
+                            <th rowspan="2">{% trans "S. No." %}</th>
+                            <th rowspan="2">{% trans "Activities" %}</th>
+                            <th colspan="2">{% trans "Status" %}</th>
+                            <th rowspan="2">{% trans "Total" %}</th>
+                          </tr>
+                          <tr>
+                            <th>{% trans "Not Started" %}</th>
+                            {% comment %} <th>{% trans "In Progress" %}</th> {% endcomment %}
+                            <th>{% trans "Completed" %}</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <!-- Table rows unchanged -->
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Detailed VDMP Progress Table -->
+              <div class="w-100 margin_top">
+                <div class="col-12">
+                  <div class="custom_padd pt-0 h-auto overflow-auto" style="background-color: #fff; border-radius: 4px; border: 1px solid #CADDF8; margin-bottom:8px;">
+                    <div class="mitigation__header d-flex justify-content-between align-items-center card_header">
+                      <h6 class="mb-0 fw-medium">{% trans "VDMP Progress Status of all Villages" %}</h6>
+                      <button type="button" class="btn btn-sm csvBtn" onclick="downloadTableAsCSV('vdmp_detailed_progress_table', 'vdmp_detailed_progress_status')" style="background-color: #245FAE; color: white; border: none;">
+                        <i class="fa fa-download DwnldIcon"></i> {% trans "Download CSV" %}
+                      </button>
+                    </div>
+                    <div class="w-100 Mitigation__table custom-table cstmDataTbl my-2">
+                      <table class="table table-bordered " id="vdmp_detailed_progress_table">
+                        <thead>
+                          <tr>
+                            <th>{% trans "Sr. No" %}</th>
+                            <th>{% trans "District" %}</th>
+                            <th>{% trans "Village" %}</th>
+                            <th>{% trans "VDMP Activity" %}</th>
+                            <th>{% trans "Status" %}</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <!-- Table rows will be populated by JavaScript -->
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+   
+  </div>
+
+{% comment %} Table Div {% endcomment %}
+
+
+
+{% endblock %}
+
+{% block extrajs %}
+<script src="{% static 'js/utils/downloadTableData.js' %}"></script>
+<script src="{% static 'js/utils/AddSelect2Options.js' %}"></script>
+<script src="{% static 'js/utils/DataTableFunction.js' %}"></script>
+<script src="{% static 'ol/ol.js' %}"></script>
+
+{% comment %} ----------- Am Charts -------------- {% endcomment %}
+
+
+{% comment %} <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script> {% endcomment %}
+
+<script src="{% static 'apexchart/apexcharts.js' %}"></script>
+<!-- Load maps script -->
+<script src="{% static 'js/maps/vdmp_progress_maps.js' %}"></script>
+
+<!-- Load training script -->
+{% comment %} <script src="{% static 'js/training/training_list.js' %}"></script> {% endcomment %}
+
+<!-- Load chart script last -->
+<script src="{% static 'js/vdmp_progress/chart_And_table.js' %}"></script>
+<script src="{% static 'js/vdmp_progress/print.js' %}"></script>
+<script src="{% static 'js/utils/summery.js' %}"></script>
+
+
+
+
+ 
+
+
+{% endblock %}

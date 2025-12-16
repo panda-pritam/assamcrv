@@ -1,0 +1,29 @@
+env
+.env
+/env
+/.env
+
+*.pyc
+
+.pyc
+/.pyc
+pyc
+*/.pyc
+
+# Ignore compiled Python files
+*.pyc
+__pycache__/
+*/__pycache__/
+
+# Just in case specific paths are needed (though not typically necessary):
+*.pyo
+*.pyd
+
+# Optional: ignore all pycache-related folders deeper in structure
+**/__pycache__/
+
+# Optional: ignore Python cache files recursively
+**/*.pyc
+**/*.pyo
+**/*.pyd
+

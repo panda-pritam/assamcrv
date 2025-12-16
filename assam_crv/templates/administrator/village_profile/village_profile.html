@@ -1,0 +1,530 @@
+{% extends "administrator/admin_base.html" %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "Village" %}{% endblock %}
+
+{% block extraheader %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+{% endblock %}
+
+{% block content %}
+{% trans "Village Profile" as vdmp_dashboard %}
+{% include "components/breadcrumb.html" with breadcrumb_title=vdmp_dashboard %}
+
+<section id="filter"> 
+  <div class="container-fluid">
+    <ul class="nav nav-tabs">
+      <li class="nav-item">
+        <a class="nav-link" id="district-tab" href="#" onclick="showTab('district')">{% trans "Districts" %}</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" id="circle-tab" href="#" onclick="showTab('circle')">{% trans "Circles" %}</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" id="gram_panchayat-tab" href="#" onclick="showTab('gram_panchayat')">{% trans "Gram Panchayats" %}</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" id="village-tab" href="#" onclick="showTab('village')">{% trans "Villages" %}</a>
+      </li>
+    </ul>
+  </div>
+</section>
+
+<section id="filter">
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-md-11">
+        <div class="filter__wrapper custom-select">
+          <div class="filter__div  flex-column" style="display: none;" id="district-filter">
+            <label class="form-label fw-medium" for="district">{% trans "District" %}</label>
+            <select name="district" id="district">
+              <option value="" selected disabled>{% trans "Select Districts" %}</option>
+            </select>
+          </div>
+          <div class="filter__div flex-column" style="display: none;" id="circle-filter">
+            <label class="form-label fw-medium" for="circle">{% trans "Circle" %}</label>
+            <select name="circle" id="circle">
+              <option value="" selected disabled>{% trans "Select Circle" %}</option>
+            </select>
+          </div>
+          <div class="filter__div flex-column" style="display: none;" id="gram_panchayat-filter">
+            <label class="form-label fw-medium" for="gram_panchayat">{% trans "Gram Panchayat" %}</label>
+            <select name="gram_panchayat" id="gram_panchayat">
+              <option value="" selected disabled>{% trans "Select Gram Panchayat" %}</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Summary Section -->
+<div class="container-fluid">
+  <div class="summary-line">
+      <i class="fas fa-info-circle"></i>
+      <span id="summary-text">
+          <img src="{% static 'images/tube-spinner.svg' %}" id="summary-loader" style="width: 20px; height: 20px; margin-right: 8px;" alt="Loading...">
+        </span>
+  </div>
+</div>
+
+<!-- District Section -->
+<div class="container-fluid" id="district-section">
+  <div class="row">
+    <div class="col-md-12">
+      <div class="Village_profile_table_wrapper_with_select custom_height">
+        <div class="mitigation__header d-flex align-items-center justify-content-between card_header">
+          <h6 class="">{% trans "Districts List" %}</h6>
+          <div class='d-flex align-items-center gap-2'>
+            <button type="button" class="csvBtn" data-bs-toggle="modal" data-bs-target="#districtModal" onclick="prepareDistrictModal()" style="background-color: #245FAE; color: white; border: none;">
+              <i class="fa fa-plus"></i> {% trans "Add District" %}
+            </button>
+            <button type="button" class="csvBtn" data-bs-toggle="modal" data-bs-target="#csvUploadModal" style="background-color: #28a745; color: white; border: none;">
+              <i class="fa fa-upload"></i> {% trans "Upload CSV" %}
+            </button>
+            <button type="button" class="csvBtn" onclick="downloadTableAsCSV('districts_table', 'districts_data')" style="background-color: #245FAE; color: white; border: none;">
+             <i class="fa fa-download DwnldIcon"></i> {% trans "CSV" %}
+            </button>
+          </div>
+        </div>
+        <div class="Mitigation__table custom-table cstmDataTbl">
+          <table class="table table-bordered" id="districts_table">
+            <thead>
+              <tr>
+                <th style="width:5%;">{% trans "Sr. No" %}</th>
+                <th style="width:10%;">{% trans "Code" %}</th>
+                <th>{% trans "District" %}</th>
+                <th>{% trans "District (Assamese)" %}</th>
+                <th>{% trans "District (Bengali)" %}</th>
+                <th>{% trans "Latitude" %}</th>
+                <th>{% trans "Longitude" %}</th>
+                <th style="width:10%;">{% trans "Actions" %}</th>
+              </tr>
+            </thead>
+            <tbody>
+        
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Circle Section -->
+<div class="container-fluid" id="circle-section">
+  <div class="row">
+    <div class="col-md-12">
+      <div class="Village_profile_table_wrapper_with_select custom_height">
+        <div class="mitigation__header d-flex align-items-center justify-content-between card_header">
+          <h6 class="">{% trans "Circles List" %}</h6>
+          <div class="d-flex gap-2 align-items-center">
+            <button type="button" class="csvBtn" data-bs-toggle="modal" data-bs-target="#circleModal" onclick="prepareCircleModal()" style="background-color: #245FAE; color: white; border: none;">
+              <i class="fa fa-plus"></i> {% trans "Add Circle" %}
+            </button>
+            <button type="button" class="csvBtn" onclick="downloadTableAsCSV('circles_table', 'circles_data')" style="background-color: #245FAE; color: white; border: none;">
+             <i class="fa fa-download DwnldIcon"></i> {% trans "CSV" %}
+            </button>
+          </div>
+        </div>
+        <div class="Mitigation__table custom-table cstmDataTbl">
+          <table class="table table-bordered" id="circles_table">
+            <thead>
+              <tr>
+                <th style="width:5%;">{% trans "Sr. No" %}</th>
+                <th style="width:20%;">{% trans "District" %}</th>
+                <th style="width:25%;">{% trans "Circle" %}</th>
+                <th style="width:20%;">{% trans "Circle (Assamese)" %}</th>
+                <th style="width:20%;">{% trans "Circle (Bengali)" %}</th>
+                <th style="width:10%;">{% trans "Actions" %}</th>
+              </tr>
+            </thead>
+            <tbody id="circles-tbody">
+              <!-- Will be populated by JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Gram Panchayat Section -->
+<div class="container-fluid" id="gram_panchayat-section">
+  <div class="row">
+    <div class="col-md-12">
+      <div class="Village_profile_table_wrapper_with_select custom_height">
+        <div class="mitigation__header d-flex align-items-center justify-content-between card_header">
+          <h6 class="secondary__heading">{% trans "Gram Panchayats List" %}</h6>
+          <div class="d-flex gap-2 align-items-center">
+            <button type="button" class="csvBtn" data-bs-toggle="modal" data-bs-target="#gramPanchayatModal" onclick="prepareGramPanchayatModal()" style="background-color: #245FAE; color: white; border: none;">
+              <i class="fa fa-plus"></i> {% trans "Add Gram Panchayat" %}
+            </button>
+            <button type="button" class="csvBtn" onclick="downloadTableAsCSV('gram_panchayats_table', 'gram_panchayats_data')" style="background-color: #245FAE; color: white; border: none;">
+             <i class="fa fa-download DwnldIcon"></i> {% trans "CSV" %}
+            </button>
+          </div>
+        </div>
+        <div class="Mitigation__table custom-table cstmDataTbl">
+          <table class="table table-bordered" id="gram_panchayats_table">
+            <thead>
+              <tr>
+                <th style="width:5%;">{% trans "Sr. No" %}</th>
+                <th style="width:15%;">{% trans "District" %}</th>
+                <th style="width:15%;">{% trans "Circle" %}</th>
+                <th style="width:20%;">{% trans "Gram Panchayat" %}</th>
+                <th style="width:15%;">{% trans "Gram Panchayat (Assamese)" %}</th>
+                <th style="width:15%;">{% trans "Gram Panchayat (Bengali)" %}</th>
+                <th style="width:10%;">{% trans "Actions" %}</th>
+              </tr>
+            </thead>
+            <tbody id="gram-panchayats-tbody">
+              <!-- Will be populated by JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Village Section -->
+<div class="container-fluid" id="village-section">
+  <div class="row">
+    <div class="col-md-12">
+      <div class="Village_profile_table_wrapper_with_select custom_height">
+        <div class="mitigation__header d-flex align-items-center justify-content-between card_header">
+          <h6 class="">{% trans "Villages List" %}</h6>
+          <div class="d-flex gap-2 align-items-center">
+            <button type="button" class="csvBtn" data-bs-toggle="modal" data-bs-target="#villageModal" onclick="prepareVillageModal()" style="background-color: #245FAE; color: white; border: none;">
+              <i class="fa fa-plus"></i> {% trans "Add Village" %}
+            </button>
+            <button type="button" class="csvBtn" onclick="downloadTableAsCSV('villages_table', 'villages_data')" style="background-color: #245FAE; color: white; border: none;">
+             <i class="fa fa-download DwnldIcon"></i> {% trans "CSV" %}
+            </button>
+          </div>
+        </div>
+        <div class=" custom-table cstmDataTbl">
+          <table class="table table-bordered" id="villages_table">
+            <thead>
+              <tr>
+                <th style="width:5%;">{% trans "Sr. No" %}</th>
+                <th style="width:5%;">{% trans "Code" %}</th>
+                <th>{% trans "District" %}</th>
+                <th>{% trans "Circle" %}</th>
+                <th>{% trans "Gram Panchayat" %}</th>
+                <th>{% trans "Village" %}</th>
+                <th>{% trans "Village (Assamese)" %}</th>
+                <th>{% trans "Village (Bengali)" %}</th>
+                <th>{% trans "Latitude" %}</th>
+                <th>{% trans "Longitude" %}</th>
+                <th style="width:10%;">{% trans "Actions" %}</th>
+              </tr>
+            </thead>
+            <tbody id="villages-tbody">
+              <!-- Will be populated by JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- District Modal -->
+<div class="modal fade" id="districtModal" tabindex="-1" aria-labelledby="districtModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <form id="districtForm">
+        {% csrf_token %}
+        <div class="modal-header model-bg">
+          <h5 class="modal-title" id="districtModalLabel">{% trans "Add District" %}</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans 'Close' %}"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="districtId">
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label for="districtCode" class="form-label">{% trans "District Code" %}</label>
+              <input type="text" class="form-control" id="districtCode" required>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="districtName" class="form-label">{% trans "District Name (English)" %}</label>
+              <input type="text" class="form-control" id="districtName" required>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="districtNameAs" class="form-label">{% trans "District Name (Assamese)" %}</label>
+              <input type="text" class="form-control" id="districtNameAs">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="districtNameBn" class="form-label">{% trans "District Name (Bengali)" %}</label>
+              <input type="text" class="form-control" id="districtNameBn">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer py-1">
+          <button type="button" class="btn btn-secondary csvBtn-Grey" data-bs-dismiss="modal">{% trans "Close" %}</button>
+          <button type="submit" class="csvBtn" id="saveDistrictBtn">{% trans "Save" %}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Circle Modal -->
+<div class="modal fade" id="circleModal" tabindex="-1" aria-labelledby="circleModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <form id="circleForm">
+        {% csrf_token %}
+        <div class="modal-header model-bg">
+          <h5 class="modal-title" id="circleModalLabel">{% trans "Add Circle" %}</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans 'Close' %}"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="circleId">
+          <input type="hidden" id="circleDistrictId">
+          <div class="row">
+            <div class="col-md-6 mb-3 removeOutline" id="circleDistrictGroup">
+              <label for="circleDistrict" class="form-label">{% trans "District" %}</label>
+              <select class="form-control " id="circleDistrict" required>
+                <option value="" selected disabled>{% trans "Select District" %}</option>
+              </select>
+            </div>
+            <div class="col-md-6 mb-3" style="display: none;">
+              <label class="form-label">{% trans "District" %}</label>
+              <p class="form-control-static" id="circleDistrictText"></p>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="circleName" class="form-label">{% trans "Circle Name (English)" %}</label>
+              <input type="text" class="form-control" id="circleName" required>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="circleNameAs" class="form-label">{% trans "Circle Name (Assamese)" %}</label>
+              <input type="text" class="form-control" id="circleNameAs">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="circleNameBn" class="form-label">{% trans "Circle Name (Bengali)" %}</label>
+              <input type="text" class="form-control" id="circleNameBn">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer py-1">
+          <button type="button" class="btn btn-secondary csvBtn-Grey" data-bs-dismiss="modal">{% trans "Close" %}</button>
+          <button type="submit" class="btn btn-primary custom-purple csvBtn" id="saveCircleBtn">{% trans "Save" %}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Gram Panchayat Modal -->
+<div class="modal fade" id="gramPanchayatModal" tabindex="-1" aria-labelledby="gramPanchayatModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <form id="gramPanchayatForm">
+        {% csrf_token %}
+        <div class="modal-header model-bg">
+          <h5 class="modal-title" id="gramPanchayatModalLabel">{% trans "Add Gram Panchayat" %}</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans 'Close' %}"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="gramPanchayatId">
+          <input type="hidden" id="gpDistrictId">
+          <input type="hidden" id="gpCircleId">
+          <div class="row removeOutline">
+            <div class="col-md-6 mb-3" id="gpDistrictGroup">
+              <label for="gpDistrict" class="form-label">{% trans "District" %}</label>
+              <select class="form-control select2 border" id="gpDistrict" required >
+                <option value="" selected disabled>{% trans "Select District" %}</option>
+              </select>
+            </div>
+            <div class="col-md-6 mb-3" style="display: none;">
+              <label class="form-label">{% trans "District" %}</label>
+              <p class="form-control-static my-0 border rounded" id="gpDistrictText" ></p>
+            </div>
+            <div class="col-md-6 mb-3" id="gpCircleGroup">
+              <label for="gpCircle" class="form-label">{% trans "Circle" %}</label>
+              <select class="form-control select2" id="gpCircle" required>
+                <option value="" selected disabled>{% trans "Select Circle" %}</option>
+              </select>
+            </div>
+            <div class="col-md-6 mb-3" style="display: none;">
+              <label class="form-label">{% trans "Circle" %}</label>
+              <p class="form-control-static my-0 border rounded " id="gpCircleText" ></p>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="gpName" class="form-label">{% trans "Gram Panchayat Name (English)" %}</label>
+              <input type="text" class="form-control" id="gpName" required>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="gpNameAs" class="form-label">{% trans "Gram Panchayat Name (Assamese)" %}</label>
+              <input type="text" class="form-control" id="gpNameAs">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="gpNameBn" class="form-label">{% trans "Gram Panchayat Name (Bengali)" %}</label>
+              <input type="text" class="form-control" id="gpNameBn">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer py-1">
+          <button type="button" class="btn btn-secondary csvBtn-Grey" data-bs-dismiss="modal">{% trans "Close" %}</button>
+          <button type="submit" class="btn btn-primary custom-purple csvBtn" id="saveGramPanchayatBtn">{% trans "Save" %}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Village Modal -->
+<div class="modal fade" id="villageModal" tabindex="-1" aria-labelledby="villageModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <form id="villageForm">
+        {% csrf_token %}
+        <div class="modal-header model-bg">
+          <h5 class="modal-title" id="villageModalLabel">{% trans "Add Village" %}</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans 'Close' %}"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="villageId">
+          <input type="hidden" id="villageDistrictId">
+          <input type="hidden" id="villageCircleId">
+          <input type="hidden" id="villageGPId">
+          <div class="row removeOutline">
+            <div class="col-md-6 mb-3" id="villageDistrictGroup">
+              <label for="villageDistrict" class="form-label">{% trans "District" %}</label>
+              <select class="form-control" id="villageDistrict" required>
+                <option value="" selected disabled>{% trans "Select District" %}</option>
+              </select>
+            </div>
+            <div class="col-md-6 mb-3" style="display: none;">
+              <label class="form-label">{% trans "District" %}</label>
+              <p class="form-control-static" id="villageDistrictText"></p>
+            </div>
+            <div class="col-md-6 mb-3" id="villageCircleGroup">
+              <label for="villageCircle" class="form-label">{% trans "Circle" %}</label>
+              <select class="form-control" id="villageCircle" required>
+                <option value="" selected disabled>{% trans "Select Circle" %}</option>
+              </select>
+            </div>
+            <div class="col-md-6 mb-3" style="display: none;">
+              <label class="form-label">{% trans "Circle" %}</label>
+              <p class="form-control-static" id="villageCircleText"></p>
+            </div>
+            <div class="col-md-6 mb-3" id="villageGPGroup">
+              <label for="villageGP" class="form-label">{% trans "Gram Panchayat" %}</label>
+              <select class="form-control" id="villageGP" required>
+                <option value="" selected disabled>{% trans "Select Gram Panchayat" %}</option>
+              </select>
+            </div>
+            <div class="col-md-6 mb-3" style="display: none;">
+              <label class="form-label">{% trans "Gram Panchayat" %}</label>
+              <p class="form-control-static" id="villageGPText"></p>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="villageCode" class="form-label">{% trans "Village Code" %}</label>
+              <input type="text" class="form-control" id="villageCode" required>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="villageName" class="form-label">{% trans "Village Name (English)" %}</label>
+              <input type="text" class="form-control" id="villageName" required>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="villageNameAs" class="form-label">{% trans "Village Name (Assamese)" %}</label>
+              <input type="text" class="form-control" id="villageNameAs">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="villageNameBn" class="form-label">{% trans "Village Name (Bengali)" %}</label>
+              <input type="text" class="form-control" id="villageNameBn">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer py-1">
+          <button type="button" class="btn btn-secondary csvBtn-Grey" data-bs-dismiss="modal">{% trans "Close" %}</button>
+          <button type="submit" class="btn btn-primary custom-purple csvBtn" id="saveVillageBtn">{% trans "Save" %}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- CSV Upload Modal -->
+<div class="modal fade" id="csvUploadModal" tabindex="-1" aria-labelledby="csvUploadModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <form id="csvUploadForm" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="modal-header model-bg">
+          <h5 class="modal-title" id="csvUploadModalLabel">{% trans "Upload Location Data" %}</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans 'Close' %}"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row">
+            <div class="col-md-12 mb-3">
+              <label for="csvFile" class="form-label">{% trans "Select CSV File" %}</label>
+              <input type="file" class="form-control" id="csvFile" accept=".csv" required>
+              <div class="form-text">{% trans "Expected columns: District_Name, District_Code, Circle_Name, Village name, Village_Code, Block_Name" %}</div>
+            </div>
+            <div class="col-md-12 mb-3">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="updateExisting">
+                <label class="form-check-label" for="updateExisting">
+                  {% trans "Update existing records" %}
+                </label>
+                <div class="form-text">{% trans "If checked, existing records will be updated. Otherwise, only new records will be added." %}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer py-1">
+          <button type="button" class="btn btn-secondary csvBtn-Grey" data-bs-dismiss="modal">{% trans "Close" %}</button>
+          <button type="submit" class="csvBtn" id="uploadCsvBtn">{% trans "Upload" %}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extrajs %}
+<script src="{% static 'js/utils/downloadTableData.js' %}"></script>
+<script src="{% static 'js/utils/DataTableFunction.js' %}"></script>
+<script src="{% static 'js/administrator/village_profile/village_profile.js' %}"></script>
+<script src="{% static 'js/utils/summery.js' %}"></script>
+<script>
+function showTab(tabName) {
+  const sections = ['district', 'circle', 'gram_panchayat', 'village'];
+
+  // Hide all sections and remove active class from all tabs
+  sections.forEach(name => {
+    document.getElementById(`${name}-section`).style.display = 'none';
+    document.getElementById(`${name}-tab`).classList.remove('active');
+
+    const filter = document.getElementById(`${name}-filter`);
+    if (filter) filter.style.display = 'none';
+  });
+
+  // Show active section and tab
+  document.getElementById(`${tabName}-section`).style.display = 'block';
+  document.getElementById(`${tabName}-tab`).classList.add('active');
+
+  // Show necessary filters based on tab
+  if (tabName === 'circle') {
+    document.getElementById('district-filter').style.display = 'flex';
+  } else if (tabName === 'gram_panchayat') {
+    document.getElementById('district-filter').style.display = 'flex';
+    document.getElementById('circle-filter').style.display = 'flex';
+  } else if (tabName === 'village') {
+    document.getElementById('district-filter').style.display = 'flex';
+    document.getElementById('circle-filter').style.display = 'flex';
+    document.getElementById('gram_panchayat-filter').style.display = 'flex';
+  }
+}
+
+// Show the first tab by default
+
+</script>
+{% endblock %}

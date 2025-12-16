@@ -1,0 +1,289 @@
+{% extends "base.html" %}
+{% load static %}
+{% load i18n %}
+{% block title %}{% trans "Layers" %} {% endblock %}
+{% block extraheader %}
+ <link href="{% static 'css/mapAndMapPage.css' %}" rel="stylesheet" />
+ 
+ <!-- ol-ext CSS for popup styling -->
+ <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol-ext@latest/dist/ol-ext.css" />
+ 
+ <!-- Custom popup styles (optional) -->
+ <style>
+
+ </style>
+
+{% endblock %}
+
+{% block content %}
+
+<div class="w-100" id="mapWrapper">
+   
+        {% comment %} Button to toggle the layer panel {% endcomment %}
+         <button id="toggleLayerPanelBtn" class="toggler_buttons"><i class="fa-solid fa-list"></i></button>
+         <div class="p-2" id="layerDiv">
+            <div class="position-relative pl-2 d-flex">
+                <h2 class="layer__heading">Layer Panel</h2>
+                <button class=" d-flex align-items-center justify-content-center DivCloseButton"  id="LayerDivCloseButton">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            {% comment %} Layer Div {% endcomment %}
+            <div class="overflow-y-auto mt-2" id="layerPanelDiv">
+                <section id="filter" class='m-0'>
+                                    <div class="container ">
+                                        <div class="row">
+                                            <!-- District -->
+                                            <div class="col-md-6 d-flex flex-column mb-3 pdngLeft">
+                                                <select name="district" id="Layer_district" class="form-select">
+                                                    <option value="" selected disabled>Select Districts</option>
+                                                </select>
+                                            </div>
+                                            {% comment %} <!-- Circle -->
+                                            <div class="col-12 d-flex flex-column mb-3">
+                                                <select name="circle" id="circle" class="form-select">
+                                                    <option value="" selected disabled>Select Circle</option>
+                                                </select>
+                                            </div>
+                                            <!-- Gram Panchayat -->
+                                            <div class="col-12 d-flex flex-column mb-3">
+                                                <select name="gram_panchayat" id="gram_panchayat" class="form-select">
+                                                    <option value="" selected disabled>Select Gram Panchayat</option>
+                                                </select>
+                                            </div> {% endcomment %}
+                                            <!-- Village -->
+                                            <div class="col-md-6 d-flex flex-column mb-3 pdngLeft">
+                                                <select name="village" id="layer_village" class="form-select">
+                                                    <option value="" selected disabled>Select Villages</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                </section>
+                <div class="accordion" id="layerAccordion">
+                    <!-- Filter Accordion Item -->
+                     <div class="accordion-item-not-in-use">
+                        {% comment %} <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
+                                    data-bs-target="#filterCollapse" aria-expanded="false" aria-controls="filterCollapse">
+                                <i class="bi bi-funnel me-2"></i>Filter
+                            </button>
+                        </h2> {% endcomment %}
+
+                          
+                        {% comment %} <div id="filterCollapse" class="accordion-collapse collapse" data-bs-parent="#layerAccordion">
+                            <div class="accordion-body">
+                              
+                            </div>
+                        </div> {% endcomment %}
+                    </div> 
+
+                    <!-- Layers Accordion Item (Open by default) -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header LayerHdng">
+                            <button class="accordion-button" type="button" data-bs-toggle="collapse" 
+                                    data-bs-target="#layersCollapse" aria-expanded="true" aria-controls="layersCollapse">
+                                <i class="bi bi-layers me-2"></i>Layers
+                            </button>
+                        </h2>
+                        <div id="layersCollapse" class="accordion-collapse collapse show" data-bs-parent="#layerAccordion">
+                            <div class="accordion-body">
+                                <div id="accordionLayerDiv" class="overflow-y-scroll">
+                                    <!-- Layers will be dynamically added here -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+         </div>
+
+         {% comment %} Base Map Changer {% endcomment %}
+          <button class="toggler_buttons" id="baseMapTogglerBtn">
+            <i class="fa-solid fa-layer-group layer_icon" ></i>
+          </button>
+          
+          {% comment %} Measurement Tool {% endcomment %}
+          <button class="toggler_buttons" id="measurementTogglerBtn">
+            <i class="fa-solid fa-ruler layer_icon" ></i>
+          </button>
+          
+          {% comment %} Options for base map {% endcomment %}
+         <div id="baseMapOptionsDiv">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="basemap-title">Base Map</span>
+                <button class="d-flex align-items-center justify-content-center DivCloseButton" id="baseMapDivCloseButton">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="basemap-container">
+                <div class="basemap-item active" data-map-type="osm">
+                    <img src="{% static 'images/basemap1.png' %}" alt="OpenStreetMap" data-bs-toggle="tooltip" title="OpenStreetMap">
+                </div>
+                <div class="basemap-item" data-map-type="satellite">
+                    <img src="{% static 'images/basemap_setalite.png' %}" alt="Satellite" data-bs-toggle="tooltip" title="Satellite">
+                </div>
+                <div class="basemap-item" data-map-type="terrain">
+                    <img src="{% static 'images/basemap_terrain.png' %}" alt="Terrain" data-bs-toggle="tooltip" title="Terrain">
+                </div>
+                <div class="basemap-item" data-map-type="blank">
+                    <img src="{% static 'images/blank_img.png' %}" alt="Blank image" data-bs-toggle="tooltip" title="Blank Layer" class="border">
+                </div>
+            </div>
+         </div>
+
+         {% comment %} Measurement Panel {% endcomment %}
+         <div id="measurementOptionsDiv">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="basemap-title">Measurement</span>
+                <button class="d-flex align-items-center justify-content-center DivCloseButton" id="measurementDivCloseButton">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="measurement-container">
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Measurement Type</label>
+                    <div class="btn-group w-100" role="group">
+                        <input type="radio" class="btn-check" name="measureType" id="lengthMeasure" value="length" checked>
+                        <label class="btn btn-outline-primary" for="lengthMeasure">Length</label>
+                        <input type="radio" class="btn-check" name="measureType" id="areaMeasure" value="area">
+                        <label class="btn btn-outline-primary" for="areaMeasure">Area</label>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Units</label>
+                    <select id="measurementUnits" class="form-select">
+                        <option value="m">Meters</option>
+                        <option value="km">Kilometers</option>
+                        <option value="ft">Feet</option>
+                    </select>
+                </div>
+                <div class="d-grid gap-2">
+                    <button class="btn btn-success" id="startMeasureBtn">
+                        <i class="fa-solid fa-play me-2"></i>Drawing
+                    </button>
+                   
+                    <button class="btn btn-danger" id="clearMeasureBtn">
+                        <i class="fa-solid fa-trash me-2"></i>Clear
+                    </button>
+                </div>
+                <div id="measurementResult" class="mt-3 p-2 bg-light rounded" style="display: none;">
+                    <small class="text-muted">Result:</small>
+                    <div class="fw-bold" id="measurementValue"></div>
+                </div>
+            </div>
+         </div>
+
+         <!-- Print Button positioned on map -->
+          {% comment %} <button id="custPrint" class="btn btn-primary position-absolute" style="top: 10px; right: 10px; z-index: 1000; visibility:'hidden">
+             <i class="fa-solid fa-print me-2"></i>Print Map
+         </button>  {% endcomment %}
+
+         <div id="mapDiv"></div>
+
+         <!-- Centered Custom Print Modal -->
+        {% comment %} <div class="modal fade" id="customPrintModal" tabindex="-1">
+            <div class="modal-dialog modal-xl modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title"><i class="fa-solid fa-print me-2"></i>Print Map Configuration</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row">
+                            <!-- Left Column - Print Settings -->
+                            <div class="col-md-6">
+                                <h6 class="text-primary mb-3"><i class="fa-solid fa-cog me-2"></i>Print Settings</h6>
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Paper Size</label>
+                                    <select id="paperSize" class="form-select">
+                                        <option value="a4">A4 (210 × 297 mm)</option>
+                                        <option value="a3">A3 (297 × 420 mm)</option>
+                                        <option value="letter">Letter (216 × 279 mm)</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Orientation</label>
+                                    <select id="orientation" class="form-select">
+                                        <option value="portrait">Portrait</option>
+                                        <option value="landscape">Landscape</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Title</label>
+                                    <input type="text" id="mapTitle" class="form-control" value="Map Print" placeholder="Enter map title">
+                                </div>
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="includeLegend" checked>
+                                        <label class="form-check-label fw-bold" for="includeLegend">Include Legend</label>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="includeScaleBar" checked>
+                                        <label class="form-check-label fw-bold" for="includeScaleBar">Include Scale Bar</label>
+                                    </div>
+                                </div>
+                                
+                                <!-- Current Map Info -->
+                                <div class="card bg-light">
+                                    <div class="card-body p-3">
+                                        <h6 class="card-title text-primary mb-2"><i class="fa-solid fa-info-circle me-2"></i>Current View</h6>
+                                        <div class="small">
+                                            <div class="mb-1"><strong>Zoom:</strong> <span id="currentZoom" class="text-primary">-</span></div>
+                                            <div class="mb-1"><strong>Center:</strong> <span id="currentCenter" class="text-primary">-</span></div>
+                                            <div><strong>Scale:</strong> <span id="currentScale" class="text-primary">-</span></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Right Column - Map Preview -->
+                            <div class="col-md-6">
+                                <h6 class="text-primary mb-3"><i class="fa-solid fa-eye me-2"></i>Map Preview</h6>
+                                <div class="border rounded p-2 bg-light" style="height: 350px; position: relative;">
+                                    <div id="previewMapDiv" style="width: 100%; height: 100%; border-radius: 4px;"></div>
+                                    <div id="previewLoading" class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center" style="background: rgba(255,255,255,0.9); border-radius: 4px; z-index: 1000; display: none; visibility: hidden;">
+                                        <div class="text-center">
+                                            <div class="spinner-border text-primary mb-2" role="status" aria-hidden="true"></div>
+                                            <div class="small text-muted">Loading preview...</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="small text-muted mt-2 text-center">
+                                    <i class="fa-solid fa-info-circle me-1"></i>Preview shows current map view
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer bg-light">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                            <i class="fa-solid fa-times me-2"></i>Cancel
+                        </button>
+                        <button type="button" class="btn btn-primary" id="generateCustomPrintBtn">
+                            <i class="fa-solid fa-file-pdf me-2"></i>Generate PDF
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div> {% endcomment %}
+    
+</div>
+
+
+{% endblock %}
+
+{% block extrajs %}
+<!-- ol-ext JavaScript library -->
+<script src="https://cdn.jsdelivr.net/npm/ol-ext@latest/dist/ol-ext.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/3.0.1/jspdf.umd.min.js" integrity="sha512-ad3j5/L4h648YM/KObaUfjCsZRBP9sAOmpjaT2BDx6u9aBrKFp7SbeHykruy83rxfmG42+5QqeL/ngcojglbJw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+<script src="{% static 'js/layers/map.js' %}"></script>
+<script src="{% static 'js/utils/AddSelect2Options.js' %}"></script>
+<script src="{% static 'js/layers/index.js' %}"></script>
+<script src="{% static 'js/layers/layers.js' %}"></script>
+<script src="{% static 'js/layers/print.js' %}"></script>
+<script src="{% static 'js/layers/measurement.js' %}"></script>
+{% endblock %}

@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+{% load static %}
+{% load i18n %}
+{% block title %}{% trans "Training Activities" %} {% endblock %}
+{% block extraheader %}
+
+
+{% endblock %}
+{% block content %}
+{% trans "Training Activities" as training_title %}
+{% include "components/breadcrumb.html" with breadcrumb_title=training_title show_print_button=True print_function="printTrainingPage()" %}
+
+
+  <section id="filter">
+          <div class="container-fluid ">
+              <div class="row ">
+                      <!-- District -->
+                <div class="col-md-3 col-xl-3 col-sm-6  d-flex flex-column ">
+                    <label class="form-label fw-medium" for="district">{% trans "Select District" %}</label>
+                    <select name="district" id="district" class="form-select select2">
+                        <option value="" selected disabled>{% trans "Select Districts" %}</option>
+                    </select>
+                </div>
+                <!-- Circle -->
+                <div class="col-md-3 col-xl-3 col-sm-6  d-flex flex-column ">
+                    <label class="form-label fw-medium" for="circle">{% trans "Select Circle" %}</label>
+                    <select name="circle" id="circle" class="form-select select2">
+                        <option value="" selected disabled>{% trans "Select Circle" %}</option>
+                    </select>
+                </div>
+                <!-- Gram Panchayat -->
+                <div class="col-md-3 col-xl-3 col-sm-6  d-flex flex-column ">
+                    <label class="form-label fw-medium" for="gram_panchayat">{% trans "Select Gram Panchayat" %}</label>
+                    <select name="gram_panchayat" id="gram_panchayat" class="form-select select2">
+                        <option value="" selected disabled>{% trans "Select Gram Panchayat" %}</option>
+                    </select>
+                </div>
+                <!-- Village -->
+                <div class="col-md-3 col-xl-3 col-sm-6  d-flex flex-column ">
+                    <label class="form-label fw-medium" for="village">{% trans "Select Village" %}</label>
+                    <select name="village" id="village" class="form-select select2">
+                        <option value="" selected disabled>{% trans "Select Villages" %}</option>
+                    </select>
+                </div>
+                  
+                  
+              </div>
+          </div>
+    </section>
+    <div class="container-fluid">
+          <div class="summary-line">
+          <i class="fas fa-info-circle"></i>
+          <span id="summary-text">
+            <img src="{% static 'images/tube-spinner.svg' %}" id="summary-loader" style="width: 20px; height: 20px; margin-right: 8px;" alt="Loading...">
+          </span>
+    </div>
+</div>
+<div class="container-fluid">
+
+    <div class="row d-none">
+        <div class="col-md-12">
+            <div class="p-3" style="background-color: #fff; border-radius: 4px; border: 1px solid #CADDF8; ">
+                <div class="d-flex align-items-center justify-content-between flex_dir ">
+                    <h6 class="fw-medium fs-6 secondary__heading">{% trans "Training Activities Progress" %}</h6>
+                    <!-- <div class="activity-filter-wrapper" style="position: relative; width: 250px;">
+                        <button class="btn btn-outline-secondary dropdown-toggle w-100 text-start" type="button" id="activityDropdown" data-bs-toggle="dropdown" aria-expanded="false" style="font-size: 14px;">
+                            <span id="activity-display">{% trans "All Activities" %}</span>
+                        </button>
+                        <div class="dropdown-menu p-2" aria-labelledby="activityDropdown" style="width: 300px; max-height: 300px; overflow-y: auto;">
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" id="select-all-activities" checked>
+                                <label class="form-check-label fw-bold" for="select-all-activities">
+                                    {% trans "All Activities" %}
+                                </label>
+                            </div>
+                            <hr class="my-2">
+                            <div id="activity-checkboxes">
+                            </div>
+                        </div>
+                    </div> -->
+                </div>
+                <div id="training_chart" style="height: 400px;"></div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row margin_top custom_height">
+        <div class="col-12">
+            <div class="custom_padd pt-0 h-auto overflow-auto" style="background-color: #fff; border-radius: 4px; border: 1px solid #CADDF8;">
+                <div class="mitigation__header d-flex justify-content-between align-items-center card_header">
+                    <h6 class="mb-0 ">{% trans "Training Progress Status" %}</h6>
+                    <ul class="d-flex gap-3 list-unstyled mb-0">
+                        <li><span class=" completed_div"></span> {% trans "Completed" %}</li>
+                        <li><span class="notstarted_div"></span> {% trans "Not Started" %}</li>
+                    </ul>
+                    <div class="activity-filter-wrapper" style="position: relative; width: 250px;">
+                        <button class="btn btn-outline-secondary dropdown-toggle w-100 text-start" type="button" id="activityDropdown" data-bs-toggle="dropdown" aria-expanded="false" style="font-size: 14px;">
+                            <span id="activity-display">{% trans "All Activities" %}</span>
+                        </button>
+                        <div class="dropdown-menu p-2" aria-labelledby="activityDropdown" style="width: 300px; max-height: 300px; overflow-y: auto;">
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" id="select-all-activities" checked>
+                                <label class="form-check-label fw-bold" for="select-all-activities">
+                                    {% trans "All Activities" %}
+                                </label>
+                            </div>
+                            <hr class="my-2">
+                            <div id="activity-checkboxes">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="table-responsive Mitigation__table custom-table cstmDataTbl vmdp__table">
+                    <table class="table table-bordered" id="training_table">
+                        <thead>
+                            <tr>
+                                <th rowspan="2">{% trans "S. No." %}</th>
+                                <th rowspan="2">{% trans "Activities" %}</th>
+                                <th colspan="2">{% trans "Status" %}</th>
+                                <th rowspan="2">{% trans "Total" %}</th>
+                            </tr>
+                            <tr>
+                                <th>{% trans "Not Started" %}</th>
+                                <th>{% trans "Completed" %}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container-fluid margin_top custom_height">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="Mitigation__wrapper custom_padd pt-0">
+                <div class="mitigation__header d-flex align-items-center justify-content-between card_header">
+                    <h5 class="secondary__heading">{% trans "Training Activities Status" %}</h5>
+                    <button type="button" class="csvBtn" onclick="downloadTableAsCSV('training_activities_table', 'training_activities_data')">
+                        <i class="fa fa-download DwnldIcon"></i> {% trans "Download CSV" %}
+                    </button>
+                </div>
+                <div class="table-responsive w-100 Mitigation__table custom-table cstmDataTbl custom_scroll">
+                    <table class="table table-bordered overflow-scroll mytblcss" id="training_activities_table">
+                   <thead> 
+                        <tr>
+                            <th >{% trans "Sr. No" %}</th>
+                            <th >{% trans "District" %}</th>
+                            <th >{% trans "Village" %}</th>
+                            <th >{% trans "Activity" %}</th>
+                            <th >{% trans "Status" %}</th>
+                            <th >{% trans "Implemented Date" %}</th>
+                            <th>{% trans "Remark" %}</th>
+                        </tr>
+                        </thead> 
+                            <tbody id="training_activities_body">
+                            </tbody>
+                    </table>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extrajs %}
+<script src="{% static 'apexchart/apexcharts.js' %}"></script>
+<script src="{% static 'js/utils/downloadTableData.js' %}"></script>
+<script src="{% static 'js/training/training_list.js' %}"></script>
+<script src="{% static 'js/training/chart.js' %}"></script>
+<script src="{% static 'js/utils/AddSelect2Options.js' %}"></script>
+<script src="{% static 'js/utils/summery.js' %}"></script>
+{% endblock %}
+

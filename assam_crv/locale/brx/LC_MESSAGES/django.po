@@ -1,0 +1,1927 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-09-12 14:39+0530\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: .\templates\accounts\login.html:10
+msgid "Responsive Dashboard"
+msgstr "रिस्पन्सिभ डैशबोर्ड"
+
+#: .\templates\accounts\login.html:109 .\templates\components\topnavber.html:22
+msgid "English"
+msgstr "अंग्रेजी"
+
+#: .\templates\accounts\login.html:129 .\templates\components\topnavber.html:43
+msgid "HELP"
+msgstr "मदद"
+
+#: .\templates\accounts\login.html:157
+msgid "Mode"
+msgstr "मोड"
+
+#: .\templates\accounts\login.html:158
+#: .\templates\components\topnavber.html:142
+msgid "Help"
+msgstr "मदद"
+
+#: .\templates\accounts\login.html:181 .\templates\components\topnavber.html:95
+msgid "Login"
+msgstr "लॉगिन"
+
+#: .\templates\accounts\login.html:193
+msgid "User Name"
+msgstr "उपयोगकर्ता नाम"
+
+#: .\templates\accounts\login.html:197
+#: .\templates\administrator\users\users_data.html:141
+msgid "Password"
+msgstr "पासवर्ड"
+
+#: .\templates\accounts\login.html:205
+msgid "Remember me"
+msgstr "मुझे याद रखें"
+
+#: .\templates\accounts\login.html:210
+msgid "SUBMIT"
+msgstr "जमा करें"
+
+#: .\templates\accounts\login.html:223
+#: .\templates\administrator\admin_base.html:70 .\templates\base.html:83
+msgid "Government of Assam"
+msgstr "आसाम सरकार"
+
+#: .\templates\accounts\login.html:224
+#: .\templates\administrator\admin_base.html:71 .\templates\base.html:84
+msgid "All Rights Reserved ®"
+msgstr "सभी अधिकार सुरक्षित ®"
+
+#: .\templates\accounts\login.html:225
+#: .\templates\administrator\admin_base.html:72 .\templates\base.html:85
+msgid "Designed and Implemented by RMSI Pvt. Ltd"
+msgstr "RMSI प्राइवेट लिमिटेड द्वारा डिज़ाइन और कार्यान्वित"
+
+#: .\templates\accounts\login.html:230
+#: .\templates\administrator\admin_base.html:77 .\templates\base.html:90
+msgid "About CRV"
+msgstr "CRV के बारे में"
+
+#: .\templates\accounts\login.html:231
+#: .\templates\administrator\admin_base.html:78 .\templates\base.html:91
+msgid "Disclaimer"
+msgstr "अस्वीकरण"
+
+#: .\templates\accounts\profile.html:44 .\templates\accounts\profile.html:56
+#: .\templates\components\topnavber.html:141
+msgid "My Profile"
+msgstr "मेरी प्रोफ़ाइल"
+
+#: .\templates\accounts\profile.html:65 .\templates\accounts\profile.html:163
+#: .\templates\administrator\users\users_data.html:97
+#: .\templates\administrator\users\users_data.html:135
+msgid "Username"
+msgstr "उपयोगकर्ता नाम"
+
+#: .\templates\accounts\profile.html:71 .\templates\accounts\profile.html:167
+#: .\templates\administrator\users\users_data.html:147
+msgid "First Name"
+msgstr "पहला नाम"
+
+#: .\templates\accounts\profile.html:77 .\templates\accounts\profile.html:171
+#: .\templates\administrator\users\users_data.html:153
+msgid "Last Name"
+msgstr "अंतिम नाम"
+
+#: .\templates\accounts\profile.html:83 .\templates\accounts\profile.html:175
+#: .\templates\administrator\users\users_data.html:159
+msgid "Email"
+msgstr "ईमेल"
+
+#: .\templates\accounts\profile.html:89 .\templates\accounts\profile.html:179
+#: .\templates\administrator\users\users_data.html:165
+msgid "Mobile"
+msgstr "मोबाइल"
+
+#: .\templates\accounts\profile.html:95
+#: .\templates\administrator\users\department.html:12
+#: .\templates\administrator\users\users_data.html:95
+#: .\templates\administrator\users\users_data.html:171
+msgid "Department"
+msgstr "विभाग"
+
+#: .\templates\accounts\profile.html:101
+#: .\templates\administrator\users\users_data.html:96
+#: .\templates\administrator\users\users_data.html:182
+msgid "Role"
+msgstr "भूमिका"
+
+#: .\templates\accounts\profile.html:107
+#: .\templates\administrator\field_images\index.html:36
+#: .\templates\administrator\field_images\index.html:136
+#: .\templates\administrator\field_images\index.html:217
+#: .\templates\administrator\rescue_equipments\rescue_equipments.html:117
+#: .\templates\administrator\rescue_equipments\rescue_equipments.html:179
+#: .\templates\administrator\rescue_equipments\rescue_equipments.html:287
+#: .\templates\administrator\task_force\index.html:38
+#: .\templates\administrator\task_force\index.html:153
+#: .\templates\administrator\task_force\index.html:234
+#: .\templates\administrator\training\training_data.html:130
+#: .\templates\administrator\training\training_data.html:194
+#: .\templates\administrator\training\training_data.html:313
+#: .\templates\administrator\users\users_data.html:98
+#: .\templates\administrator\users\users_data.html:193
+#: .\templates\administrator\vdmp_dashboard\vdmp_dashboard.html:129
+#: .\templates\administrator\vdmp_progress\vdmp_progress_admin.html:123
+#: .\templates\administrator\vdmp_progress\vdmp_progress_admin.html:185
+#: .\templates\administrator\village_profile\village_profile.html:40
+#: .\templates\administrator\village_profile\village_profile.html:98
+#: .\templates\administrator\village_profile\village_profile.html:137
+#: .\templates\administrator\village_profile\village_profile.html:175
+#: .\templates\administrator\village_profile\village_profile.html:215
+#: .\templates\administrator\village_profile\village_profile.html:291
+#: .\templates\administrator\village_profile\village_profile.html:297
+#: .\templates\administrator\village_profile\village_profile.html:339
+#: .\templates\administrator\village_profile\village_profile.html:345
+#: .\templates\administrator\village_profile\village_profile.html:398
+#: .\templates\administrator\village_profile\village_profile.html:404
+#: .\templates\equipment\rescue_equipments.html:159
+#: .\templates\training\training_activities_status.html:151
+#: .\templates\vdmp_progress\dashboard.html:162
+msgid "District"
+msgstr "जिला"
+
+#: .\templates\accounts\profile.html:113
+#: .\templates\administrator\field_images\index.html:43
+#: .\templates\administrator\field_images\index.html:142
+#: .\templates\administrator\field_images\index.html:223
+#: .\templates\administrator\rescue_equipments\rescue_equipments.html:124
+#: .\templates\administrator\task_force\index.html:44
+#: .\templates\administrator\task_force\index.html:159
+#: .\templates\administrator\task_force\index.html:240
+#: .\templates\administrator\training\training_data.html:137
+#: .\templates\administrator\users\users_data.html:99
+#: .\templates\administrator\users\users_data.html:205
+#: .\templates\administrator\vdmp_dashboard\vdmp_dashboard.html:136
+#: .\templates\administrator\vdmp_progress\vdmp_progress_admin.html:130
+#: .\templates\administrator\village_profile\village_profile.html:46
+#: .\templates\administrator\village_profile\village_profile.html:138
+#: .\templates\administrator\village_profile\village_profile.html:176
+#: .\templates\administrator\village_profile\village_profile.html:216
+#: .\templates\administrator\village_profile\village_profile.html:349
+#: .\templates\administrator\village_profile\village_profile.html:355
+#: .\templates\administrator\village_profile\village_profile.html:408
+#: .\templates\administrator\village_profile\village_profile.html:414
+msgid "Circle"
+msgstr "सर्कल"
+
+#: .\templates\accounts\profile.html:119
+#: .\templates\administrator\field_images\index.html:50
+#: .\templates\administrator\field_images\index.html:148
+#: .\templates\administrator\field_images\index.html:229
+#: .\templates\administrator\rescue_equipments\rescue_equipments.html:131
+#: .\templates\administrator\task_force\index.html:50
+#: .\templates\administrator\task_force\index.html:110
+#: .\templates\administrator\task_force\index.html:165
+#: .\templates\administrator\task_force\index.html:246
+#: .\templates\administrator\training\training_data.html:144
+#: .\templates\administrator\users\users_data.html:100
+#: .\templates\administrator\users\users_data.html:217
+#: .\templates\administrator\vdmp_dashboard\vdmp_dashboard.html:143
+#: .\templates\administrator\vdmp_progress\vdmp_progress_admin.html:137
+#: .\templates\administrator\village_profile\village_profile.html:52
+#: .\templates\administrator\village_profile\village_profile.html:177
+#: .\templates\administrator\village_profile\village_profile.html:217
+#: .\templates\administrator\village_profile\village_profile.html:418
+#: .\templates\administrator\village_profile\village_profile.html:424
+msgid "Gram Panchayat"
+msgstr "ग्राम पंचायत"
+
+#: .\templates\accounts\profile.html:125
+#: .\templates\administrator\field_images\index.html:57
+#: .\templates\administrator\field_images\index.html:154
+#: .\templates\administrator\field_images\index.html:235
+#: .\templates\administrator\rescue_equipments\rescue_equipments.html:138
+#: .\templates\administrator\rescue_equipments\rescue_equipments.html:180
+#: .\templates\administrator\rescue_equipments\rescue_equipments.html:283
+#: .\templates\administrator\task_force\index.html:56
+#: .\templates\administrator\task_force\index.html:171
+#: .\templates\administrator\task_force\index.html:252
+#: .\templates\administrator\training\training_data.html:151
+#: .\templates\administrator\training\training_data.html:195
+#: .\templates\administrator\training\training_data.html:318
+#: .\templates\administrator\users\users_data.html:101
+#: .\templates\administrator\users\users_data.html:229
+#: .\templates\administrator\vdmp_dashboard\vdmp_dashboard.html:150
+#: .\templates\administrator\vdmp_progress\vdmp_progress_admin.html:144
+#: .\templates\administrator\vdmp_progress\vdmp_progress_admin.html:186
+#: .\templates\administrator\village_profile\village_profile.html:5
+#: .\templates\administrator\village_profile\village_profile.html:218
+#: .\templates\equipment\rescue_equipments.html:160
+#: .\templates\training\training_activities_status.html:152
+#: .\templates\vdmp_progress\dashboard.html:163
+msgid "Village"
+msgstr "गाँव"
+
+#: .\templates\accounts\profile.html:136 .\templates\accounts\profile.html:156
+msgid "Edit Profile"
+msgstr "प्रोफ़ाइल संपादित करें"
+
+#: .\templates\accounts\profile.html:140 .\templates\accounts\profile.html:203
+#: .\templates\accounts\profile.html:228
+msgid "Change Password"
+msgstr "पासवर्ड बदलें"
+
+#: .\templates\accounts\profile.html:186 .\templates\accounts\profile.html:225
+#: .\templates\administrator\field_images\index.html:196
+#: .\templates\administrator\field_images\index.html:269
+#: .\templates\administrator\task_force\index.html:213
+#: .\templates\administrator\task_force\index.html:306
+#: .\templates\administrator\training\training_data.html:224
+#: .\templates\administrator\training\training_data.html:244
+#: .\templates\administrator\training\training_data.html:260
+#: .\templates\administrator\training\training_data.html:279
+#: .\templates\administrator\training\training_data.html:296
+#: .\templates\administrator\training\training_data.html:346
+#: .\templates\administrator\users\users_data.html:128
+#: .\templates\administrator\users\users_data.html:242
+#: .\templates\administrator\vdmp_progress\vdmp_progress_admin.html:235
+#: .\templates\administrator\vdmp_progress\vdmp_progress_admin.html:277
+#: .\templates\administrator\vdmp_progress\vdmp_progress_admin.html:308
+#: .\templates\administrator\village_profile\village_profile.html:244
+#: .\templates\administrator\village_profile\village_profile.html:268
+#: .\templates\administrator\village_profile\village_profile.html:284
+#: .\templates\administrator\village_profile\village_profile.html:315
+#: .\templates\administrator\village_profile\village_profile.html:331
+#: .\templates\administrator\village_profile\village_profile.html:373
+#: .\templates\administrator\village_profile\village_profile.html:389
+#: .\templates\administrator\village_profile\village_profile.html:446
+#: .\templates\administrator\village_profile\village_profile.html:462
+#: .\templates\administrator\village_profile\village_profile.html:483
+msgid "Close"
+msgstr "बंद करें"
+
+#: .\templates\accounts\profile.html:189
+msgid "Save Changes"
+msgstr "परिवर्तन सहेजें"
+
+#: .\templates\accounts\profile.html:210
+msgid "Current Password"
+msgstr "वर्तमान पासवर्ड"
+
+#: .\templates\accounts\profile.html:214
+msgid "New Password"
+msgstr "नया पासवर्ड"
+
+#: .\templates\accounts\profile.html:218
+msgid "Confirm New Password"
+msgstr "नया पासवर्ड की पुष्टि करें"
+
+#: .\templates\administrator\components\sidebar.html:10
+#: .\templates\components\sidebar.html:8
+msgid "Menu"
+msgstr "मेनू"
+
+#: .\templates\administrator\components\sidebar.html:36
+#: .\templates\administrator\users\users_data.html:18
+msgid "Users"
+msgstr "उपयोगकर्ता"
+
+#: .\templates\administrator\components\sidebar.html:47
+msgid "Departments"
+msgstr "विभाग"
+
+#: .\templates\administrator\components\sidebar.html:56
+#: .\templates\administrator\village_profile\village_profile.html:12
+msgid "Village Profile"
+msgstr "गाँव प्रोफ़ाइल"
+
+#: .\templates\administrator\components\sidebar.html:63
+#: .\templates\components\sidebar.html:87
+msgid "Task force"
+msgstr "कार्य बल"
+
+#: .\templates\administrator\components\sidebar.html:80
+#: .\templates\components\sidebar.html:36
+#: .\templates\vdmp_dashboard\dashboard.html:44
+msgid "Village Level Dashboard"
+msgstr "गाँव स्तर डैशबोर्ड"
+
+#: .\templates\administrator\components\sidebar.html:98
+#: .\templates\components\sidebar.html:54
+#: .\templates\vdmp_progress\dashboard.html:4
+#: .\templates\vdmp_progress\dashboard.html:12
+msgid "VDMP Progress Monitoring"
+msgstr "VDMP प्रगति निगरानी"
+
+#: .\templates\administrator\components\sidebar.html:121
+#: .\templates\components\sidebar.html:66
+msgid "Training & Capacity Building"
+msgstr "प्रशिक्षण और क्षमता निर्माण"
+
+#: .\templates\administrator\components\sidebar.html:140
+#: .\templates\components\sidebar.html:80
+msgid "Rescue Equipment"
+msgstr "बचाव उपकरण"
+
+#: .\templates\administrator\components\sidebar.html:159
+msgid "Field images"
+msgstr "फ़ील्ड छवियाँ"
+
+#: .\templates\administrator\dashboard.html:4
+#: .\templates\components\topnavber.html:68 .\templates\dashboard.html:4
+msgid "Dashboard"
+msgstr "डैशबोर्ड"
+
+#: .\templates\administrator\dashboard.html:7
+msgid "Welcome to the administrator Page"
+msgstr "प्रशासक पृष्ठ में आपका स्वागत है"
+
+#: .\templates\administrator\field_images\index.html:5
+#: .\templates\administrator\field_images\index.html:14
+msgid "Field Images Management"
+msgstr "फ़ील्ड छवि प्रबंधन"
+
+#: .\templates\administrator\field_images\index.html:20
+msgid "Field Images"
+msgstr "फ़ील्ड छवियाँ"
+
+#: .\templates\administrator\field_images\index.html:23
+msgid "Add New Image"
+msgstr "नई छवि जोड़ें"
+
+#: .\templates\administrator\field_images\index.html:38
+#: .\templates\administrator\rescue_equipments\rescue_equipments.html:119
+#: .\templates\administrator\task_force\index.html:40
+#: .\templates\administrator\training\training_data.html:132
+#: .\templates\administrator\vdmp_progress\vdmp_progress_admin.html:125
+#: .\templates\administrator\village_profile\village_profile.html:42
+#: .\templates\dashboard\dashboard.html:219
+#: .\templates\equipment\rescue_equipments.html:19
+#: .\templates\task_force\index.html:24
+#: .\templates\training\training_activities_status.html:21
+#: .\templates\vdmp_dashboard\dashboard.html:90
+#: .\templates\vdmp_progress\dashboard.html:41
+msgid "Select Districts"
+msgstr "जिले चुनें"
+
+#: .\templates\administrator\field_images\index.html:45
+#: .\templates\administrator\field_images\index.html:144
+#: .\templates\administrator\field_images\index.html:225
+#: .\templates\administrator\rescue_equipments\rescue_equipments.html:126
+#: .\templates\administrator\task_force\index.html:46
+#: .\templates\administrator\task_force\index.html:161
+#: .\templates\administrator\task_force\index.html:242
+#: .\templates\administrator\training\training_data.html:139
+#: .\templates\administrator\users\users_data.html:39
+#: .\templates\administrator\users\users_data.html:207
+#: .\templates\administrator\vdmp_dashboard\vdmp_dashboard.html:138
+#: .\templates\administrator\vdmp_progress\vdmp_progress_admin.html:132
+#: .\templates\administrator\village_profile\village_profile.html:48
+#: .\templates\administrator\village_profile\village_profile.html:351
+#: .\templates\administrator\village_profile\village_profile.html:410
+#: .\templates\dashboard\dashboard.html:224
+#: .\templates\dashboard\dashboard.html:226
+#: .\templates\equipment\rescue_equipments.html:24
+#: .\templates\equipment\rescue_equipments.html:26
+#: .\templates\task_force\index.html:28 .\templates\task_force\index.html:30
+#: .\templates\training\training_activities_status.html:26
+#: .\templates\training\training_activities_status.html:28
+#: .\templates\vdmp_dashboard\dashboard.html:95
+#: .\templates\vdmp_dashboard\dashboard.html:97
+#: .\templates\vdmp_progress\dashboard.html:46
+#: .\templates\vdmp_progress\dashboard.html:48
+msgid "Select Circle"
+msgstr "सर्कल चुनें"
+
+#: .\templates\administrator\field_images\index.html:52
+#: .\templates\administrator\field_images\index.html:150
+#: .\templates\administrator\field_images\index.html:231
+#: .\templates\administrator\rescue_equipments\rescue_equipments.html:133
+#: .\templates\administrator\task_force\index.html:52
+#: .\templates\administrator\task_force\index.html:167
+#: .\templates\administrator\task_force\index.html:248
+#: .\templates\administrator\training\training_data.html:146
+#: .\templates\administrator\users\users_data.html:48
+#: .\templates\administrator\vdmp_dashboard\vdmp_dashboard.html:145
+#: .\templates\administrator\vdmp_progress\vdmp_progress_admin.html:139
+#: .\templates\administrator\village_profile\village_profile.html:54
+#: .\templates\administrator\village_profile\village_profile.html:420
+#: .\templates\dashboard\dashboard.html:231
+#: .\templates\dashboard\dashboard.html:233
+#: .\templates\equipment\rescue_equipments.html:31
+#: .\templates\equipment\rescue_equipments.html:33
+#: .\templates\task_force\index.html:34 .\templates\task_force\index.html:36
+#: .\templates\training\training_activities_status.html:33
+#: .\templates\training\training_activities_status.html:35
+#: .\templates\vdmp_dashboard\dashboard.html:102
+#: .\templates\vdmp_dashboard\dashboard.html:104
+#: .\templates\vdmp_progress\dashboard.html:53
+#: .\templates\vdmp_progress\dashboard.html:55
+msgid "Select Gram Panchayat"
+msgstr "ग्राम पंचायत चुनें"
+
+#: .\templates\administrator\field_images\index.html:59
+#: .\templates\administrator\rescue_equipments\rescue_equipments.html:140
+#: .\templates\administrator\task_force\index.html:58
+#: .\templates\administrator\training\training_data.html:153
+#: .\templates\administrator\vdmp_progress\vdmp_progress_admin.html:146
+#: .\templates\dashboard\dashboard.html:240
+#: .\templates\equipment\rescue_equipments.html:40
+#: .\templates\task_force\index.html:42
+#: .\templates\training\training_activities_status.html:42
+#: .\templates\vdmp_dashboard\dashboard.html:111
+#: .\templates\vdmp_progress\dashboard.html:62
+msgid "Select Villages"
+msgstr "गाँव चुनें"
+
+#: .\templates\administrator\field_images\index.html:64
+#: .\templates\administrator\field_images\index.html:66
+#: .\templates\administrator\field_images\index.html:162
+#: .\templates\administrator\field_images\index.html:243
+msgid "Select Category"
+msgstr "श्रेणी चुनें"
+
+#: .\templates\administrator\field_images\index.html:94
+msgid "Field Images List"
+msgstr "फ़ील्ड छवि सूची"
+
+#: .\templates\administrator\field_images\index.html:96
+#: .\templates\administrator\task_force\index.html:95
+#: .\templates\administrator\vdmp_progress\vdmp_progress_admin.html:177
+#: .\templates\equipment\rescue_equipments.html:151
+#: .\templates\task_force\index.html:159
+#: .\templates\training\training_activities_status.html:143
+#: .\templates\vdmp_progress\dashboard.html:154
+msgid "Download CSV"
+msgstr "CSV डाउनलोड करें"
+
+#: .\templates\administrator\field_images\index.html:103
+#: .\templates\administrator\rescue_equipments\rescue_equipments.html:79
+#: .\templates\administrator\rescue_equipments\rescue_equipments.html:178
+#: .\templates\administrator\task_force\index.html:102
+#: .\templates\administrator\training\training_data.html:88
+#: .\templates\administrator\training\training_data.html:193
+#: .\templates\administrator\users\department.html:29
+#: .\templates\administrator\users\users_data.html:94
+#: .\templates\administrator\vdmp_progress\vdmp_progress_admin.html:82
+#: .\templates\administrator\vdmp_progress\vdmp_progress_admin.html:184
+#: .\templates\administrator\village_profile\village_profile.html:96
+#: .\templates\administrator\village_profile\village_profile.html:136
+#: .\templates\administrator\village_profile\village_profile.html:174
+#: .\templates\administrator\village_profile\village_profile.html:213
+#: .\templates\task_force\index.html:166
+#: .\templates\training\training_activities_status.html:150
+#: .\templates\vdmp_progress\dashboard.html:161
+msgid "Sr. No"
+msgstr "क्रम संख्या"
+
+#: .\templates\administrator\field_images\index.html:104
+#: .\templates\administrator\field_images\index.html:258
+msgid "Image"
+msgstr "छवि"
+
+#: .\templates\administrator\field_images\index.html:105
+#: .\templates\administrator\field_images\index.html:160
+#: .\templates\administrator\field_images\index.html:241
+msgid "Category"
+msgstr "श्रेणी"
+
+#: .\templates\administrator\field_images\index.html:106
+#: .\templates\administrator\task_force\index.html:103
+#: .\templates\administrator\users\department.html:30
+#: .\templates\administrator\users\department.html:61
+#: .\templates\task_force\index.html:167
+msgid "Name"
+msgstr "नाम"
+
+#: .\templates\administrator\field_images\index.html:107
+msgid "Upload Date"
+msgstr "अपलोड दिनांक"
+
+#: .\templates\administrator\field_images\index.html:108
+#: .\templates\administrator\task_force\index.html:108
+#: .\templates\task_force\index.html:172
+msgid "District Name"
+msgstr "जिला नाम"
+
+#: .\templates\administrator\field_images\index.html:109
+#: .\templates\administrator\task_force\index.html:111
+#: .\templates\task_force\index.html:173
+msgid "Village Name"
+msgstr "गाँव नाम"
+
+#: .\templates\administrator\field_images\index.html:110
+msgid "Uploaded By"
+msgstr "द्वारा अपलोड किया गया"
+
+#: .\templates\administrator\field_images\index.html:111
+#: .\templates\administrator\rescue_equipments\rescue_equipments.html:83
+#: .\templates\administrator\task_force\index.html:114
+#: .\templates\administrator\training\training_data.html:90
+#: .\templates\administrator\users\users_data.html:102
+#: .\templates\administrator\vdmp_progress\vdmp_progress_admin.html:86
+#: .\templates\administrator\vdmp_progress\vdmp_progress_admin.html:192
+#: .\templates\administrator\village_profile\village_profile.html:103
+#: .\templates\administrator\village_profile\village_profile.html:141
+#: .\templates\administrator\village_profile\village_profile.html:180
+#: .\templates\administrator\village_profile\village_profile.html:223
+msgid "Actions"
+msgstr "कार्य"
+
+#: .\templates\administrator\field_images\index.html:128
+msgid "Add Field Image"
+msgstr "फ़ील्ड छवि जोड़ें"
+
+#: .\templates\administrator\field_images\index.html:138
+#: .\templates\administrator\field_images\index.html:219
+#: .\templates\administrator\task_force\index.html:155
+#: .\templates\administrator\task_force\index.html:236
+#: .\templates\administrator\users\users_data.html:30
+#: .\templates\administrator\users\users_data.html:195
+#: .\templates\administrator\vdmp_dashboard\vdmp_dashboard.html:131
+#: .\templates\administrator\village_profile\village_profile.html:293
+#: .\templates\administrator\village_profile\village_profile.html:341
+#: .\templates\administrator\village_profile\village_profile.html:400
+#: .\templates\dashboard\dashboard.html:217
+#: .\templates\equipment\rescue_equipments.html:17
+#: .\templates\task_force\index.html:22
+#: .\templates\training\training_activities_status.html:19
+#: .\templates\vdmp_dashboard\dashboard.html:88
+#: .\templates\vdmp_progress\dashboard.html:39
+msgid "Select District"
+msgstr "जिला चुनें"
+
+#: .\templates\administrator\field_images\index.html:156
+#: .\templates\administrator\field_images\index.html:237
+#: .\templates\administrator\task_force\index.html:173
+#: .\templates\administrator\task_force\index.html:254
+#: .\templates\administrator\training\training_data.html:320
+#: .\templates\administrator\users\users_data.html:57
+#: .\templates\administrator\users\users_data.html:231
+#: .\templates\administrator\vdmp_dashboard\vdmp_dashboard.html:152
+#: .\templates\dashboard\dashboard.html:238
+#: .\templates\equipment\rescue_equipments.html:38
+#: .\templates\task_force\index.html:40
+#: .\templates\training\training_activities_status.html:40
+#: .\templates\vdmp_dashboard\dashboard.html:109
+#: .\templates\vdmp_progress\dashboard.html:60
+msgid "Select Village"
+msgstr "गाँव चुनें"
+
+#: .\templates\administrator\field_images\index.html:174
+msgid "Image 1"
+msgstr "छवि 1"
+
+#: .\templates\administrator\field_images\index.html:178
+msgid "Image 2 (Optional)"
+msgstr "छवि 2 (वैकल्पिक)"
+
+#: .\templates\administrator\field_images\index.html:182
+msgid "Image 1 Name (Optional)"
+msgstr "छवि 1 नाम (वैकल्पिक)"
+
+#: .\templates\administrator\field_images\index.html:186
+msgid "Image 2 Name (Optional)"
+msgstr "छवि 2 नाम (वैकल्पिक)"
+
+#: .\templates\administrator\field_images\index.html:190
+msgid ""
+"Maximum 2 images allowed per category per village. You can upload both at "
+"once."
+msgstr ""
+
+#: .\templates\administrator\field_images\index.html:197
+#: .\templates\administrator\rescue_equipments\rescue_equipments.html:254
+#: .\templates\administrator\task_force\index.html:214
+#: .\templates\administrator\vdmp_progress\vdmp_progress_admin.html:236
+#: .\templates\administrator\village_profile\village_profile.html:269
+#: .\templates\administrator\village_profile\village_profile.html:316
+#: .\templates\administrator\village_profile\village_profile.html:374
+#: .\templates\administrator\village_profile\village_profile.html:447
+msgid "Save"
+msgstr "सहेजें"
+
+#: .\templates\administrator\field_images\index.html:208
+msgid "Edit Field Image"
+msgstr "फ़ील्ड छवि संपादित करें"
+
+#: .\templates\administrator\field_images\index.html:254
+msgid "Image Name"
+msgstr "छवि नाम"
+
+#: .\templates\administrator\field_images\index.html:260
+msgid "Leave empty to keep current image"
+msgstr "वर्तमान छवि रखने के लिए खाली छोड़ें"
+
+#: .\templates\administrator\field_images\index.html:270
+#: .\templates\administrator\rescue_equipments\rescue_equipments.html:311
+#: .\templates\administrator\rescue_equipments\rescue_equipments.html:394
+#: .\templates\administrator\task_force\index.html:307
+#: .\templates\administrator\training\training_data.html:245
+#: .\templates\administrator\training\training_data.html:347
+#: .\templates\administrator\vdmp_progress\vdmp_progress_admin.html:278
+#: .\templates\administrator\vdmp_progress\vdmp_progress_admin.html:309
+msgid "Update"
+msgstr "अपडेट करें"
+
+#: .\templates\administrator\field_images\index.html:281
+msgid "Image Preview"
+msgstr "छवि पूर्वावलोकन"
+
+#: .\templates\administrator\rescue_equipments\rescue_equipments.html:5
+#: .\templates\administrator\rescue_equipments\rescue_equipments.html:29
+#: .\templates\equipment\rescue_equipments.html:5
+#: .\templates\equipment\rescue_equipments.html:9
+#: .\templates\equipment\rescue_equipments.html:149
+msgid "Rescue Equipments"
+msgstr "बचाव उपकरण"
+
+#: .\templates\administrator\rescue_equipments\rescue_equipments.html:38
+msgid "Villages Rescue Equipments"
+msgstr "गाँवों के बचाव उपकरण"
+
+#: .\templates\administrator\rescue_equipments\rescue_equipments.html:43
+msgid "Rescue Equipments Master"
+msgstr "बचाव उपकरण मास्टर"
+
+#: .\templates\administrator\rescue_equipments\rescue_equipments.html:50
+msgid "Add Equipment"
+msgstr "उपकरण जोड़ें"
+
+#: .\templates\administrator\rescue_equipments\rescue_equipments.html:53
+#: .\templates\administrator\training\training_data.html:62
+msgid "Upload Master"
+msgstr "मास्टर अपलोड करें"
+
+#: .\templates\administrator\rescue_equipments\rescue_equipments.html:70
+msgid "Rescue Equipments List"
+msgstr "बचाव उपकरण सूची"
+
+#: .\templates\administrator\rescue_equipments\rescue_equipments.html:72
+#: .\templates\administrator\rescue_equipments\rescue_equipments.html:171
+#: .\templates\administrator\training\training_data.html:81
+#: .\templates\administrator\training\training_data.html:186
+#: .\templates\administrator\vdmp_progress\vdmp_progress_admin.html:74
+#: .\templates\administrator\village_profile\village_profile.html:88
+#: .\templates\administrator\village_profile\village_profile.html:128
+#: .\templates\administrator\village_profile\village_profile.html:166
+#: .\templates\administrator\village_profile\village_profile.html:205
+msgid "CSV"
+msgstr "CSV"
+
+#: .\templates\administrator\rescue_equipments\rescue_equipments.html:80
+msgid "Equipments"
+msgstr "उपकरण"
+
+#: .\templates\administrator\rescue_equipments\rescue_equipments.html:81
+#: .\templates\administrator\rescue_equipments\rescue_equipments.html:181
+#: .\templates\administrator\rescue_equipments\rescue_equipments.html:277
+#: .\templates\equipment\rescue_equipments.html:161
+msgid "Task Force"
+msgstr "कार्य बल"
+
+#: .\templates\administrator\rescue_equipments\rescue_equipments.html:82
+msgid "specification"
+msgstr "विशिष्टता"
+
+#: .\templates\administrator\rescue_equipments\rescue_equipments.html:145
+#: .\templates\equipment\rescue_equipments.html:126
+msgid "Equipment"
+msgstr "उपकरण"
+
+#: .\templates\administrator\rescue_equipments\rescue_equipments.html:147
+#: .\templates\equipment\rescue_equipments.html:45
+#: .\templates\equipment\rescue_equipments.html:47
+msgid "Select Equipment"
+msgstr "उपकरण चुनें"
+
+#: .\templates\administrator\rescue_equipments\rescue_equipments.html:169
+msgid "Rescue Equipments Status"
+msgstr "बचाव उपकरण स्थिति"
+
+#: .\templates\administrator\rescue_equipments\rescue_equipments.html:182
+#: .\templates\administrator\rescue_equipments\rescue_equipments.html:273
+#: .\templates\equipment\rescue_equipments.html:162
+msgid "Equipment Name"
+msgstr "उपकरण नाम"
+
+#: .\templates\administrator\rescue_equipments\rescue_equipments.html:183
+#: .\templates\administrator\rescue_equipments\rescue_equipments.html:293
+#: .\templates\equipment\rescue_equipments.html:163
+msgid "Specification"
+msgstr "विशिष्टता"
+
+#: .\templates\administrator\rescue_equipments\rescue_equipments.html:184
+#: .\templates\administrator\rescue_equipments\rescue_equipments.html:299
+#: .\templates\equipment\rescue_equipments.html:164
+msgid "Count"
+msgstr "गिनती"
+
+#: .\templates\administrator\rescue_equipments\rescue_equipments.html:203
+msgid "Add Rescue Equipment"
+msgstr "बचाव उपकरण जोड़ें"
+
+#: .\templates\administrator\rescue_equipments\rescue_equipments.html:210
+#: .\templates\administrator\rescue_equipments\rescue_equipments.html:350
+msgid "Name (English)"
+msgstr "नाम (अंग्रेजी)"
+
+#: .\templates\administrator\rescue_equipments\rescue_equipments.html:214
+#: .\templates\administrator\rescue_equipments\rescue_equipments.html:354
+#: .\templates\administrator\users\department.html:31
+#: .\templates\administrator\users\department.html:65
+msgid "Name (Bengali)"
+msgstr "नाम (बंगाली)"
+
+#: .\templates\administrator\rescue_equipments\rescue_equipments.html:218
+#: .\templates\administrator\rescue_equipments\rescue_equipments.html:358
+#: .\templates\administrator\users\department.html:32
+#: .\templates\administrator\users\department.html:69
+msgid "Name (Assamese)"
+msgstr "नाम (आसामी)"
+
+#: .\templates\administrator\rescue_equipments\rescue_equipments.html:224
+#: .\templates\administrator\rescue_equipments\rescue_equipments.html:364
+msgid "Task Force (English)"
+msgstr "कार्य बल (अंग्रेजी)"
+
+#: .\templates\administrator\rescue_equipments\rescue_equipments.html:228
+#: .\templates\administrator\rescue_equipments\rescue_equipments.html:368
+msgid "Task Force (Bengali)"
+msgstr "कार्य बल (बंगाली)"
+
+#: .\templates\administrator\rescue_equipments\rescue_equipments.html:232
+#: .\templates\administrator\rescue_equipments\rescue_equipments.html:372
+msgid "Task Force (Assamese)"
+msgstr "कार्य बल (आसामी)"
+
+#: .\templates\administrator\rescue_equipments\rescue_equipments.html:238
+#: .\templates\administrator\rescue_equipments\rescue_equipments.html:378
+msgid "Specification (English)"
+msgstr "विशिष्टता (अंग्रेजी)"
+
+#: .\templates\administrator\rescue_equipments\rescue_equipments.html:242
+#: .\templates\administrator\rescue_equipments\rescue_equipments.html:382
+msgid "Specification (Bengali)"
+msgstr "विशिष्टता (बंगाली)"
+
+#: .\templates\administrator\rescue_equipments\rescue_equipments.html:246
+#: .\templates\administrator\rescue_equipments\rescue_equipments.html:386
+msgid "Specification (Assamese)"
+msgstr "विशिष्टता (आसामी)"
+
+#: .\templates\administrator\rescue_equipments\rescue_equipments.html:253
+#: .\templates\administrator\rescue_equipments\rescue_equipments.html:310
+#: .\templates\administrator\rescue_equipments\rescue_equipments.html:330
+#: .\templates\administrator\rescue_equipments\rescue_equipments.html:393
+#: .\templates\administrator\rescue_equipments\rescue_equipments.html:420
+#: .\templates\administrator\task_force\index.html:341
+#: .\templates\administrator\training\training_data.html:372
+#: .\templates\administrator\users\department.html:108
+#: .\templates\administrator\users\users_data.html:266
+#: .\templates\administrator\vdmp_progress\vdmp_progress_admin.html:334
+msgid "Cancel"
+msgstr "रद्द करें"
+
+#: .\templates\administrator\rescue_equipments\rescue_equipments.html:265
+msgid "Edit Equipment Count"
+msgstr "उपकरण गिनती संपादित करें"
+
+#: .\templates\administrator\rescue_equipments\rescue_equipments.html:303
+msgid "Last Update"
+msgstr "अंतिम अपडेट"
+
+#: .\templates\administrator\rescue_equipments\rescue_equipments.html:322
+msgid "Confirm Delete"
+msgstr "हटाने की पुष्टि करें"
+
+#: .\templates\administrator\rescue_equipments\rescue_equipments.html:326
+msgid "Are you sure you want to delete this record?"
+msgstr "क्या आप वास्तव में इस रिकॉर्ड को हटाना चाहते हैं?"
+
+#: .\templates\administrator\rescue_equipments\rescue_equipments.html:331
+msgid "Delete"
+msgstr "हटाएं"
+
+#: .\templates\administrator\rescue_equipments\rescue_equipments.html:342
+msgid "Edit Rescue Equipment"
+msgstr "बचाव उपकरण संपादित करें"
+
+#: .\templates\administrator\rescue_equipments\rescue_equipments.html:406
+msgid "Upload Rescue Equipment Master Data"
+msgstr "बचाव उपकरण मास्टर डेटा अपलोड करें"
+
+#: .\templates\administrator\rescue_equipments\rescue_equipments.html:411
+#: .\templates\administrator\task_force\index.html:335
+#: .\templates\administrator\training\training_data.html:363
+#: .\templates\administrator\vdmp_progress\vdmp_progress_admin.html:325
+msgid "Select Excel/CSV File"
+msgstr "Excel/CSV फ़ाइल चुनें"
+
+#: .\templates\administrator\rescue_equipments\rescue_equipments.html:413
+msgid ""
+"File should contain: Task_Force, Task_Force_bn, Task_Force_as, Item, "
+"Item_bn, Item_as, Specification, Specification_bn, Specification_as columns"
+msgstr ""
+
+#: .\templates\administrator\rescue_equipments\rescue_equipments.html:415
+#: .\templates\administrator\training\training_data.html:367
+#: .\templates\administrator\vdmp_progress\vdmp_progress_admin.html:329
+msgid "Note:"
+msgstr "नोट:"
+
+#: .\templates\administrator\rescue_equipments\rescue_equipments.html:415
+#: .\templates\administrator\training\training_data.html:367
+#: .\templates\administrator\vdmp_progress\vdmp_progress_admin.html:329
+msgid ""
+"To preserve Bengali/Assamese characters, open your Excel file → Go to File → "
+"Save As → Choose CSV UTF-8 (Comma delimited) (*.csv)"
+msgstr ""
+
+#: .\templates\administrator\rescue_equipments\rescue_equipments.html:421
+#: .\templates\administrator\task_force\index.html:342
+#: .\templates\administrator\training\training_data.html:373
+#: .\templates\administrator\vdmp_dashboard\vdmp_dashboard.html:96
+#: .\templates\administrator\vdmp_progress\vdmp_progress_admin.html:335
+#: .\templates\administrator\village_profile\village_profile.html:484
+msgid "Upload"
+msgstr "अपलोड करें"
+
+#: .\templates\administrator\task_force\index.html:5
+#: .\templates\administrator\task_force\index.html:14
+msgid "Task Force Management"
+msgstr "कार्य बल प्रबंधन"
+
+#: .\templates\administrator\task_force\index.html:20
+#: .\templates\task_force\index.html:5 .\templates\task_force\index.html:14
+msgid "Task Force Members"
+msgstr "कार्य बल सदस्य"
+
+#: .\templates\administrator\task_force\index.html:23
+msgid "Upload Excel"
+msgstr "Excel अपलोड करें"
+
+#: .\templates\administrator\task_force\index.html:26
+msgid "Add New Member"
+msgstr "नया सदस्य जोड़ें"
+
+#: .\templates\administrator\task_force\index.html:62
+#: .\templates\administrator\task_force\index.html:64
+#: .\templates\administrator\task_force\index.html:137
+#: .\templates\administrator\task_force\index.html:139
+#: .\templates\administrator\task_force\index.html:289
+#: .\templates\administrator\task_force\index.html:323
+#: .\templates\administrator\task_force\index.html:325
+msgid "Select Team Type"
+msgstr "टीम प्रकार चुनें"
+
+#: .\templates\administrator\task_force\index.html:93
+#: .\templates\task_force\index.html:157
+msgid "Task Force Members List"
+msgstr "कार्य बल सदस्य सूची"
+
+#: .\templates\administrator\task_force\index.html:104
+#: .\templates\administrator\task_force\index.html:181
+#: .\templates\administrator\task_force\index.html:262
+#: .\templates\task_force\index.html:168
+msgid "Father's Name"
+msgstr "पिता का नाम"
+
+#: .\templates\administrator\task_force\index.html:105
+#: .\templates\administrator\task_force\index.html:185
+#: .\templates\administrator\task_force\index.html:266
+#: .\templates\task_force\index.html:169
+msgid "Gender"
+msgstr "लिंग"
+
+#: .\templates\administrator\task_force\index.html:106
+#: .\templates\administrator\task_force\index.html:194
+#: .\templates\administrator\task_force\index.html:275
+#: .\templates\task_force\index.html:170
+msgid "Phone Number"
+msgstr "फ़ोन नंबर"
+
+#: .\templates\administrator\task_force\index.html:107
+#: .\templates\administrator\task_force\index.html:198
+#: .\templates\administrator\task_force\index.html:279
+#: .\templates\task_force\index.html:171
+msgid "Position/Responsibility"
+msgstr "पद/जिम्मेदारी"
+
+#: .\templates\administrator\task_force\index.html:109
+msgid "Circle Name"
+msgstr "सर्कल नाम"
+
+#: .\templates\administrator\task_force\index.html:112
+#: .\templates\administrator\task_force\index.html:287
+#: .\templates\task_force\index.html:174
+msgid "Team Type"
+msgstr "टीम प्रकार"
+
+#: .\templates\administrator\task_force\index.html:113
+#: .\templates\administrator\task_force\index.html:206
+#: .\templates\administrator\task_force\index.html:299
+#: .\templates\task_force\index.html:175
+msgid "Occupation"
+msgstr "पेशा"
+
+#: .\templates\administrator\task_force\index.html:131
+msgid "Add Task Force Member"
+msgstr "कार्य बल सदस्य जोड़ें"
+
+#: .\templates\administrator\task_force\index.html:177
+#: .\templates\administrator\task_force\index.html:258
+msgid "Full Name"
+msgstr "पूरा नाम"
+
+#: .\templates\administrator\task_force\index.html:187
+#: .\templates\administrator\task_force\index.html:268
+msgid "Select Gender"
+msgstr "लिंग चुनें"
+
+#: .\templates\administrator\task_force\index.html:188
+#: .\templates\administrator\task_force\index.html:269
+msgid "Male"
+msgstr "पुरुष"
+
+#: .\templates\administrator\task_force\index.html:189
+#: .\templates\administrator\task_force\index.html:270
+msgid "Female"
+msgstr "महिला"
+
+#: .\templates\administrator\task_force\index.html:190
+#: .\templates\administrator\task_force\index.html:271
+msgid "Other"
+msgstr "अन्य"
+
+#: .\templates\administrator\task_force\index.html:200
+#: .\templates\administrator\task_force\index.html:281
+msgid "Select Position"
+msgstr "पद चुनें"
+
+#: .\templates\administrator\task_force\index.html:201
+#: .\templates\administrator\task_force\index.html:282
+msgid "Team member"
+msgstr "टीम सदस्य"
+
+#: .\templates\administrator\task_force\index.html:202
+#: .\templates\administrator\task_force\index.html:283
+msgid "Team leader"
+msgstr "टीम लीडर"
+
+#: .\templates\administrator\task_force\index.html:225
+msgid "Edit Task Force Member"
+msgstr "कार्य बल सदस्य संपादित करें"
+
+#: .\templates\administrator\task_force\index.html:318
+msgid "Upload Task Force Data"
+msgstr "कार्य बल डेटा अपलोड करें"
+
+#: .\templates\administrator\task_force\index.html:337
+msgid ""
+"File should contain: Name, Father_name, Gender, Phone_number, Position/"
+"Responsibility, Occupation, Village_Id, District_Name columns"
+msgstr ""
+
+#: .\templates\administrator\training\training_data.html:5
+#: .\templates\administrator\training\training_data.html:31
+#: .\templates\training\training_activities_status.html:4
+#: .\templates\training\training_activities_status.html:10
+msgid "Training Activities"
+msgstr "प्रशिक्षण गतिविधियाँ"
+
+#: .\templates\administrator\training\training_data.html:47
+msgid "Villages Training Activities"
+msgstr "गाँवों की प्रशिक्षण गतिविधियाँ"
+
+#: .\templates\administrator\training\training_data.html:52
+msgid "Training Activities Master"
+msgstr "प्रशिक्षण गतिविधि मास्टर"
+
+#: .\templates\administrator\training\training_data.html:59
+msgid "Add Training Activity"
+msgstr "प्रशिक्षण गतिविधि जोड़ें"
+
+#: .\templates\administrator\training\training_data.html:79
+msgid "Training Activities List"
+msgstr "प्रशिक्षण गतिविधि सूची"
+
+#: .\templates\administrator\training\training_data.html:89
+#: .\templates\administrator\training\training_data.html:196
+#: .\templates\administrator\training\training_data.html:303
+#: .\templates\training\training_activities_status.html:153
+msgid "Activity"
+msgstr "गतिविधि"
+
+#: .\templates\administrator\training\training_data.html:158
+#: .\templates\administrator\training\training_data.html:197
+#: .\templates\administrator\training\training_data.html:325
+#: .\templates\administrator\vdmp_progress\vdmp_progress_admin.html:188
+#: .\templates\administrator\vdmp_progress\vdmp_progress_admin.html:297
+#: .\templates\equipment\rescue_equipments.html:127
+#: .\templates\task_force\index.html:134
+#: .\templates\training\training_activities_status.html:119
+#: .\templates\training\training_activities_status.html:154
+#: .\templates\vdmp_progress\dashboard.html:128
+#: .\templates\vdmp_progress\dashboard.html:165
+msgid "Status"
+msgstr "स्थिति"
+
+#: .\templates\administrator\training\training_data.html:160
+#: .\templates\administrator\training\training_data.html:327
+#: .\templates\administrator\vdmp_progress\vdmp_progress_admin.html:153
+#: .\templates\administrator\vdmp_progress\vdmp_progress_admin.html:299
+msgid "Select Status"
+msgstr "स्थिति चुनें"
+
+#: .\templates\administrator\training\training_data.html:161
+#: .\templates\administrator\training\training_data.html:328
+#: .\templates\administrator\vdmp_progress\vdmp_progress_admin.html:154
+#: .\templates\administrator\vdmp_progress\vdmp_progress_admin.html:300
+#: .\templates\training\training_activities_status.html:93
+#: .\templates\training\training_activities_status.html:124
+#: .\templates\vdmp_progress\dashboard.html:115
+#: .\templates\vdmp_progress\dashboard.html:135
+msgid "Completed"
+msgstr "पूरा हुआ"
+
+#: .\templates\administrator\training\training_data.html:162
+#: .\templates\administrator\training\training_data.html:329
+msgid "Scheduled"
+msgstr "निर्धारित"
+
+#: .\templates\administrator\training\training_data.html:184
+#: .\templates\training\training_activities_status.html:141
+msgid "Training Activities Status"
+msgstr "प्रशिक्षण गतिविधि स्थिति"
+
+#: .\templates\administrator\training\training_data.html:198
+#: .\templates\administrator\training\training_data.html:334
+#: .\templates\training\training_activities_status.html:155
+msgid "Implemented Date"
+msgstr "कार्यान्वित दिनांक"
+
+#: .\templates\administrator\training\training_data.html:199
+#: .\templates\administrator\training\training_data.html:339
+#: .\templates\training\training_activities_status.html:156
+msgid "Remark"
+msgstr "टिप्पणी"
+
+#: .\templates\administrator\training\training_data.html:223
+msgid "Edit Training Activity"
+msgstr "प्रशिक्षण गतिविधि संपादित करें"
+
+#: .\templates\administrator\training\training_data.html:230
+#: .\templates\administrator\training\training_data.html:265
+msgid "Activity Name (English)"
+msgstr "गतिविधि नाम (अंग्रेजी)"
+
+#: .\templates\administrator\training\training_data.html:234
+#: .\templates\administrator\training\training_data.html:269
+#: .\templates\administrator\vdmp_progress\vdmp_progress_admin.html:228
+#: .\templates\administrator\vdmp_progress\vdmp_progress_admin.html:264
+msgid "Activity Name (Assamese)"
+msgstr "गतिविधि नाम (आसामी)"
+
+#: .\templates\administrator\training\training_data.html:238
+#: .\templates\administrator\training\training_data.html:273
+#: .\templates\administrator\vdmp_progress\vdmp_progress_admin.html:224
+#: .\templates\administrator\vdmp_progress\vdmp_progress_admin.html:260
+msgid "Activity Name (Bengali)"
+msgstr "गतिविधि नाम (बंगाली)"
+
+#: .\templates\administrator\training\training_data.html:259
+msgid "Add New Training Activity"
+msgstr "नई प्रशिक्षण गतिविधि जोड़ें"
+
+#: .\templates\administrator\training\training_data.html:280
+#: .\templates\administrator\users\department.html:109
+msgid "Submit"
+msgstr "जमा करें"
+
+#: .\templates\administrator\training\training_data.html:295
+msgid "Add Training Activity Status"
+msgstr "प्रशिक्षण गतिविधि स्थिति जोड़ें"
+
+#: .\templates\administrator\training\training_data.html:305
+msgid "Select Activity"
+msgstr "गतिविधि चुनें"
+
+#: .\templates\administrator\training\training_data.html:358
+msgid "Upload Training Master Data"
+msgstr "प्रशिक्षण मास्टर डेटा अपलोड करें"
+
+#: .\templates\administrator\training\training_data.html:365
+msgid "File should contain: Activity, Activity_bn, Activity_as columns"
+msgstr ""
+
+#: .\templates\administrator\users\department.html:5
+msgid "Department Management"
+msgstr "विभाग प्रबंधन"
+
+#: .\templates\administrator\users\department.html:22
+msgid "Department List"
+msgstr "विभाग सूची"
+
+#: .\templates\administrator\users\department.html:23
+#: .\templates\administrator\users\department.html:50
+msgid "Add New Department"
+msgstr "नया विभाग जोड़ें"
+
+#: .\templates\administrator\users\department.html:33
+#: .\templates\administrator\users\department.html:73
+msgid "Details"
+msgstr "विवरण"
+
+#: .\templates\administrator\users\department.html:81
+msgid "Permissions"
+msgstr "अनुमतियाँ"
+
+#: .\templates\administrator\users\department.html:84
+msgid "Available permissions"
+msgstr "उपलब्ध अनुमतियाँ"
+
+#: .\templates\administrator\users\department.html:96
+msgid "Chosen permissions"
+msgstr "चुनी गई अनुमतियाँ"
+
+#: .\templates\administrator\users\department.html:101
+msgid ""
+"Hold down \"Control\", or \"Command\" on a Mac, to select more than one."
+msgstr ""
+
+#: .\templates\administrator\users\users_data.html:5
+#: .\templates\administrator\users\users_data.html:82
+msgid "User List"
+msgstr "उपयोगकर्ता सूची"
+
+#: .\templates\administrator\users\users_data.html:86
+msgid "Add User"
+msgstr "उपयोगकर्ता जोड़ें"
+
+#: .\templates\administrator\users\users_data.html:127
+msgid "Register New User"
+msgstr "नया उपयोगकर्ता पंजीकरण करें"
+
+#: .\templates\administrator\users\users_data.html:136
+msgid "Enter username"
+msgstr "उपयोगकर्ता नाम दर्ज करें"
+
+#: .\templates\administrator\users\users_data.html:142
+msgid "Enter password (min 8 chars)"
+msgstr "पासवर्ड दर्ज करें (कम से कम 8 अक्षर)"
+
+#: .\templates\administrator\users\users_data.html:148
+msgid "Enter first name"
+msgstr "पहला नाम दर्ज करें"
+
+#: .\templates\administrator\users\users_data.html:154
+msgid "Enter last name"
+msgstr "अंतिम नाम दर्ज करें"
+
+#: .\templates\administrator\users\users_data.html:160
+msgid "Enter email address"
+msgstr "ईमेल पता दर्ज करें"
+
+#: .\templates\administrator\users\users_data.html:166
+msgid "Enter mobile number"
+msgstr "मोबाइल नंबर दर्ज करें"
+
+#: .\templates\administrator\users\users_data.html:173
+msgid "Select Department"
+msgstr "विभाग चुनें"
+
+#: .\templates\administrator\users\users_data.html:184
+msgid "Select Role"
+msgstr "भूमिका चुनें"
+
+#: .\templates\administrator\users\users_data.html:219
+msgid "Select GP"
+msgstr "ग्राम पंचायत चुनें"
+
+#: .\templates\administrator\users\users_data.html:243
+msgid "Register"
+msgstr "पंजीकरण करें"
+
+#: .\templates\administrator\users\users_data.html:259
+msgid "Are you sure?"
+msgstr "क्या आप निश्चित हैं?"
+
+#: .\templates\administrator\users\users_data.html:260
+msgid "Do you really want to delete this training activity status?"
+msgstr "क्या आप वास्तव में इस प्रशिक्षण गतिविधि स्थिति को हटाना चाहते हैं?"
+
+#: .\templates\administrator\users\users_data.html:265
+msgid "Yes, delete it!"
+msgstr "हाँ, इसे हटा दें!"
+
+#: .\templates\administrator\vdmp_dashboard\vdmp_dashboard.html:5
+#: .\templates\administrator\vdmp_dashboard\vdmp_dashboard.html:11
+msgid "VDMP Dashboard"
+msgstr "VDMP डैशबोर्ड"
+
+#: .\templates\administrator\vdmp_dashboard\vdmp_dashboard.html:36
+#: .\templates\administrator\vdmp_dashboard\vdmp_dashboard.html:54
+msgid "Upload New Data"
+msgstr "नया डेटा अपलोड करें"
+
+#: .\templates\administrator\vdmp_dashboard\vdmp_dashboard.html:44
+#: .\templates\administrator\vdmp_dashboard\vdmp_dashboard.html:107
+msgid "Delete Existing Data"
+msgstr "मौजूदा डेटा हटाएं"
+
+#: .\templates\administrator\vdmp_dashboard\vdmp_dashboard.html:59
+msgid "Type of Data"
+msgstr "डेटा का प्रकार"
+
+#: .\templates\administrator\vdmp_dashboard\vdmp_dashboard.html:61
+#: .\templates\administrator\vdmp_dashboard\vdmp_dashboard.html:114
+msgid "Choose Data Type"
+msgstr ""
+
+#: .\templates\administrator\vdmp_dashboard\vdmp_dashboard.html:62
+#: .\templates\administrator\vdmp_dashboard\vdmp_dashboard.html:115
+msgid "Household"
+msgstr ""
+
+#: .\templates\administrator\vdmp_dashboard\vdmp_dashboard.html:63
+#: .\templates\administrator\vdmp_dashboard\vdmp_dashboard.html:116
+msgid "Transformer"
+msgstr ""
+
+#: .\templates\administrator\vdmp_dashboard\vdmp_dashboard.html:64
+#: .\templates\administrator\vdmp_dashboard\vdmp_dashboard.html:117
+msgid "Critical Facility"
+msgstr ""
+
+#: .\templates\administrator\vdmp_dashboard\vdmp_dashboard.html:65
+#: .\templates\administrator\vdmp_dashboard\vdmp_dashboard.html:118
+msgid "Commercial"
+msgstr ""
+
+#: .\templates\administrator\vdmp_dashboard\vdmp_dashboard.html:66
+#: .\templates\administrator\vdmp_dashboard\vdmp_dashboard.html:119
+msgid "Electric Poles"
+msgstr ""
+
+#: .\templates\administrator\vdmp_dashboard\vdmp_dashboard.html:67
+#: .\templates\administrator\vdmp_dashboard\vdmp_dashboard.html:120
+msgid "Villages of all the Districts"
+msgstr ""
+
+#: .\templates\administrator\vdmp_dashboard\vdmp_dashboard.html:68
+#: .\templates\administrator\vdmp_dashboard\vdmp_dashboard.html:121
+msgid "Villages road info"
+msgstr ""
+
+#: .\templates\administrator\vdmp_dashboard\vdmp_dashboard.html:69
+#: .\templates\administrator\vdmp_dashboard\vdmp_dashboard.html:122
+msgid "Village Road Erosion Info."
+msgstr ""
+
+#: .\templates\administrator\vdmp_dashboard\vdmp_dashboard.html:70
+#: .\templates\administrator\vdmp_dashboard\vdmp_dashboard.html:123
+msgid "Bridge Survey"
+msgstr ""
+
+#: .\templates\administrator\vdmp_dashboard\vdmp_dashboard.html:71
+#: .\templates\administrator\vdmp_dashboard\vdmp_dashboard.html:124
+msgid "Risk Assesment"
+msgstr ""
+
+#: .\templates\administrator\vdmp_dashboard\vdmp_dashboard.html:76
+msgid "Select File"
+msgstr ""
+
+#: .\templates\administrator\vdmp_dashboard\vdmp_dashboard.html:79
+msgid "Please upload only CSV or Excel files."
+msgstr ""
+
+#: .\templates\administrator\vdmp_dashboard\vdmp_dashboard.html:80
+msgid "Do not add records that already exist in the database."
+msgstr ""
+
+#: .\templates\administrator\vdmp_dashboard\vdmp_dashboard.html:84
+msgid "File Upload Requirements"
+msgstr ""
+
+#: .\templates\administrator\vdmp_dashboard\vdmp_dashboard.html:86
+msgid "CSV Format:"
+msgstr ""
+
+#: .\templates\administrator\vdmp_dashboard\vdmp_dashboard.html:86
+msgid "Save your file as CSV with UTF-8 encoding and comma separation"
+msgstr ""
+
+#: .\templates\administrator\vdmp_dashboard\vdmp_dashboard.html:87
+msgid "Remove Empty Rows:"
+msgstr ""
+
+#: .\templates\administrator\vdmp_dashboard\vdmp_dashboard.html:87
+msgid ""
+"Please remove all empty rows from your file before uploading. Empty rows can "
+"cause upload failures, increase processing time, and lead to operation errors"
+msgstr ""
+
+#: .\templates\administrator\vdmp_dashboard\vdmp_dashboard.html:88
+msgid "Data Validation:"
+msgstr ""
+
+#: .\templates\administrator\vdmp_dashboard\vdmp_dashboard.html:88
+msgid ""
+"Ensure all required fields are properly filled to avoid processing issues"
+msgstr ""
+
+#: .\templates\administrator\vdmp_dashboard\vdmp_dashboard.html:112
+msgid "Select Data Type"
+msgstr ""
+
+#: .\templates\administrator\vdmp_dashboard\vdmp_dashboard.html:158
+msgid ""
+"Warning: This action is permanent and cannot be undone. Proceed only if "
+"you're sure."
+msgstr ""
+
+#: .\templates\administrator\vdmp_dashboard\vdmp_dashboard.html:163
+msgid "Delete Data"
+msgstr ""
+
+#: .\templates\administrator\vdmp_progress\vdmp_progress_admin.html:5
+#: .\templates\administrator\vdmp_progress\vdmp_progress_admin.html:18
+msgid "VDMP Progress monitoring"
+msgstr ""
+
+#: .\templates\administrator\vdmp_progress\vdmp_progress_admin.html:27
+msgid "VDMP Progress Activities status"
+msgstr ""
+
+#: .\templates\administrator\vdmp_progress\vdmp_progress_admin.html:32
+msgid "VDMP Progress Activity Master"
+msgstr ""
+
+#: .\templates\administrator\vdmp_progress\vdmp_progress_admin.html:40
+msgid "Upload Master List"
+msgstr ""
+
+#: .\templates\administrator\vdmp_progress\vdmp_progress_admin.html:43
+msgid "Add New VDMP Activity"
+msgstr ""
+
+#: .\templates\administrator\vdmp_progress\vdmp_progress_admin.html:70
+msgid "VDMP Activities List"
+msgstr ""
+
+#: .\templates\administrator\vdmp_progress\vdmp_progress_admin.html:83
+#: .\templates\administrator\vdmp_progress\vdmp_progress_admin.html:220
+#: .\templates\administrator\vdmp_progress\vdmp_progress_admin.html:256
+msgid "Activity Name"
+msgstr ""
+
+#: .\templates\administrator\vdmp_progress\vdmp_progress_admin.html:84
+#: .\templates\administrator\vdmp_progress\vdmp_progress_admin.html:270
+msgid "Is Active"
+msgstr ""
+
+#: .\templates\administrator\vdmp_progress\vdmp_progress_admin.html:151
+msgid "VDMP status"
+msgstr ""
+
+#: .\templates\administrator\vdmp_progress\vdmp_progress_admin.html:155
+#: .\templates\administrator\vdmp_progress\vdmp_progress_admin.html:301
+msgid "In Progress"
+msgstr ""
+
+#: .\templates\administrator\vdmp_progress\vdmp_progress_admin.html:156
+#: .\templates\administrator\vdmp_progress\vdmp_progress_admin.html:302
+#: .\templates\training\training_activities_status.html:94
+#: .\templates\training\training_activities_status.html:123
+#: .\templates\vdmp_progress\dashboard.html:118
+#: .\templates\vdmp_progress\dashboard.html:132
+msgid "Not Started"
+msgstr ""
+
+#: .\templates\administrator\vdmp_progress\vdmp_progress_admin.html:161
+msgid "VDMP Activities"
+msgstr ""
+
+#: .\templates\administrator\vdmp_progress\vdmp_progress_admin.html:163
+msgid "Select VDMP Activities"
+msgstr ""
+
+#: .\templates\administrator\vdmp_progress\vdmp_progress_admin.html:175
+#: .\templates\vdmp_progress\dashboard.html:113
+msgid "VDMP Progress Status"
+msgstr ""
+
+#: .\templates\administrator\vdmp_progress\vdmp_progress_admin.html:187
+#: .\templates\vdmp_progress\dashboard.html:164
+msgid "VDMP Activity"
+msgstr ""
+
+#: .\templates\administrator\vdmp_progress\vdmp_progress_admin.html:212
+msgid "Add VDMP Activity"
+msgstr ""
+
+#: .\templates\administrator\vdmp_progress\vdmp_progress_admin.html:247
+msgid "Edit VDMP Activity"
+msgstr ""
+
+#: .\templates\administrator\vdmp_progress\vdmp_progress_admin.html:289
+msgid "Edit VDMP Progress Status"
+msgstr ""
+
+#: .\templates\administrator\vdmp_progress\vdmp_progress_admin.html:320
+msgid "Upload VDMP Activity Master Data"
+msgstr ""
+
+#: .\templates\administrator\vdmp_progress\vdmp_progress_admin.html:327
+msgid ""
+"File should contain: Activity_Name, Activity_Name_bn, Activity_Name_as "
+"columns"
+msgstr ""
+
+#: .\templates\administrator\village_profile\village_profile.html:19
+msgid "Districts"
+msgstr ""
+
+#: .\templates\administrator\village_profile\village_profile.html:22
+msgid "Circles"
+msgstr ""
+
+#: .\templates\administrator\village_profile\village_profile.html:25
+msgid "Gram Panchayats"
+msgstr ""
+
+#: .\templates\administrator\village_profile\village_profile.html:28
+msgid "Villages"
+msgstr ""
+
+#: .\templates\administrator\village_profile\village_profile.html:79
+msgid "Districts List"
+msgstr ""
+
+#: .\templates\administrator\village_profile\village_profile.html:82
+#: .\templates\administrator\village_profile\village_profile.html:243
+msgid "Add District"
+msgstr ""
+
+#: .\templates\administrator\village_profile\village_profile.html:85
+msgid "Upload CSV"
+msgstr ""
+
+#: .\templates\administrator\village_profile\village_profile.html:97
+#: .\templates\administrator\village_profile\village_profile.html:214
+msgid "Code"
+msgstr ""
+
+#: .\templates\administrator\village_profile\village_profile.html:99
+msgid "District (Assamese)"
+msgstr ""
+
+#: .\templates\administrator\village_profile\village_profile.html:100
+msgid "District (Bengali)"
+msgstr ""
+
+#: .\templates\administrator\village_profile\village_profile.html:101
+#: .\templates\administrator\village_profile\village_profile.html:221
+msgid "Latitude"
+msgstr ""
+
+#: .\templates\administrator\village_profile\village_profile.html:102
+#: .\templates\administrator\village_profile\village_profile.html:222
+msgid "Longitude"
+msgstr ""
+
+#: .\templates\administrator\village_profile\village_profile.html:122
+msgid "Circles List"
+msgstr ""
+
+#: .\templates\administrator\village_profile\village_profile.html:125
+#: .\templates\administrator\village_profile\village_profile.html:283
+msgid "Add Circle"
+msgstr ""
+
+#: .\templates\administrator\village_profile\village_profile.html:139
+msgid "Circle (Assamese)"
+msgstr ""
+
+#: .\templates\administrator\village_profile\village_profile.html:140
+msgid "Circle (Bengali)"
+msgstr ""
+
+#: .\templates\administrator\village_profile\village_profile.html:160
+msgid "Gram Panchayats List"
+msgstr ""
+
+#: .\templates\administrator\village_profile\village_profile.html:163
+#: .\templates\administrator\village_profile\village_profile.html:330
+msgid "Add Gram Panchayat"
+msgstr ""
+
+#: .\templates\administrator\village_profile\village_profile.html:178
+msgid "Gram Panchayat (Assamese)"
+msgstr ""
+
+#: .\templates\administrator\village_profile\village_profile.html:179
+msgid "Gram Panchayat (Bengali)"
+msgstr ""
+
+#: .\templates\administrator\village_profile\village_profile.html:199
+msgid "Villages List"
+msgstr ""
+
+#: .\templates\administrator\village_profile\village_profile.html:202
+#: .\templates\administrator\village_profile\village_profile.html:388
+msgid "Add Village"
+msgstr ""
+
+#: .\templates\administrator\village_profile\village_profile.html:219
+msgid "Village (Assamese)"
+msgstr ""
+
+#: .\templates\administrator\village_profile\village_profile.html:220
+msgid "Village (Bengali)"
+msgstr ""
+
+#: .\templates\administrator\village_profile\village_profile.html:250
+msgid "District Code"
+msgstr ""
+
+#: .\templates\administrator\village_profile\village_profile.html:254
+msgid "District Name (English)"
+msgstr ""
+
+#: .\templates\administrator\village_profile\village_profile.html:258
+msgid "District Name (Assamese)"
+msgstr ""
+
+#: .\templates\administrator\village_profile\village_profile.html:262
+msgid "District Name (Bengali)"
+msgstr ""
+
+#: .\templates\administrator\village_profile\village_profile.html:301
+msgid "Circle Name (English)"
+msgstr ""
+
+#: .\templates\administrator\village_profile\village_profile.html:305
+msgid "Circle Name (Assamese)"
+msgstr ""
+
+#: .\templates\administrator\village_profile\village_profile.html:309
+msgid "Circle Name (Bengali)"
+msgstr ""
+
+#: .\templates\administrator\village_profile\village_profile.html:359
+msgid "Gram Panchayat Name (English)"
+msgstr ""
+
+#: .\templates\administrator\village_profile\village_profile.html:363
+msgid "Gram Panchayat Name (Assamese)"
+msgstr ""
+
+#: .\templates\administrator\village_profile\village_profile.html:367
+msgid "Gram Panchayat Name (Bengali)"
+msgstr ""
+
+#: .\templates\administrator\village_profile\village_profile.html:428
+msgid "Village Code"
+msgstr ""
+
+#: .\templates\administrator\village_profile\village_profile.html:432
+msgid "Village Name (English)"
+msgstr ""
+
+#: .\templates\administrator\village_profile\village_profile.html:436
+msgid "Village Name (Assamese)"
+msgstr ""
+
+#: .\templates\administrator\village_profile\village_profile.html:440
+msgid "Village Name (Bengali)"
+msgstr ""
+
+#: .\templates\administrator\village_profile\village_profile.html:461
+msgid "Upload Location Data"
+msgstr ""
+
+#: .\templates\administrator\village_profile\village_profile.html:467
+msgid "Select CSV File"
+msgstr ""
+
+#: .\templates\administrator\village_profile\village_profile.html:469
+msgid ""
+"Expected columns: District_Name, District_Code, Circle_Name, Village name, "
+"Village_Code, Block_Name"
+msgstr ""
+
+#: .\templates\administrator\village_profile\village_profile.html:475
+msgid "Update existing records"
+msgstr ""
+
+#: .\templates\administrator\village_profile\village_profile.html:477
+msgid ""
+"If checked, existing records will be updated. Otherwise, only new records "
+"will be added."
+msgstr ""
+
+#: .\templates\components\breadcrumb.html:24
+#: .\templates\vdmp_dashboard\dashboard.html:58
+msgid "Print Page"
+msgstr ""
+
+#: .\templates\components\sidebar.html:26
+msgid "CRV Score Dashboard"
+msgstr ""
+
+#: .\templates\components\sidebar.html:100
+msgid "Map Viewer"
+msgstr ""
+
+#: .\templates\components\sidebar.html:108
+msgid "Mitigation Catalogue"
+msgstr ""
+
+#: .\templates\components\topnavber.html:55
+msgid "CRV Admin"
+msgstr ""
+
+#: .\templates\components\topnavber.html:64
+msgid "Profile"
+msgstr ""
+
+#: .\templates\components\topnavber.html:75
+msgid "Administrator"
+msgstr ""
+
+#: .\templates\components\topnavber.html:85
+#: .\templates\components\topnavber.html:154
+msgid "Logout"
+msgstr ""
+
+#: .\templates\dashboard.html:7
+msgid "Welcome to the Home Page"
+msgstr ""
+
+#: .\templates\dashboard\dashboard.html:4
+msgid "CRV Score"
+msgstr ""
+
+#: .\templates\dashboard\dashboard.html:273
+msgid "Base Map"
+msgstr ""
+
+#: .\templates\dashboard\dashboard.html:301
+msgid "CRV Resilience Score"
+msgstr ""
+
+#: .\templates\dashboard\dashboard.html:316
+msgid "Resilient Housing"
+msgstr ""
+
+#: .\templates\dashboard\dashboard.html:324
+msgid "Resilient Infrastructure"
+msgstr ""
+
+#: .\templates\dashboard\dashboard.html:335
+msgid "Resilient Essential Services"
+msgstr ""
+
+#: .\templates\dashboard\dashboard.html:343
+msgid "Resilient Livelihoods & Economic Security"
+msgstr ""
+
+#: .\templates\dashboard\dashboard.html:351
+msgid "Governance and Partnerships for Resilience"
+msgstr ""
+
+#: .\templates\dashboard\dashboard.html:359
+msgid "Knowledge, Skills, Behaviours for Resilience"
+msgstr ""
+
+#: .\templates\equipment\rescue_equipments.html:70
+msgid "Rescue Equipment Availability"
+msgstr ""
+
+#: .\templates\equipment\rescue_equipments.html:99
+msgid "Equipment Availability Status"
+msgstr ""
+
+#: .\templates\equipment\rescue_equipments.html:101
+#: .\templates\equipment\rescue_equipments.html:132
+msgid "Available"
+msgstr ""
+
+#: .\templates\equipment\rescue_equipments.html:102
+#: .\templates\equipment\rescue_equipments.html:131
+msgid "Not Available"
+msgstr ""
+
+#: .\templates\equipment\rescue_equipments.html:106
+#: .\templates\equipment\rescue_equipments.html:112
+msgid "All Equipments"
+msgstr ""
+
+#: .\templates\equipment\rescue_equipments.html:125
+#: .\templates\equipment\rescue_equipments.html:158
+#: .\templates\task_force\index.html:132
+#: .\templates\training\training_activities_status.html:117
+#: .\templates\vdmp_progress\dashboard.html:126
+msgid "S. No."
+msgstr ""
+
+#: .\templates\equipment\rescue_equipments.html:128
+#: .\templates\task_force\index.html:135
+#: .\templates\training\training_activities_status.html:120
+#: .\templates\vdmp_progress\dashboard.html:129
+msgid "Total"
+msgstr ""
+
+#: .\templates\layers\map.html:4
+msgid "Layers"
+msgstr ""
+
+#: .\templates\task_force\index.html:46 .\templates\task_force\index.html:48
+msgid "Select Task Force"
+msgstr ""
+
+#: .\templates\task_force\index.html:77
+msgid "Task Force Teams Progress"
+msgstr ""
+
+#: .\templates\task_force\index.html:106
+msgid "Task Force Teams Status"
+msgstr ""
+
+#: .\templates\task_force\index.html:108 .\templates\task_force\index.html:139
+msgid "Created"
+msgstr ""
+
+#: .\templates\task_force\index.html:109 .\templates\task_force\index.html:138
+msgid "Not Created"
+msgstr ""
+
+#: .\templates\task_force\index.html:113 .\templates\task_force\index.html:119
+msgid "All Team Types"
+msgstr ""
+
+#: .\templates\task_force\index.html:133
+msgid "Team Types"
+msgstr ""
+
+#: .\templates\training\training_activities_status.html:64
+msgid "Training Activities Progress"
+msgstr ""
+
+#: .\templates\training\training_activities_status.html:67
+#: .\templates\training\training_activities_status.html:73
+#: .\templates\training\training_activities_status.html:98
+#: .\templates\training\training_activities_status.html:104
+#: .\templates\vdmp_progress\dashboard.html:87
+#: .\templates\vdmp_progress\dashboard.html:93
+msgid "All Activities"
+msgstr ""
+
+#: .\templates\training\training_activities_status.html:91
+msgid "Training Progress Status"
+msgstr ""
+
+#: .\templates\training\training_activities_status.html:118
+#: .\templates\vdmp_progress\dashboard.html:127
+msgid "Activities"
+msgstr ""
+
+#: .\templates\vdmp_dashboard\dashboard.html:4
+msgid "Village Level Summary Dashboard"
+msgstr ""
+
+#: .\templates\vdmp_dashboard\dashboard.html:53
+msgid "Download report"
+msgstr ""
+
+#: .\templates\vdmp_dashboard\dashboard.html:139
+msgid "Demographic Summary"
+msgstr ""
+
+#: .\templates\vdmp_dashboard\dashboard.html:144
+msgid "Asset Summary"
+msgstr ""
+
+#: .\templates\vdmp_dashboard\dashboard.html:149
+msgid "Hazard & Vulnerability"
+msgstr ""
+
+#: .\templates\vdmp_dashboard\dashboard.html:155
+msgid "Flood Shelter"
+msgstr ""
+
+#: .\templates\vdmp_dashboard\dashboard.html:399
+msgid "Kachcha house"
+msgstr ""
+
+#: .\templates\vdmp_dashboard\dashboard.html:406
+msgid "Semi pucca house"
+msgstr ""
+
+#: .\templates\vdmp_dashboard\dashboard.html:413
+msgid "Pucca house"
+msgstr ""
+
+#: .\templates\vdmp_dashboard\dashboard.html:424
+msgid "Educational Facilities"
+msgstr ""
+
+#: .\templates\vdmp_dashboard\dashboard.html:430
+msgid "Anganwadi"
+msgstr ""
+
+#: .\templates\vdmp_dashboard\dashboard.html:437
+msgid "School"
+msgstr ""
+
+#: .\templates\vdmp_dashboard\dashboard.html:444
+msgid "Religious Places"
+msgstr ""
+
+#: .\templates\vdmp_dashboard\dashboard.html:463
+msgid "Hazard Summary"
+msgstr ""
+
+#: .\templates\vdmp_dashboard\dashboard.html:469
+msgid "Average flood depth"
+msgstr ""
+
+#: .\templates\vdmp_dashboard\dashboard.html:476
+msgid "Maximum flood depth"
+msgstr ""
+
+#: .\templates\vdmp_dashboard\dashboard.html:483
+msgid "River Bank erosion"
+msgstr ""
+
+#: .\templates\vdmp_dashboard\dashboard.html:490
+msgid "Landslide"
+msgstr ""
+
+#: .\templates\vdmp_dashboard\dashboard.html:501
+msgid "Vulnerable Assets"
+msgstr ""
+
+#: .\templates\vdmp_dashboard\dashboard.html:507
+msgid "Flood vulnerable houses"
+msgstr ""
+
+#: .\templates\vdmp_dashboard\dashboard.html:514
+msgid "Erosion vulnerable houses"
+msgstr ""
+
+#: .\templates\vdmp_dashboard\dashboard.html:521
+msgid "Flood vulnerable roads"
+msgstr ""
+
+#: .\templates\vdmp_dashboard\dashboard.html:528
+msgid "Erosion vulnerable roads"
+msgstr ""
+
+#: .\templates\vdmp_dashboard\dashboard.html:546
+msgid "LP School"
+msgstr ""
+
+#: .\templates\vdmp_dashboard\dashboard.html:547
+msgid "For moderate flood"
+msgstr ""
+
+#: .\templates\vdmp_dashboard\dashboard.html:553
+msgid "Elevated Platforms"
+msgstr ""
+
+#: .\templates\vdmp_dashboard\dashboard.html:554
+msgid "For Livestocks"
+msgstr ""
+
+#: .\templates\vdmp_dashboard\dashboard.html:568
+msgid "Loading..."
+msgstr ""
+
+#: .\templates\vdmp_dashboard\dashboard.html:570
+msgid "Generating report, please wait..."
+msgstr ""
+
+#: .\templates\vdmp_progress\dashboard.html:84
+msgid "VDMP Chart"
+msgstr ""
+
+#: .\templates\vdmp_progress\dashboard.html:152
+msgid "VDMP Progress Status of all Villages"
+msgstr ""

@@ -1,0 +1,437 @@
+{% extends "administrator/admin_base.html" %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "Rescue Equipments" %}{% endblock %}
+
+{% block extraheader %}
+{% comment %} <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script> {% endcomment %}
+  <script src="{% static 'sweetAlert/sweetalert2@11.js' %}"></script>
+<style>
+    .row-border td {
+        border-bottom: 1px solid #d55deb !important;
+    }
+   
+
+   
+</style>
+
+{% comment %} <!-- DataTables core CSS -->
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+<!-- DataTables FixedHeader extension CSS -->
+<link rel="stylesheet" href="https://cdn.datatables.net/fixedheader/3.4.0/css/fixedHeader.dataTables.min.css"> {% endcomment %}
+{% endblock %}
+
+{% block content %}
+
+{% trans "Rescue Equipments" as rescue_title %}
+{% include "components/breadcrumb.html" with breadcrumb_title=rescue_title %}
+
+<section id="filter">
+    <div class="container-fluid">
+        <div class="d-flex justify-content-between align-items-center">
+            <ul class="nav nav-tabs">
+              
+                <li class="nav-item">
+                    <a class="nav-link fw-medium active {% if not user.is_superuser and user.role.name != 'ASDMA' %}active{% endif %}" id="village-tab" href="#" onclick="showTab('village', 'Add_Equipment_Btn', () => { adjustDataTableColumns('rescue_equipment_table_master'); adjustDataTableColumns('rescue_equipment_table'); },'Upload_rescue_master_btn')">{% trans "Villages Rescue Equipments" %}</a>
+                </li>
+
+                {% if user.is_superuser or user.role.name == "ASDMA" %}
+                <li class="nav-item">
+                    <a class="nav-link fw-medium " id="master-tab" href="#" onclick="showTab('master', 'Add_Equipment_Btn', () => { adjustDataTableColumns('rescue_equipment_table_master'); adjustDataTableColumns('rescue_equipment_table'); },'Upload_rescue_master_btn')">{% trans "Rescue Equipments Master" %}</a>
+                </li>
+                {% endif %}
+            </ul>
+            {% if user.is_superuser or user.role.name == "ASDMA" %}
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-primary custom-purple d-none align-items-center justify-content-center gap-1 csvBtn" data-bs-toggle="modal" data-bs-target="#addEquipmentModal" id="Add_Equipment_Btn">
+                        <i class="fa fa-plus"></i> <span class="d-none d-md-block">{% trans "Add Equipment" %}</span>
+                    </button>
+                    <button type="button" class="csvBtn d-none" data-bs-toggle="modal" data-bs-target="#uploadRescueMasterModal" id="Upload_rescue_master_btn">
+                        <i class="fa fa-upload"></i> <span class="d-none d-md-block">{% trans "Upload Master" %}</span>
+                    </button>
+                </div>
+            {% endif %}
+            
+        </div>
+    </div>
+</section>
+
+<!-- Rescue Equipment Section -->
+{% if user.is_superuser or user.role.name == "ASDMA" %}
+<div class="container-fluid d-none" id="activities-master">
+    <div class="row">
+        
+        <div class="col-md-12">
+            <div class="Mitigation__wrapper_admin_master">
+                <div class="mitigation__header d-flex align-items-center justify-content-between">
+                    <h5 class="secondary__heading">{% trans "Rescue Equipments List" %}</h5>
+                    <button type="button" class="csvBtn" onclick="downloadTableAsCSV('rescue_equipment_table_master', 'rescue_equipments_master')" style="background-color: #245FAE; color: white; border: none;">
+                       <i class="fa fa-download DwnldIcon"></i> {% trans "CSV" %}
+                    </button>
+                </div>
+                <div class="Mitigation__table custom-table cstmDataTbl">
+                    <table class="table table-bordered" id="rescue_equipment_table_master">
+                        <thead>
+                        <tr>
+                            <th style="width:5%;">{% trans "Sr. No" %}</th>
+                            <th style="">{% trans "Equipments" %}</th>
+                             <th style="">{% trans "Task Force" %}</th>
+                               <th style="">{% trans "specification" %}</th>
+                            <th style="width:200px;">{% trans "Actions" %}</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                            {% for equipment in equipments %}
+                                <tr>
+                                    <td class="text-center">{{ forloop.counter }}</td>
+                                    <td class="text-start">{{ equipment.custom_name }}</td>
+                                    <td class="text-start">{{ equipment.custom_task_force }}</td>
+                                    <td class="text-start">{{ equipment.custom_specification }}</td>
+
+                                    <td class="text-start">
+                                        
+                                        <button type="button" class=" custom-purple table_edit_Btn" onclick="editEquipment({{ equipment.id }}, '{{ equipment.name|escapejs }}', '{{ equipment.name_bn|escapejs }}', '{{ equipment.name_as|escapejs }}', '{{ equipment.task_force|escapejs }}', '{{ equipment.task_force_bn|escapejs }}', '{{ equipment.task_force_as|escapejs }}', '{{ equipment.specification|escapejs }}', '{{ equipment.specification_bn|escapejs }}', '{{ equipment.specification_as|escapejs }}')"><i class="fa-solid fa-pen-to-square"></i> </button>
+                                        <button type="button" class=" table_Delete_Btn" onclick="confirmDelete({{ equipment.id }})"><i class="fa-solid fa-trash"></i> </button>
+                                    </td>
+                                 </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Villages Activities Section -->
+<div id="activities-villages" class="{% if not user.is_superuser and user.role.name != 'ASDMA' %}d-block{% else %}d-block{% endif %}" style="{% if user.is_superuser or user.role.name == 'ASDMA' %}display: none;{% endif %}">
+<section id="filter">
+  <div class="container-fluid">
+    <div class="row px-2">
+      <!-- District -->
+      <div class="col-1-5 d-flex flex-column">
+       <label class="form-label fw-medium" for="district">{% trans "District" %}</label>
+        <select name="district" id="rescue_equipment_district_select" class="form-select select2">
+          <option value="" selected disabled>{% trans "Select Districts" %}</option>
+        </select>
+      </div>
+      <!-- Circle -->
+      <div class="col-1-5 d-flex flex-column">
+       <label class="form-label fw-medium" for="circle">{% trans "Circle" %}</label>
+        <select name="circle" id="rescue_equipment_circle" class="form-select select2">
+          <option value="" selected disabled>{% trans "Select Circle" %}</option>
+        </select>
+      </div>
+      <!-- Gram Panchayat -->
+      <div class="col-1-5 d-flex flex-column">
+        <label class="form-label fw-medium" for="gram_panchayat">{% trans "Gram Panchayat" %}</label>
+        <select name="gram_panchayat" id="rescue_equipment_gram_panchayat" class="form-select select2">
+          <option value="" selected disabled>{% trans "Select Gram Panchayat" %}</option>
+        </select>
+      </div>
+      <!-- Village -->
+      <div class="col-1-5 d-flex flex-column">
+        <label class="form-label fw-medium" for="village">{% trans "Village" %}</label> 
+        <select name="village" id="rescue_equipment_village_select" class="form-select select2">
+          <option value="" selected disabled>{% trans "Select Villages" %}</option>
+        </select>
+      </div>
+      <!-- Equipment -->
+      <div class="col-1-5 d-flex flex-column">
+    <label class="form-label fw-medium" for="equipment">{% trans "Equipment" %}</label>
+        <select name="equipment" id="equipment" class="form-select select2">
+          <option value="" selected disabled>{% trans "Select Equipment" %}</option>
+        </select>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Summary Section -->
+<div class="container-fluid">
+    <div class="summary-line">
+        <i class="fas fa-info-circle"></i>
+        <span id="summary-text">
+            <img src="{% static 'images/tube-spinner.svg' %}" id="summary-loader" style="width: 20px; height: 20px; margin-right: 8px;" alt="Loading...">
+          </span>
+    </div>
+</div>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="Mitigation__wrapper_admin_village_rescue_eqp custom_height">
+                <div class="mitigation__header d-flex align-items-center justify-content-between card_header">
+                    <h6 class="secondary__heading">{% trans "Rescue Equipments Status" %}</h6>
+                    <button type="button" class="csvBtn" onclick="downloadTableAsCSV('rescue_equipment_table', 'rescue_equipments_status')" style="background-color: #245FAE; color: white; border: none;">
+                         <i class="fa fa-download DwnldIcon"></i> {% trans "CSV" %}
+                    </button>
+                </div>
+                <div class="w-100 Mitigation__table custom-table" >
+                    <table class="table table-bordered" id="rescue_equipment_table">
+                    <thead>
+                        <tr>
+                            <th >{% trans "Sr. No" %}</th>
+                            <th >{% trans "District" %}</th>
+                            <th >{% trans "Village" %}</th>
+                            <th >{% trans "Task Force" %}</th>
+                            <th >{% trans "Equipment Name" %}</th>
+                            <th >{% trans "Specification" %}</th>
+                            <th >{% trans "Count" %}</th>
+                        </tr>
+                     </thead> 
+                            <tbody id="training_activities_body">
+                            </tbody>
+                    </table>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+
+<!-- Add Equipment Modal -->
+<div class="modal fade" id="addEquipmentModal" tabindex="-1" aria-labelledby="addEquipmentModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header model-bg">
+                <h5 class="modal-title" id="addEquipmentModalLabel">{% trans "Add Rescue Equipment" %}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addEquipmentForm ">
+                    <div class="row removeOutline mt-3">
+                        <div class="col-md-4 ">
+                            <label for="name" class="form-label">{% trans "Name (English)" %} <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="name" name="name" required>
+                        </div>
+                        <div class="col-md-4 ">
+                            <label for="name_bn" class="form-label">{% trans "Name (Bengali)" %}</label>
+                            <input type="text" class="form-control" id="name_bn" name="name_bn">
+                        </div>
+                        <div class="col-md-4 ">
+                            <label for="name_as" class="form-label">{% trans "Name (Assamese)" %}</label>
+                            <input type="text" class="form-control" id="name_as" name="name_as">
+                        </div>
+                    </div>
+                    <div class="row removeOutline mt-3">
+                        <div class="col-md-4 ">
+                            <label for="task_force" class="form-label">{% trans "Task Force (English)" %}</label>
+                            <input type="text" class="form-control" id="task_force" name="task_force">
+                        </div>
+                        <div class="col-md-4 ">
+                            <label for="task_force_bn" class="form-label">{% trans "Task Force (Bengali)" %}</label>
+                            <input type="text" class="form-control" id="task_force_bn" name="task_force_bn">
+                        </div>
+                        <div class="col-md-4 ">
+                            <label for="task_force_as" class="form-label">{% trans "Task Force (Assamese)" %}</label>
+                            <input type="text" class="form-control" id="task_force_as" name="task_force_as">
+                        </div>
+                    </div>
+                    <div class="row removeOutline mt-3">
+                        <div class="col-md-4 ">
+                            <label for="specification" class="form-label">{% trans "Specification (English)" %}</label>
+                            <input type="text" class="form-control" id="specification" name="specification">
+                        </div>
+                        <div class="col-md-4 ">
+                            <label for="specification_bn" class="form-label">{% trans "Specification (Bengali)" %}</label>
+                            <input type="text" class="form-control" id="specification_bn" name="specification_bn">
+                        </div>
+                        <div class="col-md-4 ">
+                            <label for="specification_as" class="form-label">{% trans "Specification (Assamese)" %}</label>
+                            <input type="text" class="form-control" id="specification_as" name="specification_as">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer py-1">
+                <button type="button" class="btn btn-secondary csvBtn-Grey" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
+                <button type="button" class="btn btn-primary custom-purple csvBtn" onclick="submitEquipmentForm()">{% trans "Save" %}</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Rescue Equipment Status Modal -->
+<div class="modal fade" id="editRescueStatusModal" tabindex="-1" aria-labelledby="editRescueStatusModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header model-bg">
+                <h5 class="modal-title" id="editRescueStatusModalLabel">{% trans "Edit Equipment Count" %}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editRescueStatusForm">
+                    <input type="hidden" id="editStatusId">
+                    <div class="row removeOutline mt-3">
+                        <div class="col-md-6 ">
+                            <label for="editEquipmentName" class="form-label">{% trans "Equipment Name" %}</label>
+                            <input type="text" class="form-control" id="editEquipmentName" disabled>
+                        </div>
+                        <div class="col-md-6 ">
+                            <label for="editTaskForce" class="form-label">{% trans "Task Force" %}</label>
+                            <input type="text" class="form-control" id="editTaskForce" disabled>
+                        </div>
+                    </div>
+                    <div class="row removeOutline mt-3">
+                        <div class="col-md-6 ">
+                            <label for="editVillageName" class="form-label">{% trans "Village" %}</label>
+                            <input type="text" class="form-control" id="editVillageName" disabled>
+                        </div>
+                        <div class="col-md-6 ">
+                            <label for="editDistrictName" class="form-label">{% trans "District" %}</label>
+                            <input type="text" class="form-control" id="editDistrictName" disabled>
+                        </div>
+                    </div>
+                    <div class="row removeOutline mt-3">
+                        <div class="col-md-12 ">
+                            <label for="editSpecification" class="form-label">{% trans "Specification" %}</label>
+                            <textarea class="form-control" id="editSpecification" rows="2" disabled></textarea>
+                        </div>
+                    </div>
+                    <div class="row removeOutline mt-3">
+                        <div class="col-md-6 ">
+                            <label for="editCount" class="form-label">{% trans "Count" %} <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="editCount" min="0" required>
+                        </div>
+                        <div class="col-md-6 ">
+                            <label for="editLastUpdate" class="form-label">{% trans "Last Update" %}</label>
+                            <input type="text" class="form-control" id="editLastUpdate" disabled>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer py-1">
+                <button type="button" class="btn btn-secondary csvBtn-Grey" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
+                <button type="button" class="btn btn-primary custom-purple csvBtn" onclick="submitEditRescueStatus()">{% trans "Update" %}</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-labelledby="deleteConfirmModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header model-bg">
+                <h5 class="modal-title" id="deleteConfirmModalLabel">{% trans "Confirm Delete" %}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>{% trans "Are you sure you want to delete this record?" %}</p>
+                <input type="hidden" id="deleteRecordId">
+            </div>
+            <div class="modal-footer py-1">
+                <button type="button" class="btn btn-secondary csvBtn-Grey" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
+                <button type="button" class="btn btn-danger csvBtn" onclick="confirmDeleteRecord()">{% trans "Delete" %}</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Equipment Modal -->
+<div class="modal fade" id="editEquipmentModal" tabindex="-1" aria-labelledby="editEquipmentModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header model-bg">
+                <h5 class="modal-title" id="editEquipmentModalLabel">{% trans "Edit Rescue Equipment" %}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editEquipmentForm">
+                    <input type="hidden" id="editEquipmentId">
+                    <div class="row removeOutline mt-3">
+                        <div class="col-md-4 ">
+                            <label for="editName" class="form-label">{% trans "Name (English)" %} <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="editName" required>
+                        </div>
+                        <div class="col-md-4 ">
+                            <label for="editNameBn" class="form-label">{% trans "Name (Bengali)" %}</label>
+                            <input type="text" class="form-control" id="editNameBn">
+                        </div>
+                        <div class="col-md-4 ">
+                            <label for="editNameAs" class="form-label">{% trans "Name (Assamese)" %}</label>
+                            <input type="text" class="form-control" id="editNameAs">
+                        </div>
+                    </div>
+                    <div class="row removeOutline mt-3">
+                        <div class="col-md-4 ">
+                            <label for="editEquipTaskForce" class="form-label">{% trans "Task Force (English)" %}</label>
+                            <input type="text" class="form-control" id="editEquipTaskForce">
+                        </div>
+                        <div class="col-md-4 ">
+                            <label for="editEquipTaskForceBn" class="form-label">{% trans "Task Force (Bengali)" %}</label>
+                            <input type="text" class="form-control" id="editEquipTaskForceBn">
+                        </div>
+                        <div class="col-md-4 ">
+                            <label for="editEquipTaskForceAs" class="form-label">{% trans "Task Force (Assamese)" %}</label>
+                            <input type="text" class="form-control" id="editEquipTaskForceAs">
+                        </div>
+                    </div>
+                    <div class="row removeOutline mt-3">
+                        <div class="col-md-4 ">
+                            <label for="editEquipSpecification" class="form-label">{% trans "Specification (English)" %}</label>
+                            <input type="text" class="form-control" id="editEquipSpecification">
+                        </div>
+                        <div class="col-md-4 ">
+                            <label for="editEquipSpecificationBn" class="form-label">{% trans "Specification (Bengali)" %}</label>
+                            <input type="text" class="form-control" id="editEquipSpecificationBn">
+                        </div>
+                        <div class="col-md-4 ">
+                            <label for="editEquipSpecificationAs" class="form-label">{% trans "Specification (Assamese)" %}</label>
+                            <input type="text" class="form-control" id="editEquipSpecificationAs">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer py-1">
+                <button type="button" class="btn btn-secondary csvBtn-Grey" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
+                <button type="button" class="btn btn-primary custom-purple csvBtn" onclick="submitEditEquipmentForm()">{% trans "Update" %}</button>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Upload Rescue Master Modal -->
+<div class="modal fade" id="uploadRescueMasterModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content ">
+            <div class="modal-header model-bg">
+                <h5 class="modal-title">{% trans "Upload Rescue Equipment Master Data" %}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="rescueMasterFile" class="form-label">{% trans "Select Excel/CSV File" %}</label>
+                    <input type="file" class="form-control" id="rescueMasterFile" accept=".csv,.xlsx,.xls">
+                    <div class="form-text">{% trans "File should contain: Task_Force, Task_Force_bn, Task_Force_as, Item, Item_bn, Item_as, Specification, Specification_bn, Specification_as columns" %}</div>
+                    <div class="alert alert-info mt-2">
+                        <strong>{% trans "Note:" %}</strong> {% trans "To preserve Bengali/Assamese characters, open your Excel file → Go to File → Save As → Choose CSV UTF-8 (Comma delimited) (*.csv)" %}
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer py-1">
+                <button type="button" class="csvBtn-Grey" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
+                <button type="button" class="csvBtn" id="uploadRescueMaster">{% trans "Upload" %}</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+
+{% block extrajs %}
+
+<script src="{% static 'js/utils/downloadTableData.js' %}"></script>
+<script src="{% static 'js/utils/tabs.js' %}"></script>
+<script src="{% static 'js/rescue_equipments/rescue_equipments.js' %}"></script>
+<script src="{% static 'js/administrator/rescue_equipment/rescue_equipment_master.js' %}"></script>
+<script src="{% static 'js/utils/summery.js' %}"></script>
+
+{% endblock %}
+

@@ -1,0 +1,392 @@
+{% extends "administrator/admin_base.html" %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "Training Activities" %}{% endblock %}
+
+{% block extraheader %}
+{% comment %} <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script> {% endcomment %}
+
+  <script src="{% static 'sweetAlert/sweetalert2@11.js' %}"></script>
+<style>
+    .row-border td {
+        border-bottom: 1px solid #d55deb !important;
+    }
+    
+   
+    
+</style>
+{% endblock %}
+
+{% block content %}
+
+<section id="broadcrump">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="broadcrump__wrapper">
+                    <ul>
+                        <li>
+                            <span><i class="fa-solid fa-angle-right" style="color: #000;"></i></span> {% trans "Training Activities" %}
+                        </li>
+                    </ul>
+                    
+                </div>
+            </div>
+        </div>
+</section>
+
+
+<section id="filter">
+    <div class="container-fluid">
+        <div class="d-flex justify-content-between align-items-center">
+        <ul class="nav nav-tabs">
+        
+        <li class="nav-item">
+            <a class="nav-link fw-medium active {% if not user.is_superuser and user.role.name != 'ASDMA' %}active{% endif %}" id="village-tab" href="#" onclick="showTab('village', 'Add_activity_btn', () => { adjustDataTableColumns('training_activities_table_master'); adjustDataTableColumns('training_activities_table'); },'Upload_master_btn')">{% trans "Villages Training Activities" %}</a>
+        </li>
+
+        {% if user.is_superuser or user.role.name == "ASDMA" %}
+        <li class="nav-item">
+            <a class="nav-link  fw-medium" id="master-tab" href="#" onclick="showTab('master', 'Add_activity_btn', () => { adjustDataTableColumns('training_activities_table_master'); adjustDataTableColumns('training_activities_table'); },'Upload_master_btn')">{% trans "Training Activities Master" %}</a>
+        </li>
+        {% endif %}
+        </ul>
+          {% if user.is_superuser or user.role.name == "ASDMA" %}
+            <div class="d-flex gap-2">
+                <button type="button" class="btn btn-primary custom-purple d-none align-items-center justify-content-center gap-2 csvBtn" data-bs-toggle="modal" data-bs-target="#addActivityModal" id="Add_activity_btn">
+                    <i class="fa fa-plus"></i> <span class="d-none d-md-block">{% trans "Add Training Activity" %}</span>
+                </button>
+                <button type="button" class="btn btn-success d-none align-items-center justify-content-center gap-2 csvBtn" data-bs-toggle="modal" data-bs-target="#uploadTrainingMasterModal" id="Upload_master_btn">
+                    <i class="fa fa-upload"></i> <span class="d-none d-md-block">{% trans "Upload Master" %}</span>
+                </button>
+            </div>
+          {% endif %}        
+        </div>
+    </div>
+</section>
+
+
+{% if user.is_superuser or user.role.name == "ASDMA" %}
+<!-- Activities Master Section -->
+<div class="container-fluid d-none" id="activities-master">
+    <div class="row">
+ 
+        <div class="col-md-12">
+            <div class="Mitigation__wrapper_admin_master custom_height">
+                <div class="mitigation__header d-flex align-items-center justify-content-between card_header ">
+                    <h6 class="secondary__heading">{% trans "Training Activities List" %}</h6>
+                    <button type="button" class="csvBtn" onclick="downloadTableAsCSV('training_activities_table_master', 'training_activities_master')" style="background-color: #245FAE; color: white; border: none;">
+                       <i class="fa fa-download DwnldIcon"></i> {% trans "CSV" %}
+                    </button>
+                </div>
+                <div class="Mitigation__table custom-table cstmDataTbl">
+                    <table class="table table-bordered" id="training_activities_table_master">
+                        <thead>
+                        <tr>
+                            <th style="width:5%;" >{% trans "Sr. No" %}</th>
+                            <th style="width:55%;" >{% trans "Activity" %}</th>
+                            <th style="width:20%;" >{% trans "Actions" %}</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                            {% for activity in activities %}
+                                <tr>
+                                    <td class="text-center">{{ forloop.counter }}</td>
+                                    <td class="text-start">{{ activity.name }}</td>
+                                    <td class="text-start">
+                                        <button type="button"
+                                                class="table_edit_Btn"
+                                                data-id="{{ activity.id }}"
+                                                data-name-en="{{ activity.name_en }}"
+                                                data-name-bn="{{ activity.name_bn }}"
+                                                data-name-as="{{ activity.name_as }}"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#editActivityModal">
+                                            <i class="fa-solid fa-pen-to-square"></i> 
+                                        </button>
+
+                                        <button type="button" class="table_Delete_Btn" onclick="confirmDelete({{ activity.id }})"><i class="fa-solid fa-trash"></i> </button>
+                                    </td>
+                                 </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+<!-- Villages Activities Section -->
+<div id="activities-villages" class="{% if not user.is_superuser and user.role.name != 'ASDMA' %}d-block{% else %}d-block{% endif %}" style="{% if user.is_superuser or user.role.name == 'ASDMA' %}display: none;{% endif %}">
+    
+<section id='filter'>
+    <div class="container-fluid">
+        <div class="row px-1">
+            <!-- District -->
+            <div class="col-1-5 d-flex flex-column">
+                 <label class="form-label fw-medium" for="district">{% trans "District" %}</label> 
+                <select name="district" id="district" class="form-select select2">
+                    <option value="" selected disabled>{% trans "Select Districts" %}</option>
+                </select>
+            </div>
+            <!-- Circle -->
+            <div class="col-1-5 d-flex flex-column">
+             <label class="form-label fw-medium" for="circle">{% trans "Circle" %}</label>
+                <select name="circle" id="circle" class="form-select select2">
+                    <option value="" selected disabled>{% trans "Select Circle" %}</option>
+                </select>
+            </div>
+            <!-- Gram Panchayat -->
+            <div class="col-1-5 d-flex flex-column">
+            <label class="form-label fw-medium" for="gram_panchayat">{% trans "Gram Panchayat" %}</label> 
+                <select name="gram_panchayat" id="gram_panchayat" class="form-select select2">
+                    <option value="" selected disabled>{% trans "Select Gram Panchayat" %}</option>
+                </select>
+            </div>
+            <!-- Village -->
+            <div class="col-1-5 d-flex flex-column">
+         <label class="form-label fw-medium" for="village">{% trans "Village" %}</label> 
+                <select name="village" id="village" class="form-select select2">
+                    <option value="" selected disabled>{% trans "Select Villages" %}</option>
+                </select>
+            </div>
+            <!-- Status -->
+             <div class="col-1-5 d-flex flex-column">
+                <label class="form-label fw-medium" for="status">{% trans "Status" %}</label> 
+                <select name="status" id="status" class="form-select select2">
+                    <option value="" selected disabled>{% trans "Select Status" %}</option>
+                    <option value="Completed">{% trans "Completed" %}</option>
+                    <option value="Scheduled">{% trans "Scheduled" %}</option>
+                </select>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Summary Section -->
+<div class="container-fluid">
+  <div class="summary-line">
+      <i class="fas fa-info-circle"></i>
+      <span id="summary-text">
+          <img src="{% static 'images/tube-spinner.svg' %}" id="summary-loader" style="width: 20px; height: 20px; margin-right: 8px;" alt="Loading...">
+        </span>
+  </div>
+</div>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="Mitigation__wrapper_admin_village_rescue_eqp custom_height">
+                <div class="mitigation__header d-flex align-items-center justify-content-between  card_header">
+                    <h6 class="">{% trans "Training Activities Status" %}</h6>
+                    <button type="button" class="csvBtn" onclick="downloadTableAsCSV('training_activities_table', 'training_activities_status')" style="background-color: #245FAE; color: white; border: none;">
+                         <i class="fa fa-download DwnldIcon"></i> {% trans "CSV" %}
+                    </button>
+                </div>
+                <div class="w-100 Mitigation__table custom-table cstmDataTbl">
+                    <table class="table table-bordered overflow-scroll" id="training_activities_table">
+                   <thead> 
+                        <tr>
+                            <th >{% trans "Sr. No" %}</th>
+                            <th >{% trans "District" %}</th>
+                            <th >{% trans "Village" %}</th>
+                            <th >{% trans "Activity" %}</th>
+                            <th >{% trans "Status" %}</th>
+                            <th >{% trans "Implemented Date" %}</th>
+                            <th>{% trans "Remark" %}</th>
+                          
+
+                        </tr>
+                        </thead> 
+                            <tbody id="training_activities_body">
+                            </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+
+
+
+<!-- Edit Modal -->
+<div class="modal fade" id="editActivityModal" tabindex="-1" aria-labelledby="editActivityModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <form id="editActivityForm">
+        {% csrf_token %}
+        <div class="modal-header model-bg">
+          <h5 class="modal-title" id="editActivityModalLabel">{% trans "Edit Training Activity" %}</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans 'Close' %}"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="editActivityId">
+          <div class="row">
+            <div class="col-md-4 ">
+              <label for="editActivityNameEn" class="form-label">{% trans "Activity Name (English)" %}</label>
+              <input type="text" class="form-control" id="editActivityNameEn" required>
+            </div>
+            <div class="col-md-4 ">
+              <label for="editActivityNameAs" class="form-label">{% trans "Activity Name (Assamese)" %}</label>
+              <input type="text" class="form-control" id="editActivityNameAs" required>
+            </div>
+            <div class="col-md-4 ">
+              <label for="editActivityNameBn" class="form-label">{% trans "Activity Name (Bengali)" %}</label>
+              <input type="text" class="form-control" id="editActivityNameBn" required>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer py-1">
+          <button type="button" class="btn btn-secondary csvBtn-Grey" data-bs-dismiss="modal">{% trans "Close" %}</button>
+          <button type="submit" class="csvBtn">{% trans "Update" %}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Add Modal -->
+<div class="modal fade" id="addActivityModal" tabindex="-1" aria-labelledby="addActivityModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <form id="addActivityForm">
+        {% csrf_token %}
+        <div class="modal-header model-bg">
+          <h5 class="modal-title" id="addActivityModalLabel">{% trans "Add New Training Activity" %}</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans 'Close' %}"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row">
+            <div class="col-md-4 ">
+              <label for="addActivityNameEn" class="form-label">{% trans "Activity Name (English)" %}</label>
+              <input type="text" class="form-control" id="addActivityNameEn" name="activity_name_en" required placeholder="">
+            </div>
+            <div class="col-md-4 ">
+              <label for="addActivityNameAs" class="form-label">{% trans "Activity Name (Assamese)" %}</label>
+              <input type="text" class="form-control" id="addActivityNameAs" name="activity_name_as" required placeholder="">
+            </div>
+            <div class="col-md-4 ">
+              <label for="addActivityNameBn" class="form-label">{% trans "Activity Name (Bengali)" %}</label>
+              <input type="text" class="form-control" id="addActivityNameBn" name="activity_name_bn" required placeholder="">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer py-1">
+          <button type="button" class="btn btn-secondary csvBtn-Grey" data-bs-dismiss="modal">{% trans "Close" %}</button>
+          <button type="submit" class="csvBtn">{% trans "Submit" %}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+
+<!-- Modal -->
+<div class="modal fade" id="addActivityStatusModal" tabindex="-1" aria-labelledby="addActivityStatusModalLabel" aria-hidden="true">
+ <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <form id="addActivityStatusForm">
+        {% csrf_token %}
+        <div class="modal-header model-bg">
+          <h5 class="modal-title" id="addActivityStatusModalLabel">{% trans "Add Training Activity Status" %}</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans 'Close' %}"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="addActivityStatusId">
+
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">{% trans "Activity" %}</label>
+              <select name="activity_data" id="activity_data" class="form-select" required>
+                <option value="" selected disabled>{% trans "Select Activity" %}</option>
+                {% for activity in activities %}
+                  <option value="{{ activity.id }}">{{ activity.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label">{% trans "District" %}</label>
+              <select name="district_data" id="district_data" class="form-select" required></select>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label">{% trans "Village" %}</label>
+              <select name="village_data" id="village_data" class="form-select" required>
+                <option value="" selected disabled>{% trans "Select Village" %}</option>
+              </select>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label">{% trans "Status" %}</label>
+              <select name="status_val" id="status_val" class="form-select" required>
+                <option value="" selected disabled>{% trans "Select Status" %}</option>
+                <option value="Completed">{% trans "Completed" %}</option>
+                <option value="Scheduled">{% trans "Scheduled" %}</option>
+              </select>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label">{% trans "Implemented Date" %}</label>
+              <input type="date" class="form-control" id="implemented_date">
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label">{% trans "Remark" %}</label>
+              <input type="text" class="form-control" id="remark" placeholder="Enter Remark">
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer py-1">
+          <button type="button" class="btn btn-secondary csvBtn-Grey" data-bs-dismiss="modal">{% trans "Close" %}</button>
+          <button type="submit" id="activityStatusSubmitBtn" class="csvBtn">{% trans "Update" %}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+<!-- Upload Training Master Modal -->
+<div class="modal fade" id="uploadTrainingMasterModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header model-bg">
+                <h5 class="modal-title">{% trans "Upload Training Master Data" %}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="trainingMasterFile" class="form-label">{% trans "Select Excel/CSV File" %}</label>
+                    <input type="file" class="form-control" id="trainingMasterFile" accept=".csv,.xlsx,.xls">
+                    <div class="form-text">{% trans "File should contain: Activity, Activity_bn, Activity_as columns" %}</div>
+                    <div class="alert alert-info mt-2">
+                        <strong>{% trans "Note:" %}</strong> {% trans "To preserve Bengali/Assamese characters, open your Excel file → Go to File → Save As → Choose CSV UTF-8 (Comma delimited) (*.csv)" %}
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer py-1">
+                <button type="button" class="csvBtn-Grey" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
+                <button type="button" class="csvBtn" id="uploadTrainingMaster">{% trans "Upload" %}</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extrajs %}
+<script src="{% static 'js/utils/downloadTableData.js' %}"></script>
+
+<script src="{% static 'js/training/training_list.js' %}"></script>
+<script src="{% static 'js/administrator/training/training_list_master.js' %}"></script>
+<script src="{% static 'js/utils/tabs.js' %}"></script>
+
+<script src="{% static 'js/utils/summery.js' %}"></script>
+
+
+
+
+{% endblock %}

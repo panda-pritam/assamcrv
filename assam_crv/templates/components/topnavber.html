@@ -1,0 +1,179 @@
+{% load static %}
+{% load i18n %}
+<section id="header">
+    {% comment %} Desltop header {% endcomment %}
+    <div class="container-fluid d-none d-xl-block">
+        <div class="row">
+            <div class="col-md-12">
+                <header>
+                    <div class="logo__div">
+                        <div class="toggle-btn d-block d-md-none" onclick="toggleSideBarInMob()">&#9776;</div>
+                        <a href="{% url 'home' %}">
+                            <div class="logo">
+                                <img src="{% static 'images/AIRBMP_logo.svg' %}" class="img-fluid">
+                            </div>
+                        </a>
+                    </div>
+                    <div class="dropdown__wrapper">
+                        <div class="dropdown" style="display:inline-block; margin-right: 10px;">
+                            <button class="btn-outline-light d-flex align-items-center bg-transparent gap-2" type="button" data-bs-toggle="dropdown" style="height: 33px; padding: 8px 16px;">
+                                <i class="fas fa-language"></i>
+                                <span>{% trans "English" %}</span>
+                                <i class="fas fa-chevron-down" style="font-size: 0.8rem;"></i>
+                            </button>
+                            <ul class="dropdown-menu">
+                                {% get_current_language as LANGUAGE_CODE %}
+                                {% for lang_code, lang_name in LANGUAGES %}
+                                    <li>
+                                        <form action="{% url 'set_language' %}" method="post" style="margin: 0;">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="language" value="{{ lang_code }}">
+                                            <button type="submit" class="dropdown-item" {% if lang_code == LANGUAGE_CODE %}style="font-weight: bold;"{% endif %}>
+                                                {% trans lang_name %}
+                                            </button>
+                                        </form>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+
+                        <button class=" btn-outline-light help_btn d-flex align-items-center gap-2" style="height: 33px; padding: 8px 16px;">
+                            <i class="fas fa-question-circle"></i>
+                            <span>{% trans "HELP" %}</span>
+                        </button>
+                        <!-- Language Switcher -->
+
+                        <div class="dropdown login_dropdown">
+                            {% if request.user.is_authenticated %}
+                            <button class="dropdown-toggle d-flex align-items-center gap-2" type="button" data-bs-toggle="dropdown" style="height: 40px; padding: 8px 16px;">
+                                <div class="rounded-circle bg-white  d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                                    <i class="fas fa-user "></i>
+                                </div>
+                                <div class="text-start login_btn">
+                                    <div>
+                                    <div class="small">{% trans "CRV Admin" %}</div>
+                                    <div class="small small_text ">ASDMA</div>
+                                    </div>
+                                    <div class="down_icon">
+                                    <svg class="svg-inline--fa fa-chevron-down" style="font-size: 0.8rem;" aria-hidden="true" focusable="false" data-prefix="fas" data-icon="chevron-down" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" data-fa-i2svg=""><path fill="currentColor" d="M233.4 406.6c12.5 12.5 32.8 12.5 45.3 0l192-192c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L256 338.7 86.6 169.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l192 192z"></path></svg>
+                                </div></div>
+
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item" href="{% url 'profile' %}"><i class="fas fa-user me-2"></i>{% trans "Profile" %}</a></li>
+                           {% if "administrator" in request.path %}
+    <li>
+            <a class="dropdown-item" href="/">
+            <i class="fas fa-home me-2"></i>{% trans "Dashboard" %}
+        </a>
+    </li>
+{% else %}
+    <li>
+   
+         <a class="dropdown-item" href="/administrator/training_activities">
+            <i class="fas fa-cog me-2"></i>{% trans "Administrator" %}
+        </a>
+    </li>
+{% endif %}
+
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <form method="post" action="{% url 'logout' %}">
+                                        {% csrf_token %}
+                                        <button type="submit" class="dropdown-item">
+                                            <i class="fas fa-sign-out-alt me-2"></i>{% trans "Logout" %}
+                                        </button>
+                                    </form>
+                                </li>
+   
+                            </ul>
+                            {% else %}
+                         <a href="{% url 'login' %}" 
+   class="btn btn-outline-light d-flex align-items-center gap-2 custom-login-btn">
+    <i class="fas fa-sign-in-alt"></i>
+    <span>{% trans "Login" %}</span>
+    <!-- <i class="fas fa-chevron-down"></i> -->
+</a>
+
+                            {% endif %}
+                        </div>
+
+                    </div>
+                </header>
+            </div>
+        </div>
+    </div>
+
+    {% comment %} Mobile header {% endcomment %}
+    <div class="container-fluid d-block d-xl-none">
+        <div class="row">
+            <div class="col-12">
+                <header class=" d-flex flex-row  justify-content-between align-items-center py-1 px-1 px-md-3 gap-2">
+                    <!-- Hamburger Menu -->
+                    <div class="hamburger-menu d-md-none" onclick="toggleSideBarInMob()" style="width: 4rem; height: 3rem; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.15);">
+                        <span style="color: #ffffff; font-size: 1.5rem;">&#9776;</span>
+                    </div>
+                    
+                    <!-- Logo -->
+                    <a href="{% url 'home' %}" class="mobile-logo">
+                        <img src="{% static '/images/AIRBMP_logo.svg' %}" class="img-fluid" style="height: 40px;">
+                    </a>
+                    
+                    <!-- Profile Dropdown -->
+                    <div class="mobile-profile-dropdown" style="position: relative;">
+                        {% if request.user.is_authenticated %}
+                        <button onclick="toggleMobileDropdown()" style="width: 40px; height: 40px; border-radius: 50%; background: #245FAE; border: none; display: flex; align-items: center; justify-content: center; cursor: pointer;">
+                            <img src="{% static 'images/user.svg' %}" class="img-fluid">
+                        </button>
+                        <div id="mobileDropdownMenu" style="display: none; position: absolute; right: 0; top: 45px; background: white; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); min-width: 200px; z-index: 1000;">
+                            <div style="padding: 12px; border-bottom: 1px solid #eee; color: #666;">
+                                <strong>
+                                     {% if request.user.first_name %}
+                                {{ request.user.first_name }}
+                                {% else %}
+                                {{ request.user.username }}
+                                {% endif %}
+                                </strong>
+                                <br><small style="color: #666;">{{ request.user.role }}</small>
+                            </div>
+                            <a href="{% url 'profile' %}" style="display: block; padding: 8px 12px; text-decoration: none; color: #333; border-bottom: 1px solid #eee;">{% trans "My Profile" %}</a>
+                            <a href="#" style="display: block; padding: 8px 12px; text-decoration: none; color: #333; border-bottom: 1px solid #eee;">{% trans "Help" %}</a>
+                            <form action="{% url 'set_language' %}" method="post" style="padding: 8px 12px; border-bottom: 1px solid #eee;">
+                                {% csrf_token %}
+                                <select name="language" onchange="this.form.submit()" style="width: 100%; padding: 4px; border: 1px solid #ddd; border-radius: 4px;">
+                                    {% get_current_language as LANGUAGE_CODE %}
+                                    {% for lang_code, lang_name in LANGUAGES %}
+                                        <option value="{{ lang_code }}" {% if lang_code == LANGUAGE_CODE %}selected{% endif %}>
+                                            {% trans lang_name %}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </form>
+                            <a href="{% url 'logout' %}" style="display: block; padding: 8px 12px; text-decoration: none; color: #dc3545;">{% trans "Logout" %}</a>
+                        </div>
+                        {% else %}
+                        <a href="{% url 'login' %}" style="width: 40px; height: 40px; border-radius: 50%; background: #245FAE; display: flex; align-items: center; justify-content: center; text-decoration: none; color: white;"><i class="fa-solid fa-right-to-bracket"></i></a>
+                        {% endif %}
+                    </div>
+                </header>
+            </div>
+        </div>
+    </div>
+
+</section>
+
+<script>
+function toggleMobileDropdown() {
+    const dropdown = document.getElementById('mobileDropdownMenu');
+    dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+}
+
+// Close dropdown when clicking outside
+document.addEventListener('click', function(event) {
+    const dropdown = document.getElementById('mobileDropdownMenu');
+    const button = event.target.closest('.mobile-profile-dropdown');
+    if (!button && dropdown) {
+        dropdown.style.display = 'none';
+    }
+});
+</script>

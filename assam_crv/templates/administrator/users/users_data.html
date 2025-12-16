@@ -1,0 +1,267 @@
+{% extends "administrator/admin_base.html" %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "User List" %}{% endblock %}
+
+{% block extraheader %}
+<style>
+    .row-border td {
+        border-bottom: 1px solid #d55deb !important;
+    }
+</style>
+<script src="{% static 'js/utils/DataTableFunction.js' %}"></script>
+{% endblock %}
+
+{% block content %}
+
+{% trans "Users" as Users %}
+{% include "components/breadcrumb.html" with breadcrumb_title=Users %}
+<!-- Villages Activities Section -->
+<div id="activities-villages">
+  <section id="filter" class="">
+    <div class=" container-fluid ">
+      <div class="row align-items-end">
+        <!-- District -->
+        <div class="col-md-3 mb-2">
+        {% comment %} <label class="form-label" for="district">{% trans "District" %}</label> {% endcomment %} 
+          <select name="district" id="district" class="form-select select2">
+            <option value="" selected disabled>{% trans "Select District" %}</option>
+          </select>
+        </div>
+
+        <!-- Circle -->
+        <div class="col-md-3 mb-2">
+          {% comment %} <label class="form-label" for="circle">{% trans "Circle" %}</label> {% endcomment %}
+          <select name="circle" id="circle" class="form-select select2">
+            <option value="" selected disabled>{% trans "Select Circle" %}</option>
+          </select>
+        </div>
+
+        <!-- Gram Panchayat -->
+        <div class="col-md-3 mb-2">
+          {% comment %} <label class="form-label" for="gram_panchayat">{% trans "Gram Panchayat" %}</label> {% endcomment %}
+          <select name="gram_panchayat" id="gram_panchayat" class="form-select select2">
+            <option value="" selected disabled>{% trans "Select Gram Panchayat" %}</option>
+          </select>
+        </div>
+
+        <!-- Village -->
+        <div class="col-md-3 mb-2">
+          {% comment %} <label class="form-label" for="village">{% trans "Village" %}</label> {% endcomment %}
+          <select name="village" id="village" class="form-select select2">
+            <option value="" selected disabled>{% trans "Select Village" %}</option>
+          </select>
+        </div>
+
+        
+      </div>
+     
+    </div>
+    
+  </section>
+</div>
+<!-- Summary Section -->
+<div class="container-fluid">
+  <div class="summary-line">
+      <i class="fas fa-info-circle"></i>
+      <span id="summary-text">
+          <img src="{% static 'images/tube-spinner.svg' %}" id="summary-loader" style="width: 20px; height: 20px; margin-right: 8px;" alt="Loading...">
+        </span>
+  </div>
+</div>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="user__wrapper_admin">
+                <div class="mitigation__header d-flex align-items-center justify-content-between">
+                    <h5 class="secondary__heading">{% trans "User List" %}</h5>
+                    <!-- Add New User Button -->
+                    <div class="">
+                      <button type="button" class="btn btn-primary custom-purple csvBtn" id="addActivityBtn" data-bs-toggle="modal" data-bs-target="#registerUserModal">
+                        <i class="fa-solid fa-plus"></i> {% trans "Add User" %}
+                      </button>
+                    </div>
+                </div>
+                <div class="w-100 Mitigation__table custom-table cstmDataTbl">
+                    <table class="table table-bordered overflow-scroll" id="users_data_table">
+                   <thead> 
+                        <tr>
+                            <th class="text-center">{% trans "Sr. No" %}</th>
+                            <th  class="text-start">{% trans "Department" %}</th>
+                            <th  class="text-start">{% trans "Role" %}</th>
+                            <th class="text-start">{% trans "Username" %}</th>
+                            <th  class="text-start">{% trans "District" %}</th>
+                            <th class="text-start" >{% trans "Circle" %}</th>
+                            <th  class="text-start">{% trans "Gram Panchayat" %}</th>
+                            <th  class="text-start">{% trans "Village" %}</th>
+                            <th class="text-start" width="10%">{% trans "Actions" %}</th>
+
+                        </tr>
+                        </thead> 
+                            <tbody id="users_data_body">
+                            </tbody>
+                    </table>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+
+
+
+<!-- Register User Modal -->
+<!-- Register/Edit User Modal -->
+<div class="modal fade" id="registerUserModal" tabindex="-1" aria-labelledby="registerUserModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <form id="registerUserForm">
+        {% csrf_token %}
+        <div class="modal-header model-bg">
+          <h5 class="modal-title" id="registerUserModalLabel">{% trans "Register New User" %}</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans 'Close' %}"></button>
+        </div>
+
+        <div class="modal-body">
+          <div class="row">
+            <!-- Username -->
+            <div class="col-md-6 ">
+              <label class="form-label">{% trans "Username" %}</label>
+              <input type="text" class="form-control" id="username" placeholder="{% trans 'Enter username' %}" required>
+            </div>
+
+            <!-- Password -->
+            <div class="col-md-6 ">
+              <label class="form-label">{% trans "Password" %}</label>
+              <input type="password" class="form-control" id="password" placeholder="{% trans 'Enter password (min 8 chars)' %}" required minlength="8">
+            </div>
+
+            <!-- First Name -->
+            <div class="col-md-6 mt-3">
+              <label class="form-label">{% trans "First Name" %}</label>
+              <input type="text" class="form-control" id="first_name" placeholder="{% trans 'Enter first name' %}" required>
+            </div>
+
+            <!-- Last Name -->
+            <div class="col-md-6  mt-3">
+              <label class="form-label">{% trans "Last Name" %}</label>
+              <input type="text" class="form-control" id="last_name" placeholder="{% trans 'Enter last name' %}" required>
+            </div>
+
+            <!-- Email -->
+            <div class="col-md-6  mt-3">
+              <label class="form-label">{% trans "Email" %}</label>
+              <input type="email" class="form-control" id="email" placeholder="{% trans 'Enter email address' %}" required>
+            </div>
+
+            <!-- Mobile -->
+            <div class="col-md-6  mt-3">
+              <label class="form-label">{% trans "Mobile" %}</label>
+              <input type="number" class="form-control" id="mobile" placeholder="{% trans 'Enter mobile number' %}">
+            </div>
+
+            <!-- Role -->
+            <div class="col-md-6  mt-3">
+              <label class="form-label">{% trans "Department" %}</label>
+              <select id="department" class="form-select drpdwn_slct">
+                <option selected disabled>{% trans "Select Department" %}</option>
+                {% for department in departments %}
+                  <option value="{{ department.id }}" data-role-name="{{ department.name }}">{{ department.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <!-- Role -->
+            <div class="col-md-6  mt-3">
+              <label class="form-label">{% trans "Role" %}</label>
+              <select id="role" class="form-select drpdwn_slct">
+                <option selected disabled>{% trans "Select Role" %}</option>
+                {% for role in roles %}
+                  <option value="{{ role.id }}" data-role-name="{{ role.name }}">{{ role.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <!-- District -->
+            <div class="col-md-6  mt-3" style="display: none;" id="district_div">
+              <label class="form-label">{% trans "District" %}</label>
+              <select id="district_val" class="form-select drpdwn_slct">
+                <option value="" selected disabled>{% trans "Select District" %}</option>
+                {% comment %} {% for district in districts %}
+                  <option value="{{ district.id }}">{{ district.name }}</option>
+                {% endfor %} {% endcomment %}
+              </select>
+            </div>
+
+            <!-- Circle -->
+            <div class="col-md-6 mt-3 " style="display: none;" id="circle_div">
+              <label class="form-label">{% trans "Circle" %}</label>
+              <select id="circle_val" class="form-select drpdwn_slct">
+                <option value="" selected disabled>{% trans "Select Circle" %}</option>
+                {% comment %} {% for circle in circles %}
+                  <option value="{{ circle.id }}">{{ circle.name }}</option>
+                {% endfor %} {% endcomment %}
+              </select>
+            </div>
+
+            <!-- Gram Panchayat -->
+            <div class="col-md-6  mt-3" style="display: none;" id="gram_panchayat_div">
+              <label class="form-label">{% trans "Gram Panchayat" %}</label>
+              <select id="gram_panchayat_val" class="form-select drpdwn_slct">
+                <option value="" selected disabled>{% trans "Select GP" %}</option>
+                {% comment %} {% for gp in gram_panchayats %}
+                  <option value="{{ gp.id }}">{{ gp.name }}</option>
+                {% endfor %} {% endcomment %}
+              </select>
+            </div>
+
+            <!-- Village -->
+            <div class="col-md-6  mt-3" style="display: none;" id="village_div">
+              <label class="form-label">{% trans "Village" %}</label>
+              <select id="village_val" class="form-select drpdwn_slct">
+                <option value="" selected disabled>{% trans "Select Village" %}</option>
+                {% comment %} {% for village in villages %}
+                  <option value="{{ village.id }}">{{ village.name }}</option>
+                {% endfor %} {% endcomment %}
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary csvBtn-Grey" data-bs-dismiss="modal">{% trans "Close" %}</button>
+          <button type="submit" class="csvBtn" id="registerUserBtn">{% trans "Register" %}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+
+{% endblock %}
+
+{% block extrajs %}
+<script src="{% static 'js/administrator/users/users.js' %}"></script>
+<script src="{% static 'js/utils/summery.js' %}"></script>
+<script>
+  function confirmstatusDelete(StatusId) {
+    Swal.fire({
+        title: '{% trans "Are you sure?" %}',
+        text: '{% trans "Do you really want to delete this training activity status?" %}',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: '{% trans "Yes, delete it!" %}',
+        cancelButtonText: '{% trans "Cancel" %}'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            window.location.href = '/api/users/' + StatusId + '/delete/';
+        }
+    });
+}
+
+</script>
+{% endblock %}

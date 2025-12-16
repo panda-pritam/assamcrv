@@ -1,0 +1,355 @@
+{% extends "administrator/admin_base.html" %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "Task Force Management" %}{% endblock %}
+
+{% block extraheader %}
+<script src="{% static 'js/utils/DataTableFunction.js' %}"></script>
+<script src="{% static 'js/utils/AddSelect2Options.js' %}"></script>
+{% endblock %}
+
+{% block content %}
+
+{% trans "Task Force Management" as task_force_title %}
+{% include "components/breadcrumb.html" with breadcrumb_title=task_force_title %}
+
+<section id="filter">
+    <div class="container-fluid">
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="secondary__heading">{% trans "Task Force Members" %}</h5>
+            <div class="d-flex gap-2">
+                <button type="button" class="btn btn-primary custom-purple d-flex align-items-center justify-content-center gap-1 csvBtn" data-bs-toggle="modal" data-bs-target="#uploadTaskForceModal">
+                    <i class="fa fa-upload"></i> {% trans "Upload Excel" %}
+                </button>
+                <button type="button" class="btn btn-primary custom-purple d-flex align-items-center justify-content-center gap-1 csvBtn" data-bs-toggle="modal" data-bs-target="#addTaskForceModal">
+                    <i class="fa fa-plus"></i> <span class="d-none d-md-block">{% trans "Add New Member" %}</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Filter Section -->
+<section id="filter">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-4 col-xl-2 col-sm-6 d-flex flex-column">
+                 <label class="form-label fw-medium" for="district">{% trans "District" %}</label>
+                <select name="district" id="district" class="form-select select2">
+                    <option value="" selected disabled>{% trans "Select Districts" %}</option>
+                </select>
+            </div>
+            <div class="col-md-4 col-xl-2 col-sm-6 d-flex flex-column">
+                 <label class="form-label fw-medium" for="circle">{% trans "Circle" %}</label>
+                <select name="circle" id="circle" class="form-select select2">
+                    <option value="" selected disabled>{% trans "Select Circle" %}</option>
+                </select>
+            </div>
+            <div class="col-md-4 col-xl-2 col-sm-6 d-flex flex-column">
+                 <label class="form-label fw-medium" for="gram_panchayat">{% trans "Gram Panchayat" %}</label>
+                <select name="gram_panchayat" id="gram_panchayat" class="form-select select2">
+                    <option value="" selected disabled>{% trans "Select Gram Panchayat" %}</option>
+                </select>
+            </div>
+            <div class="col-md-4 col-xl-2 col-sm-6 d-flex flex-column">
+                <label class="form-label fw-medium" for="village">{% trans "Village" %}</label> 
+                <select name="village" id="village" class="form-select select2">
+                    <option value="" selected disabled>{% trans "Select Villages" %}</option>
+                </select>
+            </div>
+            <div class="col-md-4 col-xl-2 col-sm-6 d-flex flex-column">
+                <label class="form-label fw-medium" for="village">{% trans "Select Team Type" %}</label> 
+                <select name="team_type" id="team_type" class="form-select select2">
+                    <option value="" selected disabled>{% trans "Select Team Type" %}</option>
+                    <option value="VLCDMC">VLCDMC</option>
+                    <option value="Search & rescue">Search & rescue</option>
+                    <option value="Relief management team">Relief management team</option>
+                    <option value="Shelter Management team">Shelter Management team</option>
+                    <option value="First Aid team">First Aid team</option>
+                    <option value="Water & Sanitation">Water & Sanitation</option>
+                </select>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Summary Section -->
+<div class="container-fluid">
+    <div class="summary-line">
+        <i class="fas fa-info-circle"></i>
+        <span id="summary-text">
+            <img src="{% static 'images/tube-spinner.svg' %}" id="summary-loader" style="width: 20px; height: 20px; margin-right: 8px;" alt="Loading...">
+          </span>
+    </div>
+</div>
+
+<!-- Task Force Table -->
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="Mitigation__wrapper_admin_village_rescue_eqp custom_height">
+                <div class="mitigation__header d-flex align-items-center justify-content-between card_header">
+                    <h6 class="">{% trans "Task Force Members List" %}</h6>
+                    <button type="button" class="btn btn-sm csvBtn" onclick="downloadTableAsCSV('taskforce_table', 'taskforce_members')" style="background-color: #245FAE; color: white; border: none;">
+                        <i class="fa fa-download DwnldIcon"></i> {% trans "Download CSV" %}
+                    </button>
+                </div>
+                <div class="w-100 Mitigation__table custom-table cstmDataTbl">
+                    <table class="table table-bordered" id="taskforce_table">
+                        <thead>
+                            <tr>
+                                <th>{% trans "Sr. No" %}</th>
+                                <th>{% trans "Name" %}</th>
+                                <th>{% trans "Father's Name" %}</th>
+                                <th>{% trans "Gender" %}</th>
+                                <th>{% trans "Phone Number" %}</th>
+                                <th>{% trans "Position/Responsibility" %}</th>
+                                <th>{% trans "District Name" %}</th>
+                                <!-- <th>{% trans "Circle Name" %}</th> -->
+                                <!-- <th>{% trans "Gram Panchayat" %}</th> -->
+                                <th>{% trans "Village Name" %}</th>
+                                <th>{% trans "Team Type" %}</th>
+                                <th>{% trans "Occupation" %}</th>
+                                <th>{% trans "Actions" %}</th>
+                            </tr>
+                        </thead>
+                        <tbody id="taskforce_body">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Task Force Modal -->
+<div class="modal fade" id="addTaskForceModal" tabindex="-1" aria-labelledby="addTaskForceModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content removeOutline">
+            <div class="modal-header model-bg">
+                <h5 class="modal-title" id="addTaskForceModalLabel">{% trans "Add Task Force Member" %}</h5>
+                <button type="button" class="btn-close ms-0 position-absolute end-0 me-3" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Team Type Selection -->
+                <div class="mb-4">
+                    <label for="add_team_type" class="form-label">{% trans "Select Team Type" %} <span class="text-danger">*</span></label>
+                    <select class="form-select" id="add_team_type" required>
+                        <option value="" selected disabled>{% trans "Select Team Type" %}</option>
+                        <option value="VLCDMC">VLCDMC</option>
+                        <option value="Search & rescue">Search & rescue</option>
+                        <option value="Relief management team">Relief management team</option>
+                        <option value="Shelter Management team">Shelter Management team</option>
+                        <option value="First Aid team">First Aid team</option>
+                        <option value="Water & Sanitation">Water & Sanitation</option>
+                    </select>
+                </div>
+
+                <form id="add_taskforce_form" class="removeOutline">
+                    {% csrf_token %}
+                    <div class="row">
+                        <div class="mb-3 col-6 col-md-4">
+                            <label for="add_district" class="form-label">{% trans "District" %} <span class="text-danger">*</span></label>
+                            <select class="form-select" id="add_district" required>
+                                <option value="" selected disabled>{% trans "Select District" %}</option>
+                            </select>
+                        </div>
+                        <div class="mb-3 col-6 col-md-4">
+                            <label for="add_circle" class="form-label">{% trans "Circle" %} <span class="text-danger">*</span></label>
+                            <select class="form-select" id="add_circle" required>
+                                <option value="" selected disabled>{% trans "Select Circle" %}</option>
+                            </select>
+                        </div>
+                        <div class="mb-3 col-6 col-md-4">
+                            <label for="add_gram_panchayat" class="form-label">{% trans "Gram Panchayat" %} <span class="text-danger">*</span></label>
+                            <select class="form-select" id="add_gram_panchayat" required>
+                                <option value="" selected disabled>{% trans "Select Gram Panchayat" %}</option>
+                            </select>
+                        </div>
+                        <div class="mb-3 col-6 col-md-4">
+                            <label for="add_village" class="form-label">{% trans "Village" %} <span class="text-danger">*</span></label>
+                            <select class="form-select" id="add_village" required>
+                                <option value="" selected disabled>{% trans "Select Village" %}</option>
+                            </select>
+                        </div>
+                        <div class="mb-3 col-6 col-md-4">
+                            <label for="add_fullname" class="form-label">{% trans "Full Name" %} <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="add_fullname" required>
+                        </div>
+                        <div class="mb-3 col-6 col-md-4">
+                            <label for="add_father_name" class="form-label">{% trans "Father's Name" %} <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="add_father_name" required>
+                        </div>
+                        <div class="mb-3 col-6 col-md-4">
+                            <label for="add_gender" class="form-label">{% trans "Gender" %} <span class="text-danger">*</span></label>
+                            <select class="form-select" id="add_gender" required>
+                                <option value="" selected disabled>{% trans "Select Gender" %}</option>
+                                <option value="Male">{% trans "Male" %}</option>
+                                <option value="Female">{% trans "Female" %}</option>
+                                <option value="Other">{% trans "Other" %}</option>
+                            </select>
+                        </div>
+                        <div class="mb-3 col-6 col-md-4">
+                            <label for="add_mobile_number" class="form-label">{% trans "Phone Number" %} <span class="text-danger">*</span></label>
+                            <input type="tel" class="form-control" id="add_mobile_number" required>
+                        </div>
+                        <div class="mb-3 col-6 col-md-4">
+                            <label for="add_position_responsibility" class="form-label">{% trans "Position/Responsibility" %} <span class="text-danger">*</span></label>
+                            <select class="form-select" id="add_position_responsibility" required>
+                                <option value="" selected disabled>{% trans "Select Position" %}</option>
+                                <option value="Team member">{% trans "Team member" %}</option>
+                                <option value="Team leader">{% trans "Team leader" %}</option>
+                            </select>
+                        </div>
+                        <div class="mb-3 col-6 col-md-4">
+                            <label for="add_occupation" class="form-label">{% trans "Occupation" %}</label>
+                            <input type="text" class="form-control" id="add_occupation">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer py-1">
+                <button type="button" class="btn btn-secondary csvBtn-Grey" data-bs-dismiss="modal">{% trans "Close" %}</button>
+                <button type="button" class="btn btn-primary custom-purple csvBtn" onclick="addTaskForceMember()">{% trans "Save" %}</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Task Force Modal -->
+<div class="modal fade" id="editTaskForceModal" tabindex="-1" aria-labelledby="editTaskForceModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content removeOutline">
+            <div class="modal-header model-bg">
+                <h5 class="modal-title" id="editTaskForceModalLabel">{% trans "Edit Task Force Member" %}</h5>
+                <button type="button" class="btn-close ms-0 position-absolute end-0 me-3" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="edit_taskforce_form" class="removeOutline">
+                    {% csrf_token %}
+                    <input type="hidden" id="edit_member_id">
+                    <div class="row">
+                        <div class="mb-3 col-6 col-md-4">
+                            <label for="edit_district" class="form-label">{% trans "District" %} <span class="text-danger">*</span></label>
+                            <select class="form-select" id="edit_district" required>
+                                <option value="" selected disabled>{% trans "Select District" %}</option>
+                            </select>
+                        </div>
+                        <div class="mb-3 col-6 col-md-4">
+                            <label for="edit_circle" class="form-label">{% trans "Circle" %} <span class="text-danger">*</span></label>
+                            <select class="form-select" id="edit_circle" required>
+                                <option value="" selected disabled>{% trans "Select Circle" %}</option>
+                            </select>
+                        </div>
+                        <div class="mb-3 col-6 col-md-4">
+                            <label for="edit_gram_panchayat" class="form-label">{% trans "Gram Panchayat" %} <span class="text-danger">*</span></label>
+                            <select class="form-select" id="edit_gram_panchayat" required>
+                                <option value="" selected disabled>{% trans "Select Gram Panchayat" %}</option>
+                            </select>
+                        </div>
+                        <div class="mb-3 col-6 col-md-4">
+                            <label for="edit_village" class="form-label">{% trans "Village" %} <span class="text-danger">*</span></label>
+                            <select class="form-select" id="edit_village" required>
+                                <option value="" selected disabled>{% trans "Select Village" %}</option>
+                            </select>
+                        </div>
+                        <div class="mb-3 col-6 col-md-4">
+                            <label for="edit_fullname" class="form-label">{% trans "Full Name" %} <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="edit_fullname" required>
+                        </div>
+                        <div class="mb-3 col-6 col-md-4">
+                            <label for="edit_father_name" class="form-label">{% trans "Father's Name" %} <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="edit_father_name" required>
+                        </div>
+                        <div class="mb-3 col-6 col-md-4">
+                            <label for="edit_gender" class="form-label">{% trans "Gender" %} <span class="text-danger">*</span></label>
+                            <select class="form-select" id="edit_gender" required>
+                                <option value="" selected disabled>{% trans "Select Gender" %}</option>
+                                <option value="Male">{% trans "Male" %}</option>
+                                <option value="Female">{% trans "Female" %}</option>
+                                <option value="Other">{% trans "Other" %}</option>
+                            </select>
+                        </div>
+                        <div class="mb-3 col-6 col-md-4">
+                            <label for="edit_mobile_number" class="form-label">{% trans "Phone Number" %} <span class="text-danger">*</span></label>
+                            <input type="tel" class="form-control" id="edit_mobile_number" required>
+                        </div>
+                        <div class="mb-3 col-6 col-md-4">
+                            <label for="edit_position_responsibility" class="form-label">{% trans "Position/Responsibility" %} <span class="text-danger">*</span></label>
+                            <select class="form-select" id="edit_position_responsibility" required>
+                                <option value="" selected disabled>{% trans "Select Position" %}</option>
+                                <option value="Team member">{% trans "Team member" %}</option>
+                                <option value="Team leader">{% trans "Team leader" %}</option>
+                            </select>
+                        </div>
+                        <div class="mb-3 col-6 col-md-4">
+                            <label for="edit_team_type" class="form-label">{% trans "Team Type" %} <span class="text-danger">*</span></label>
+                            <select class="form-select" id="edit_team_type" required>
+                                <option value="" selected disabled>{% trans "Select Team Type" %}</option>
+                                <option value="VLCDMC">VLCDMC</option>
+                                <option value="Search & rescue">Search & rescue</option>
+                                <option value="Relief management team">Relief management team</option>
+                                <option value="Shelter Management team">Shelter Management team</option>
+                                <option value="First Aid team">First Aid team</option>
+                                <option value="Water & Sanitation">Water & Sanitation</option>
+                            </select>
+                        </div>
+                        <div class="mb-3 col-6 col-md-4">
+                            <label for="edit_occupation" class="form-label">{% trans "Occupation" %}</label>
+                            <input type="text" class="form-control" id="edit_occupation">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer py-1">
+                <button type="button" class="btn btn-secondary csvBtn-Grey" data-bs-dismiss="modal">{% trans "Close" %}</button>
+                <button type="button" class="btn btn-primary custom-purple csvBtn" onclick="updateTaskForceMember()">{% trans "Update" %}</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Upload Task Force Modal -->
+<div class="modal fade" id="uploadTaskForceModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">{% trans "Upload Task Force Data" %}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="upload_team_type" class="form-label">{% trans "Select Team Type" %} <span class="text-danger">*</span></label>
+                    <select class="form-select" id="upload_team_type" required>
+                        <option value="" selected disabled>{% trans "Select Team Type" %}</option>
+                        <option value="VLCDMC">VLCDMC</option>
+                        <option value="Search & rescue">Search & rescue</option>
+                        <option value="Relief management team">Relief management team</option>
+                        <option value="Shelter Management team">Shelter Management team</option>
+                        <option value="First Aid team">First Aid team</option>
+                        <option value="Water & Sanitation">Water & Sanitation</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="taskforceFile" class="form-label">{% trans "Select Excel/CSV File" %}</label>
+                    <input type="file" class="form-control" id="taskforceFile" accept=".csv,.xlsx,.xls">
+                    <div class="form-text">{% trans "File should contain: Name, Father_name, Gender, Phone_number, Position/Responsibility, Occupation, Village_Id, District_Name columns" %}</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="csvBtn-Grey" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
+                <button type="button" class="csvBtn" id="uploadTaskForce">{% trans "Upload" %}</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extrajs %}
+<script src="{% static 'js/utils/sideBarItemColorChange.js' %}"></script>
+<script src="{% static 'js/utils/downloadTableData.js' %}"></script>
+<script src="{% static 'js/utils/csrf.js' %}"></script>
+<script src="{% static 'js/administrator/taskforce/taskforce_admin.js' %}"></script>
+{% endblock %}

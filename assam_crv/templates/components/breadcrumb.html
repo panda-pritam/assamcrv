@@ -1,0 +1,31 @@
+{% load static %}
+{% load i18n %}
+<section id="broadcrump">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="broadcrump__wrapper">
+                    <ul>
+                        <li><i class="fa-solid fa-house home_icon" ></i></li>
+                        <li>
+                            <span class="me-2"><i class="fa-solid fa-angle-right" ></i></span><span class="BrdCrmb">{{ breadcrumb_title }}</span>
+                        </li>
+                    </ul>
+                    <div class="right_div">
+                       
+                        {% comment %} <ul>
+                            <li>{% trans "CRV Framework" %}</li>
+                            <li>{% trans "VDMP Process" %}</li>
+                        </ul> {% endcomment %}
+
+                         {% if show_print_button %}
+                            <button class="border-0 rounded-1 d-flex align-items-center gap-2 px-2 printCss " onclick="{{ print_function|default:'window.print()' }}">
+                                <i><img src="{% static 'images/Print_icon.svg' %}" class="img-fluid PrintIcn"></i> {% trans "Print Page" %}
+                            </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

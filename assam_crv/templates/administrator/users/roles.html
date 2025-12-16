@@ -1,0 +1,158 @@
+{% comment %} {% extends "administrator/admin_base.html" %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "Roles Management" %}{% endblock %}
+
+{% block extraheader %}
+<style>
+    .row-border td {
+        border-bottom: 1px solid #d55deb !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<section id="broadcrump">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="broadcrump__wrapper">
+                    <ul>
+                        <li>
+                            <span><i class="fa-solid fa-angle-right" style="color: #000;"></i></span> {% trans "Roles Management" %}
+                        </li>
+                    </ul>
+                    <div class="right_div">
+                        <ul>
+                            <li>{% trans "CRV Framework" %}</li>
+                            <li>{% trans "VDMP Process" %}</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="Mitigation__wrapper">
+                <div class="mitigation__header d-flex justify-content-between align-items-center  mt-2">
+                    <h5>{% trans "Roles List" %}</h5>
+                    <button type="button" class="btn btn-primary custom-purple" onclick="openModal()">{% trans "Add New Role" %}</button>
+                </div>
+                <div class="Mitigation__table custom-table">
+                    <table class="table table-bordered" id="roles_table">
+                        <thead>
+                        <tr>
+                            <th style="width:5%;">{% trans "Sr. No" %}</th>
+                            <th style="width:20%;">{% trans "Name" %}</th>
+                            <th style="width:15%;">{% trans "Name (Bengali)" %}</th>
+                            <th style="width:15%;">{% trans "Name (Assamese)" %}</th>
+                            <th style="width:25%;">{% trans "Details" %}</th>
+                            <th style="width:20%;">{% trans "Actions" %}</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                            {% for role in roles %}
+                                <tr>
+                                    <td>{{ forloop.counter }}</td>
+                                    <td>{{ role.name }}</td>
+                                    <td>{{ role.name_bn|default:"-" }}</td>
+                                    <td>{{ role.name_as|default:"-" }}</td>
+                                    <td>{{ role.details|default:"-" }}</td>
+                                    <td>
+                                        <button type="button" class="btn btn-outline-primary custom-purple" onclick="editRole({{ role.id }}, '{{ role.name }}', '{{ role.name_bn|default:"" }}', '{{ role.name_as|default:"" }}', '{{ role.details|default:"" }}')">
+                                            <i class="fa-solid fa-pen-to-square"></i> {% trans "Edit" %}
+                                        </button>
+                                        <button type="button" class="btn btn-outline-danger" onclick="confirmDelete({{ role.id }})">
+                                            <i class="fa-solid fa-trash"></i> {% trans "Delete" %}
+                                        </button>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Role Modal -->
+<div class="modal fade" id="roleModal" tabindex="-1" aria-labelledby="roleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="roleModalLabel">{% trans "Add New Role" %}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" id="roleForm">
+                <div class="modal-body">
+                    {% csrf_token %}
+                    <input type="hidden" id="roleId" name="role_id">
+                    
+                    <div class="row">
+                        <div class="col-md-12 ">
+                            <label for="roleName" class="form-label"><b>{% trans "Name" %}</b></label>
+                            <input type="text" class="form-control" id="roleName" name="name" placeholder="{% trans 'Enter role name' %}" required>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 ">
+                            <label for="roleNameBn" class="form-label"><b>{% trans "Name (Bengali)" %}</b></label>
+                            <input type="text" class="form-control" id="roleNameBn" name="name_bn" placeholder="{% trans 'Enter Bengali name' %}">
+                        </div>
+                        <div class="col-md-6 ">
+                            <label for="roleNameAs" class="form-label"><b>{% trans "Name (Assamese)" %}</b></label>
+                            <input type="text" class="form-control" id="roleNameAs" name="name_as" placeholder="{% trans 'Enter Assamese name' %}">
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-12 ">
+                            <label for="roleDetails" class="form-label"><b>{% trans "Details" %}</b></label>
+                            <textarea class="form-control" id="roleDetails" name="details" rows="3" placeholder="{% trans 'Enter role details' %}"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
+                    <button type="submit" class="btn btn-primary custom-purple" id="submitBtn">{% trans "Submit" %}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extrajs %}
+<script src="{% static 'js/administrator/users/roles.js' %}"></script>
+
+
+<script>
+
+
+function confirmDelete(roleId) {
+    Swal.fire({
+        title: '{% trans "Are you sure?" %}',
+        text: '{% trans "Do you really want to delete this role?" %}',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: '{% trans "Yes, delete it!" %}',
+        cancelButtonText: '{% trans "Cancel" %}'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            window.location.href = '/en/api/role/' + roleId + '/delete/';
+        }
+    });
+}
+</script>
+{% endblock %} {% endcomment %}

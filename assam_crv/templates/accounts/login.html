@@ -1,0 +1,272 @@
+{% load static %}
+{% load i18n %}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% trans "Responsive Dashboard" %}</title>
+    <link rel="icon" href="{% static 'images/Logo_ASDMA.svg' %}" type="image/svg">
+    <!-- Font Awesome CDN -->
+    <!-- Font Awesome CDN -->
+    <link rel="stylesheet" href="{% static 'fontawesome/all.min.css' %}">
+    <link rel="stylesheet" href="{% static 'bootstrap/css/bootstrap.min.css' %}">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link rel="stylesheet" href="{% static 'css/responsive.css' %}">
+    <link rel="stylesheet" href="{% static 'css/scroll_bar.css' %}">
+    <link href="{% static 'css/dashboard.css' %}" rel="stylesheet" />
+
+            {% comment %} <style>
+        @font-face {
+            font-family: 'Nunito Sans';
+            src: url("{% static 'font/Nunito_Sans/NunitoSans-Italic-VariableFont_YTLC,opsz,wdth,wght.ttf' %}") format('truetype'),
+                url("{% static 'font/Nunito_Sans/NunitoSans-VariableFont_YTLC,opsz,wdth,wght.ttf' %}") format('woff');
+            font-weight: normal;
+            font-style: normal;
+        }
+
+        @font-face {
+            font-family: 'Nunito Sans';
+            src: url("{% static 'fonts/NunitoSans-Bold.ttf' %}") format('truetype'),
+                url("{% static 'fonts/NunitoSans-Bold.woff' %}") format('woff');
+            font-weight: bold;
+            font-style: normal;
+        }
+
+        @font-face {
+            font-family: 'Work Sans';
+            src: url("{% static 'font/worksens/WorkSans-Medium.ttf' %}") format('truetype');
+            font-weight: 500;
+            font-style: normal;
+        }
+
+        @font-face {
+            font-family: 'Work Sans';
+            src: url("{% static 'font/worksens/WorkSans-Bold.ttf' %}") format('truetype');
+            font-weight: bold;
+            font-style: normal;
+        }
+
+        @font-face {
+            font-family: 'Work Sans';
+            src: url("{% static 'font/worksens/WorkSans-Regular.ttf' %}") format('truetype');
+            font-weight: 400;
+            font-style: normal;
+        }
+        </style> {% endcomment %}
+<style>
+        header .dropdown {
+            display: none;
+        }
+
+        .dropdown__wrapper>button::before {
+            display: none;
+        }
+
+        .toggle-btn {
+            display: none;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 11px 20px;
+            background-color: #245FAE;
+            color: white;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 1000;
+        }
+</style>
+   
+</head>
+
+<body>
+  <section id="header">
+    {% comment %} Desktop header {% endcomment %}
+    <div class="container-fluid d-none d-xl-block">
+       <div class="row">
+        <div class="col-md-12">
+            <header id="LoginPageHeader">
+                <div class="logo__div">
+                    <a href="{% url 'home' %}">
+                        <div class="logo">
+                            <img src="{% static 'images/AIRBMP_logo.svg' %}" class="img-fluid">
+                        </div>
+                    </a>
+                </div>
+                <div class="dropdown__wrapper login__page">
+                                   <div class="dropdown" style="display:inline-block; margin-right: 10px;">
+                            <button class="btn-outline-light d-flex align-items-center bg-transparent gap-2" type="button" data-bs-toggle="dropdown" style="height: 33px; padding: 8px 16px;">
+                                <i class="fas fa-language"></i>
+                                <span>{% trans "English" %}</span>
+                                <i class="fas fa-chevron-down" style="font-size: 0.8rem;"></i>
+                            </button>
+                            <ul class="dropdown-menu">
+                                {% get_current_language as LANGUAGE_CODE %}
+                                {% for lang_code, lang_name in LANGUAGES %}
+                                    <li>
+                                        <form action="{% url 'set_language' %}" method="post" style="margin: 0;">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="language" value="{{ lang_code }}">
+                                            <button type="submit" class="dropdown-item" {% if lang_code == LANGUAGE_CODE %}style="font-weight: bold;"{% endif %}>
+                                                {% trans lang_name %}
+                                            </button>
+                                        </form>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                     <button class=" btn-outline-light help_btn d-flex align-items-center gap-2" style="height: 33px; padding: 8px 16px;">
+                            <i class="fas fa-question-circle"></i>
+                            <span>{% trans "HELP" %}</span>
+                        </button>
+                </div>
+            </header>
+        </div>
+      </div>
+    </div>
+    
+    {% comment %} Mobile header {% endcomment %}
+    <div class="container-fluid d-block d-xl-none">
+        <div class="row">
+            <div class="col-12">
+                <header class="d-flex flex-row justify-content-between align-items-center py-1 px-1 px-md-3 gap-2">
+                    <!-- Logo -->
+                    <a href="{% url 'home' %}" class="mobile-logo">
+                        <img src="{% static 'images/logo.png' %}" class="img-fluid" style="height: 40px;">
+                    </a>
+                    
+                    <!-- Right Menu Dropdown -->
+                    <div class="mobile-menu-dropdown" style="position: relative;">
+                        <!-- Right Hamburger Icon -->
+                        <button onclick="toggleRightMenuDropdown()" style="width: 40px; height: 40px; border-radius: 50%; background: #245FAE; border: none; display: flex; align-items: center; justify-content: center; cursor: pointer;">
+                            <i class="fa-solid fa-bars" style="color: white; font-size: 1.2rem;"></i>
+                        </button>
+                        
+                        <!-- Right Menu Dropdown Content -->
+                        <div id="rightMenuDropdown" style="display: none; position: absolute; right: 0; top: 45px; background: white; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); min-width: 200px; z-index: 1000;">
+                            <a href="#" style="display: block; padding: 8px 12px; text-decoration: none; color: #333; border-bottom: 1px solid #eee;">{% trans "Mode" %}</a>
+                            <a href="#" style="display: block; padding: 8px 12px; text-decoration: none; color: #333; border-bottom: 1px solid #eee;">{% trans "Help" %}</a>
+                            <form action="{% url 'set_language' %}" method="post" style="padding: 8px 12px; border-bottom: 1px solid #eee;">
+                                {% csrf_token %}
+                                <select name="language" onchange="this.form.submit()" style="width: 100%; padding: 4px; border: 1px solid #ddd; border-radius: 4px;">
+                                    {% get_current_language as LANGUAGE_CODE %}
+                                    {% for lang_code, lang_name in LANGUAGES %}
+                                        <option value="{{ lang_code }}" {% if lang_code == LANGUAGE_CODE %}selected{% endif %}>
+                                            {% trans lang_name %}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </form>
+                        </div>
+                    </div>
+                </header>
+            </div>
+        </div>
+    </div>
+</section>
+    <div class="login-content loginpage" id="main-content">
+        <div class="login__form">
+            <div class="glassEffect">
+                <div class="form-title">
+                  <h1>{% trans "Login" %}</h1>
+                </div>
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-danger">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+                <!-- main form -->
+                <form method="post">
+                    {% csrf_token %}
+                  <div class="single-input">
+                    <span><i class="fas fa-user" style="padding-left: 10px"></i></span>
+                    <input type="text" id="username" name="username" placeholder="{% trans 'User Name' %}" style="padding-left: 10px">
+                  </div>
+                  <div class="single-input">
+                    <span><i class="fas fa-unlock" style="padding-left: 10px"></i></span>
+                    <input type="password" id="password" name="password" placeholder="{% trans 'Password' %}" style="padding-left: 10px">
+                  </div>
+                  <div class="toggle__div">
+                  <div class="toggle__wrapper">
+                  <div class="toggle-container">
+                    <input type="checkbox" id="toggle" class="toggle-checkbox" name="remember">
+                    <label for="toggle" class="toggle-label"></label>
+                </div>
+                <h5>{% trans "Remember me" %}</h5></div>
+                {% comment %} <h5>Forgot password?</h5> {% endcomment %}
+                </div>
+                  <div class="single-input submit-btn">
+                    <input type="submit" value="{% trans 'SUBMIT' %}">
+                  </div>
+                </form>
+                   
+            </div>
+        </div>
+    </div>
+
+    <footer class='w-100 m-0'>
+        <div class="container-fluid ">
+            <div class="row px-3">
+                <div class="col-md-8">
+                    <p>
+                        ©2024 ASDMA, {% trans "Government of Assam" %} |
+                        {% trans "All Rights Reserved ®" %} |
+                        {% trans "Designed and Implemented by RMSI Pvt. Ltd" %}
+                    </p>
+                </div>
+                <div class="col-12 col-md-4 pull-right">
+                    <ul class="">
+                        <li>{% trans "About CRV" %}</li>
+                        <li>{% trans "Disclaimer" %}</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Toggle sidebar visibility
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.getElementById('main-content');
+
+            if (sidebar.style.left === '-250px') {
+                sidebar.style.left = '0';
+                mainContent.style.marginLeft = '250px';
+            } else {
+                sidebar.style.left = '-250px';
+                mainContent.style.marginLeft = '0';
+            }
+        }
+        
+        // Toggle right menu dropdown
+        function toggleRightMenuDropdown() {
+            const dropdown = document.getElementById('rightMenuDropdown');
+            dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+        }
+        
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(event) {
+            const rightMenuDropdown = document.getElementById('rightMenuDropdown');
+            const rightMenuButton = event.target.closest('.mobile-menu-dropdown');
+            if (!rightMenuButton && rightMenuDropdown && rightMenuDropdown.style.display === 'block') {
+                rightMenuDropdown.style.display = 'none';
+            }
+        });
+    </script>
+    <script src="{% static 'bootstrap/js/bootstrap.min.js' %}"></script> 
+    <script src="{% static 'bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+    <script src="{% static 'bootstrap/js/popper.min.js' %}"></script>
+    <script src="{% static 'fontawesome/all.min.js' %}"></script> 
+
+ 
+</body>
+
+</html>

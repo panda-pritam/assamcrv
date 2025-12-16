@@ -1,0 +1,9 @@
+.htmlTableThead th {
+    padding-top: 2px !important;
+    padding-bottom: 2px !important;
+}
+
+/* Additional styling for better appearance */
+.htmlTableThead tr {
+    background-color: #f8f9fa;
+}

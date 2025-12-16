@@ -1,0 +1,704 @@
+#mapWrapper {
+    height: calc(100vh - 110px) !important;
+    position: relative;
+}
+
+#layerDiv {
+    height: calc(100vh - 222px);
+    width: 375px;
+    border-radius: 4px;
+    box-shadow: 0px 4px 40px rgba(0, 0, 0, 0.1);
+    background-color: #edf2f9;
+    margin:7px 0px;
+    position: absolute;
+    top: 0;
+    left: 7px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateX(-20px);
+    transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s ease;
+    z-index: 10;
+}
+
+#layerDiv.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(0);
+}
+
+#toggleLayerPanelBtn {
+
+    position: absolute;
+    left: 8px;
+    top: 8px;
+    z-index: 20;
+}
+
+#baseMapTogglerBtn{
+    position: absolute;
+    right: 7px;
+    top: 5rem !important;
+    z-index: 20;
+    height: 30px;
+    width: 30px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+
+#measurementTogglerBtn{
+    position: absolute;
+    right: 7px;
+    top: 10.6rem !important;
+    z-index: 20;
+    height: 30px;
+    width: 30px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+#layerPanelDiv .accordion{
+   width: 346px; 
+
+}
+.layer_icon{
+    font-size: 14px !important;
+}
+
+.toggler_buttons {
+    padding: 0;
+    border-radius: 0px;
+    color: white;
+    background-color: #245FAE;
+    border: none;
+    font-size: 1rem;
+    height: 30px;
+    width: 30px;
+}
+
+.DivCloseButton {
+    position: absolute;
+    right: 10px;
+    top: 3px;
+    border-radius: 30px;
+    color: #245fae;
+    background-color: transparent;
+    border: none;
+    font-size: 1rem;
+    padding: 1px;
+}
+.layer__heading {
+    font-size: 16px;
+    color: #222223;
+    padding: 3px 2px 0px 2px;
+    margin-bottom: 0px;
+    font-family: 'Work Sans';
+    font-weight: 500;
+}
+#mapDiv {
+    width: 100%;
+    height: 100%;
+
+}
+
+#baseMapOptionsDiv{
+    height: auto;
+    width: auto;
+    border-radius: 4px;
+    box-shadow: -5px -5px 10px rgba(0, 0, 0, 0.2);
+    background-color: aliceblue;
+    margin: 4px;
+    position: absolute;
+    right: 4px;
+    top: 4rem !important;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateX(-20px);
+    transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s ease;
+    z-index: 100 !important;
+    padding: 15px;
+}
+
+#baseMapOptionsDiv.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(0);
+}
+
+#measurementOptionsDiv{
+    height: auto;
+    width: 280px;
+    border-radius: 4px;
+    box-shadow: -5px -5px 10px rgba(0, 0, 0, 0.2);
+    background-color: aliceblue;
+    margin: 4px;
+    position: absolute;
+
+    right: 4px;
+    top: 10.2rem !important;
+    /* opacity: 0; */
+
+    /* visibility: hidden; */
+    /* transform: translateX(20px); */
+    /* transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s ease; */
+    z-index: 1000000 !important;
+    padding: 15px;
+    display: none;
+    max-height: 23rem !important;
+    overflow-y: auto;
+}
+
+#measurementOptionsDiv.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(0);
+}
+
+.measurement-container .btn-group {
+    border-radius: 4px;
+}
+
+.measurement-container .btn-check:checked + .btn {
+    background-color: #245FAE;
+    border-color: #245FAE;
+}
+
+#measurementResult {
+    border: 1px solid #dee2e6;
+    background-color: #f8f9fa !important;
+}
+
+#measurementValue {
+    color: #245FAE;
+    font-size: 1.1rem;
+}
+
+.layer-zoom-btn{
+    position: absolute;
+    top: 7px;
+    right: 2rem !important;
+    border:none;
+    font-size: 1rem;
+    background-color: transparent;
+    display: none;
+}
+
+.layer-zoom-btn.show {
+    display: block;
+}
+
+.accordion-button::after {
+    display: none;
+}
+
+.accordion-button.show::after {
+    display: block;
+}
+.accordion-header .accordion-button:focus{
+    box-shadow: none !important;
+    outline: none;
+}
+.accordion-button:not(.collapsed) {
+  color: var(--bs-accordion-active-color);
+  background-color: #CFE4FF;
+  box-shadow: none;
+}
+h2.LayerHdng .accordion-button:not(.collapsed) {
+  color: #ffffff;
+  background-color: #245FAE;
+  box-shadow: none;
+}
+.LayerHdng{
+    margin-bottom: 0px;
+}
+
+/* Base styles */
+/* Add your base styles here */
+
+/* Media Queries for different screen sizes */
+
+/* Mobile devices (portrait phones, less than 576px) */
+@media (max-width: 575.98px) {
+    /* Mobile-specific styles */
+}
+
+/* Small tablets (portrait tablets and large phones, 576px and up) */
+@media (min-width: 576px) and (max-width: 767.98px) {
+    /* Small tablet-specific styles */
+}
+
+/* Tablets (768px and up) */
+@media (min-width: 768px) and (max-width: 991.98px) {
+
+    /* Tablet-specific styles */
+    #mapWrapper {
+        height: calc(100vh - 260px) !important;
+    }
+
+    /* Pro tablets (992px and up) */
+    @media (min-width: 992px) and (max-width: 1199.98px) {
+        /* Pro tablet-specific styles */
+    }
+
+    /* Small laptops (1200px and up) */
+    @media (min-width: 1200px) and (max-width: 1399.98px) {
+        /* Small laptop-specific styles */
+
+    }
+}
+
+/* Large laptops and desktops (1400px and up) */
+@media (min-width: 1400px) and (max-width: 1799.98px) {
+    /* Large laptop-specific styles */
+    footer .container-fluid {
+    width: 100% !important;
+}
+}
+
+/* Extra large screens (1800px and up) */
+@media (min-width: 1800px) {
+    /* Extra large screen-specific styles */
+    footer .container-fluid {
+    width: 90% !important;
+}
+
+}.ol-control{
+    background-color: transparent;
+    border-radius: 0px;
+}
+.ol-control button{
+    height: 30px !important;
+    width: 30px !important;
+    font-size: 22px;
+    border-radius: 0;
+}
+
+.ol-zoom {
+    right: 1.2rem !important;
+    width: 1.2rem !important;
+    margin-left: auto !important;
+}
+.ol-zoom-in{
+    height: 1.5rem !important;
+    width: 1.5rem !important;
+    background-color: #245FAE !important;
+    color: white !important;
+}
+.ol-zoom-out{
+    height: 1.5rem !important;
+    width: 1.5rem !important;
+     background-color: #245FAE !important;
+    color: white !important;
+}
+
+.ol-control button:hover, .ol-control button:focus{
+    outline: none;
+}
+/* Base Map Selection Styles */
+#baseMapOptionsDiv .basemap-title {
+    font-weight: bold;
+    font-size: 1.1rem;
+    margin-bottom: 10px;
+    display: block;
+    text-align: center;
+    color: #245FAE;
+}
+
+#baseMapOptionsDiv .basemap-container {
+    display: flex;
+    justify-content: space-evenly;
+    align-items: center;
+    margin-top: 10px;
+}
+
+#baseMapOptionsDiv .basemap-item {
+    cursor: pointer;
+    transition: transform 0.2s;
+    margin: 0 5px;
+    border: 2px solid transparent;
+}
+
+#baseMapOptionsDiv .basemap-item:hover {
+    transform: scale(1.05);
+    border: 2px solid #245FAE;
+}
+
+#baseMapOptionsDiv .basemap-item.active {
+    border: 2px solid #245FAE;
+    box-shadow: 0 0 5px rgba(131, 61, 145, 0.5);
+}
+
+#baseMapOptionsDiv .basemap-item img {
+    width: 80px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 3px;
+}
+#baseMapOptionsDiv .basemap-item div {
+    width: 80px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 3px;
+}
+
+#baseMapOptionsDiv .basemap-label {
+    display: block;
+    text-align: center;
+    font-size: 0.8rem;
+    margin-top: 5px;
+}
+
+.accordion-button:hover {
+    z-index: 0 !important;
+}
+.accordion-button:focus {
+    z-index: 0 !important;
+}
+
+.form-check-input{
+    height: 0.9rem !important;
+    width: 0.9rem !important;
+    border: 1px solid #afb1b3;
+}
+
+.form-check-input[type=checkbox]{
+    border-radius: 3px !important;
+}
+.form-check-input[type=checkbox]:focus{
+   box-shadow: none;
+}
+.accordion_layer_checkbox{
+    position: absolute;
+    top: 0px !important;
+    left: 13px !important;
+}
+/*.accordion-button{
+    flex-direction: row-reverse;
+}
+.accordion-button::after{
+    margin-left: 0px !important;
+    justify-content: start;
+} */
+
+.accordionLayerDiv{
+    height: calc(100vh - 800px) !important;
+    overflow: scroll !important;
+}
+
+#accordionLayerDiv {
+    max-height: calc(100vh - 370px);
+    overflow-y: auto !important;
+}
+
+.accordion-button{
+    padding: 7px !important;
+}
+.accordion-item{
+    border: none;
+    border-bottom: 1px solid #d9e1eb;
+}
+.layer-zoom-btn .srchIcn{
+    font-size: 13px;
+}
+.accordion-body{
+    padding: 0px;
+}
+.accSpcng{
+    padding: 0px 12px;
+}
+.accSpcng label{
+    font-size: 14px;
+}
+.accSpcng .form-label{
+    margin-bottom: 0;
+}
+/* #layerAccordion .accordion-body{
+    padding:2px !important;
+} */
+/* ---------  Map popup --------------- */
+
+     /* Custom popup styling */
+     .badge{
+        border-radius: 3px;
+     }
+     .ol-popup {
+         max-width: 400px;
+         font-family: Arial, sans-serif;
+     }
+     
+     .ol-popup .popup-header {
+         margin-bottom: 8px;
+         font-family: 'Work Sans', sans-serif;
+     }
+     
+     .ol-popup .popup-title {
+         margin: 0;
+         color: #313131 ;
+         font-size: 1rem;
+         font-weight: 500;
+         font-family: 'Work Sans', sans-serif;
+     }
+     
+     .ol-popup .popup-body {
+         max-height: 300px;
+         overflow-y: auto;
+     }
+     
+     .ol-popup table {
+         width: 100%;
+         border-collapse: collapse;
+     }
+     
+     .ol-popup th,
+     .ol-popup td {
+         padding: 6px 8px;
+         border: 1px solid #245fae;
+         font-size: 0.875rem;
+          background: white !important;
+     }
+     
+     .ol-popup th {
+        
+         font-weight: 500;
+     }
+     
+     /* Popup animation classes */
+     .ol-popup.anim {
+         transition: all 0.25s;
+     }
+     
+     /* Different popup themes available in ol-ext */
+     .ol-popup.black {
+         background: rgba(0,0,0,0.8);
+         color: white;
+     }
+     
+     .ol-popup.white {
+         background: white;
+         border: 2px solid #369;
+     }
+     .popover_table{
+        font-family: 'Work Sans', sans-serif;
+     }
+
+.popover_table table thead{
+    color: #313131;
+}
+.popover_table table tbody td{
+    color: #313131 !important;
+    background-color: white !important;
+    border: 1px solid #e1edff !important;
+}
+.ol-popup th{
+    background-color: #e1edff !important;
+    color: #313131  !important;
+}
+/* .popover_table {
+    border: 2px solid #245fae !important;
+} */
+.ol-popup.hasclosebox .ol-popup-content{
+    margin-right: 0 !important;
+}
+.ol-popup .closeBox{
+    /* right: -20em;
+    background-color: transparent; */
+}
+.layer_title_span{
+   margin-left: 29px !important;
+  font-size: 15px;
+}
+.bg-light {
+  --bs-bg-opacity: 1;
+  background-color: rgb(246, 246, 246) !important;
+}
+.accordion-item h2.accordion-header button{
+    margin-left: 0px;
+}
+.pdngLeft{
+    padding-left: 0;
+}
+
+/* Full screen button  */
+
+.ol-full-screen{
+    right: 7px !important;
+    top: 6.8rem !important;
+    height: 31px;
+    width: 31px;
+    color: white !important;
+}
+
+.ol-full-screen button{
+    background-color: #245FAE !important;
+    color: white !important;
+}
+
+.ol-print{
+    right: 8px !important;
+    top: 8.7rem !important;
+    height: 30px;
+    width: 30px;
+    left: unset !important;
+}
+.ol-print button{
+    background-color: #245FAE !important;
+    color: white !important;
+    font-size: 17px;
+}
+
+
+/* Add these styles to your mapAndMapPage.css file */
+
+/* Print Modal Styles */
+#layerSelectionList {
+    background-color: #f8f9fa;
+}
+
+#layerSelectionList .form-check {
+    padding: 8px 12px;
+    border-radius: 4px;
+    transition: background-color 0.2s ease;
+}
+
+#layerSelectionList .form-check:hover {
+    background-color: #e9ecef;
+}
+
+#layerSelectionList .form-check-input:checked + .form-check-label {
+    color: #0d6efd;
+    font-weight: 500;
+}
+
+.modal-lg {
+    max-width: 800px;
+}
+
+/* Print button positioning */
+#customPrintBtn {
+    position: absolute;
+    bottom: 120px;
+    right: 10px;
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 8px 12px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    z-index: 1000;
+}
+
+#customPrintBtn:hover {
+    background-color: #f8f9fa;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    transform: translateY(-1px);
+}
+
+#customPrintBtn i {
+    font-size: 16px;
+    color: #333;
+}
+
+/* Spinner for loading state */
+.spinner-border-sm {
+    width: 1rem;
+    height: 1rem;
+}
+
+/* Map info alert styling */
+.alert-info {
+    background-color: #e7f3ff;
+    border-color: #b8daff;
+    color: #0c5460;
+}
+
+/* Layer checkbox custom styling */
+.layer-checkbox:checked {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+}
+
+
+#previewMapDiv .ol-viewport {
+    border-radius: 4px;
+}
+
+.modal-xl {
+    max-width: 1200px;
+}
+
+#custPrint {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    border: none;
+    font-weight: 500;
+}
+
+#custPrint:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}
+
+.card {
+    border: 1px solid #dee2e6;
+}
+
+.form-label.fw-bold {
+    color: #495057;
+}
+
+/* Loading spinner improvements */
+#previewLoading {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 4px;
+    z-index: 1000;
+    display: none;
+    visibility: hidden;
+}
+
+#previewLoading.show {
+    display: flex !important;
+    visibility: visible !important;
+}
+
+.spinner-border {
+    animation: spinner-border 0.75s linear infinite;
+}
+
+@keyframes spinner-border {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Ensure proper button states */
+.btn:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+
+.btn-success {
+    background-color: #198754;
+    border-color: #198754;
+}
+
+.btn-danger {
+    background-color: #dc3545;
+    border-color: #dc3545;
+}
+
+#startMeasureBtn{
+    background-color: #245fae;
+    color: white;
+}
+
+#clearMeasureBtn{
+    background-color: #6c757d;
+    color: white;   
+    border: none;
+}

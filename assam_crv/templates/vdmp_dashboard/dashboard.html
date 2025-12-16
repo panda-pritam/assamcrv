@@ -1,0 +1,804 @@
+{% extends "base.html" %}
+{% load static %}
+{% load i18n %}
+{% block title %}{% trans "Village Level Summary Dashboard" %} {% endblock %}
+{% block extraheader %}
+<style>
+  #loaderOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 9999;
+
+    display: flex;
+    justify-content: center;
+    /* horizontal center */
+    align-items: center;
+    /* vertical center */
+  }
+
+  .loader-content {
+    text-align: center;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+  }
+</style>
+{% endblock %}
+{% block content %}
+<!-- Banner Section -->
+
+<section id="broadcrump">
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-md-12">
+        <div class="broadcrump__wrapper">
+          <ul>
+            <li>
+              <span class="me-2"><i class="fa-solid fa-house mr-2" style="color: #0b0b0b;"></i> <i class="fa-solid fa-angle-right" style="color: #000;"></i></span><span
+                class="BrdCrmb">{% trans "Village Level Dashboard" %}</span>
+            </li>
+          </ul>
+          <div class="right_div ">
+            <div class="d-flex align-items-center gap-2 ">
+
+              <div class="right_div d-flex align-items-center d-none" id="download_report_container">
+                <button class="btn btn-light btn-sm d-flex align-items-center gap-2"
+                  id="download_report_VDMP_Dashboard">
+                  <i class="fa-solid fa-download download_icon"></i> {% trans "Download report" %}
+                </button>
+              </div>
+            
+                <button  id="printDashboardBtn" class=" border-0 rounded-1 d-flex align-items-center gap-2 px-2 printCss">
+                            <i><img src="{% static 'images/Print_icon.svg' %}" class="img-fluid PrintIcn"></i> {% trans "Print Page"  %}
+                </button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+
+
+<!-- Hidden User Location Data -->
+
+<div class="visually-hidden">
+  <input type="hidden" id="userDistrictId" value="{{ user_location.district_id|default:'' }}">
+  <input type="hidden" id="userCircleId" value="{{ user_location.circle_id|default:'' }}">
+  <input type="hidden" id="userGramPanchayatId" value="{{ user_location.gram_panchayat_id|default:'' }}">
+  <input type="hidden" id="userVillageId" value="{{ user_location.village_id|default:'' }}">
+
+</div>
+
+
+<section id="filter" class="mt-3">
+  <div class="container-fluid">
+    <div class="row ">
+                      <!-- District -->
+                <div class="col-md-3 col-xl-3 col-sm-6  d-flex flex-column ">
+                    <label class="form-label fw-medium" for="district">{% trans "Select District" %}</label>
+                    <select name="district" id="district" class="form-select select2">
+                        <option value="" selected disabled>{% trans "Select Districts" %}</option>
+                    </select>
+                </div>
+                <!-- Circle -->
+                <div class="col-md-3 col-xl-3 col-sm-6  d-flex flex-column ">
+                    <label class="form-label fw-medium" for="circle">{% trans "Select Circle" %}</label>
+                    <select name="circle" id="circle" class="form-select select2">
+                        <option value="" selected disabled>{% trans "Select Circle" %}</option>
+                    </select>
+                </div>
+                <!-- Gram Panchayat -->
+                <div class="col-md-3 col-xl-3 col-sm-6  d-flex flex-column ">
+                    <label class="form-label fw-medium" for="gram_panchayat">{% trans "Select Gram Panchayat" %}</label>
+                    <select name="gram_panchayat" id="gram_panchayat" class="form-select select2">
+                        <option value="" selected disabled>{% trans "Select Gram Panchayat" %}</option>
+                    </select>
+                </div>
+                <!-- Village -->
+                <div class="col-md-3 col-xl-3 col-sm-6  d-flex flex-column ">
+                    <label class="form-label fw-medium" for="village">{% trans "Select Village" %}</label>
+                    <select name="village" id="village" class="form-select select2">
+                        <option value="" selected disabled>{% trans "Select Villages" %}</option>
+                    </select>
+                </div>
+
+
+    </div>
+  </div>
+</section>
+
+{% load i18n %}
+
+<div class="container-fluid d-flex flex-column">
+  <div class="summary-line">
+    <i class="fas fa-info-circle"></i>
+
+    <span id="summary-text">
+      <img src="{% static 'images/tube-spinner.svg' %}" id="summary-loader"
+        style="width: 20px; height: 20px; margin-right: 8px;" alt="Loading...">
+    </span>
+  </div>
+
+  <!-- Tabbed Dashboard -->
+  <div class="dashboard-tabs">
+    <!-- Tab Navigation -->
+    <ul class="nav nav-tabs" id="dashboardTabs" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="demographic-tab" data-bs-toggle="tab" data-bs-target="#demographic"
+          type="button" role="tab">
+          {% trans "Demographic Summary" %}
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="asset-tab" data-bs-toggle="tab" data-bs-target="#asset" type="button" role="tab">
+          {% trans "Asset Summary" %}
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="hazard-tab" data-bs-toggle="tab" data-bs-target="#hazard" type="button" role="tab">
+          {% trans "Hazard & Vulnerability" %}
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="shelter-tab" data-bs-toggle="tab" data-bs-target="#shelter" type="button"
+          role="tab">
+          {% trans "Flood Shelter" %}
+        </button>
+      </li>
+     
+    </ul>
+
+     <div class="updateInfo">
+        Updated as on September 2025
+      </div>
+
+    {% comment %} <!-- Right aligned red text -->
+    <!-- Right aligned red text -->
+    <div style="color: red; font-weight: bold; white-space: nowrap; margin-left: 20px;">
+      Hello World
+    </div> {% endcomment %}
+
+    <!-- Tab Content -->
+    <div class="tab-content" id="dashboardTabContent">
+      <!-- Demographic Summary Tab -->
+      <div class="tab-pane fade show active" id="demographic" role="tabpanel">
+        <div class="tab-body">
+          <div class="row">
+            <div class="col-12 col-lg-6 col-xl-4 ">
+              <div class="population-section">
+                <div class="section-header">
+                  <div class="section-icon population-icon-header"><img src="/static/images/population.svg"></div>
+                  <h5>Population</h5>
+                </div>
+                <div class="row g-3 custom_padd">
+                  <div class="col-12 ">
+                    <div class="pop-card pop-male">
+                      <div class="pop-icon light-blue"><i class="fas fa-mars"></i></div>
+                      <div class="pop-content">
+                        <div class="pop-number" id="male_population">0</div>
+                        <div class="pop-label">Male</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-12 ">
+                    <div class="pop-card pop-female">
+                      <div class="pop-icon light-green"><i class="fas fa-venus"></i></div>
+                      <div class="pop-content">
+                        <div class="pop-number" id="female_population">0</div>
+                        <div class="pop-label">Female</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-12 ">
+                    <div class="pop-card pop-total">
+                      <div class="pop-icon light-orange"><img src="/static/images/totalpopulation.svg"
+                          alt="Total Population"></div>
+                      <div class="pop-content">
+                        <div class="pop-number" id="total_population">0</div>
+                        <div class="pop-label">Total Population</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-12 ">
+                    <div class="pop-card pop-household">
+                      <div class="pop-icon light-cyan"><img src="/static/images/household.svg" alt="Total Population">
+                      </div>
+                      <div class="pop-content">
+                        <div class="pop-number" id="total_households">0</div>
+                        <div class="pop-label">Total Household</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col-12 col-lg-6 col-xl-8 ">
+              <div class="vulnerable-section h-full">
+                <div class="section-header">
+                  <div class="section-icon vulnerable-icon-header"><img src="/static/images/vul.svg" alt="Total Population"></div>
+                  <h5>Vulnerable Populations</h5>
+                </div>
+                <div class="row g-3 custom_padd">
+                  <div class="col-12 col-lg-6 col-xl-6">
+                    <div class="vuln-pop-card vuln-priority">
+                      <div class="vuln-pop-icon light-blue"><img src="/static/images/phouse.svg" alt="Total Population">
+                      </div>
+                      <div class="vuln-pop-content">
+                        <div class="vuln-pop-number" id="priority_households">0</div>
+                        <div class="vuln-pop-label">Priority Household (PHH)</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-12 col-lg-6 col-xl-6">
+                    <div class="vuln-pop-card vuln-bpl">
+                      <div class="vuln-pop-icon light-blue"><img src="/static/images/bhouse.svg"
+                          alt="Total Population"></i></div>
+                      <div class="vuln-pop-content">
+                        <div class="vuln-pop-number" id="bpl_households">0</div>
+                        <div class="vuln-pop-label">Antyodaya Anna Yojana (AAY)</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-12 col-lg-6 col-xl-6">
+                    <div class="vuln-pop-card vuln-child">
+                      <div class="vuln-pop-icon light-green"><i class="fas fa-child"></i></div>
+                      <div class="vuln-pop-content">
+                        <div class="vuln-pop-number" id="population_bl_six">0</div>
+                        <div class="vuln-pop-label">Age < 6</div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-12 col-lg-6 col-xl-6">
+                      <div class="vuln-pop-card vuln-elderly">
+                        <div class="vuln-pop-icon light-green"><i class="fa-solid fa-person-cane"></i></div>
+                        <div class="vuln-pop-content">
+                          <div class="vuln-pop-number" id="senior_citizens">0</div>
+                          <div class="vuln-pop-label">Age > 60</div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-12 col-lg-6 col-xl-6">
+                      <div class="vuln-pop-card vuln-mother">
+                        <div class="vuln-pop-icon light-orange"><i class="fa-solid fa-person-pregnant"></i></div>
+                        <div class="vuln-pop-content">
+                          <div class="vuln-pop-number" id="pregnant_lactating">0</div>
+                          <div class="vuln-pop-label">Pregnant Woman</div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-12 col-lg-6 col-xl-6">
+                      <div class="vuln-pop-card vuln-lact-mother">
+                        <div class="vuln-pop-icon light-orange"><i class="fa-solid fa-person-breastfeeding"></i></div>
+                        <div class="vuln-pop-content">
+                          <div class="vuln-pop-number" id="lactating_women">0</div>
+                          <div class="vuln-pop-label">Lactating Mother</div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-12 col-lg-6 col-xl-6">
+                      <div class="vuln-pop-card vuln-disabled">
+                        <div class="vuln-pop-icon light-cyan"><i class="fas fa-wheelchair"></i></div>
+                        <div class="vuln-pop-content">
+                          <div class="vuln-pop-number" id="total_disabled">0</div>
+                          <div class="vuln-pop-label">Differently Abled</div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-12 col-lg-6 col-xl-6">
+                      <div class="vuln-pop-card vuln-disabled">
+                        <div class="vuln-pop-icon light-orange"><img src="/static/images/chronic.svg" alt="chronic"></div>
+                        <div class="vuln-pop-content">
+                          <div class="vuln-pop-number" id="chronic_illiness">0</div>
+                          <div class="vuln-pop-label">Chronic Illiness</div>
+                        </div>
+                      </div>
+                    </div>
+                    <!-- <div class="col-md-6">
+                    <div class="vuln-pop-card vuln-cattle-big">
+                      <div class="vuln-pop-icon"><i class="fa-solid fa-cow"></i></div>
+                      <div class="vuln-pop-content">
+                        <div class="vuln-pop-number" id="big_cattles">0</div>
+                        <div class="vuln-pop-label">Big Cattles</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="vuln-pop-card vuln-cattle-small">
+                      <div class="vuln-pop-icon"><i class="fas fa-dog"></i></div>
+                      <div class="vuln-pop-content">
+                        <div class="vuln-pop-number" id="small_cattles">0</div>
+                        <div class="vuln-pop-label">Small Cattles</div>
+                      </div>
+                    </div>
+                  </div> -->
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Asset Summary Tab -->
+        <div class="tab-pane fade" id="asset" role="tabpanel">
+          <div class="tab-body">
+            <div class="row mbottom">
+              <div class="col-sm-6 col-md-4">
+                <div class="asset-section">
+                  <div class="section-header">
+                    <div class="section-icon infrastructure-icon-header"><img src="/static/images/infra.svg" alt="bridge"></div>
+                    <h5>Infrastructure</h5>
+                  </div>
+                  <div class="asset-list custom_padd">
+                    <div class="asset-item">
+                      <div class="asset-icon orange light-purple"><i class="fas fa-road"></i></div>
+                      <div class="asset-content">
+                        <div class="asset-title">Road length (kms)</div>
+                        <div class="asset-value" id="total_road_length">0 km</div>
+                      </div>
+                    </div>
+                    <div class="asset-item">
+                      <div class="asset-icon info light-violet"><img src="/static/images/bridge.svg" alt="bridge"></div>
+                      <div class="asset-content">
+                        <div class="asset-title">Bridge (count)</div>
+                        <div class="asset-value" id="bridge_count">-</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-sm-6 col-md-4">
+                <div class="asset-section ">
+                  <div class="section-header">
+                    <div class="section-icon health-icon-header light-peach"><img src="/static/images/health.svg"/></div>
+                    <h5>Health Facilities</h5>
+                  </div>
+                  <div class="asset-list custom_padd">
+                    <div class="asset-item">
+                      <div class="asset-icon light-purple"><img src="/static/images/phc.svg" alt="Phc"></div>
+                      <div class="asset-content">
+                        <div class="asset-title">PHC/CHC</div>
+                        <div class="asset-value">-</div>
+                      </div>
+                    </div>
+                    <div class="asset-item">
+                      <div class="asset-icon light-violet"><img src="/static/images/otherhealth.svg"/></div>
+                      <div class="asset-content">
+                        <div class="asset-title">Other health facilities</div>
+                        <div class="asset-value">-</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+        <div class="col-sm-6 col-md-4">
+                <div class="asset-section">
+                  <div class="section-header">
+                    <div class="section-icon school-icon-header"><img src="/static/images/education.svg" alt="khouse"></div>
+                    <h5>{% trans "Educational Facilities" %}</h5>
+                  </div>
+                  <div class="asset-list custom_padd">
+                    <div class="asset-item">
+                      <div class="asset-icon light-purple"><i class="fas fa-school"></i></div>
+                      <div class="asset-content">
+                        <div class="asset-title">{% trans "Anganwadi" %}</div>
+                        <div class="asset-value" id="anganwadi_asset">0</div>
+                      </div>
+                    </div>
+                    <div class="asset-item">
+                      <div class="asset-icon light-violet"><i class="fas fa-graduation-cap"></i></div>
+                      <div class="asset-content">
+                        <div class="asset-title">{% trans "School" %}</div>
+                        <div class="asset-value" id="school_asset">0</div>
+                      </div>
+                    </div>
+                    {% comment %} <div class="asset-item">
+                      <div class="asset-icon light-peach"><img src="/static/images/place.svg" alt="khouse"></div>
+                      <div class="asset-content">
+                        <div class="asset-title">{% trans "Religious Places" %}</div>
+                        <div class="asset-value" id="religous_places_asset">0</div>
+                      </div>
+                    </div> {% endcomment %}
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="row">
+                            <div class="col-sm-6 col-md-4">
+                <div class="asset-section ">
+                  <div class="section-header">
+                    <div class="section-icon livestock-icon-header"><img src="/static/images/livestock.svg"/></div>
+                    <h5>Livestock</h5>
+                  </div>
+                  <div class="asset-list custom_padd">
+                    <div class="asset-item">
+                      <div class="asset-icon light-purple"><img src="/static/images/bc.svg" alt="bc"></div>
+                      <div class="asset-content">
+                        <div class="asset-title">Big cattle</div>
+                        <div class="asset-value" id="big_cattles_asset">0</div>
+                      </div>
+                    </div>
+                    <div class="asset-item">
+                      <div class="asset-icon light-violet"><img src="/static/images/sc.svg" alt="sc"></div>
+                      <div class="asset-content">
+                        <div class="asset-title">Small Cattles</div>
+                        <div class="asset-value" id="small_cattles_asset">0</div>
+                      </div>
+                    </div>
+                    <div class="asset-item">
+                      <div class="asset-icon light-orange"><img src="/static/images/poultry.svg" alt="poultry"></div>
+                      <div class="asset-content">
+                        <div class="asset-title">Poultry</div>
+                        <div class="asset-value" id="poultry_animals">-</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-sm-6 col-md-4">
+                <div class="asset-section">
+                  <div class="section-header">
+                    <div class="section-icon housing-icon-header"><img src="/static/images/housing.svg"/></div>
+                    <h5>Housing</h5>
+                  </div>
+                  <div class="asset-list custom_padd">
+                    <div class="asset-item">
+                      <div class="asset-icon light-purple"><img src="/static/images/khouse.svg" alt="khouse"></div>
+                      <div class="asset-content">
+                        <div class="asset-title">{% trans "Kachcha house" %}</div>
+                        <div class="asset-value" id="kachcha_houses_asset">0</div>
+                      </div>
+                    </div>
+                    <div class="asset-item">
+                      <div class="asset-icon light-violet"><img src="/static/images/phouse1.svg" alt="khouse"></div>
+                      <div class="asset-content">
+                        <div class="asset-title">{% trans "Semi pucca house" %}</div>
+                        <div class="asset-value" id="semi_pucca_houses_asset">0</div>
+                      </div>
+                    </div>
+                    <div class="asset-item">
+                      <div class="asset-icon light-peach"><img src="/static/images/khouse1.svg" alt="khouse"></div>
+                      <div class="asset-content">
+                        <div class="asset-title">{% trans "Pucca house" %}</div>
+                        <div class="asset-value" id="pucca_houses_asset">0</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+             
+
+              <div class="col-sm-6 col-md-4">
+                <div class="asset-section">
+                  <div class="section-header">
+                    <div class="section-icon school-icon-header"><img src="/static/images/education.svg" alt="khouse"></div>
+                    <h5>{% trans "Other Assets" %}</h5>
+                  </div>
+
+                  
+                  <div class="asset-list custom_padd">
+                    <div class="asset-item">
+                      <div class="asset-icon light-peach"><img src="/static/images/place.svg" alt="khouse"></div>
+                      <div class="asset-content">
+                        <div class="asset-title">{% trans "Religious Places" %}</div>
+                        <div class="asset-value" id="religous_places_asset">0</div>
+                      </div>
+                    </div>
+
+                    <div class="asset-item">
+                      <div class="asset-icon light-purple"><img src="/static/images/commercial.svg" alt="commercial"></div>
+                      <div class="asset-content">
+                        <div class="asset-title">{% trans "Commercial Buildings" %}</div>
+                        <div class="asset-value" id="commercial_buildings">-</div>
+                      </div>
+                    </div>
+
+                    <div class="asset-item">
+                      <div class="asset-icon light-violet"><img src="/static/images/industrial.svg" alt="industrial"></div>
+                      <div class="asset-content">
+                        <div class="asset-title">{% trans "Industrial Buildings" %}</div>
+                        <div class="asset-value">-</div>
+                      </div>
+                    </div>
+
+                    <div class="asset-item">
+                      <div class="asset-icon light-cyan"><img src="/static/images/watertank.svg" alt="watertank"></div>
+                      <div class="asset-content">
+                        <div class="asset-title">{% trans "Overhead Water Tank" %}</div>
+                        <div class="asset-value">-</div>
+                      </div>
+                    </div>
+
+                    <div class="asset-item">
+                      <div class="asset-icon light-orange"><img src="/static/images/transformer.svg" alt="transformer"></div>
+                      <div class="asset-content">
+                        <div class="asset-title">{% trans "Transformer" %}</div>
+                        <div class="asset-value" id="transformer_count">-</div>
+                      </div>
+                    </div>
+                    
+                    <div class="asset-item">
+                      <div class="asset-icon light-green"><img src="/static/images/sluicegate.svg" alt="sluicegate"></div>
+                      <div class="asset-content">
+                        <div class="asset-title">{% trans "Sluice Gate" %}</div>
+                        <div class="asset-value">-</div>
+                      </div>
+                    </div>
+
+                    {% comment %} <div class="asset-item">
+                      <div class="asset-icon light-violet"><i class="fas fa-graduation-cap"></i></div>
+                      <div class="asset-content">
+                        <div class="asset-title">{% trans "School" %}</div>
+                        <div class="asset-value" id="school_asset">0</div>
+                      </div>
+                    </div> {% endcomment %}
+
+                    {% comment %} <div class="asset-item">
+                      <div class="asset-icon light-peach"><img src="/static/images/place.svg" alt="khouse"></div>
+                      <div class="asset-content">
+                        <div class="asset-title">{% trans "Religious Places" %}</div>
+                        <div class="asset-value" id="religous_places_asset">0</div>
+                      </div>
+                    </div> {% endcomment %}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Hazard & Vulnerability Tab -->
+        <div class="tab-pane fade" id="hazard" role="tabpanel">
+          <div class="tab-body">
+            <div class="row">
+              <div class="col-md-6">
+                <div class="hazard-section">
+                  <div class="section-header">
+                    <div class="section-icon hazard-icon-header"><i class="fas fa-exclamation-triangle"></i></div>
+                    <h5>{% trans "Hazard Summary" %}</h5>
+                  </div>
+                  <div class="hazard-list custom_padd">
+                    <div class="hazard-item">
+                      <div class="hazard-icon light-cyan"><img src="/static/images/wind.svg" alt="wind"></div>
+
+                      <div class="hazard-content">
+                        <div class="hazard-title">{% trans "Average flood depth" %}</div>
+                        <div class="hazard-value" id="avg_flood_depth">0 feet</div>
+                      </div>
+                    </div>
+                    <div class="hazard-item">
+                      <div class="hazard-icon light-green"><i class="fas fa-water"></i></div>
+                      <div class="hazard-content">
+                        <div class="hazard-title">{% trans "Maximum flood depth" %}</div>
+                        <div class="hazard-value" id="max_flood_depth">0 feet</div>
+                      </div>
+                    </div>
+                    <div class="hazard-item">
+                      <div class="hazard-icon light-violet"><i class="fas fa-mountain"></i></div>
+                      <div class="hazard-content">
+                        <div class="hazard-title">{% trans "River Bank erosion" %}</div>
+                        <div class="hazard-value" id="river_erosion_length_km">-</div>
+                      </div>
+                    </div>
+                    {% comment %} <div class="hazard-item">
+                      <div class="hazard-icon landslide light-peach"><i class="fa-solid fa-hill-rockslide"></i></div>
+                      <div class="hazard-content">
+                        <div class="hazard-title">{% trans "Landslide" %}</div>
+                        <div class="hazard-value">0</div>
+                      </div>
+                    </div> {% endcomment %}
+                    <div class="hazard-item">
+                      <div class="hazard-icon light-orange"><i class="fas fa-water"></i></div>
+
+                      <div class="hazard-content">
+                        <div class="hazard-title">{% trans "Wind velocity (km/hour)" %}</div>
+                        <div class="hazard-value">51 km/hour</div>
+                      </div>
+                    </div>
+                    <div class="hazard-item">
+                      <div class="hazard-icon light-peach"><img src="/static/images/earthquake.svg" alt="earthquake"></div>
+                      <div class="hazard-content">
+                        <div class="hazard-title">{% trans "Earthquake" %}</div>
+                        <div class="hazard-value">Zone V</div>
+                      </div>
+                    </div>
+                    <div class="hazard-item">
+                      <div class="hazard-icon light-violet"><img src="/static/images/landslide.svg" alt="landslide"></div>
+                      <div class="hazard-content">
+                        <div class="hazard-title">{% trans "Landslide susceptibility" %}</div>
+                        <div class="hazard-value">Nil</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="vulnerability-section">
+                  <div class="section-header">
+                    <div class="section-icon vulnerability-icon-header"><img src="/static/images/vul.svg" alt="khouse"></div>
+                    <h5>{% trans "Vulnerable Assets" %}</h5>
+                  </div>
+                  <div class="vulnerability-grid custom_padd">
+                    <div class="vuln-card vuln-high">
+                      <div class="vuln-icon light-orange"><i class="fas fa-home"></i></div>
+                      <div class="vuln-content">
+                        <div class="vuln-label">{% trans "Flood vulnerable houses" %}</div>
+                        <div class="vuln-number" id="flood_vulnerable_houses">0</div>
+                      </div>
+                    </div>
+                    <div class="vuln-card vuln-medium">
+                      <div class="vuln-icon light-green"><i class="fas fa-home"></i></div>
+                      <div class="vuln-content">
+                        <div class="vuln-label">{% trans "Erosion vulnerable houses" %}</div>
+                        <div class="vuln-number" id="erosion_vulnerable_houses">0</div>
+                      </div>
+                    </div>
+                    <div class="vuln-card vuln-warning">
+                      <div class="vuln-icon light-violet"><i class="fas fa-road"></i></div>
+                      <div class="vuln-content">
+                        <div class="vuln-label">{% trans "Flood vulnerable roads" %}</div>
+                        <div class="vuln-number" id="flood_vulnerable_roads">0</div>
+                      </div>
+                    </div>
+                    <div class="vuln-card vuln-danger">
+                      <div class="vuln-icon light-peach"><i class="fas fa-road"></i></div>
+                      <div class="vuln-content">
+                        <div class="vuln-label">{% trans "Erosion vulnerable roads" %}</div>
+                        <div class="vuln-number" id="erosion_vulnerable_roads">0</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Flood Shelter Tab -->
+        <div class="tab-pane fade" id="shelter" role="tabpanel">
+          <div class="tab-body">
+            <div class="shelter-grid">
+              <div class="shelter-card">
+                <div class="shelter-icon light-blue"><i class="fas fa-school"></i></div>
+                <div class="shelter-content">
+                  <div class="shelter-name">{% trans "LP School" %}</div>
+                  <div class="shelter-capacity">{% trans "For moderate flood" %}</div>
+                </div>
+              </div>
+              <div class="shelter-card">
+                <div class="shelter-icon light-green"><i class="fas fa-arrow-up-from-ground-water"></i></div>
+                <div class="shelter-content">
+                  <div class="shelter-name">{% trans "Elevated Platforms" %}</div>
+                  <div class="shelter-capacity">{% trans "For Livestocks" %}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <div id="loaderOverlay" style="display:none;">
+    <div class="loader-content">
+      <div class="spinner-border text-light" role="status" style="width: 3rem; height: 3rem;">
+        <span class="visually-hidden">{% trans "Loading..." %}</span>
+      </div>
+      <p class="text-light mt-3">{% trans "Generating report, please wait..." %}</p>
+    </div>
+  </div>
+
+
+  {% endblock %}
+
+  {% block extrajs %}
+  <script src="{% static 'js/vdmp_dashboard/vdmp_dashboard.js' %}"></script>
+  <script src="{% static 'js/vdmp_dashboard/pagePrint.js' %}"></script>
+  <script src="{% static 'js/utils/summery.js' %}"></script>
+  {% endblock %}
+
+  <!-- Breadcrumb Section -->
+{% comment %} <section class="bg-primary" style="background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%);">
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-12">
+        <div class="d-flex align-items-center justify-content-between py-3">
+          <!-- Breadcrumb -->
+          <div class="d-flex align-items-center text-white">
+            <i class="fas fa-home me-2"></i>
+            <span class="me-2">{% trans "Dashboard" %}</span>
+            <i class="fas fa-angle-right me-2"></i>
+            <span class="fw-bold">{% trans "Monitoring Climate-Resilient Villages across Assam" %}</span>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="d-flex align-items-center gap-2">
+            <button class="btn btn-light btn-sm d-flex align-items-center gap-2">
+              <i class="fas fa-download"></i>
+              <span>{% trans "Save Report" %}</span>
+            </button>
+            <button id="printDashboardBtn" class="btn btn-outline-light btn-sm d-flex align-items-center gap-2">
+              <i class="fas fa-print"></i>
+              <span>{% trans "Print" %}</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section> {% endcomment %}
+
+<!-- Breadcrumb Section -->
+{% comment %} <section id="breadcrumb-section" class="bg-primary"
+  style="background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%);">
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-12">
+        <div class="d-flex align-items-center justify-content-between py-3">
+          <!-- Breadcrumb -->
+          <div class="d-flex align-items-center text-white">
+            <i class="fas fa-home me-2"></i>
+            <span class="me-2">{% trans "Dashboard" %}</span>
+            <i class="fas fa-angle-right me-2"></i>
+            <span class="fw-bold">{% trans "Monitoring Climate-Resilient Villages across Assam" %}</span>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="d-flex align-items-center gap-2">
+            <button class="btn btn-light btn-sm d-flex align-items-center gap-2">
+              <i class="fas fa-download"></i>
+              <span>{% trans "Save Report" %}</span>
+            </button>
+            <button id="printDashboardBtn" class="btn btn-outline-light btn-sm d-flex align-items-center gap-2">
+              <i class="fas fa-print"></i>
+              <span>{% trans "Print" %}</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section> {% endcomment %}
+
+{% comment %} <section id="broadcrump">
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-md-12">
+        <div class="broadcrump__wrapper">
+          <ul>
+            <li>
+              <span class="me-2"><i class="fa-solid fa-angle-right" style="color: #000;"></i></span><span
+                class="BrdCrmb">{% trans "Village Summary" %}</span>
+            </li>
+          </ul>
+
+          <div class="d-flex align-items-center gap-2">
+            <button id="printDashboardBtn"
+              class=" border-0 rounded-1 d-flex align-items-center gap-2 px-2 printCss"><img
+                src="{% static 'images/Print_icon.svg' %}" class="img-fluid PrintIcn">{% trans "Print Page" %} </button>
+            {% if request.user.is_authenticated and request.user.is_superuser or request.user.role.name == "ASDMA" %}
+
+            <div class="right_div d-flex align-items-center d-none" id="download_report_container">
+              <button class=" border-0 rounded-1 d-flex align-items-center gap-2 px-2 printCss"
+                id="download_report_VDMP_Dashboard">
+                <i class="fa-solid fa-download download_icon"></i> {% trans "Download report" %}
+              </button>
+            </div>
+            {% endif %}
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section> {% endcomment %}

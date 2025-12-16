@@ -1,0 +1,35 @@
+/* .dataTables_filter{
+    margin: 4px 0px !important;
+} */
+
+/* DataTable horizontal scrolling styles */
+.dataTables_wrapper {
+    overflow-x: auto;
+    width: 100%;
+}
+
+.dataTables_scroll {
+    overflow-x: auto;
+    width: 100%;
+}
+
+.dataTables_scrollHead,
+.dataTables_scrollBody {
+    overflow-x: auto;
+}
+
+ .dataTables_wrapper .dataTables_length {
+        margin-bottom: 15px;
+    }
+    .dataTables_wrapper .row:first-child {
+        margin-bottom: 20px;
+    }
+
+
+.removeOutline input:focus,.removeOutline select:focus ,.removeOutline select,.removeOutline input,.removeOutline textarea {
+     outline:none !important;
+    box-shadow:none !important;
+    border: 1px solid #0072ae !important;
+    border-radius: 3px !important;
+}
+

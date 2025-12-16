@@ -1,0 +1,39 @@
+/* For Chrome, Edge, and Safari */
+::-webkit-scrollbar {
+  width: 6px; /* scrollbar width */
+}
+
+::-webkit-scrollbar-track {
+  background: #ffffff; /* dark track color */
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #4285f4; /* blue thumb color */
+  border-radius: 10px;
+   border: 1px solid #3b77db;/* optional border */
+}
+
+::-webkit-scrollbar-button {
+  display: none; /* hides top and bottom arrow buttons */
+}
+
+/* For Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #313131 #f8f8f8;
+}
+
+/* Hide scrollbar arrows completely */
+::-webkit-scrollbar-button:single-button {
+  display: none;
+  height: 0;
+  width: 0;
+}
+
+/* Hide both top and bottom arrow buttons */
+::-webkit-scrollbar-button:single-button:vertical:decrement {
+  display: none;
+}
+::-webkit-scrollbar-button:single-button:vertical:increment {
+  display: none;
+}

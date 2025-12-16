@@ -1,0 +1,526 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-07-22 13:12+0530\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: .\static\js\accounts\profile.js:18 .\static\js\accounts\profile.js:51
+#: .\static\js\accounts\profile.js:60 .\static\js\accounts\profile.js:77
+#: .\static\js\accounts\profile.js:86 .\static\js\accounts\profile.js:122
+#: .\static\js\accounts\profile.js:131
+#: .\static\js\administrator\rescue_equipment.js:73
+#: .\static\js\administrator\rescue_equipment.js:172
+#: .\static\js\administrator\training\training_list.js:33
+#: .\static\js\administrator\vdmp_dashboard\vdmp_dashboard.js:324
+#: .\static\js\administrator\vdmp_progress\vdmp_progress.js:49
+#: .\static\js\administrator\vdmp_progress\vdmp_progress.js:57
+#: .\static\js\administrator\vdmp_progress\vdmp_progress.js:135
+#: .\static\js\administrator\vdmp_progress\vdmp_progress.js:265
+#: .\static\js\administrator\vdmp_progress\vdmp_progress.js:273
+#: .\static\js\administrator\village_profile\village_profile.js:813
+#: .\static\js\training\training_list.js:264
+msgid "Error"
+msgstr "ত্ৰুটি"
+
+#: .\static\js\accounts\profile.js:19 .\static\js\accounts\profile.js:78
+msgid "All fields are required!"
+msgstr "সকলো ক্ষেত্ৰ আৱশ্যক!"
+
+#: .\static\js\accounts\profile.js:43 .\static\js\accounts\profile.js:114
+#: .\static\js\administrator\rescue_equipment.js:56
+#: .\static\js\administrator\rescue_equipment.js:155
+#: .\static\js\administrator\training\training_list.js:29
+#: .\static\js\administrator\vdmp_progress\vdmp_progress.js:38
+#: .\static\js\administrator\vdmp_progress\vdmp_progress.js:124
+#: .\static\js\administrator\vdmp_progress\vdmp_progress.js:255
+#: .\static\js\administrator\village_profile\village_profile.js:804
+#: .\static\js\training\training_list.js:248
+msgid "Success"
+msgstr "সফল"
+
+#: .\static\js\accounts\profile.js:44
+msgid "Profile updated successfully!"
+msgstr "প্ৰফাইল সফলভাৱে আপডেট কৰা হৈছে!"
+
+#: .\static\js\accounts\profile.js:52
+msgid "Failed to update profile"
+msgstr "প্ৰফাইল আপডেট কৰাত ব্যর্থ হ'ল"
+
+#: .\static\js\accounts\profile.js:61
+msgid "An error occurred while updating profile"
+msgstr "প্ৰফাইল আপডেট কৰাৰ সময়ত এটা ত্ৰুটি ঘটিল"
+
+#: .\static\js\accounts\profile.js:87
+msgid "New password and confirm password do not match!"
+msgstr "নতুন পাছৱৰ্ড আৰু নিশ্চিত পাছৱৰ্ড মিল খায় নাই!"
+
+#: .\static\js\accounts\profile.js:123
+msgid "Failed to change password"
+msgstr "পাছৱৰ্ড সলনি কৰাত ব্যর্থ হ'ল"
+
+#: .\static\js\accounts\profile.js:132
+msgid "An error occurred while changing password"
+msgstr "পাছৱৰ্ড সলনি কৰাৰ সময়ত এটা ত্ৰুটি ঘটিল"
+
+#: .\static\js\administrator\department\department.js:113
+msgid "Edit Department"
+msgstr "বিভাগ সম্পাদনা কৰক"
+
+#: .\static\js\administrator\department\department.js:114
+msgid "Update"
+msgstr "আপডেট কৰক"
+
+#: .\static\js\administrator\department\department.js:127
+msgid "Are you sure?"
+msgstr "আপুনি নিশ্চিত নে?"
+
+#: .\static\js\administrator\department\department.js:128
+msgid "Do you really want to delete this department?"
+msgstr "আপুনি এই বিভাগটো নিশ্চিতভাবে মচি পেলাব বিচাৰে নে?"
+
+#: .\static\js\administrator\department\department.js:133
+msgid "Yes, delete it!"
+msgstr "হʼব, মচি পেলাওক!"
+
+#: .\static\js\administrator\department\department.js:153
+msgid "Deleted!"
+msgstr "মচি পেলোৱা হ'ল!"
+
+#: .\static\js\administrator\department\department.js:156
+msgid "Error!"
+msgstr "ত্ৰুটি!"
+
+#: .\static\js\administrator\department\department.js:160
+msgid "Failed to delete department."
+msgstr "বিভাগ মচি পেলাবলৈ ব্যর্থ হ'ল।"
+
+#: .\static\js\administrator\department\department.js:168
+msgid "Do you really want to save this department?"
+msgstr "আপুনি এই বিভাগটো নিশ্চিতভাবে সংৰক্ষণ কৰিব বিচাৰে নে?"
+
+#: .\static\js\administrator\department\department.js:173
+msgid "Yes, save it!"
+msgstr "হʼব, সংৰক্ষণ কৰক!"
+
+#: .\static\js\administrator\department\department.js:207
+msgid "Success!"
+msgstr "সফলতা!"
+
+#: .\static\js\administrator\department\department.js:209
+msgid "Something went wrong."
+msgstr "কিবা এটা ভুল হ'ল।"
+
+#: .\static\js\administrator\department\department.js:213
+msgid "Failed to save department."
+msgstr "বিভাগ সংৰক্ষণ কৰাত ব্যর্থ হ'ল।"
+
+#: .\static\js\administrator\department\department.js:234
+msgid "Add New Department"
+msgstr "নতুন বিভাগ যোগ কৰক"
+
+#: .\static\js\administrator\department\department.js:235
+msgid "Submit"
+msgstr "জমা দিয়ক"
+
+#: .\static\js\administrator\department\department.js:246
+msgid "⚠️ No modules loaded. Cannot proceed with permission assignment."
+msgstr "⚠️ কোনো মডিউল লোড হোৱা নাই। অনুমতি নিযুক্তিৰ কাৰ্য্য আগবঢ়াব নোৱাৰি।"
+
+#: .\static\js\administrator\department\department.js:253
+msgid "Actions"
+msgstr "কাৰ্য্যসমূহ"
+
+#: .\static\js\administrator\rescue_equipment.js:21
+msgid "Saving..."
+msgstr "সংৰক্ষণ কৰি আছে..."
+
+#: .\static\js\administrator\rescue_equipment.js:62
+msgid "Unknown error"
+msgstr "অজ্ঞাত ত্ৰুটি"
+
+#: .\static\js\administrator\rescue_equipment.js:91
+msgid "Do you want to edit this equipment?"
+msgstr "আপুনি এই উপকৰণটো সম্পাদনা কৰিব বিচাৰে নে?"
+
+#: .\static\js\administrator\rescue_equipment.js:96
+msgid "Yes, edit it!"
+msgstr "হʼব, সম্পাদনা কৰক!"
+
+#: .\static\js\administrator\rescue_equipment.js:97
+msgid "Cancel"
+msgstr "বাতিল কৰক"
+
+#: .\static\js\administrator\rescue_equipment.js:122
+msgid "Updating..."
+msgstr "আপডেট কৰি আছে..."
+
+#: .\static\js\administrator\rescue_equipment.js:186
+msgid "Do you really want to delete this equipment?"
+msgstr "আপুনি এই উপকৰণটো নিশ্চিতভাবে মচি পেলাব বিচাৰে নে?"
+
+#: .\static\js\administrator\training\training_list.js:64
+msgid "Failed to add activity."
+msgstr "কাৰ্য্য যোগ কৰাত ব্যর্থ হ'ল।"
+
+#: .\static\js\administrator\training\training_list.js:139
+msgid "Status updated!"
+msgstr "স্থিতি আপডেট কৰা হ'ল!"
+
+#: .\static\js\administrator\training\training_list.js:139
+msgid "Status added!"
+msgstr "স্থিতি যোগ কৰা হ'ল!"
+
+#: .\static\js\administrator\training\training_list.js:139
+msgid "Failed to save status."
+msgstr "স্থিতি সংৰক্ষণ কৰাত ব্যর্থ হ'ল।"
+
+#: .\static\js\administrator\users\users.js:8
+msgid "Select Districts"
+msgstr "জিলা বাছনি কৰক"
+msgid "Select Circle"
+msgstr "চৰ্কিল বাছক"
+
+msgid "Select Gram Panchayat"
+msgstr "গাঁও পঞ্চায়ত বাছক"
+
+msgid "Select Villages"
+msgstr "গাঁওসমূহ বাছক"
+
+msgid "Sr. No"
+msgstr "ক্রমিক নম্বৰ"
+
+msgid "Department"
+msgstr "বিভাগ"
+
+msgid "Role"
+msgstr "ভূমিকা"
+
+msgid "Username"
+msgstr "ব্যৱহাৰকাৰী নাম"
+
+msgid "District"
+msgstr "জিলা"
+
+msgid "Circle"
+msgstr "চৰ্কিল"
+
+msgid "Gram Panchayat"
+msgstr "গাঁও পঞ্চায়ত"
+
+msgid "Village"
+msgstr "গাঁও"
+
+msgid "Edit User"
+msgstr "ব্যৱহাৰকাৰী সম্পাদনা কৰক"
+
+msgid "View User Details"
+msgstr "ব্যৱহাৰকাৰীৰ বিবৰণ চাওক"
+
+msgid "Register"
+msgstr "পঞ্জীয়ন কৰক"
+
+msgid "Register New User"
+msgstr "নতুন ব্যৱহাৰকাৰী পঞ্জীয়ন কৰক"
+
+msgid "User Updated"
+msgstr "ব্যৱহাৰকাৰী আপডেট কৰা হৈছে"
+
+msgid "User Registered"
+msgstr "ব্যৱহাৰকাৰী পঞ্জীয়ন কৰা হৈছে"
+
+msgid "The user has been updated successfully."
+msgstr "ব্যৱহাৰকাৰীজন সফলভাৱে আপডেট কৰা হৈছে।"
+
+msgid "The user has been registered successfully."
+msgstr "ব্যৱহাৰকাৰীজন সফলভাৱে পঞ্জীয়ন কৰা হৈছে।"
+
+msgid "Operation Failed"
+msgstr "অপারেশ্বন ব্যৰ্থ হৈছে"
+
+msgid "Please check the form data."
+msgstr "অনুগ্ৰহ কৰি ফৰ্মৰ ডাটা পৰীক্ষা কৰক।"
+
+msgid "Server Error"
+msgstr "চাৰ্ভাৰ ত্ৰুটি"
+
+msgid "An unexpected error occurred. Try again later."
+msgstr "অপ্ৰত্যাশিত ত্ৰুটি ঘটিছে। অনুগ্ৰহ কৰি পিছত চেষ্টা কৰক।"
+
+msgid "Last Updated"
+msgstr "শেষবাৰ আপডেট কৰা হৈছে"
+
+msgid "Edit Village Summary"
+msgstr "গাঁওৰ সামাৰিকৰণ সম্পাদনা কৰক"
+
+msgid "Save"
+msgstr "সংৰক্ষণ কৰক"
+
+msgid "Add Village Summary"
+msgstr "গাঁওৰ সামাৰিকৰণ যোগ কৰক"
+
+msgid "Summary Updated"
+msgstr "সামাৰিকৰণ আপডেট কৰা হৈছে"
+
+msgid "Summary Created"
+msgstr "সামাৰিকৰণ সৃষ্টি কৰা হৈছে"
+
+msgid "The village summary has been updated successfully."
+msgstr "গাঁওৰ সামাৰিকৰণ সফলভাৱে আপডেট কৰা হৈছে।"
+
+msgid "The village summary has been created successfully."
+msgstr "গাঁওৰ সামাৰিকৰণ সফলভাৱে সৃষ্টি কৰা হৈছে।"
+
+msgid "The record was successfully deleted."
+msgstr "ৰেকৰ্ড সফলভাৱে ডিলিট কৰা হৈছে।"
+
+msgid "Validation Error"
+msgstr "যাচাই ত্ৰুটি"
+
+msgid "Activity name is required!"
+msgstr "কাৰ্য্যৰ নাম প্ৰয়োজন!"
+
+msgid "VDMP Activity added successfully!"
+msgstr "VDMP কাৰ্য্য সফলভাৱে যোগ কৰা হৈছে!"
+
+msgid "Failed to add VDMP Activity: "
+msgstr "VDMP কাৰ্য্য যোগ কৰাত ব্যৰ্থ: "
+
+msgid "An unexpected error occurred. Please try again."
+msgstr "অপ্ৰত্যাশিত ত্ৰুটি ঘটিছে। অনুগ্ৰহ কৰি পুনৰ চেষ্টা কৰক।"
+
+msgid "Do you want to update this VDMP Activity?"
+msgstr "আপুনি এই VDMP কাৰ্য্য আপডেট কৰিব বিচাৰে নে?"
+
+msgid "Yes, update it!"
+msgstr "হয়, আপডেট কৰক!"
+
+msgid "VDMP Activity updated successfully!"
+msgstr "VDMP কাৰ্য্য সফলভাৱে আপডেট কৰা হৈছে!"
+
+msgid "Failed to update VDMP Activity: "
+msgstr "VDMP কাৰ্য্য আপডেট কৰাত ব্যৰ্থ: "
+
+msgid "You won't be able to revert this!"
+msgstr "আপুনি এইটো পিছু হটাব নোৱাৰিব!"
+msgid "VDMP Activity Status updated successfully!"
+msgstr "VDMP কাৰ্য্যৰ স্থিতি সফলভাৱে আপডেট কৰা হৈছে!"
+
+msgid "Failed to update VDMP Activity Status: "
+msgstr "VDMP কাৰ্য্যৰ স্থিতি আপডেট কৰাত ব্যৰ্থ: "
+
+msgid "Select VDMP Activities"
+msgstr "VDMP কাৰ্য্যসমূহ বাছক"
+
+msgid "Edit District"
+msgstr "জিলা সম্পাদনা কৰক"
+
+msgid "Edit Circle"
+msgstr "চৰ্কিল সম্পাদনা কৰক"
+
+msgid "Edit Gram Panchayat"
+msgstr "গাঁও পঞ্চায়ত সম্পাদনা কৰক"
+
+msgid "Edit Village"
+msgstr "গাঁও সম্পাদনা কৰক"
+
+msgid "Add District"
+msgstr "জিলা যোগ কৰক"
+
+msgid "Add Circle"
+msgstr "চৰ্কিল যোগ কৰক"
+
+msgid "Add Gram Panchayat"
+msgstr "গাঁও পঞ্চায়ত যোগ কৰক"
+
+msgid "Add Village"
+msgstr "গাঁও যোগ কৰক"
+
+msgid "Failed to load districts"
+msgstr "জিলা লোড কৰাত ব্যৰ্থ"
+
+msgid "Failed to load circles"
+msgstr "চৰ্কিলসমূহ লোড কৰাত ব্যৰ্থ"
+
+msgid "Failed to load gram panchayats"
+msgstr "গাঁও পঞ্চায়তসমূহ লোড কৰাত ব্যৰ্থ"
+
+msgid "Failed to load villages"
+msgstr "গাঁওসমূহ লোড কৰাত ব্যৰ্থ"
+
+msgid "District updated successfully"
+msgstr "জিলা সফলভাৱে আপডেট কৰা হৈছে"
+
+msgid "District created successfully"
+msgstr "জিলা সফলভাৱে সৃষ্টি কৰা হৈছে"
+
+msgid "Failed to save district"
+msgstr "জিলা সংৰক্ষণ কৰাত ব্যৰ্থ"
+
+msgid "An error occurred while saving the district"
+msgstr "জিলা সংৰক্ষণৰ সময়ত ত্ৰুটি ঘটিছে"
+
+msgid "Circle updated successfully"
+msgstr "চৰ্কিল সফলভাৱে আপডেট কৰা হৈছে"
+
+msgid "Circle created successfully"
+msgstr "চৰ্কিল সফলভাৱে সৃষ্টি কৰা হৈছে"
+
+msgid "Failed to save circle"
+msgstr "চৰ্কিল সংৰক্ষণ কৰাত ব্যৰ্থ"
+
+msgid "An error occurred while saving the circle"
+msgstr "চৰ্কিল সংৰক্ষণৰ সময়ত ত্ৰুটি ঘটিছে"
+
+msgid "Gram Panchayat updated successfully"
+msgstr "গাঁও পঞ্চায়ত সফলভাৱে আপডেট কৰা হৈছে"
+
+msgid "Gram Panchayat created successfully"
+msgstr "গাঁও পঞ্চায়ত সফলভাৱে সৃষ্টি কৰা হৈছে"
+
+msgid "Failed to save gram panchayat"
+msgstr "গাঁও পঞ্চায়ত সংৰক্ষণ কৰাত ব্যৰ্থ"
+
+msgid "An error occurred while saving the gram panchayat"
+msgstr "গাঁও পঞ্চায়ত সংৰক্ষণৰ সময়ত ত্ৰুটি ঘটিছে"
+
+msgid "Village updated successfully"
+msgstr "গাঁও সফলভাৱে আপডেট কৰা হৈছে"
+
+msgid "Village created successfully"
+msgstr "গাঁও সফলভাৱে সৃষ্টি কৰা হৈছে"
+
+msgid "Failed to save village"
+msgstr "গাঁও সংৰক্ষণ কৰাত ব্যৰ্থ"
+
+msgid "An error occurred while saving the village"
+msgstr "গাঁও সংৰক্ষণৰ সময়ত ত্ৰুটি ঘটিছে"
+
+msgid "Are you sure you want to delete this district?"
+msgstr "আপুনি নিশ্চিতনে যে এই জিলাটো ডিলিট কৰিব বিচাৰে?"
+
+msgid ""
+"This will also delete all circles, gram panchayats, and villages associated "
+"with this district."
+msgstr "এই জিলাৰ সৈতে সম্পৰ্কিত সকলো চৰ্কিল, গাঁও পঞ্চায়ত আৰু গাঁওও ডিলিট কৰা হ'ব।"
+
+msgid "Are you sure you want to delete this circle?"
+msgstr "আপুনি নিশ্চিতনে যে এই চৰ্কিলটো ডিলিট কৰিব বিচাৰে?"
+
+msgid ""
+"This will also delete all gram panchayats and villages associated with this "
+"circle."
+msgstr "এই চৰ্কিলৰ সৈতে সম্পৰ্কিত সকলো গাঁও পঞ্চায়ত আৰু গাঁওও ডিলিট কৰা হ'ব।"
+
+msgid "Are you sure you want to delete this gram panchayat?"
+msgstr "আপুনি নিশ্চিতনে যে এই গাঁও পঞ্চায়তটো ডিলিট কৰিব বিচাৰে?"
+
+msgid "This will also delete all villages associated with this gram panchayat."
+msgstr "এই গাঁও পঞ্চায়তৰ সৈতে সম্পৰ্কিত সকলো গাঁওও ডিলিট কৰা হ'ব।"
+
+msgid "Are you sure you want to delete this village?"
+msgstr "আপুনি নিশ্চিতনে যে এই গাঁওটো ডিলিট কৰিব বিচাৰে?"
+
+msgid "Deleted successfully"
+msgstr "সফলভাৱে ডিলিট কৰা হৈছে"
+
+msgid "All"
+msgstr "সকলো"
+msgid "Search..."
+msgstr "সন্ধান কৰক..."
+
+msgid "Select Equipment"
+msgstr "সাজ-সজোৱা বাছক"
+
+msgid "Do you really want to update this data?"
+msgstr "আপুনি নিশ্চিতনে যে এই তথ্য আপডেট কৰিব বিচাৰে?"
+
+msgid "Updated!"
+msgstr "আপডেট কৰা হৈছে!"
+
+msgid "Equipment status updated successfully!"
+msgstr "সাজ-সজোৱাৰ স্থিতি সফলভাৱে আপডেট কৰা হৈছে!"
+
+msgid "Failed to update"
+msgstr "আপডেট কৰাত ব্যৰ্থ"
+
+msgid "Failed to update equipment status"
+msgstr "সাজ-সজোৱাৰ স্থিতি আপডেট কৰাত ব্যৰ্থ"
+
+msgid "Select Task Force"
+msgstr "কাৰ্য্যবল বাছক"
+
+msgid "Please fill all required fields"
+msgstr "অনুগ্ৰহ কৰি সকলো আৱশ্যকীয় স্থান পূৰণ কৰক"
+
+msgid "Equipment added successfully!"
+msgstr "সাজ-সজোৱা সফলভাৱে যোগ কৰা হৈছে!"
+
+msgid "Failed to add equipment"
+msgstr "সাজ-সজোৱা যোগ কৰাত ব্যৰ্থ"
+
+msgid "training_activities"
+msgstr "প্ৰশিক্ষণ কাৰ্যকলাপসমূহ"
+
+msgid "Select Status"
+msgstr "স্থিতি বাছক"
+
+msgid "Error loading training activity data:"
+msgstr "প্ৰশিক্ষণ কাৰ্যকলাপৰ তথ্য লোড কৰাত ত্ৰুটি:"
+
+msgid "Failed to load data."
+msgstr "তথ্য লোড কৰাত ব্যৰ্থ।"
+
+msgid "Training status not found for ID:"
+msgstr "এই ID ৰ বাবে প্ৰশিক্ষণ স্থিতি পোৱা নগ'ল:"
+
+msgid "Edit Training Activity Status"
+msgstr "প্ৰশিক্ষণ কাৰ্যকলাপৰ স্থিতি সম্পাদনা কৰক"
+
+msgid "Do you really want to delete this training activity status?"
+msgstr "আপুনি নিশ্চিতনে যে এই প্ৰশিক্ষণ স্থিতি ডিলিট কৰিব বিচাৰে?"
+
+msgid "Status updated successfully!"
+msgstr "স্থিতি সফলভাৱে আপডেট কৰা হৈছে!"
+
+msgid "Failed to update status!"
+msgstr "স্থিতি আপডেট কৰাত ব্যৰ্থ!"
+
+msgid "Select Option"
+msgstr "বিকল্প বাছক"
+
+msgid "Select Village"
+msgstr "গাঁও বাছক"
+
+msgid "Not Started"
+msgstr "আৰম্ভ হোৱা নাই"
+
+msgid "In Progress"
+msgstr "চলিত অৱস্থাত"
+
+msgid "Completed"
+msgstr "সম্পূৰ্ণ হৈছে"
+
+msgid "VDMP Activity Progress Status"
+msgstr "VDMP কাৰ্যকলাপৰ অগ্ৰগতি স্থিতি"
+
+msgid "Activity"
+msgstr "কাৰ্যকলাপ"
+
+msgid "Count"
+msgstr "সংখ্যা"
+
+msgid "activities"
+msgstr "কাৰ্যকলাপসমূহ"

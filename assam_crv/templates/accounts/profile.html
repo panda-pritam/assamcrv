@@ -1,0 +1,261 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load static %}
+
+{% block extra_css %}
+<style>
+    .info-card {
+        background-color: white;
+        transition: all 0.1s ease;
+        border-left: 4px solid #e1edff;
+        overflow-wrap: break-word;
+        word-wrap: break-word;
+        word-break: break-word;
+    }
+
+    .info-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1) !important;
+    }
+
+    .profile-avatar {
+        padding: 15px;
+        border-radius: 50%;
+        background-color: rgba(106, 17, 203, 0.1);
+        display: inline-block;
+    }
+
+    .bg-gradient {
+        background: linear-gradient(to right, #e1edff, #dba3e6ff);
+    }
+    
+    @media (max-width: 576px) {
+        .info-card {
+            padding: 10px !important;
+        }
+        
+        .card-body {
+            padding: 1rem 0.5rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block title %}{% trans "My Profile" %}{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-5" style="padding: 50px;">
+    <div class="row justify-content-center">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header bg-gradient" style="background-color: #e1edff; color: black;">
+                    <div class="d-flex align-items-center">
+                        <div class="profile-icon me-3">
+                            <i class="fas fa-user-circle fa-2x"></i>
+                        </div>
+                        <h5 class="mb-0">{% trans "My Profile" %}</h5>
+                    </div>
+                </div>
+                <div class="card-body bg-light">
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="row">
+                                <div class="col-12 col-sm-6 col-md-4 mb-5">
+                                    <div class="info-card p-3 rounded shadow-sm">
+                                        <label class="text-primary fw-bold">{% trans "Username" %}</label>
+                                        <p class="mb-0 text-break">{{ user.username }}</p>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-sm-6 col-md-4 mb-5">
+                                    <div class="info-card p-3 rounded shadow-sm">
+                                        <label class="text-primary fw-bold">{% trans "First Name" %}</label>
+                                        <p class="mb-0 text-break">{{ user.first_name }}</p>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-sm-6 col-md-4 mb-5">
+                                    <div class="info-card p-3 rounded shadow-sm">
+                                        <label class="text-primary fw-bold">{% trans "Last Name" %}</label>
+                                        <p class="mb-0 text-break">{{ user.last_name }}</p>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-sm-6 col-md-4 mb-5">
+                                    <div class="info-card p-3 rounded shadow-sm">
+                                        <label class="text-primary fw-bold">{% trans "Email" %}</label>
+                                        <p class="mb-0 text-break">{{ user.email }}</p>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-sm-6 col-md-4 mb-5">
+                                    <div class="info-card p-3 rounded shadow-sm">
+                                        <label class="text-primary fw-bold">{% trans "Mobile" %}</label>
+                                        <p class="mb-0 text-break">{{ user.mobile }}</p>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-sm-6 col-md-4 mb-5">
+                                    <div class="info-card p-3 rounded shadow-sm">
+                                        <label class="text-primary fw-bold">{% trans "Department" %}</label>
+                                        <p class="mb-0 text-break">{{ department }}</p>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-sm-6 col-md-4 mb-5">
+                                    <div class="info-card p-3 rounded shadow-sm">
+                                        <label class="text-primary fw-bold">{% trans "Role" %}</label>
+                                        <p class="mb-0 text-break">{{ user.role.name }}</p>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-sm-6 col-md-4 mb-5">
+                                    <div class="info-card p-3 rounded shadow-sm">
+                                        <label class="text-primary fw-bold">{% trans "District" %}</label>
+                                        <p class="mb-0 text-break">{{ district }}</p>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-sm-6 col-md-4 mb-5">
+                                    <div class="info-card p-3 rounded shadow-sm">
+                                        <label class="text-primary fw-bold">{% trans "Circle" %}</label>
+                                        <p class="mb-0 text-break">{{ circle }}</p>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-sm-6 col-md-4 mb-5">
+                                    <div class="info-card p-3 rounded shadow-sm">
+                                        <label class="text-primary fw-bold">{% trans "Gram Panchayat" %}</label>
+                                        <p class="mb-0 text-break">{{ gram_panchayat }}</p>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-sm-6 col-md-4 mb-5">
+                                    <div class="info-card p-3 rounded shadow-sm">
+                                        <label class="text-primary fw-bold">{% trans "Village" %}</label>
+                                        <p class="mb-0 text-break">{{ village }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-12 text-center">
+                            <button type="button" class="btn btn-primary custom-purple me-2 mb-2 mb-sm-0" data-bs-toggle="modal"
+                                data-bs-target="#editProfileModal">
+                                <i class="fas fa-user-edit me-1"></i> {% trans "Edit Profile" %}
+                            </button>
+                            <button type="button" class="btn btn-secondary mb-2 mb-sm-0" data-bs-toggle="modal"
+                                data-bs-target="#changePasswordModal">
+                                <i class="fas fa-key me-1"></i> {% trans "Change Password" %}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Profile Modal -->
+<div class="modal fade" id="editProfileModal" tabindex="-1" aria-labelledby="editProfileModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-fullscreen-sm-down">
+        <div class="modal-content shadow-lg border-0">
+            <div class="modal-header bg-gradient"
+                style="background: linear-gradient(to right, #6a11cb, #2575fc); color: black;">
+                <h5 class="modal-title" id="editProfileModalLabel">{% trans "Edit Profile" %}</h5>
+                <button type="button" class="btn-close btn-close-black" data-bs-dismiss="modal"
+                    aria-label="Close"></button>
+            </div>
+            <div class="modal-body bg-light">
+                <form id="editProfileForm" class="p-2">
+                    <div class="mb-3">
+                        <label for="username" class="form-label">{% trans "Username" %}</label>
+                        <input type="text" class="form-control" id="username" value="{{ user.username }}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="firstName" class="form-label">{% trans "First Name" %}</label>
+                        <input type="text" class="form-control" id="firstName" value="{{ user.first_name }}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="lastName" class="form-label">{% trans "Last Name" %}</label>
+                        <input type="text" class="form-control" id="lastName" value="{{ user.last_name }}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="email" class="form-label">{% trans "Email" %}</label>
+                        <input type="email" class="form-control" id="email" value="{{ user.email }}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="mobile" class="form-label">{% trans "Mobile" %}</label>
+                        <input type="text" class="form-control" id="mobile" value="{{ user.mobile }}">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer bg-light">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i> {% trans "Close" %}
+                </button>
+                <button type="button" class="btn btn-primary" id="saveProfileBtn">
+                    <i class="fas fa-save me-1"></i> {% trans "Save Changes" %}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Change Password Modal -->
+<div class="modal fade" id="changePasswordModal" tabindex="-1" aria-labelledby="changePasswordModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-fullscreen-sm-down">
+        <div class="modal-content shadow-lg border-0">
+            <div class="modal-header bg-gradient"
+                style="background: linear-gradient(to right, #6a11cb, #2575fc); color: black;">
+                <h5 class="modal-title" id="changePasswordModalLabel">{% trans "Change Password" %}</h5>
+                <button type="button" class="btn-close btn-close-black" data-bs-dismiss="modal"
+                    aria-label="Close"></button>
+            </div>
+            <div class="modal-body bg-light">
+                <form id="changePasswordForm" class="p-2">
+                    <div class="mb-3">
+                        <label for="currentPassword" class="form-label">{% trans "Current Password" %}</label>
+                        <input type="password" class="form-control" id="currentPassword">
+                    </div>
+                    <div class="mb-3">
+                        <label for="newPassword" class="form-label">{% trans "New Password" %}</label>
+                        <input type="password" class="form-control" id="newPassword">
+                    </div>
+                    <div class="mb-3">
+                        <label for="confirmPassword" class="form-label">{% trans "Confirm New Password" %}</label>
+                        <input type="password" class="form-control" id="confirmPassword">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer bg-light">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i> {% trans "Close" %}
+                </button>
+                <button type="button" class="btn btn-primary" id="changePasswordBtn">
+                    <i class="fas fa-key me-1"></i> {% trans "Change Password" %}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extrajs %}
+<script src="{% static 'js/accounts/profile.js' %}"></script>
+<script>
+    // Add responsive behavior for modals on small screens
+    document.addEventListener('DOMContentLoaded', function() {
+        const adjustModalForMobile = function() {
+            const modalBodies = document.querySelectorAll('.modal-body');
+            if (window.innerWidth < 576) {
+                modalBodies.forEach(body => {
+                    body.style.maxHeight = (window.innerHeight * 0.6) + 'px';
+                    body.style.overflowY = 'auto';
+                });
+            } else {
+                modalBodies.forEach(body => {
+                    body.style.maxHeight = '';
+                    body.style.overflowY = '';
+                });
+            }
+        };
+        
+        // Run on page load and window resize
+        adjustModalForMobile();
+        window.addEventListener('resize', adjustModalForMobile);
+    });
+</script>
+{% endblock %}

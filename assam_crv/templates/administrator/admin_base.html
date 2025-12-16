@@ -1,0 +1,115 @@
+{% load static %}
+{% load i18n %}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{% endblock %}</title>
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <link rel="icon" href="{% static 'images/Logo_ASDMA.svg' %}" type="image/svg">
+
+    <!-- Font Awesome CDN -->
+    <link rel="stylesheet" href="{% static 'fontawesome/all.min.css' %}">
+    <link rel="stylesheet" href="{% static 'bootstrap/css/bootstrap.min.css' %}">
+    <link rel="stylesheet" href="{% static 'css/dataTable.css' %}">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link rel="stylesheet" href="{% static 'css/responsive.css' %}">
+    <link rel="stylesheet" href="{% static 'css/scroll_bar.css' %}">
+    {% comment %} ---------- Select 2 style --------- {% endcomment %}
+    <link href="{% static 'select2/select2.min.css' %}" rel="stylesheet" />
+    {% comment %} ------------ JQuery table -------------- {% endcomment %}
+    <link href="{% static 'jquery/css/jquery.dataTables.min.css' %}" rel="stylesheet" />
+     <link href="{% static 'jquery/css/fixedHeader.dataTables.min.css' %}" rel="stylesheet" />
+    <script src="{% url 'javascript-catalog' %}"></script>
+    <link href="{% static 'css/dashboard.css' %}" rel="stylesheet" />
+
+
+    {% comment %} <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css"> {% endcomment %}
+
+    <link href="{% static 'sweetAlert/sweetalert2.min.css' %}" rel="stylesheet" />
+
+
+    {% block extraheader %}
+    {% endblock %}
+
+    <style>
+        .right_div img {
+            width: 16px;
+        }
+
+        .right_div ul {
+            padding-right: 4px;
+        }
+
+        #filter {
+            margin-bottom: 0px;
+        }
+    </style>
+
+</head>
+
+<body class="position-relative">
+    {% include "components/topnavber.html" %}
+    {% include "administrator/components/sidebar.html" %}
+
+    <div class="main-content " id="main-content">
+        {% block content %}
+        {% endblock %}
+    </div>
+     <footer>
+        <div class="container-fluiddd">
+            <div class="row px-3">
+                <div class="col-md-8">
+                    <p>
+                        ©2024 ASDMA, {% trans "Government of Assam" %} |
+                        {% trans "All Rights Reserved ®" %} |
+                        {% trans "Designed and Implemented by RMSI Pvt. Ltd" %}
+                    </p>
+                </div>
+                <div class="col-12 col-md-4 pull-right">
+                    <ul class="">
+                        <li>{% trans "About CRV" %}</li>
+                        <li>{% trans "Disclaimer" %}</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="{% url 'javascript-catalog' %}"></script>
+    {% comment %} ------------ bootstrap -------------- {% endcomment %}
+    <script src="{% static 'bootstrap/js/bootstrap.min.js' %}"></script>
+    <script src="{% static 'bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+    <script src="{% static 'bootstrap/js/bootstrap.esm.min.js' %}"></script>
+    <script src="{% static 'bootstrap/js/popper.min.js' %}"></script>
+    {% comment %} ----------------- JQuery js file ----------- {% endcomment %}
+    <script src="{% static 'jquery/jquery-3.6.0.min.js' %}"></script>
+    <script src="{% static 'jquery/js/jquery.dataTables.min.js' %}"></script>
+     <script src="{% static 'jquery/js/dataTables.fixedHeader.min.js' %}"></script>
+        
+    {% comment %} ------------ Select 2 js file --------- {% endcomment %}
+    <script src="{% static 'select2/select2.min.js' %}"></script>
+    {% comment %} ---------------- fontawesome js file--------------- {% endcomment %}
+    <script src="{% static 'fontawesome/all.min.js' %}"></script>
+    <script src="{% static 'js/TopNavBar.js' %}"></script>
+     <script src="{% static 'js/utils/sideBarItemColorChange.js' %}"></script>
+     <script src="{% static 'js/utils/AddSelect2Options.js' %}"></script>
+     <script src="{% static 'js/utils/DataTableFunction.js' %}"></script>
+     <script src="{% static 'js/utils/csrf.js' %}"></script>
+     <script src="{% static 'js/utils/downloadTableData.js' %}"></script>
+
+    
+
+
+    {% comment %} <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script> {% endcomment %}
+  <script src="{% static 'sweetAlert/sweetalert2@11.js' %}"></script>
+  <script src="{% static 'js/utils/summery.js' %}"></script>
+    {% block extrajs %}
+    {% endblock %}
+
+</body>
+
+</html>
