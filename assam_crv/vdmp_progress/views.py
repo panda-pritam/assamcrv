@@ -10,6 +10,9 @@ from utils import is_admin_or_superuser, apply_location_filters, apply_role_filt
 from django.db.models import Count, Q
 from django.utils.translation import get_language
 
+from .data_pipeline import process_household_survey_data
+from village_profile.models import district_village_mapping
+
 @api_view(['GET'])
 def get_vdmp_activity_status(request):
     district_id = request.query_params.get('district_id', None)
@@ -201,12 +204,62 @@ def update_vdmp_activity_status(request, status_id):
     Accepts partial update by status ID."""
 
     try:
-        activity = tblVDMP_Activity_Status.objects.get(id=status_id)
+        activity_status = tblVDMP_Activity_Status.objects.get(id=status_id)
     except tblVDMP_Activity_Status.DoesNotExist:
         return Response({'error': 'Activity not found'}, status=status.HTTP_404_NOT_FOUND)
 
-    serializer = VDMPActivityStatusSerializer(activity, data=request.data, partial=True)
+    serializer = VDMPActivityStatusSerializer(activity_status, data=request.data, partial=True)
     if serializer.is_valid():
+        # Trigger data pipeline if status is marked as 'Completed'
+        if serializer.validated_data.get('status') == 'Completed':
+            try:
+                from .data_pipeline import process_household_survey_data
+                from village_profile.models import district_village_mapping
+                
+                # Get activity name for household survey processing
+                if activity_status.activity.name == 'Household survey':
+                    village_id = activity_status.village.id
+                    print("activity_status.village.id -> ", village_id)
+                    
+                    # Get mapping record
+                    mapping = district_village_mapping.objects.get(village_id=village_id)
+                    mobile_village_id = mapping.mobileDBVillageID
+                    district_id = mapping.district.id
+                    district_code = mapping.district_code
+                    village_code = mapping.village_code
+                    
+                    print(f"Mobile Village ID: {mobile_village_id}")
+                    print(f"District ID: {district_id}, District Code: {district_code}")
+                    print(f"Village Code: {village_code}")
+                    
+                    # Process data pipeline with import status tracking
+                    import_status, records_processed = process_household_survey_data(
+                        activity_status.activity.name,
+                        village_id,
+                        district_id,
+                        mobile_village_id,
+                        district_code,
+                        village_code,
+                        activity_status
+                    )
+                    
+                    # Save status only after successful pipeline completion
+                    serializer.save()
+                    
+                    return Response({
+                        **serializer.data,
+                        'pipeline_status': 'success',
+                        'records_processed': records_processed,
+                        'import_status_id': import_status.id
+                    })
+            except Exception as e:
+                # Don't save status if pipeline fails
+                return Response({
+                    'error': 'Pipeline processing failed',
+                    'pipeline_error': str(e)
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        # Save status for non-Completed statuses
         serializer.save()
         return Response(serializer.data)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

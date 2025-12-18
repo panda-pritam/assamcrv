@@ -3,7 +3,7 @@ from django.urls import path
 from .views import ( get_districts, get_circles, get_gram_panchayats, get_villages, villages_by_district, 
                     add_district_crlcle_gp_vill_by_csv,get_all_districts, get_all_villages, get_all_circles, get_all_gram_panchayats,
                     create_circle, create_district, create_gram_panchayat, create_village, update_circle, update_district
-                     ,update_gram_panchayat, update_village, delete_circle, delete_district, delete_gram_panchayat, delete_village,update_locations, get_village_count, get_location_counts )
+                     ,update_gram_panchayat, update_village, delete_circle, delete_district, delete_gram_panchayat, delete_village,update_locations, get_village_count, get_location_counts, sync_mobile_db_villages )
 
 from .views import count_of_villages_with_survey
 
@@ -42,6 +42,9 @@ urlpatterns = [
     path('api/get_location_counts', get_location_counts, name='get_location_counts'),
     #add via csv
     path('api/add_district_crlcle_gp_vill_by_csv', add_district_crlcle_gp_vill_by_csv, name='add_district_crlcle_gp_vill_by_csv'),
+    
+    # Sync mobile DB
+    path('api/sync_mobile_db_villages', sync_mobile_db_villages, name='sync_mobile_db_villages'),
 
 
     path('api/count_of_villages_with_survey', count_of_villages_with_survey, name='count_of_villages_with_survey'),

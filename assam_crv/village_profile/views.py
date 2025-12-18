@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from rest_framework.response import Response
 from rest_framework import status
-from .models import tblDistrict, tblCircle, tblGramPanchayat, tblVillage
+from .models import tblDistrict, tblCircle, tblGramPanchayat, tblVillage, district_village_mapping
 from vdmp_dashboard.models import VillageListOfAllTheDistricts
 from .serializers import (DistrictSerializer, CircleSerializer, GramPanchayatSerializer, VillageSerializer,
                           ListCircleSerializer, ListGramPanchayatSerializer, ListVillageSerializer, ListDistrictSerializer)
@@ -10,6 +10,12 @@ from rest_framework.parsers import MultiPartParser, FormParser
 import tempfile, os
 from utils import import_location_data, is_admin_or_superuser,store_lat_lon
 from django.contrib.auth.decorators import login_required, user_passes_test
+from django.db import connections
+from django.db import transaction
+
+from vdmp_dashboard.models import HouseholdSurvey, Transformer, Commercial,Critical_Facility,ElectricPole,VillageListOfAllTheDistricts,VillageRoadInfo,VillageRoadInfoErosion
+from utils import apply_location_filters, village_apply_location_filters
+
 
 
 @api_view(['GET'])
@@ -199,8 +205,60 @@ def create_village(request):
     Expects village data in the request body."""
     serializer = ListVillageSerializer(data=request.data)
     if serializer.is_valid():
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        try:
+            with transaction.atomic():
+                village = serializer.save()
+                create_village_with_mobile_db_mapping(village, request.user)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+def create_village_with_mobile_db_mapping(village, user):
+    """Create village entry in mobile_db and maintain mapping."""
+    with transaction.atomic():
+        # Get district info
+        district = village.gram_panchayat.circle.district
+        
+        # Insert into mobile_db
+        mobile_db = connections['mobile_db']
+        with mobile_db.cursor() as cursor:
+            # PostgreSQL auto-handles id if it's SERIAL/IDENTITY
+            cursor.execute(
+                "INSERT INTO public.villages (district_id, district_name, village_name, created_on, updated_on) VALUES (%s, %s, %s, NOW(), NOW()) RETURNING id",
+                [district.code, district.name, village.name]
+            )
+            mobile_village_id = cursor.fetchone()[0]
+        
+        # Create mapping record
+        district_village_mapping.objects.create(
+            district=district,
+            district_code=district.code,
+            circle=village.gram_panchayat.circle,
+            gram_panchayat=village.gram_panchayat,
+            village=village,
+            village_code=village.code,
+            mobileDBVillageID=str(mobile_village_id),
+            mobileDBDistrictID=district.code,
+            userID=user
+        )
+
+
+@login_required
+@api_view(['POST'])
+@user_passes_test(is_admin_or_superuser)
+def create_village_with_mapping(request):
+    """Create village in both default DB and mobile_db with mapping."""
+    serializer = ListVillageSerializer(data=request.data)
+    if serializer.is_valid():
+        try:
+            with transaction.atomic():
+                village = serializer.save()
+                create_village_with_mobile_db_mapping(village, request.user)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -455,9 +513,68 @@ def update_locations(request):
         return Response({"message": "Locations updated successfully."}, status=status.HTTP_200_OK)
     except Exception as e:
         return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERRO)
+
+
+# @login_required
+@api_view(['GET', 'POST'])
+# @user_passes_test(is_admin_or_superuser)
+def sync_mobile_db_villages(request):
+    """Sync villages from mobile DB to district_village_mapping table."""
+    try:
+        result = sync_villages_from_mobile_db(request.user)
+        return Response(result, status=status.HTTP_200_OK)
+    except Exception as e:
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+def sync_villages_from_mobile_db(user):
+    """Read mobile DB villages and create mapping records."""
+    mobile_db = connections['mobile_db']
+    created_count = 0
+    skipped_count = 0
     
-from vdmp_dashboard.models import HouseholdSurvey, Transformer, Commercial,Critical_Facility,ElectricPole,VillageListOfAllTheDistricts,VillageRoadInfo,VillageRoadInfoErosion
-from utils import apply_location_filters, village_apply_location_filters
+    with mobile_db.cursor() as cursor:
+        cursor.execute("SELECT id, district_name, village_name FROM public.villages")
+        mobile_villages = cursor.fetchall()
+    
+    for mobile_village_id, district_name, village_name in mobile_villages:
+        # Check if mapping already exists
+        if district_village_mapping.objects.filter(mobileDBVillageID=str(mobile_village_id)).exists():
+            skipped_count += 1
+            continue
+        
+        # Find matching district and village in default DB
+        try:
+            district = tblDistrict.objects.get(name__iexact=district_name)
+            village = tblVillage.objects.filter(
+                name__iexact=village_name,
+                gram_panchayat__circle__district=district
+            ).first()
+            
+            if village:
+                district_village_mapping.objects.create(
+                    district=district,
+                    district_code=district.code,
+                    circle=village.gram_panchayat.circle,
+                    gram_panchayat=village.gram_panchayat,
+                    village=village,
+                    village_code=village.code,
+                    mobileDBVillageID=str(mobile_village_id),
+                    mobileDBDistrictID=district.code,
+                    userID=user if user.is_authenticated else None
+                )
+                created_count += 1
+            else:
+                skipped_count += 1
+        except tblDistrict.DoesNotExist:
+            skipped_count += 1
+    
+    return {
+        "message": "Sync completed",
+        "created": created_count,
+        "skipped": skipped_count
+    }
+    
 
 
 @api_view(['GET'])

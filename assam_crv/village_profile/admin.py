@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import tblDistrict, tblCircle, tblGramPanchayat, tblVillage
+from .models import tblDistrict, tblCircle, tblGramPanchayat, tblVillage, district_village_mapping
 
 @admin.register(tblDistrict)
 class tblDistrictAdmin(admin.ModelAdmin):
@@ -38,3 +38,11 @@ class tblVillageAdmin(admin.ModelAdmin):
     def get_district(self, obj):
         return obj.gram_panchayat.circle.district
     get_district.short_description = 'District'
+
+
+@admin.register(district_village_mapping)
+class DistrictVillageMappingAdmin(admin.ModelAdmin):
+    list_display = ('id', 'district', 'village', 'mobileDBVillageID', 'mobileDBDistrictID', 'userID', 'created_at')
+    list_filter = ('district', 'circle', 'created_at')
+    search_fields = ('district__name', 'village__name', 'mobileDBVillageID')
+    readonly_fields = ('created_at', 'updated_at')

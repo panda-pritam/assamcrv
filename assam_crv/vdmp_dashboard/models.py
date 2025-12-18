@@ -99,6 +99,8 @@ class HouseholdSurvey(models.Model):
     crops_diversity = models.CharField(max_length=255, null=True, blank=True)
     last_updated = models.DateTimeField(auto_now=True)
     Sanitation_Type=models.CharField(max_length=255, null=True, blank=True)
+    unique_id=models.CharField(max_length=255, null=True, blank=True, unique=True)
+    form_id=models.CharField(max_length=255, null=True, blank=True, unique=True)
 
     def __str__(self):
         return f"{self.village_code} - {self.point_id}"

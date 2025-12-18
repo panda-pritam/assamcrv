@@ -93,7 +93,7 @@ WSGI_APPLICATION = 'assam_crv.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
-print("DB HOST:", config('DB_HOST'))  # Debug line to check DB_HOST value
+# print("DB HOST:", config('DB_HOST'))  # Debug line to check DB_HOST value
 
 
 DATABASES = {
@@ -107,7 +107,15 @@ DATABASES = {
         'OPTIONS': {
             'options': '-c default_transaction_isolation=serializable'
         },
-    }
+    },
+    'mobile_db': {
+        'ENGINE': 'django.contrib.gis.db.backends.postgis',
+        'NAME': config('MOBILE_DB_NAME'),
+        'USER': config('MOBILE_DB_USER'),
+        'PASSWORD': config('MOBILE_DB_PASSWORD'),
+        'HOST': config('MOBILE_DB_HOST'),
+        'PORT': config('MOBILE_DB_PORT', cast=int),
+    },
 }
 
 
