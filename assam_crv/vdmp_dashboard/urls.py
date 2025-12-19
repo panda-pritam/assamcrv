@@ -17,3 +17,13 @@ urlpatterns = [
     path('api/download_excels_format', download_excels_format, name='download_excels_format'),
 
 ]
+
+
+# from django.urls import path
+# from . import views
+
+# urlpatterns = [
+#     # path('sync-attributes/', views.sync_attributes_view, name='sync_attributes'),
+#     path('test-dynamic-sql/', views.test_dynamic_sql, name='test_dynamic_sql'),
+#     path('list-mappings/', views.list_mappings, name='list_mappings'),
+# ]

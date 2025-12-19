@@ -2,6 +2,36 @@ from django.db import models
 from village_profile.models import tblVillage
 
 
+class AttributeMapping(models.Model):
+    MODEL_CHOICES = [
+        ('HouseholdSurvey', 'Household Survey'),
+        ('Commercial', 'Commercial'),
+        ('Transformer',"Transformer"),
+        ('Critical_Facility',"Critical_Facility"),
+        ("ElectricPole","ElectricPole"),
+        ("VillageListOfAllTheDistricts","VillageListOfAllTheDistricts"),
+        ("VillageRoadInfo","VillageRoadInfo"),
+        ("BridgeSurvey","")
+
+
+    ]
+    
+    mobile_db_attribute_id = models.IntegerField()
+    attribute_text = models.CharField(max_length=500, null=True, blank=True)
+    alias_name = models.CharField(max_length=100)
+    model_name = models.CharField(max_length=50, choices=MODEL_CHOICES)
+    is_calculated = models.BooleanField(default=False)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        unique_together = ['mobile_db_attribute_id', 'model_name']
+    
+    def __str__(self):
+        return f"{self.model_name} - {self.alias_name}"
+
+
 class HouseholdSurvey(models.Model):
     village = models.ForeignKey(tblVillage, on_delete=models.CASCADE)
     dist_code = models.CharField(max_length=255, null=True, blank=True)

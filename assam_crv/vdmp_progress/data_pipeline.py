@@ -104,8 +104,15 @@ def process_household_survey_data(activity_name, village_id, district_id, mobile
 
 def get_household_sql_script(village_id):
     """Get the household SQL script with village_id parameter"""
-    ("--------------- Running the SQL script ---------------")
-    sql_script = """
+    from .dynamic_sql import get_dynamic_sql_script
+    print("--------------- Running the SQL script ---------------")
+    return get_dynamic_sql_script(village_id, 'HouseholdSurvey')
+
+
+def get_household_sql_script_old(village_id):
+    """Old hardcoded SQL script - kept for reference"""
+    print("--------------- Running the SQL script ---------------")
+    sql_script_old = """
     WITH media_urls AS (
         SELECT
             fd.spatial_id,
