@@ -212,12 +212,11 @@ def update_vdmp_activity_status(request, status_id):
     if serializer.is_valid():
         # Trigger data pipeline if status is marked as 'Completed'
         if serializer.validated_data.get('status') == 'Completed':
-            try:
-                from .data_pipeline import process_household_survey_data
-                from village_profile.models import district_village_mapping
-                
-                # Get activity name for household survey processing
-                if activity_status.activity.name == 'Household survey':
+            if activity_status.activity.name == 'Household survey':
+                try:
+                    from .data_pipeline import process_household_survey_data
+                    from village_profile.models import district_village_mapping
+                    
                     village_id = activity_status.village.id
                     print("activity_status.village.id -> ", village_id)
                     
@@ -252,16 +251,21 @@ def update_vdmp_activity_status(request, status_id):
                         'records_processed': records_processed,
                         'import_status_id': import_status.id
                     })
-            except Exception as e:
-                # Don't save status if pipeline fails
-                return Response({
-                    'error': 'Pipeline processing failed',
-                    'pipeline_error': str(e)
-                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
-        # Save status for non-Completed statuses
-        serializer.save()
-        return Response(serializer.data)
+                    
+                except Exception as e:
+                    # Return error without saving status
+                    return Response({
+                        'error': 'Pipeline processing failed',
+                        'pipeline_error': str(e)
+                    }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            else:
+                # For non-household survey activities, just save
+                serializer.save()
+                return Response(serializer.data)
+        else:
+            # Save status for non-Completed statuses
+            serializer.save()
+            return Response(serializer.data)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 

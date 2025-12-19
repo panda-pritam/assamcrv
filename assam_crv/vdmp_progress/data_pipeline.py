@@ -82,10 +82,9 @@ def process_household_survey_data(activity_name, village_id, district_id, mobile
     print("Starting data cleaning process")
     cleaned_df = clean_survey_data(df, district_code, village_code, activity_type="household")
     
-    # Save CSV for verification in static directory
-    static_dir = os.path.join(settings.BASE_DIR, 'static', 'csv_exports')
-    os.makedirs(static_dir, exist_ok=True)
-    csv_path = os.path.join(static_dir, f"household_survey_village_{village_id}.csv")
+    # Save CSV for verification
+    with tempfile.NamedTemporaryFile(mode='w', suffix=f'_village_{village_id}.csv', delete=False) as tmp_file:
+        csv_path = tmp_file.name
     cleaned_df.to_csv(csv_path, index=False)
     print(f"CSV saved for verification: {csv_path}")
     
@@ -98,7 +97,9 @@ def process_household_survey_data(activity_name, village_id, district_id, mobile
     import_status.processing_time = datetime.now() - start_time
     import_status.save()
     
-    (f"Pipeline completed successfully. Processed {records_saved} records")
+    total_time = datetime.now() - start_time
+    print(f"Pipeline completed successfully. Processed {records_saved} records")
+    print(f"Total execution time: {total_time.total_seconds():.2f} seconds")
     return import_status, records_saved
 
 def get_household_sql_script(village_id):
@@ -212,35 +213,35 @@ def get_household_sql_script(village_id):
         MAX(CASE WHEN a.attribute_name ILIKE '%%Poultry%%' THEN av.value END) AS do_you_have_poultry_chicken_and_duck,
         MAX(CASE WHEN a.attribute_name ILIKE '%%Number of poultry%%' THEN av.value END) AS number_of_poultry_animals,
         MAX(CASE WHEN a.attribute_name ILIKE '%%Approximate income earned every year%%' THEN av.value END) AS approximate_income_earned_every_year_inr,
-        MAX(CASE WHEN a.attribute_name ILIKE '%%Education.*children%%' THEN av.value END) AS expense_on_education,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%Education of children including tuition fee, books etc%%' THEN av.value END) AS expense_on_education,
         MAX(CASE WHEN a.attribute_name ILIKE '%%Health related%%' THEN av.value END) AS expense_on_health,
         MAX(CASE WHEN a.attribute_name ILIKE '%%Food including%%' THEN av.value END) AS expense_on_food,
-        MAX(CASE WHEN a.attribute_name ILIKE '%%tobacco.*liquor%%' THEN av.value END) AS expense_on_tobacco_liquor,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%Amount spend for tobacco, liquor etc per annum%%' THEN av.value END) AS expense_on_tobacco_liquor,
         MAX(CASE WHEN a.attribute_name ILIKE '%%Repair of house%%' THEN av.value END) AS expense_on_house_repair,
-        MAX(CASE WHEN a.attribute_name ILIKE '%%festival.*marriage%%' THEN av.value END) AS expense_on_festival_marriage_and_other_social_occassions,
-        MAX(CASE WHEN a.attribute_name ILIKE '%%agriculture.*livestock%%' THEN av.value END) AS amount_spent_for_agriculture_livestock,
-        MAX(CASE WHEN a.attribute_name ILIKE '%%loss.*flood%%' THEN av.value END) AS loss_due_to_flood,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%Amount (approximate) spent for festival, marriage and other%%' THEN av.value END) AS expense_on_festival_marriage_and_other_social_occassions,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%Amount spent for agriculture/livestock every year%%' THEN av.value END) AS amount_spent_for_agriculture_livestock,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%Approximate loss incurred to your livelihood due to flood%%' THEN av.value END) AS loss_due_to_flood,
         MAX(CASE WHEN a.attribute_name ILIKE '%%avail loan%%' THEN av.value END) AS loan_availed,
         MAX(CASE WHEN a.attribute_name ILIKE '%%loan amount%%' THEN av.value END) AS loan_amount,
-        MAX(CASE WHEN a.attribute_name ILIKE '%%loan.*purpose%%' THEN av.value END) AS loan_purpose,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%For what purpose you took loan%%' THEN av.value END) AS loan_purpose,
         MAX(CASE WHEN a.attribute_name ILIKE '%%house affected by flood%%' THEN av.value END) AS house_affected_by_flood,
         MAX(CASE WHEN a.attribute_name ILIKE '%%economic loss.*house.*flood%%' THEN av.value END) AS economic_loss_to_your_house_due_to_flood,
         MAX(CASE WHEN a.attribute_name ILIKE '%%flood recovery expenditure%%' THEN av.value END) AS amount_towards_flood_recovery_expenditure,
-        MAX(CASE WHEN a.attribute_name ILIKE '%%Maximum flood height.*house%%' THEN av.value END) AS maximum_flood_height_in_house_ft,
-        MAX(CASE WHEN a.attribute_name ILIKE '%%Year.*maximum flood.*house%%' THEN av.value END) AS year_in_which_maximum_flood_experience_in_your_house,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%Maximum flood height experience in your house%%' THEN av.value END) AS maximum_flood_height_in_house_ft,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%Your house affected by flood%%' THEN av.value END) AS year_in_which_maximum_flood_experience_in_your_house,
         MAX(CASE WHEN a.attribute_name ILIKE '%%agriculture affected by flood%%' THEN av.value END) AS your_agriculture_affected_by_flood,
-        MAX(CASE WHEN a.attribute_name ILIKE '%%flood height.*agriculture%%' THEN av.value END) AS maximum_flood_height_experience_in_your_agriculture_ft,
-        MAX(CASE WHEN a.attribute_name ILIKE '%%Year.*flood.*agriculture%%' THEN av.value END) AS year_in_which_max_flood_experience_in_your_agriculture_land,
-        MAX(CASE WHEN a.attribute_name ILIKE '%%Duration of flood%%' THEN av.value END) AS duration_of_flood_stay_in_your_agriculture_field,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%Maximum flood height experience in your agriculture%%' THEN av.value END) AS maximum_flood_height_experience_in_your_agriculture_ft,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%Year in which max flood experience in your agriculture land%%' THEN av.value END) AS year_in_which_max_flood_experience_in_your_agriculture_land,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%Duration of flood stay in your agriculture field%%' THEN av.value END) AS duration_of_flood_stay_in_your_agriculture_field,
         MAX(CASE WHEN a.attribute_name ILIKE '%%Other natural hazards%%' THEN av.value END) AS other_natural_hazards_directly_impacting_you_and_family,
         MAX(CASE WHEN a.attribute_name ILIKE '%%House vulnerable to erosion%%' THEN av.value END) AS house_vulnerable_to_erosion,
-        MAX(CASE WHEN a.attribute_name ILIKE '%%agriculture.*vulnerable to erosion%%' THEN av.value END) AS your_agriculture_field_vulnerable_to_erosion,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%House vulnerable to erosion%%' THEN av.value END) AS your_agriculture_field_vulnerable_to_erosion,
         MAX(CASE WHEN a.attribute_name ILIKE '%%Building quality%%' THEN av.value END) AS building_quality,
         MAX(CASE WHEN a.attribute_name ILIKE '%%Foundation quality%%' THEN av.value END) AS foundation_quality,
-        MAX(CASE WHEN a.attribute_name ILIKE '%%Number of small buildings%%' THEN av.value END) AS number_of_small_buildings_of_the_household,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%Number of small buildings of the household%%' THEN av.value END) AS number_of_small_buildings_of_the_household,
         MAX(CASE WHEN a.attribute_name ILIKE '%%Occupancy type of small building%%' THEN av.value END) AS occupa_ncy_type_of_small_building,
         MAX(CASE WHEN a.attribute_name ILIKE '%%Presence of grain bank%%' THEN av.value END) AS presence_of_grain_bank,
-        MAX(CASE WHEN a.attribute_name ILIKE '%%plinth height of grain bank%%' THEN av.value END) AS plinth_height_of_grain_bank_ft,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%Stilt plinth height of grain bank%%' THEN av.value END) AS plinth_height_of_grain_bank_ft,
         MAX(CASE WHEN a.attribute_name ILIKE '%%Wall material of grain bank%%' THEN av.value END) AS wall_material_of_grain_bank,
         MAX(CASE WHEN a.attribute_name ILIKE '%%Roof material of grain bank%%' THEN av.value END) AS roof_material_of_grain_bank,
         MAX(CASE WHEN a.attribute_name ILIKE '%%Approximate length%%' THEN av.value END) AS approximate_length_feet_of_the_house_main_building,
@@ -298,111 +299,130 @@ def save_to_household_survey(df, village_id, district_code):
     ("--------------- Saving Data to DB  ---------------")
     (f"Saving {len(df)} records to HouseholdSurvey model")
     
-    # Clear existing data for this village
-    existing_count = HouseholdSurvey.objects.filter(village_id=village_id).count()
-    if existing_count > 0:
-        (f"Deleting {existing_count} existing records for village_id: {village_id}")
-        HouseholdSurvey.objects.filter(village_id=village_id).delete()
-    
-    # Create new records
-    records = []
-    print("Creating HouseholdSurvey records from cleaned data")
+    # Use update_or_create to handle duplicates
+    created_count = 0
+    updated_count = 0
     
     for idx, row in df.iterrows():
-        if idx % 100 == 0:  # Log progress every 100 records
+        if idx % 100 == 0:
             print(f"Processing record {idx + 1}/{len(df)}")
-        record = HouseholdSurvey(
-            village_id=village_id,
-            dist_code=row.get('dist_code', district_code),
-            village_code=row.get('village_code', ''),
-            point_id=row.get('polygon_id', ''),
-            property_owner=row.get('property_owner', ''),
-            name_of_person=row.get('name_of_person', ''),
-            name_of_hohh=row.get('name_of_hohh', ''),
-            photo=row.get('photo', ''),
-            mobile_number=row.get('mobile_number', ''),
-            data_access=row.get('data_access', ''),
-            community=row.get('community', ''),
-            social_status=row.get('social_status', ''),
-            economic_status=row.get('economic_status', ''),
-            wall_type=row.get('wall_type', ''),
-            roof_type=row.get('roof_type', ''),
-            floor_type=row.get('floor_type', ''),
-            plinth_or_stilt=row.get('plinth_or_stilt', ''),
-            plinth_or_stilt_height_ft=str(row.get('plinth_or_stilt_height_ft', '')),
-            number_of_storeys=str(row.get('number_of_storeys', '')),
-            number_of_males_including_children=str(row.get('number_of_males_including_children', '')),
-            number_of_females_including_children=str(row.get('number_of_females_including_children', '')),
-            children_below_6_years=str(row.get('children_below_6_years', '')),
-            senior_citizens=str(row.get('senior_citizens', '')),
-            pregnant_women=str(row.get('pregnant_women', '')),
-            lactating_women=str(row.get('lactating_women', '')),
-            persons_with_disability_or_chronic_disease=str(row.get('persons_with_disability_or_chronic_disease', '')),
-            drinking_water_source=row.get('drinking_water_source', ''),
-            sanitation_facility=row.get('sanitation_facility', ''),
-            toilet_wall_material=row.get('toilet_wall_material', ''),
-            toilet_roof_material=row.get('toilet_roof_material', ''),
-            digital_media_owned=row.get('digital_media_owned', ''),
-            house_has_electric_connection=row.get('house_has_electric_connection', ''),
-            source_of_electricity=row.get('source_of_electricity', ''),
-            own_agriculture_land=row.get('own_agriculture_land', ''),
-            area_of_agriculture_land_owned_bigha=str(row.get('area_of_agriculture_land_owned_bigha', '')),
-            land_area_annually_cultivated_bigha=str(row.get('land_area_annually_cultivated_bigha', '')),
-            crops_cultivated=row.get('crops_cultivated', ''),
-            specify_other=row.get('specify_other', ''),
-            number_of_crops_normally_raised_every_year=str(row.get('number_of_crops_normally_raised_every_year', '')),
-            livelihood_primary=row.get('livelihood_primary', ''),
-            livelihood_secondary=row.get('livelihood_secondary', ''),
-            do_you_have_big_cattle_cattle_buffalo=row.get('do_you_have_big_cattle_cattle_buffalo', ''),
-            number_of_big_cattle_animals=str(row.get('number_of_big_cattle_animals', '')),
-            do_you_have_small_cattle_goat_sheep_pig=row.get('do_you_have_small_cattle_goat_sheep_pig', ''),
-            number_of_small_cattle_animals=str(row.get('number_of_small_cattle_animals', '')),
-            do_you_have_poultry_chicken_and_duck=row.get('do_you_have_poultry_chicken_and_duck', ''),
-            number_of_poultry_animals=str(row.get('number_of_poultry_animals', '')),
-            approximate_income_earned_every_year_inr=str(row.get('approximate_income_earned_every_year_inr', '')),
-            expense_on_education=str(row.get('expense_on_education', '')),
-            expense_on_health=str(row.get('expense_on_health', '')),
-            expense_on_food=str(row.get('expense_on_food', '')),
-            expense_on_tobacco_liquor=str(row.get('expense_on_tobacco_liquor', '')),
-            expense_on_house_repair=str(row.get('expense_on_house_repair', '')),
-            expense_on_festival_marriage_and_other_social_occassions=str(row.get('amount_spent_for_festival_marriage_and_other_social_functions_per_year', row.get('expense_on_festival_marriage_and_other_social_occassions', ''))),
-            amount_spent_for_agriculture_livestock=str(row.get('amount_spent_for_agriculture_livestock', '')),
-            loss_due_to_flood=row.get('loss_due_to_flood', ''),
-            loan_availed=row.get('loan_availed', ''),
-            loan_amount=str(row.get('loan_amount', '')),
-            loan_purpose=row.get('loan_purpose', ''),
-            house_affected_by_flood=row.get('house_affected_by_flood', ''),
-            economic_loss_to_your_house_due_to_flood=str(row.get('economic_loss_to_your_house_due_to_flood', '')),
-            amount_towards_flood_recovery_expenditure=str(row.get('amount_towards_flood_recovery_expenditure', '')),
-            maximum_flood_height_in_house_ft=str(row.get('maximum_flood_height_in_house_ft', '')),
-            year_in_which_maximum_flood_experience_in_your_house=str(row.get('year_in_which_maximum_flood_experience_in_your_house', '')),
-            your_agriculture_affected_by_flood=row.get('your_agriculture_affected_by_flood', ''),
-            maximum_flood_height_experience_in_your_agriculture_ft=str(row.get('maximum_flood_height_experience_in_your_agriculture_ft', '')),
-            year_in_which_max_flood_experience_in_your_agriculture_land=str(row.get('year_in_which_max_flood_experience_in_your_agriculture_land', '')),
-            duration_of_flood_stay_in_your_agriculture_field=row.get('duration_of_flood_stay_in_your_agriculture_field', ''),
-            other_natural_hazards_directly_impacting_you_and_family=row.get('other_natural_hazards_directly_impacting_you_and_family', ''),
-            house_vulnerable_to_erosion=row.get('house_vulnerable_to_erosion', ''),
-            your_agriculture_field_vulnerable_to_erosion=row.get('your_agriculture_field_vulnerable_to_erosion', ''),
-            building_quality=row.get('building_quality', ''),
-            foundation_quality=row.get('foundation_quality', ''),
-            number_of_small_buildings_of_the_household=str(row.get('number_of_small_buildings_of_the_household', '')),
-            occupa_ncy_type_of_small_building=row.get('occupa_ncy_type_of_small_building', ''),
-            presence_of_grain_bank=row.get('presence_of_grain_bank', ''),
-            plinth_height_of_grain_bank_ft=str(row.get('plinth_height_of_grain_bank_ft', '')),
-            wall_material_of_grain_bank=row.get('wall_material_of_grain_bank', ''),
-            roof_material_of_grain_bank=row.get('roof_material_of_grain_bank', ''),
-            unique_id=row.get('unique_id', ''),
-            form_id=str(row.get('form_id', ''))
-        )
-        records.append(record)
+        
+        defaults = {
+            'village_id': village_id,
+            'dist_code': row.get('dist_code', district_code),
+            'village_code': row.get('village_code', ''),
+            'point_id': row.get('polygon_id', ''),
+            'property_owner': row.get('property_owner', ''),
+            'name_of_person': row.get('name_of_person', ''),
+            'name_of_hohh': row.get('name_of_hohh', ''),
+            'photo': row.get('photo', ''),
+            'mobile_number': row.get('mobile_number', ''),
+            'data_access': row.get('data_access', ''),
+            'community': row.get('community', ''),
+            'social_status': row.get('social_status', ''),
+            'economic_status': row.get('economic_status', ''),
+            'wall_type': row.get('wall_type', ''),
+            'roof_type': row.get('roof_type', ''),
+            'floor_type': row.get('floor_type', ''),
+            'plinth_or_stilt': row.get('plinth_or_stilt', ''),
+            'plinth_or_stilt_height_ft': str(row.get('plinth_or_stilt_height_ft', '')),
+            'number_of_storeys': str(row.get('number_of_storeys', '')),
+            'number_of_males_including_children': str(row.get('number_of_males_including_children', '')),
+            'number_of_females_including_children': str(row.get('number_of_females_including_children', '')),
+            'children_below_6_years': str(row.get('children_below_6_years', '')),
+            'senior_citizens': str(row.get('senior_citizens', '')),
+            'pregnant_women': str(row.get('pregnant_women', '')),
+            'lactating_women': str(row.get('lactating_women', '')),
+            'persons_with_disability_or_chronic_disease': str(row.get('persons_with_disability_or_chronic_disease', '')),
+            'drinking_water_source': row.get('drinking_water_source', ''),
+            'sanitation_facility': row.get('sanitation_facility', ''),
+            'toilet_wall_material': row.get('toilet_wall_material', ''),
+            'toilet_roof_material': row.get('toilet_roof_material', ''),
+            'digital_media_owned': row.get('digital_media_owned', ''),
+            'house_has_electric_connection': row.get('house_has_electric_connection', ''),
+            'source_of_electricity': row.get('source_of_electricity', ''),
+            'own_agriculture_land': row.get('own_agriculture_land', ''),
+            'area_of_agriculture_land_owned_bigha': str(row.get('area_of_agriculture_land_owned_bigha', '')),
+            'land_area_annually_cultivated_bigha': str(row.get('land_area_annually_cultivated_bigha', '')),
+            'crops_cultivated': row.get('crops_cultivated', ''),
+            'specify_other': row.get('specify_other', ''),
+            'number_of_crops_normally_raised_every_year': str(row.get('number_of_crops_normally_raised_every_year', '')),
+            'livelihood_primary': row.get('livelihood_primary', ''),
+            'livelihood_secondary': row.get('livelihood_secondary', ''),
+            'do_you_have_big_cattle_cattle_buffalo': row.get('do_you_have_big_cattle_cattle_buffalo', ''),
+            'number_of_big_cattle_animals': str(row.get('number_of_big_cattle_animals', '')),
+            'do_you_have_small_cattle_goat_sheep_pig': row.get('do_you_have_small_cattle_goat_sheep_pig', ''),
+            'number_of_small_cattle_animals': str(row.get('number_of_small_cattle_animals', '')),
+            'do_you_have_poultry_chicken_and_duck': row.get('do_you_have_poultry_chicken_and_duck', ''),
+            'number_of_poultry_animals': str(row.get('number_of_poultry_animals', '')),
+            'approximate_income_earned_every_year_inr': str(row.get('approximate_income_earned_every_year_inr', '')),
+            'expense_on_education': str(row.get('expense_on_education', '')),
+            'expense_on_health': str(row.get('expense_on_health', '')),
+            'expense_on_food': str(row.get('expense_on_food', '')),
+            'expense_on_tobacco_liquor': str(row.get('expense_on_tobacco_liquor', '')),
+            'expense_on_house_repair': str(row.get('expense_on_house_repair', '')),
+            'expense_on_festival_marriage_and_other_social_occassions': str(row.get('amount_spent_for_festival_marriage_and_other_social_functions_per_year', row.get('expense_on_festival_marriage_and_other_social_occassions', ''))),
+            'amount_spent_for_agriculture_livestock': str(row.get('amount_spent_for_agriculture_livestock', '')),
+            'loss_due_to_flood': row.get('loss_due_to_flood', ''),
+            'loan_availed': row.get('loan_availed', ''),
+            'loan_amount': str(row.get('loan_amount', '')),
+            'loan_purpose': row.get('loan_purpose', ''),
+            'house_affected_by_flood': row.get('house_affected_by_flood', ''),
+            'economic_loss_to_your_house_due_to_flood': str(row.get('economic_loss_to_your_house_due_to_flood', '')),
+            'amount_towards_flood_recovery_expenditure': str(row.get('amount_towards_flood_recovery_expenditure', '')),
+            'maximum_flood_height_in_house_ft': str(row.get('maximum_flood_height_in_house_ft', '')),
+            'year_in_which_maximum_flood_experience_in_your_house': str(row.get('year_in_which_maximum_flood_experience_in_your_house', '')),
+            'your_agriculture_affected_by_flood': row.get('your_agriculture_affected_by_flood', ''),
+            'maximum_flood_height_experience_in_your_agriculture_ft': str(row.get('maximum_flood_height_experience_in_your_agriculture_ft', '')),
+            'year_in_which_max_flood_experience_in_your_agriculture_land': str(row.get('year_in_which_max_flood_experience_in_your_agriculture_land', '')),
+            'duration_of_flood_stay_in_your_agriculture_field': row.get('duration_of_flood_stay_in_your_agriculture_field', ''),
+            'other_natural_hazards_directly_impacting_you_and_family': row.get('other_natural_hazards_directly_impacting_you_and_family', ''),
+            'house_vulnerable_to_erosion': row.get('house_vulnerable_to_erosion', ''),
+            'your_agriculture_field_vulnerable_to_erosion': row.get('your_agriculture_field_vulnerable_to_erosion', ''),
+            'building_quality': row.get('building_quality', ''),
+            'foundation_quality': row.get('foundation_quality', ''),
+            'number_of_small_buildings_of_the_household': str(row.get('number_of_small_buildings_of_the_household', '')),
+            'occupa_ncy_type_of_small_building': row.get('occupa_ncy_type_of_small_building', ''),
+            'presence_of_grain_bank': row.get('presence_of_grain_bank', ''),
+            'plinth_height_of_grain_bank_ft': str(row.get('plinth_height_of_grain_bank_ft', '')),
+            'wall_material_of_grain_bank': row.get('wall_material_of_grain_bank', ''),
+            'roof_material_of_grain_bank': row.get('roof_material_of_grain_bank', ''),
+            'flood_depth_m': str(row.get('flood_depth_m', '')),
+            'flood_class': row.get('flood_class', ''),
+            'erosion_class': row.get('erosion_class', 'No'),
+            'loan_class': row.get('loan_class', ''),
+            'agrculture_land_class': row.get('agrculture_land_class', ''),
+            'loan_class_1': row.get('loan_class_1', ''),
+            'fld_hh_class': row.get('fld_hh_class', ''),
+            'repair_class': row.get('repair_class', ''),
+            'economic_loss_hh': row.get('economic_loss_hh', ''),
+            'loss_agricultire_livlihood': row.get('loss_agricultire_livelihood', ''),
+            'big_cattle': row.get('big_cattle', ''),
+            'small_cattle': row.get('small_cattle', ''),
+            'house_type': row.get('house_type', ''),
+            'income_class': row.get('income_class', ''),
+            'crops_diversity': str(row.get('crops_diversity', '')),
+            'Sanitation_Type': row.get('Sanitation_Type', ''),
+            # 'duration_class': row.get('duration_class', ''),
+            # 'FLOOD_CLASS2': row.get('FLOOD_CLASS2', '')
+
+           
+        }
+        
+        try:
+            obj, created = HouseholdSurvey.objects.update_or_create(
+                unique_id=row.get('unique_id', ''),
+                form_id=str(row.get('form_id', '')),
+                defaults=defaults
+            )
+            if created:
+                created_count += 1
+            else:
+                updated_count += 1
+        except Exception as e:
+            logger.error(f"Error processing record {idx}: {str(e)}")
+            continue
     
-    # Bulk create with logging
-    (f"Bulk creating {len(records)} HouseholdSurvey records")
-    try:
-        HouseholdSurvey.objects.bulk_create(records, batch_size=1000)
-        (f"Successfully saved {len(records)} records to database")
-    except Exception as e:
-        logger.error(f"Failed to save records to database: {str(e)}")
-        raise
+    print(f"Created: {created_count}, Updated: {updated_count} records")
     
-    return len(records)
+    return created_count + updated_count

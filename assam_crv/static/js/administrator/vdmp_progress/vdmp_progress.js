@@ -239,6 +239,19 @@ async function updateVDMPProgress() {
 
     if (!result.isConfirmed) return;
 
+    // Show loader with processing message
+    Swal.fire({
+        title: gettext('Processing...'),
+        text: gettext('It will take a bit of time, we are processing the data for the selected village'),
+        icon: 'info',
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        showConfirmButton: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+
     try {
         const response = await fetch(`/api/update_vdmp_activity_status/${id}/`, {
             method: 'PATCH',
