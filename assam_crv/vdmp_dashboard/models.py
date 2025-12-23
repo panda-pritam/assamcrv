@@ -16,17 +16,19 @@ class AttributeMapping(models.Model):
 
     ]
     
-    mobile_db_attribute_id = models.IntegerField()
+    mobile_db_attribute_id = models.IntegerField(null=True, blank=True)
     attribute_text = models.CharField(max_length=500, null=True, blank=True)
     alias_name = models.CharField(max_length=100)
     model_name = models.CharField(max_length=50, choices=MODEL_CHOICES)
     is_calculated = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
+    tab_id=models.IntegerField(null=True, blank=True)
+    tab_name=models.CharField(max_length=100, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
-    class Meta:
-        unique_together = ['mobile_db_attribute_id', 'model_name']
+    # class Meta:
+    #     unique_together = ['mobile_db_attribute_id']
     
     def __str__(self):
         return f"{self.model_name} - {self.alias_name}"
