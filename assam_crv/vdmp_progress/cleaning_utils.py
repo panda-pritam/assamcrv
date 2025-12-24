@@ -33,6 +33,7 @@ def clean_survey_data(df, district_code, village_code, activity_type="household"
         
         logger.debug(f"Cleaning column: {col}")
         df[col] = df[col].apply(lambda v: _clean_text(v, col_name=col))
+        df[col]= df[col].apply(lambda v: _remove_empty_parentheses(v))
         df[col] = df[col].apply(lambda v: _convert_numeric(v, col_name=col))
     
     # Add standard codes
@@ -49,6 +50,20 @@ def clean_survey_data(df, district_code, village_code, activity_type="household"
     logger.info(f"Cleaning completed. Output dataframe shape: {df.shape}")
     return df
 
+def _remove_empty_parentheses(x):
+    """Remove empty or punctuation-only parentheses"""
+    if pd.isna(x) or not isinstance(x, str):
+        return x
+    
+    # Special case: Remove ( Or ), ( or ), ( OR ) - single word "or" in parentheses
+    x = re.sub(r'\(\s*[Oo][Rr]\s*\)', '', x)
+    
+    # Remove empty or punctuation-only parentheses - multiple passes to handle nested cases
+    for _ in range(3):  # Run multiple times to handle deeply nested cases
+        x = re.sub(r'\([\s,\/\-\(\)]*\)', '', x)
+    
+    return x.strip()
+
 def _clean_text(x, col_name=None):
     """Clean text fields matching original cleaning script"""
     if pd.isna(x) or not isinstance(x, str):
@@ -58,8 +73,8 @@ def _clean_text(x, col_name=None):
     if x == "" or x.startswith(("http://", "https://")):
         return x
     
-    # Remove all bracketed content (matching original script)
-    x = re.sub(r'\([^)]*\)', '', x)
+    # Remove non-English content in parentheses
+    x = re.sub(r'\([^A-Za-z0-9\s\.\-,\/\+\&:_%\']*\)', '', x)
     
     # Keep common punctuation like / + & - , . and parentheses (matching original)
     x = re.sub(r'[^A-Za-z0-9\s\.\-<\(\),\/\+\&:_%\']', '', x)
@@ -74,6 +89,9 @@ def _clean_text(x, col_name=None):
     # preserve OBC in community column
     if col_name and "community" in col_name.lower():
         x = re.sub(r'\bObc\b', 'OBC', x)
+    
+    # Remove empty parentheses after all other processing
+    # x = _remove_empty_parentheses(x)
     
     return x
 
@@ -93,7 +111,9 @@ def _convert_numeric(x, col_name=None):
         m = re.search(r'(-?\d+(?:\.\d+)?)', s.replace(',', ''))
         if m:
             try:
-                return float(m.group(1))
+                num_val = float(m.group(1))
+                # Return int if it's a whole number, otherwise float
+                return int(num_val) if num_val.is_integer() else num_val
             except:
                 return x
     return x
@@ -318,13 +338,17 @@ def _classify_income(income):
 def _classify_house_type(wall, roof):
     """Classify house type based on wall and roof materials"""
     wall_map = {
-        "brick with cement": "brick with cement",
+       "brick with cement": "brick with cement",
         "brick without cement": "brick with cement",
         "concrete frame with infill brick walls": "brick with cement",
+
         "wood": "wood",
         "wood, bamboo & cow dung": "wood",
+        "wood, bamboo & cow dung/mud": "wood",
+
         "grass": "grass",
-        "grass/leaves/plastic": "grass"
+        "grass/leaves/plastic": "grass",
+        "grass/leaves/plastic & cow dung/mud": "grass",
     }
     roof_map = {
         "tin": "tin", "wood": "wood", "grass": "grass",

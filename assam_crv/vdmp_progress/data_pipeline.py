@@ -4,7 +4,7 @@ import psycopg2
 from django.db import connections
 from django.conf import settings
 from village_profile.models import district_village_mapping
-from vdmp_dashboard.models import HouseholdSurvey
+from vdmp_dashboard.models import *
 from .models import tblVDMP_Activity_Import_Status
 from datetime import datetime, timedelta
 import subprocess
@@ -12,20 +12,27 @@ import tempfile
 import re
 import logging
 from .cleaning_utils import clean_survey_data
+from .dynamic_sql import get_dynamic_sql_script
+
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-def process_household_survey_data(activity_name, village_id, district_id, mobile_village_id, district_code, village_code, activity_status):
+def process_household_survey_data(activity_name, village_id, district_id, mobile_village_id, district_code, village_code, activity_status,district_name, village_name):
     """
-    Process household survey data pipeline:
-    1. Extract data from mobile_db
-    2. Apply comprehensive data cleaning
-    3. Save to HouseholdSurvey model
+    Process survey data pipeline dynamically:
+    1. Get model name from activity name
+    2. Extract data from mobile_db using dynamic SQL
+    3. Apply comprehensive data cleaning
+    4. Save to appropriate model
     """
-    (f"Starting {activity_name} data processing for village_id: {village_id}")
+    print(f"Starting {activity_name} data processing for village_id: {village_id}")
     start_time = datetime.now()
+    
+    # Get model name from activity name
+    model_name = get_model_name_from_activity(activity_name)
+    print(f"Using model: {model_name}")
     
     # Create import status record
     import_status = tblVDMP_Activity_Import_Status.objects.create(
@@ -58,9 +65,9 @@ def process_household_survey_data(activity_name, village_id, district_id, mobile
             password=mobile_db_config['PASSWORD']
         ) as conn:
             
-            # Get SQL script and parameters
-            sql_script, params = get_household_sql_script(mobile_village_id)
-            (f"Executing SQL query with village_id parameter: {mobile_village_id}")
+            # Get SQL script and parameters dynamically
+            sql_script, params = get_dynamic_sql_script(mobile_village_id, model_name)
+            print(f"Executing SQL query with village_id parameter: {mobile_village_id}")
             
             # Execute query and get data
             df = pd.read_sql(sql_script, conn, params=params)
@@ -76,11 +83,12 @@ def process_household_survey_data(activity_name, village_id, district_id, mobile
         import_status.processing_time = datetime.now() - start_time
         import_status.save()
         logger.error(f"Database connection/query failed: {str(e)}")
-        raise
+        raise Exception(f"Pipeline failed: {str(e)}")
     
     # Apply comprehensive data cleaning
     print("Starting data cleaning process")
-    cleaned_df = clean_survey_data(df, district_code, village_code, activity_type="household")
+    activity_type = model_name.lower().replace('survey', '').replace('_', '')
+    cleaned_df = clean_survey_data(df, district_code, village_code, activity_type=activity_type)
     
     # Save CSV for verification
     with tempfile.NamedTemporaryFile(mode='w', suffix=f'_village_{village_id}.csv', delete=False) as tmp_file:
@@ -88,9 +96,15 @@ def process_household_survey_data(activity_name, village_id, district_id, mobile
     cleaned_df.to_csv(csv_path, index=False)
     print(f"CSV saved for verification: {csv_path}")
     
-    # Save to Django model
-    ("Saving cleaned data to HouseholdSurvey model")
-    records_saved = save_to_household_survey(cleaned_df, village_id, district_code)
+    # Save to Django model dynamically
+    print(f"Saving cleaned data to {model_name} model")
+    try:
+        records_saved = save_to_model_dynamic(cleaned_df, village_id, district_code, model_name)
+    except Exception as e:
+        import_status.error_count = 1
+        import_status.processing_time = datetime.now() - start_time
+        import_status.save()
+        raise Exception(f"Model save failed: {str(e)}")
     
     # Update import status with final results
     import_status.rows_imported = records_saved
@@ -101,6 +115,116 @@ def process_household_survey_data(activity_name, village_id, district_id, mobile
     print(f"Pipeline completed successfully. Processed {records_saved} records")
     print(f"Total execution time: {total_time.total_seconds():.2f} seconds")
     return import_status, records_saved
+
+def get_model_name_from_activity(activity_name):
+    """Map activity name to model name"""
+    activity_to_model = {
+        'household survey': 'HouseholdSurvey',
+        'commercial': 'Commercial',
+        'critical_facility': 'Critical_Facility',
+        'bridgesurvey': 'BridgeSurvey'
+    }
+    
+    
+    # Normalize activity name for comparison
+    normalized_activity = activity_name.lower().strip()
+    print(f"Normalizing activity name: '{activity_name}' to '{normalized_activity}'"    )
+    # Try exact match first
+    if normalized_activity in activity_to_model:
+        return activity_to_model[normalized_activity]
+    
+    # Try partial match
+    for key, model in activity_to_model.items():
+        if key in normalized_activity or normalized_activity in key:
+            return model
+    
+    # Default to HouseholdSurvey if no match
+    print(f"Warning: No model mapping found for activity '{activity_name}', defaulting to HouseholdSurvey")
+    return 'HouseholdSurvey'
+
+def save_to_model_dynamic(df, village_id, district_code, model_name):
+    """Save cleaned data to appropriate model dynamically"""
+    
+    
+    print(f"Saving {len(df)} records to {model_name} model")
+    
+    # Get model class
+    model_class = get_model_class(model_name)
+    if not model_class:
+        raise Exception(f"Model class not found for {model_name}")
+    
+    # Get field mappings from AttributeMapping
+    mappings = AttributeMapping.objects.filter(
+        model_name=model_name,
+        is_active=True
+    ).values('alias_name', 'mobile_db_attribute_id')
+    
+    created_count = 0
+    updated_count = 0
+    error_count = 0
+    
+    for idx, row in df.iterrows():
+        if idx % 100 == 0:
+            print(f"Processing record {idx + 1}/{len(df)}")
+        
+        # Build defaults dict dynamically
+        defaults = {
+            'village_id': village_id,
+            'district_code': row.get('dist_code', district_code),
+            'village_code': row.get('village_code', ''),
+            'point_id': row.get('point_id', ''),
+            # 'geometry_id': row.get('geometry_id', ''),
+            'form_id': row.get('form_id', ''),
+            'unique_id': row.get('unique_id', '')
+        }
+        
+        # Add mapped fields
+        for mapping in mappings:
+            alias_name = mapping['alias_name']
+            if alias_name in row:
+                defaults[alias_name] = str(row.get(alias_name, ''))
+        
+        try:
+            obj, created = model_class.objects.update_or_create(
+                unique_id=row.get('unique_id', ''),
+                form_id=str(row.get('form_id', '')),
+                defaults=defaults
+            )
+            if created:
+                created_count += 1
+            else:
+                updated_count += 1
+        except Exception as e:
+            error_count += 1
+            logger.error(f"Error processing record {idx}: {str(e)}")
+            continue
+           
+    
+    print(f"Created: {created_count}, Updated: {updated_count} records")
+    
+    # If too many errors, raise exception
+    if error_count > 0 and (created_count + updated_count) == 0:
+        raise Exception(f"Pipeline failed: {error_count} errors occurred, no records saved")
+    
+    return created_count + updated_count
+
+def get_model_class(model_name):
+    """Get Django model class by name"""
+    from vdmp_dashboard.models import (
+        HouseholdSurvey, Commercial, Transformer, 
+        Critical_Facility, ElectricPole, BridgeSurvey
+    )
+    
+    model_map = {
+        'HouseholdSurvey': HouseholdSurvey,
+        'Commercial': Commercial,
+        'Transformer': Transformer,
+        'Critical_Facility': Critical_Facility,
+        'ElectricPole': ElectricPole,
+        'BridgeSurvey': BridgeSurvey
+    }
+    
+    return model_map.get(model_name)
 
 def get_household_sql_script(village_id):
     """Get the household SQL script with village_id parameter"""
@@ -317,6 +441,8 @@ def save_to_household_survey(df, village_id, district_code):
         defaults = {
             'village_id': village_id,
             'dist_code': row.get('dist_code', district_code),
+            'district_code': row.get('district_code', ''),
+           
             'village_code': row.get('village_code', ''),
             'point_id': row.get('polygon_id', ''),
             'property_owner': row.get('property_owner', ''),

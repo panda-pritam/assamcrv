@@ -37,6 +37,7 @@ class AttributeMapping(models.Model):
 class HouseholdSurvey(models.Model):
     village = models.ForeignKey(tblVillage, on_delete=models.CASCADE)
     dist_code = models.CharField(max_length=255, null=True, blank=True)
+    district_code = models.CharField(max_length=255, null=True, blank=True)
     village_code = models.CharField(max_length=255, null=True, blank=True)
     point_id = models.CharField(max_length=255, null=True, blank=True)
     property_owner = models.CharField(max_length=255, null=True, blank=True)
@@ -168,6 +169,8 @@ class Commercial(models.Model):
     access_road_during_flood = models.CharField(max_length=255, null=True, blank=True)
     flood_depth_m = models.CharField(max_length=255, null=True, blank=True)
     erosion_class = models.CharField(max_length=255, null=True, blank=True)
+    unique_id=models.CharField(max_length=255, null=True, blank=True, unique=True)
+    form_id=models.CharField(max_length=255, null=True, blank=True, unique=True)
 
     def __str__(self):
         return f"{self.district_code} - {self.village_name}"
@@ -226,6 +229,8 @@ class Critical_Facility(models.Model):
     flood_depth_m = models.CharField(max_length=255, null=True, blank=True)
     flood_class = models.CharField(max_length=255, null=True, blank=True)
     erosion_class = models.CharField(max_length=255, null=True, blank=True)
+    unique_id=models.CharField(max_length=255, null=True, blank=True, unique=True)
+    form_id=models.CharField(max_length=255, null=True, blank=True, unique=True)
 
     def __str__(self):
         return f"{self.district_code} - {self.village_name}"
@@ -247,6 +252,8 @@ class ElectricPole(models.Model):
     flood_depth_m = models.CharField(max_length=255, null=True, blank=True)
     flood_class = models.CharField(max_length=100, blank=True, null=True)
     erosion_class = models.CharField(max_length=100, blank=True, null=True)
+    unique_id=models.CharField(max_length=255, null=True, blank=True, unique=True)
+    form_id=models.CharField(max_length=255, null=True, blank=True, unique=True)
 
     def __str__(self):
         return f"{self.electric_pole_name} - {self.village_name}"
@@ -332,7 +339,8 @@ class BridgeSurvey(models.Model):
     geometry = models.CharField(max_length=255, blank=True, null=True)
     user_id = models.CharField(max_length=255, blank=True, null=True)
     under_id = models.CharField(max_length=255, blank=True, null=True)
-    unique_id = models.CharField(max_length=255, blank=True, null=True)
+    district_code = models.CharField(max_length=255, null=True, blank=True)
+    point_id = models.CharField(max_length=255, null=True, blank=True)
     date = models.CharField(max_length=255, blank=True, null=True)
     form_id = models.CharField(max_length=255, blank=True, null=True)
     tab_id = models.CharField(max_length=255, blank=True, null=True)
@@ -349,6 +357,8 @@ class BridgeSurvey(models.Model):
     general_condition = models.CharField(max_length=255, blank=True, null=True)
     status_access_part = models.CharField(max_length=255, blank=True, null=True)
     remarks = models.CharField(max_length=255, blank=True, null=True)
+    unique_id=models.CharField(max_length=255, null=True, blank=True, unique=True)
+    form_id=models.CharField(max_length=255, null=True, blank=True, unique=True)
 
     def __str__(self):
         return f"{self.village_name} - {self.unique_id}"

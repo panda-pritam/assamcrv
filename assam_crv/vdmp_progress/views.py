@@ -11,7 +11,9 @@ from django.db.models import Count, Q
 from django.utils.translation import get_language
 
 from .data_pipeline import process_household_survey_data
-from village_profile.models import district_village_mapping
+from village_profile.models import district_village_mapping, tblDistrict, tblVillage
+from vdmp_dashboard.models import HouseholdSurvey
+
 
 @api_view(['GET'])
 def get_vdmp_activity_status(request):
@@ -212,13 +214,13 @@ def update_vdmp_activity_status(request, status_id):
     if serializer.is_valid():
         # Trigger data pipeline if status is marked as 'Completed'
         if serializer.validated_data.get('status') == 'Completed':
-            if activity_status.activity.name == 'Household survey':
+            activity_name = activity_status.activity.name.lower()
+            print("Activity Name -> ", activity_name)
+            if 'household survey' in activity_name:
+                # Single activity pipeline for household survey
                 try:
-                    from .data_pipeline import process_household_survey_data
-                    from village_profile.models import district_village_mapping
-                    
                     village_id = activity_status.village.id
-                    print("activity_status.village.id -> ", village_id)
+                    print("Processing Household Survey for village_id -> ", village_id)
                     
                     # Get mapping record
                     mapping = district_village_mapping.objects.get(village_id=village_id)
@@ -226,12 +228,11 @@ def update_vdmp_activity_status(request, status_id):
                     district_id = mapping.district.id
                     district_code = mapping.district_code
                     village_code = mapping.village_code
+                     # Get district and village names from their respective tables
+                    district_name = tblDistrict.objects.get(id=district_id).name
+                    village_name = tblVillage.objects.get(id=village_id).name
                     
-                    print(f"Mobile Village ID: {mobile_village_id}")
-                    print(f"District ID: {district_id}, District Code: {district_code}")
-                    print(f"Village Code: {village_code}")
-                    
-                    # Process data pipeline with import status tracking
+                    # Process data pipeline for household survey only
                     import_status, records_processed = process_household_survey_data(
                         activity_status.activity.name,
                         village_id,
@@ -239,12 +240,12 @@ def update_vdmp_activity_status(request, status_id):
                         mobile_village_id,
                         district_code,
                         village_code,
-                        activity_status
+                        activity_status,
+                        district_name,
+                        village_name
                     )
                     
-                    # Save status only after successful pipeline completion
                     serializer.save()
-                    
                     return Response({
                         **serializer.data,
                         'pipeline_status': 'success',
@@ -253,13 +254,84 @@ def update_vdmp_activity_status(request, status_id):
                     })
                     
                 except Exception as e:
-                    # Return error without saving status
                     return Response({
                         'error': 'Pipeline processing failed',
                         'pipeline_error': str(e)
                     }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                    
+            elif 'physical vulnerability survey' in activity_name:
+                # Check if household data exists for this village
+              
+                village_id = activity_status.village.id
+                
+                if not HouseholdSurvey.objects.filter(village_id=village_id).exists():
+                    return Response({
+                        'error': 'To complete physical vulnerability survey, household survey must be completed first'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+                
+                # Multiple activity pipeline for physical vulnerability survey
+                try:
+                    print("Processing Physical Vulnerability Survey for village_id -> ", village_id)
+                    
+                    # Get mapping record
+                    mapping = district_village_mapping.objects.get(village_id=village_id)
+                    mobile_village_id = mapping.mobileDBVillageID
+                    district_id = mapping.district.id
+                    district_code = mapping.district_code
+                    village_code = mapping.village_code
+                     # Get district and village names from their respective tables
+                    district_name = tblDistrict.objects.get(id=district_id).name
+                    village_name = tblVillage.objects.get(id=village_id).name
+                    # Process multiple activities for physical vulnerability survey
+                    activities_to_process = ['Commercial', 'Critical_Facility', 'BridgeSurvey']
+                    total_records = 0
+                    import_statuses = []
+                    failed_activities = []
+                    
+                    for activity_model in activities_to_process:
+                        try:
+                            import_status, records_processed = process_household_survey_data(
+                                activity_model,
+                                village_id,
+                                district_id,
+                                mobile_village_id,
+                                district_code,
+                                village_code,
+                                activity_status,
+                                district_name,
+                                village_name
+                            )
+                            total_records += records_processed
+                            import_statuses.append(import_status.id)
+                        except Exception as e:
+                            print(f"Error processing {activity_model}: {str(e)}")
+                            failed_activities.append(activity_model)
+                            continue
+                    
+                    # If all activities failed, return error
+                    if len(failed_activities) == len(activities_to_process):
+                        return Response({
+                            'error': 'All physical vulnerability activities failed',
+                            'failed_activities': failed_activities
+                        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                    
+                    serializer.save()
+                    return Response({
+                        **serializer.data,
+                        'pipeline_status': 'success',
+                        'total_records_processed': total_records,
+                        'import_status_ids': import_statuses,
+                        'activities_processed': activities_to_process,
+                        'failed_activities': failed_activities
+                    })
+                    
+                except Exception as e:
+                    return Response({
+                        'error': 'Physical vulnerability pipeline processing failed',
+                        'pipeline_error': str(e)
+                    }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
             else:
-                # For non-household survey activities, just save
+                # For other activities, just save without pipeline
                 serializer.save()
                 return Response(serializer.data)
         else:
