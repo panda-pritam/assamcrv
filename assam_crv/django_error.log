@@ -4730,3 +4730,1881 @@ Traceback (most recent call last):
 django.db.utils.DataError: invalid input syntax for type numeric: "None"
 
 2025-12-24 11:46:48,259 [ERROR] django.server: "GET /en/api/get_household_summary_data?district_id=&village_id=&circle_id=&gram_panchayat_id= HTTP/1.1" 500 163393
+2025-12-25 11:10:03,426 [ERROR] django.request: Internal Server Error: /en/api/update_vdmp_activity_status/5919/
+2025-12-25 11:10:03,426 [ERROR] django.server: "PATCH /en/api/update_vdmp_activity_status/5919/ HTTP/1.1" 500 114
+2025-12-25 11:10:35,062 [ERROR] django.request: Internal Server Error: /en/api/update_vdmp_activity_status/5919/
+2025-12-25 11:10:35,063 [ERROR] django.server: "PATCH /en/api/update_vdmp_activity_status/5919/ HTTP/1.1" 500 114
+2025-12-25 11:21:03,441 [ERROR] vdmp_progress.data_pipeline: No data found in mobile_db for village_id: 35
+2025-12-25 11:21:03,456 [ERROR] vdmp_progress.data_pipeline: Database connection/query failed: No household survey data found for village_id: 35. Please ensure data collection is completed.
+2025-12-25 11:21:04,457 [ERROR] vdmp_progress.data_pipeline: No data found in mobile_db for village_id: 35
+2025-12-25 11:21:04,474 [ERROR] vdmp_progress.data_pipeline: Database connection/query failed: No household survey data found for village_id: 35. Please ensure data collection is completed.
+2025-12-25 11:21:04,591 [ERROR] vdmp_progress.data_pipeline: Database connection/query failed: Execution failed on sql '
+    WITH media_urls AS (
+        SELECT
+            fd.spatial_id,
+            fd.attribute_id,
+            STRING_AGG(fd.media_id::text, ',' ORDER BY fd.media_id) AS media_ids_str
+        FROM public.formdata fd
+        JOIN public.attributes att ON att.id = fd.attribute_id
+        WHERE att.widget_id = 10
+          AND att.tab_id = 14
+          AND fd.media_id IS NOT NULL
+        GROUP BY fd.spatial_id, fd.attribute_id
+    ),
+    raw_values AS (
+        SELECT
+            fd.spatial_id,
+            fd.attribute_id,
+            fd.form_id,
+            CASE
+                WHEN att.widget_id = 2 THEN ao.option_text
+                WHEN att.widget_id = 10 THEN 
+                    'https://jkiofs.in/fastapi/PincerApps/images/test'
+                    || COALESCE(mu.media_ids_str,'')
+                    || '/' || fd.spatial_id
+                ELSE fd.attribute_value
+            END AS value
+        FROM public.formdata fd
+        JOIN public.attributes att ON att.id = fd.attribute_id
+        LEFT JOIN public.attributes_option ao
+            ON ao.attribute_id = fd.attribute_id
+           AND att.widget_id = 2
+           AND ao.option_id = CAST(NULLIF(regexp_replace(fd.attribute_value, '[^0-9]', '', 'g'), '') AS BIGINT)
+        LEFT JOIN media_urls mu
+            ON mu.spatial_id = fd.spatial_id
+           AND mu.attribute_id = fd.attribute_id
+        WHERE att.tab_id = 14
+          AND fd.spatial_id IN (
+                SELECT id FROM public.spatialdata WHERE village_id = %s
+          )
+    ),
+    attribute_values AS (
+        SELECT
+            spatial_id,
+            attribute_id,
+            STRING_AGG(DISTINCT value, ', ' ORDER BY value) AS value
+        FROM raw_values
+        GROUP BY spatial_id, attribute_id
+    )
+    SELECT
+        s.survey_id,
+        s.spatial_id,
+        v.district_name,
+        v.village_name,
+        SPLIT_PART(s.geometry, ' ', 1) AS latitude,
+        SPLIT_PART(s.geometry, ' ', 2) AS longitude,
+        s.polygon_id AS point_id,
+        s.unique_id,
+        MIN(rv.form_id) AS form_id,
+        MAX(CASE WHEN a.attribute_name ILIKE '%Type of occupancy%' THEN av.value END) AS "type_of_occupancy",
+	MAX(CASE WHEN a.attribute_name ILIKE '%Photo with coordinates of the building%' THEN av.value END) AS "photo",
+	MAX(CASE WHEN a.attribute_name ILIKE '%Height of asset above ground (in feet)%' THEN av.value END) AS "height_of_asset",
+	MAX(CASE WHEN a.attribute_name ILIKE '%Fencing%' THEN av.value END) AS "fencing",
+	MAX(CASE WHEN a.attribute_name ILIKE '%Plinth height (in feet)%' THEN av.value END) AS "plinth_height",
+	MAX(CASE WHEN a.attribute_name ILIKE '%Building condition%' THEN av.value END) AS "building_condition",
+	MAX(CASE WHEN a.attribute_name ILIKE '%Water Tank structure type%' THEN av.value END) AS "water_tank_structure_type",
+	MAX(CASE WHEN a.attribute_name ILIKE '%Condition%' THEN av.value END) AS "condition",
+	MAX(CASE WHEN a.attribute_name ILIKE '%Observation%' THEN av.value END) AS "observation",
+	MAX(CASE WHEN a.attribute_name ILIKE '%Status (working)%' THEN av.value END) AS "status",
+	MAX(CASE WHEN a.attribute_name ILIKE '%Assets Type%' THEN av.value END) AS "assets_type",
+	MAX(CASE WHEN a.attribute_name ILIKE '%Material%' THEN av.value END) AS "material",
+	MAX(CASE WHEN a.attribute_name ILIKE '%Asset Name%' THEN av.value END) AS "asset_name",
+	MAX(CASE WHEN a.attribute_name ILIKE '%Condition%' THEN av.value END) AS "condition"
+    FROM raw_values rv
+    JOIN attribute_values av
+      ON av.spatial_id = rv.spatial_id
+     AND av.attribute_id = rv.attribute_id
+    JOIN public.attributes a
+      ON a.id = rv.attribute_id
+    JOIN public.spatialdata s
+      ON s.id = rv.spatial_id
+    JOIN public.users u
+      ON u.id = s.user_id
+    JOIN public.villages v
+      ON v.id = s.village_id
+    WHERE a.tab_id = 14
+      AND v.id = %s
+    GROUP BY
+        s.survey_id, s.spatial_id,
+        v.district_name, v.village_name,
+        s.geometry, s.polygon_id, s.unique_id
+    ORDER BY s.survey_id
+    ': tuple index out of range
+2025-12-25 11:29:45,153 [ERROR] vdmp_progress.data_pipeline: No data found in mobile_db for village_id: 35
+2025-12-25 11:29:45,158 [ERROR] vdmp_progress.data_pipeline: Database connection/query failed: No household survey data found for village_id: 35. Please ensure data collection is completed.
+2025-12-25 11:29:46,055 [ERROR] vdmp_progress.data_pipeline: No data found in mobile_db for village_id: 35
+2025-12-25 11:29:46,062 [ERROR] vdmp_progress.data_pipeline: Database connection/query failed: No household survey data found for village_id: 35. Please ensure data collection is completed.
+2025-12-25 11:29:46,174 [ERROR] vdmp_progress.data_pipeline: Database connection/query failed: Execution failed on sql '
+    WITH media_urls AS (
+        SELECT
+            fd.spatial_id,
+            fd.attribute_id,
+            STRING_AGG(fd.media_id::text, ',' ORDER BY fd.media_id) AS media_ids_str
+        FROM public.formdata fd
+        JOIN public.attributes att ON att.id = fd.attribute_id
+        WHERE att.widget_id = 10
+          AND att.tab_id = 14
+          AND fd.media_id IS NOT NULL
+        GROUP BY fd.spatial_id, fd.attribute_id
+    ),
+    raw_values AS (
+        SELECT
+            fd.spatial_id,
+            fd.attribute_id,
+            fd.form_id,
+            CASE
+                WHEN att.widget_id = 2 THEN ao.option_text
+                WHEN att.widget_id = 10 THEN 
+                    'https://jkiofs.in/fastapi/PincerApps/images/test'
+                    || COALESCE(mu.media_ids_str,'')
+                    || '/' || fd.spatial_id
+                ELSE fd.attribute_value
+            END AS value
+        FROM public.formdata fd
+        JOIN public.attributes att ON att.id = fd.attribute_id
+        LEFT JOIN public.attributes_option ao
+            ON ao.attribute_id = fd.attribute_id
+           AND att.widget_id = 2
+           AND ao.option_id = CAST(NULLIF(regexp_replace(fd.attribute_value, '[^0-9]', '', 'g'), '') AS BIGINT)
+        LEFT JOIN media_urls mu
+            ON mu.spatial_id = fd.spatial_id
+           AND mu.attribute_id = fd.attribute_id
+        WHERE att.tab_id = 14
+          AND fd.spatial_id IN (
+                SELECT id FROM public.spatialdata WHERE village_id = %s
+          )
+    ),
+    attribute_values AS (
+        SELECT
+            spatial_id,
+            attribute_id,
+            STRING_AGG(DISTINCT value, ', ' ORDER BY value) AS value
+        FROM raw_values
+        GROUP BY spatial_id, attribute_id
+    )
+    SELECT
+        s.survey_id,
+        s.spatial_id,
+        v.district_name,
+        v.village_name,
+        SPLIT_PART(s.geometry, ' ', 1) AS latitude,
+        SPLIT_PART(s.geometry, ' ', 2) AS longitude,
+        s.polygon_id AS point_id,
+        s.unique_id,
+        MIN(rv.form_id) AS form_id,
+        MAX(CASE WHEN a.attribute_name ILIKE '%Type of occupancy%' THEN av.value END) AS type_of_occupancy,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Photo with coordinates of the building%' THEN av.value END) AS photo,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Height of asset above ground (in feet)%' THEN av.value END) AS height_of_asset,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Fencing%' THEN av.value END) AS fencing,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Plinth height (in feet)%' THEN av.value END) AS plinth_height,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Building condition%' THEN av.value END) AS building_condition,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Water Tank structure type%' THEN av.value END) AS water_tank_structure_type,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Condition%' THEN av.value END) AS condition,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Observation%' THEN av.value END) AS observation,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Status (working)%' THEN av.value END) AS status,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Assets Type%' THEN av.value END) AS assets_type,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Material%' THEN av.value END) AS material,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Asset Name%' THEN av.value END) AS asset_name,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Condition%' THEN av.value END) AS condition
+    FROM raw_values rv
+    JOIN attribute_values av
+      ON av.spatial_id = rv.spatial_id
+     AND av.attribute_id = rv.attribute_id
+    JOIN public.attributes a
+      ON a.id = rv.attribute_id
+    JOIN public.spatialdata s
+      ON s.id = rv.spatial_id
+    JOIN public.users u
+      ON u.id = s.user_id
+    JOIN public.villages v
+      ON v.id = s.village_id
+    WHERE a.tab_id = 14
+      AND v.id = %s
+    GROUP BY
+        s.survey_id, s.spatial_id,
+        v.district_name, v.village_name,
+        s.geometry, s.polygon_id, s.unique_id
+    ORDER BY s.survey_id
+    ': tuple index out of range
+2025-12-25 11:32:37,889 [ERROR] vdmp_progress.data_pipeline: No data found in mobile_db for village_id: 35
+2025-12-25 11:32:37,889 [ERROR] vdmp_progress.data_pipeline: Database connection/query failed: No household survey data found for village_id: 35. Please ensure data collection is completed.
+2025-12-25 11:32:38,755 [ERROR] vdmp_progress.data_pipeline: No data found in mobile_db for village_id: 35
+2025-12-25 11:32:38,756 [ERROR] vdmp_progress.data_pipeline: Database connection/query failed: No household survey data found for village_id: 35. Please ensure data collection is completed.
+2025-12-25 11:32:38,878 [ERROR] vdmp_progress.data_pipeline: Database connection/query failed: Execution failed on sql '
+    WITH media_urls AS (
+        SELECT
+            fd.spatial_id,
+            fd.attribute_id,
+            STRING_AGG(fd.media_id::text, ',' ORDER BY fd.media_id) AS media_ids_str
+        FROM public.formdata fd
+        JOIN public.attributes att ON att.id = fd.attribute_id
+        WHERE att.widget_id = 10
+          AND att.tab_id = 14
+          AND fd.media_id IS NOT NULL
+        GROUP BY fd.spatial_id, fd.attribute_id
+    ),
+    raw_values AS (
+        SELECT
+            fd.spatial_id,
+            fd.attribute_id,
+            fd.form_id,
+            CASE
+                WHEN att.widget_id = 2 THEN ao.option_text
+                WHEN att.widget_id = 10 THEN 
+                    'https://jkiofs.in/fastapi/PincerApps/images/test'
+                    || COALESCE(mu.media_ids_str,'')
+                    || '/' || fd.spatial_id
+                ELSE fd.attribute_value
+            END AS value
+        FROM public.formdata fd
+        JOIN public.attributes att ON att.id = fd.attribute_id
+        LEFT JOIN public.attributes_option ao
+            ON ao.attribute_id = fd.attribute_id
+           AND att.widget_id = 2
+           AND ao.option_id = CAST(NULLIF(regexp_replace(fd.attribute_value, '[^0-9]', '', 'g'), '') AS BIGINT)
+        LEFT JOIN media_urls mu
+            ON mu.spatial_id = fd.spatial_id
+           AND mu.attribute_id = fd.attribute_id
+        WHERE att.tab_id = 14
+          AND fd.spatial_id IN (
+                SELECT id FROM public.spatialdata WHERE village_id = %s
+          )
+    ),
+    attribute_values AS (
+        SELECT
+            spatial_id,
+            attribute_id,
+            STRING_AGG(DISTINCT value, ', ' ORDER BY value) AS value
+        FROM raw_values
+        GROUP BY spatial_id, attribute_id
+    )
+    SELECT
+        s.survey_id,
+        s.spatial_id,
+        v.district_name,
+        v.village_name,
+        SPLIT_PART(s.geometry, ' ', 1) AS latitude,
+        SPLIT_PART(s.geometry, ' ', 2) AS longitude,
+        s.polygon_id AS point_id,
+        s.unique_id,
+        MIN(rv.form_id) AS form_id,
+        MAX(CASE WHEN a.attribute_name ILIKE '%Type of occupancy%' THEN av.value END) AS type_of_occupancy,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Photo with coordinates of the building%' THEN av.value END) AS photo,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Height of asset above ground (in feet)%' THEN av.value END) AS height_of_asset,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Fencing%' THEN av.value END) AS fencing,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Plinth height (in feet)%' THEN av.value END) AS plinth_height,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Building condition%' THEN av.value END) AS building_condition,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Water Tank structure type%' THEN av.value END) AS water_tank_structure_type,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Condition%' THEN av.value END) AS condition,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Observation%' THEN av.value END) AS observation,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Status (working)%' THEN av.value END) AS status,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Assets Type%' THEN av.value END) AS assets_type,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Material%' THEN av.value END) AS material,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Asset Name%' THEN av.value END) AS asset_name,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Condition%' THEN av.value END) AS condition
+    FROM raw_values rv
+    JOIN attribute_values av
+      ON av.spatial_id = rv.spatial_id
+     AND av.attribute_id = rv.attribute_id
+    JOIN public.attributes a
+      ON a.id = rv.attribute_id
+    JOIN public.spatialdata s
+      ON s.id = rv.spatial_id
+    JOIN public.users u
+      ON u.id = s.user_id
+    JOIN public.villages v
+      ON v.id = s.village_id
+    WHERE a.tab_id = 14
+      AND v.id = %s
+    GROUP BY
+        s.survey_id, s.spatial_id,
+        v.district_name, v.village_name,
+        s.geometry, s.polygon_id, s.unique_id
+    ORDER BY s.survey_id
+    ': tuple index out of range
+2025-12-25 12:14:36,486 [ERROR] vdmp_progress.data_pipeline: No data found in mobile_db for village_id: 35
+2025-12-25 12:14:36,492 [ERROR] vdmp_progress.data_pipeline: Database connection/query failed: Data not exist in the mobile DB for this village: 35. Please ensure data collection is completed.
+2025-12-25 12:14:37,313 [ERROR] vdmp_progress.data_pipeline: No data found in mobile_db for village_id: 35
+2025-12-25 12:14:37,331 [ERROR] vdmp_progress.data_pipeline: Database connection/query failed: Data not exist in the mobile DB for this village: 35. Please ensure data collection is completed.
+2025-12-25 12:21:35,992 [ERROR] vdmp_progress.data_pipeline: No data found in mobile_db for village_id: 35
+2025-12-25 12:21:35,998 [ERROR] vdmp_progress.data_pipeline: Database connection/query failed: Data not exist in the mobile DB for this village: 35. Please ensure data collection is completed.
+2025-12-25 12:21:36,841 [ERROR] vdmp_progress.data_pipeline: No data found in mobile_db for village_id: 35
+2025-12-25 12:21:36,843 [ERROR] vdmp_progress.data_pipeline: Database connection/query failed: Data not exist in the mobile DB for this village: 35. Please ensure data collection is completed.
+2025-12-25 12:31:49,309 [ERROR] django.request: Internal Server Error: /en/api/update_vdmp_activity_status/6275/
+2025-12-25 12:31:49,309 [ERROR] django.server: "PATCH /en/api/update_vdmp_activity_status/6275/ HTTP/1.1" 500 138
+2025-12-25 12:33:37,743 [ERROR] vdmp_progress.data_pipeline: Database connection/query failed: Execution failed on sql '
+    WITH media_urls AS (
+        SELECT
+            fd.spatial_id,
+            fd.attribute_id,
+            STRING_AGG(fd.media_id::text, ',' ORDER BY fd.media_id) AS media_ids_str
+        FROM public.formdata fd
+        JOIN public.attributes att ON att.id = fd.attribute_id
+        WHERE att.widget_id = 10
+          AND att.tab_id = 14
+          AND fd.media_id IS NOT NULL
+        GROUP BY fd.spatial_id, fd.attribute_id
+    ),
+    raw_values AS (
+        SELECT
+            fd.spatial_id,
+            fd.attribute_id,
+            fd.form_id,
+            CASE
+                WHEN att.widget_id = 2 THEN ao.option_text
+                WHEN att.widget_id = 10 THEN 
+                    'https://jkiofs.in/fastapi/PincerApps/images/test'
+                    || COALESCE(mu.media_ids_str,'')
+                    || '/' || fd.spatial_id
+                ELSE fd.attribute_value
+            END AS value
+        FROM public.formdata fd
+        JOIN public.attributes att ON att.id = fd.attribute_id
+        LEFT JOIN public.attributes_option ao
+            ON ao.attribute_id = fd.attribute_id
+           AND att.widget_id = 2
+           AND ao.option_id = CAST(NULLIF(regexp_replace(fd.attribute_value, '[^0-9]', '', 'g'), '') AS BIGINT)
+        LEFT JOIN media_urls mu
+            ON mu.spatial_id = fd.spatial_id
+           AND mu.attribute_id = fd.attribute_id
+        WHERE att.tab_id = 14
+          AND fd.spatial_id IN (
+                SELECT id FROM public.spatialdata WHERE village_id = %s
+          )
+    ),
+    attribute_values AS (
+        SELECT
+            spatial_id,
+            attribute_id,
+            STRING_AGG(DISTINCT value, ', ' ORDER BY value) AS value
+        FROM raw_values
+        GROUP BY spatial_id, attribute_id
+    )
+    SELECT
+        s.survey_id,
+        s.spatial_id,
+        v.district_name,
+        v.village_name,
+        SPLIT_PART(s.geometry, ' ', 1) AS latitude,
+        SPLIT_PART(s.geometry, ' ', 2) AS longitude,
+        s.polygon_id AS point_id,
+        s.unique_id,
+        MIN(rv.form_id) AS form_id,
+        MAX(CASE WHEN a.attribute_name ILIKE '%Type of occupancy%' THEN av.value END) AS type_of_occupancy,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Photo with coordinates of the building%' THEN av.value END) AS photo,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Height of asset above ground (in feet)%' THEN av.value END) AS height_of_asset,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Fencing%' THEN av.value END) AS fencing,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Plinth height (in feet)%' THEN av.value END) AS plinth_height,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Building condition%' THEN av.value END) AS building_condition,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Water Tank structure type%' THEN av.value END) AS water_tank_structure_type,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Condition%' THEN av.value END) AS condition,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Observation%' THEN av.value END) AS observation,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Status (working)%' THEN av.value END) AS status,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Assets Type%' THEN av.value END) AS assets_type,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Material%' THEN av.value END) AS material,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Asset Name%' THEN av.value END) AS asset_name,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Condition%' THEN av.value END) AS condition
+    FROM raw_values rv
+    JOIN attribute_values av
+      ON av.spatial_id = rv.spatial_id
+     AND av.attribute_id = rv.attribute_id
+    JOIN public.attributes a
+      ON a.id = rv.attribute_id
+    JOIN public.spatialdata s
+      ON s.id = rv.spatial_id
+    JOIN public.users u
+      ON u.id = s.user_id
+    JOIN public.villages v
+      ON v.id = s.village_id
+    WHERE a.tab_id = 14
+      AND v.id = %s
+    GROUP BY
+        s.survey_id, s.spatial_id,
+        v.district_name, v.village_name,
+        s.geometry, s.polygon_id, s.unique_id
+    ORDER BY s.survey_id
+    ': tuple index out of range
+2025-12-25 12:33:37,756 [ERROR] django.request: Internal Server Error: /en/api/update_vdmp_activity_status/6275/
+2025-12-25 12:33:37,756 [ERROR] django.server: "PATCH /en/api/update_vdmp_activity_status/6275/ HTTP/1.1" 500 138
+2025-12-25 12:38:06,660 [ERROR] vdmp_progress.data_pipeline: Database connection/query failed: Execution failed on sql '
+    WITH media_urls AS (
+        SELECT
+            fd.spatial_id,
+            fd.attribute_id,
+            STRING_AGG(fd.media_id::text, ',' ORDER BY fd.media_id) AS media_ids_str
+        FROM public.formdata fd
+        JOIN public.attributes att ON att.id = fd.attribute_id
+        WHERE att.widget_id = 10
+          AND att.tab_id = 14
+          AND fd.media_id IS NOT NULL
+        GROUP BY fd.spatial_id, fd.attribute_id
+    ),
+    raw_values AS (
+        SELECT
+            fd.spatial_id,
+            fd.attribute_id,
+            fd.form_id,
+            CASE
+                WHEN att.widget_id = 2 THEN ao.option_text
+                WHEN att.widget_id = 10 THEN 
+                    'https://jkiofs.in/fastapi/PincerApps/images/test'
+                    || COALESCE(mu.media_ids_str,'')
+                    || '/' || fd.spatial_id
+                ELSE fd.attribute_value
+            END AS value
+        FROM public.formdata fd
+        JOIN public.attributes att ON att.id = fd.attribute_id
+        LEFT JOIN public.attributes_option ao
+            ON ao.attribute_id = fd.attribute_id
+           AND att.widget_id = 2
+           AND ao.option_id = CAST(NULLIF(regexp_replace(fd.attribute_value, '[^0-9]', '', 'g'), '') AS BIGINT)
+        LEFT JOIN media_urls mu
+            ON mu.spatial_id = fd.spatial_id
+           AND mu.attribute_id = fd.attribute_id
+        WHERE att.tab_id = 14
+          AND fd.spatial_id IN (
+                SELECT id FROM public.spatialdata WHERE village_id = %s
+          )
+    ),
+    attribute_values AS (
+        SELECT
+            spatial_id,
+            attribute_id,
+            STRING_AGG(DISTINCT value, ', ' ORDER BY value) AS value
+        FROM raw_values
+        GROUP BY spatial_id, attribute_id
+    )
+    SELECT
+        s.survey_id,
+        s.spatial_id,
+        v.district_name,
+        v.village_name,
+        SPLIT_PART(s.geometry, ' ', 1) AS latitude,
+        SPLIT_PART(s.geometry, ' ', 2) AS longitude,
+        s.polygon_id AS point_id,
+        s.unique_id,
+        MIN(rv.form_id) AS form_id,
+        MAX(CASE WHEN a.attribute_name ILIKE '%Type of occupancy%' THEN av.value END) AS type_of_occupancy,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Photo with coordinates of the building%' THEN av.value END) AS photo,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Height of asset above ground (in feet)%' THEN av.value END) AS height_of_asset,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Fencing%' THEN av.value END) AS fencing,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Plinth height (in feet)%' THEN av.value END) AS plinth_height,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Building condition%' THEN av.value END) AS building_condition,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Water Tank structure type%' THEN av.value END) AS water_tank_structure_type,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Condition%' THEN av.value END) AS condition,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Observation%' THEN av.value END) AS observation,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Status (working)%' THEN av.value END) AS status,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Assets Type%' THEN av.value END) AS assets_type,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Material%' THEN av.value END) AS material,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Asset Name%' THEN av.value END) AS asset_name,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Condition%' THEN av.value END) AS condition
+    FROM raw_values rv
+    JOIN attribute_values av
+      ON av.spatial_id = rv.spatial_id
+     AND av.attribute_id = rv.attribute_id
+    JOIN public.attributes a
+      ON a.id = rv.attribute_id
+    JOIN public.spatialdata s
+      ON s.id = rv.spatial_id
+    JOIN public.users u
+      ON u.id = s.user_id
+    JOIN public.villages v
+      ON v.id = s.village_id
+    WHERE a.tab_id = 14
+      AND v.id = %s
+    GROUP BY
+        s.survey_id, s.spatial_id,
+        v.district_name, v.village_name,
+        s.geometry, s.polygon_id, s.unique_id
+    ORDER BY s.survey_id
+    ': tuple index out of range
+2025-12-25 12:38:06,666 [ERROR] django.request: Internal Server Error: /en/api/update_vdmp_activity_status/6275/
+2025-12-25 12:38:06,668 [ERROR] django.server: "PATCH /en/api/update_vdmp_activity_status/6275/ HTTP/1.1" 500 138
+2025-12-25 12:42:14,456 [ERROR] vdmp_progress.data_pipeline: Database connection/query failed: Execution failed on sql '
+    WITH media_urls AS (
+        SELECT
+            fd.spatial_id,
+            fd.attribute_id,
+            STRING_AGG(fd.media_id::text, ',' ORDER BY fd.media_id) AS media_ids_str
+        FROM public.formdata fd
+        JOIN public.attributes att ON att.id = fd.attribute_id
+        WHERE att.widget_id = 10
+          AND att.tab_id = 14
+          AND fd.media_id IS NOT NULL
+        GROUP BY fd.spatial_id, fd.attribute_id
+    ),
+    raw_values AS (
+        SELECT
+            fd.spatial_id,
+            fd.attribute_id,
+            fd.form_id,
+            CASE
+                WHEN att.widget_id = 2 THEN ao.option_text
+                WHEN att.widget_id = 10 THEN 
+                    'https://jkiofs.in/fastapi/PincerApps/images/test'
+                    || COALESCE(mu.media_ids_str,'')
+                    || '/' || fd.spatial_id
+                ELSE fd.attribute_value
+            END AS value
+        FROM public.formdata fd
+        JOIN public.attributes att ON att.id = fd.attribute_id
+        LEFT JOIN public.attributes_option ao
+            ON ao.attribute_id = fd.attribute_id
+           AND att.widget_id = 2
+           AND ao.option_id = CAST(NULLIF(regexp_replace(fd.attribute_value, '[^0-9]', '', 'g'), '') AS BIGINT)
+        LEFT JOIN media_urls mu
+            ON mu.spatial_id = fd.spatial_id
+           AND mu.attribute_id = fd.attribute_id
+        WHERE att.tab_id = 14
+          AND fd.spatial_id IN (
+                SELECT id FROM public.spatialdata WHERE village_id = %s
+          )
+    ),
+    attribute_values AS (
+        SELECT
+            spatial_id,
+            attribute_id,
+            STRING_AGG(DISTINCT value, ', ' ORDER BY value) AS value
+        FROM raw_values
+        GROUP BY spatial_id, attribute_id
+    )
+    SELECT
+        s.survey_id,
+        s.spatial_id,
+        v.district_name,
+        v.village_name,
+        SPLIT_PART(s.geometry, ' ', 1) AS latitude,
+        SPLIT_PART(s.geometry, ' ', 2) AS longitude,
+        s.polygon_id AS point_id,
+        s.unique_id,
+        MIN(rv.form_id) AS form_id,
+        MAX(CASE WHEN a.attribute_name ILIKE '%Type of occupancy%' THEN av.value END) AS type_of_occupancy,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Photo with coordinates of the building%' THEN av.value END) AS photo,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Height of asset above ground (in feet)%' THEN av.value END) AS height_of_asset,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Fencing%' THEN av.value END) AS fencing,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Plinth height (in feet)%' THEN av.value END) AS plinth_height,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Building condition%' THEN av.value END) AS building_condition,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Water Tank structure type%' THEN av.value END) AS water_tank_structure_type,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Condition%' THEN av.value END) AS condition,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Observation%' THEN av.value END) AS observation,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Status (working)%' THEN av.value END) AS status,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Assets Type%' THEN av.value END) AS assets_type,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Material%' THEN av.value END) AS material,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Asset Name%' THEN av.value END) AS asset_name
+    FROM raw_values rv
+    JOIN attribute_values av
+      ON av.spatial_id = rv.spatial_id
+     AND av.attribute_id = rv.attribute_id
+    JOIN public.attributes a
+      ON a.id = rv.attribute_id
+    JOIN public.spatialdata s
+      ON s.id = rv.spatial_id
+    JOIN public.users u
+      ON u.id = s.user_id
+    JOIN public.villages v
+      ON v.id = s.village_id
+    WHERE a.tab_id = 14
+      AND v.id = %s
+    GROUP BY
+        s.survey_id, s.spatial_id,
+        v.district_name, v.village_name,
+        s.geometry, s.polygon_id, s.unique_id
+    ORDER BY s.survey_id
+    ': tuple index out of range
+2025-12-25 12:42:14,459 [ERROR] django.request: Internal Server Error: /en/api/update_vdmp_activity_status/6275/
+2025-12-25 12:42:14,460 [ERROR] django.server: "PATCH /en/api/update_vdmp_activity_status/6275/ HTTP/1.1" 500 138
+2025-12-25 12:43:07,657 [ERROR] vdmp_progress.data_pipeline: Database connection/query failed: Execution failed on sql '
+    WITH media_urls AS (
+        SELECT
+            fd.spatial_id,
+            fd.attribute_id,
+            STRING_AGG(fd.media_id::text, ',' ORDER BY fd.media_id) AS media_ids_str
+        FROM public.formdata fd
+        JOIN public.attributes att ON att.id = fd.attribute_id
+        WHERE att.widget_id = 10
+          AND att.tab_id = 14
+          AND fd.media_id IS NOT NULL
+        GROUP BY fd.spatial_id, fd.attribute_id
+    ),
+    raw_values AS (
+        SELECT
+            fd.spatial_id,
+            fd.attribute_id,
+            fd.form_id,
+            CASE
+                WHEN att.widget_id = 2 THEN ao.option_text
+                WHEN att.widget_id = 10 THEN 
+                    'https://jkiofs.in/fastapi/PincerApps/images/test'
+                    || COALESCE(mu.media_ids_str,'')
+                    || '/' || fd.spatial_id
+                ELSE fd.attribute_value
+            END AS value
+        FROM public.formdata fd
+        JOIN public.attributes att ON att.id = fd.attribute_id
+        LEFT JOIN public.attributes_option ao
+            ON ao.attribute_id = fd.attribute_id
+           AND att.widget_id = 2
+           AND ao.option_id = CAST(NULLIF(regexp_replace(fd.attribute_value, '[^0-9]', '', 'g'), '') AS BIGINT)
+        LEFT JOIN media_urls mu
+            ON mu.spatial_id = fd.spatial_id
+           AND mu.attribute_id = fd.attribute_id
+        WHERE att.tab_id = 14
+          AND fd.spatial_id IN (
+                SELECT id FROM public.spatialdata WHERE village_id = %s
+          )
+    ),
+    attribute_values AS (
+        SELECT
+            spatial_id,
+            attribute_id,
+            STRING_AGG(DISTINCT value, ', ' ORDER BY value) AS value
+        FROM raw_values
+        GROUP BY spatial_id, attribute_id
+    )
+    SELECT
+        s.survey_id,
+        s.spatial_id,
+        v.district_name,
+        v.village_name,
+        SPLIT_PART(s.geometry, ' ', 1) AS latitude,
+        SPLIT_PART(s.geometry, ' ', 2) AS longitude,
+        s.polygon_id AS point_id,
+        s.unique_id,
+        MIN(rv.form_id) AS form_id,
+        MAX(CASE WHEN a.attribute_name ILIKE '%Type of occupancy%' THEN av.value END) AS type_of_occupancy,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Photo with coordinates of the building%' THEN av.value END) AS photo,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Height of asset above ground (in feet)%' THEN av.value END) AS height_of_asset,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Fencing%' THEN av.value END) AS fencing,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Plinth height (in feet)%' THEN av.value END) AS plinth_height,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Building condition%' THEN av.value END) AS building_condition,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Water Tank structure type%' THEN av.value END) AS water_tank_structure_type,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Condition%' THEN av.value END) AS condition,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Observation%' THEN av.value END) AS observation,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Status (working)%' THEN av.value END) AS status,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Assets Type%' THEN av.value END) AS assets_type,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Material%' THEN av.value END) AS material,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Asset Name%' THEN av.value END) AS asset_name
+    FROM raw_values rv
+    JOIN attribute_values av
+      ON av.spatial_id = rv.spatial_id
+     AND av.attribute_id = rv.attribute_id
+    JOIN public.attributes a
+      ON a.id = rv.attribute_id
+    JOIN public.spatialdata s
+      ON s.id = rv.spatial_id
+    JOIN public.users u
+      ON u.id = s.user_id
+    JOIN public.villages v
+      ON v.id = s.village_id
+    WHERE a.tab_id = 14
+      AND v.id = %s
+    GROUP BY
+        s.survey_id, s.spatial_id,
+        v.district_name, v.village_name,
+        s.geometry, s.polygon_id, s.unique_id
+    ORDER BY s.survey_id
+    ': tuple index out of range
+2025-12-25 12:43:07,657 [ERROR] django.request: Internal Server Error: /en/api/update_vdmp_activity_status/6275/
+2025-12-25 12:43:07,657 [ERROR] django.server: "PATCH /en/api/update_vdmp_activity_status/6275/ HTTP/1.1" 500 138
+2025-12-25 12:45:24,590 [ERROR] vdmp_progress.data_pipeline: Database connection/query failed: Execution failed on sql '
+    WITH media_urls AS (
+        SELECT
+            fd.spatial_id,
+            fd.attribute_id,
+            STRING_AGG(fd.media_id::text, ',' ORDER BY fd.media_id) AS media_ids_str
+        FROM public.formdata fd
+        JOIN public.attributes att ON att.id = fd.attribute_id
+        WHERE att.widget_id = 10
+          AND att.tab_id = 14
+          AND fd.media_id IS NOT NULL
+        GROUP BY fd.spatial_id, fd.attribute_id
+    ),
+    raw_values AS (
+        SELECT
+            fd.spatial_id,
+            fd.attribute_id,
+            fd.form_id,
+            CASE
+                WHEN att.widget_id = 2 THEN ao.option_text
+                WHEN att.widget_id = 10 THEN 
+                    'https://jkiofs.in/fastapi/PincerApps/images/test'
+                    || COALESCE(mu.media_ids_str,'')
+                    || '/' || fd.spatial_id
+                ELSE fd.attribute_value
+            END AS value
+        FROM public.formdata fd
+        JOIN public.attributes att ON att.id = fd.attribute_id
+        LEFT JOIN public.attributes_option ao
+            ON ao.attribute_id = fd.attribute_id
+           AND att.widget_id = 2
+           AND ao.option_id = CAST(NULLIF(regexp_replace(fd.attribute_value, '[^0-9]', '', 'g'), '') AS BIGINT)
+        LEFT JOIN media_urls mu
+            ON mu.spatial_id = fd.spatial_id
+           AND mu.attribute_id = fd.attribute_id
+        WHERE att.tab_id = 14
+          AND fd.spatial_id IN (
+                SELECT id FROM public.spatialdata WHERE village_id = %s
+          )
+    ),
+    attribute_values AS (
+        SELECT
+            spatial_id,
+            attribute_id,
+            STRING_AGG(DISTINCT value, ', ' ORDER BY value) AS value
+        FROM raw_values
+        GROUP BY spatial_id, attribute_id
+    )
+    SELECT
+        s.survey_id,
+        s.spatial_id,
+        v.district_name,
+        v.village_name,
+        SPLIT_PART(s.geometry, ' ', 1) AS latitude,
+        SPLIT_PART(s.geometry, ' ', 2) AS longitude,
+        s.polygon_id AS point_id,
+        s.unique_id,
+        MIN(rv.form_id) AS form_id,
+        MAX(CASE WHEN a.attribute_name ILIKE '%Type of occupancy%' THEN av.value END) AS type_of_occupancy,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Photo with coordinates of the building%' THEN av.value END) AS photo,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Height of asset above ground (in feet)%' THEN av.value END) AS height_of_asset,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Fencing%' THEN av.value END) AS fencing,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Plinth height (in feet)%' THEN av.value END) AS plinth_height,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Building condition%' THEN av.value END) AS building_condition,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Water Tank structure type%' THEN av.value END) AS water_tank_structure_type,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Condition%' THEN av.value END) AS condition,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Observation%' THEN av.value END) AS observation,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Status (working)%' THEN av.value END) AS status,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Assets Type%' THEN av.value END) AS assets_type,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Material%' THEN av.value END) AS material,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Asset Name%' THEN av.value END) AS asset_name
+    FROM raw_values rv
+    JOIN attribute_values av
+      ON av.spatial_id = rv.spatial_id
+     AND av.attribute_id = rv.attribute_id
+    JOIN public.attributes a
+      ON a.id = rv.attribute_id
+    JOIN public.spatialdata s
+      ON s.id = rv.spatial_id
+    JOIN public.users u
+      ON u.id = s.user_id
+    JOIN public.villages v
+      ON v.id = s.village_id
+    WHERE a.tab_id = 14
+      AND v.id = %s
+    GROUP BY
+        s.survey_id, s.spatial_id,
+        v.district_name, v.village_name,
+        s.geometry, s.polygon_id, s.unique_id
+    ORDER BY s.survey_id
+    ': tuple index out of range
+2025-12-25 12:45:24,606 [ERROR] django.request: Internal Server Error: /en/api/update_vdmp_activity_status/6275/
+2025-12-25 12:45:24,606 [ERROR] django.server: "PATCH /en/api/update_vdmp_activity_status/6275/ HTTP/1.1" 500 138
+2025-12-25 12:47:28,849 [ERROR] vdmp_progress.data_pipeline: Database connection/query failed: Execution failed on sql '
+    WITH media_urls AS (
+        SELECT
+            fd.spatial_id,
+            fd.attribute_id,
+            STRING_AGG(fd.media_id::text, ',' ORDER BY fd.media_id) AS media_ids_str
+        FROM public.formdata fd
+        JOIN public.attributes att ON att.id = fd.attribute_id
+        WHERE att.widget_id = 10
+          AND att.tab_id = 14
+          AND fd.media_id IS NOT NULL
+        GROUP BY fd.spatial_id, fd.attribute_id
+    ),
+    raw_values AS (
+        SELECT
+            fd.spatial_id,
+            fd.attribute_id,
+            fd.form_id,
+            CASE
+                WHEN att.widget_id = 2 THEN ao.option_text
+                WHEN att.widget_id = 10 THEN 
+                    'https://jkiofs.in/fastapi/PincerApps/images/test'
+                    || COALESCE(mu.media_ids_str,'')
+                    || '/' || fd.spatial_id
+                ELSE fd.attribute_value
+            END AS value
+        FROM public.formdata fd
+        JOIN public.attributes att ON att.id = fd.attribute_id
+        LEFT JOIN public.attributes_option ao
+            ON ao.attribute_id = fd.attribute_id
+           AND att.widget_id = 2
+           AND ao.option_id = CAST(NULLIF(regexp_replace(fd.attribute_value, '[^0-9]', '', 'g'), '') AS BIGINT)
+        LEFT JOIN media_urls mu
+            ON mu.spatial_id = fd.spatial_id
+           AND mu.attribute_id = fd.attribute_id
+        WHERE att.tab_id = 14
+          AND fd.spatial_id IN (
+                SELECT id FROM public.spatialdata WHERE village_id = %s
+          )
+    ),
+    attribute_values AS (
+        SELECT
+            spatial_id,
+            attribute_id,
+            STRING_AGG(DISTINCT value, ', ' ORDER BY value) AS value
+        FROM raw_values
+        GROUP BY spatial_id, attribute_id
+    )
+    SELECT
+        s.survey_id,
+        s.spatial_id,
+        v.district_name,
+        v.village_name,
+        SPLIT_PART(s.geometry, ' ', 1) AS latitude,
+        SPLIT_PART(s.geometry, ' ', 2) AS longitude,
+        s.polygon_id AS point_id,
+        s.unique_id,
+        MIN(rv.form_id) AS form_id,
+        MAX(CASE WHEN a.attribute_name ILIKE '%Type of occupancy%' THEN av.value END) AS type_of_occupancy,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Photo with coordinates of the building%' THEN av.value END) AS photo,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Height of asset above ground (in feet)%' THEN av.value END) AS height_of_asset,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Fencing%' THEN av.value END) AS fencing,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Plinth height (in feet)%' THEN av.value END) AS plinth_height,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Building condition%' THEN av.value END) AS building_condition,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Water Tank structure type%' THEN av.value END) AS water_tank_structure_type,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Condition%' THEN av.value END) AS condition,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Observation%' THEN av.value END) AS observation,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Status (working)%' THEN av.value END) AS status,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Assets Type%' THEN av.value END) AS assets_type,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Material%' THEN av.value END) AS material,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Asset Name%' THEN av.value END) AS asset_name
+    FROM raw_values rv
+    JOIN attribute_values av
+      ON av.spatial_id = rv.spatial_id
+     AND av.attribute_id = rv.attribute_id
+    JOIN public.attributes a
+      ON a.id = rv.attribute_id
+    JOIN public.spatialdata s
+      ON s.id = rv.spatial_id
+    JOIN public.users u
+      ON u.id = s.user_id
+    JOIN public.villages v
+      ON v.id = s.village_id
+    WHERE a.tab_id = 14
+      AND v.id = %s
+    GROUP BY
+        s.survey_id, s.spatial_id,
+        v.district_name, v.village_name,
+        s.geometry, s.polygon_id, s.unique_id
+    ORDER BY s.survey_id
+    ': tuple index out of range
+2025-12-25 12:47:28,853 [ERROR] django.request: Internal Server Error: /en/api/update_vdmp_activity_status/6275/
+2025-12-25 12:47:28,855 [ERROR] django.server: "PATCH /en/api/update_vdmp_activity_status/6275/ HTTP/1.1" 500 138
+2025-12-25 12:48:47,356 [ERROR] vdmp_progress.data_pipeline: Database connection/query failed: Execution failed on sql '
+    WITH media_urls AS (
+        SELECT
+            fd.spatial_id,
+            fd.attribute_id,
+            STRING_AGG(fd.media_id::text, ',' ORDER BY fd.media_id) AS media_ids_str
+        FROM public.formdata fd
+        JOIN public.attributes att ON att.id = fd.attribute_id
+        WHERE att.widget_id = 10
+          AND att.tab_id = 14
+          AND fd.media_id IS NOT NULL
+        GROUP BY fd.spatial_id, fd.attribute_id
+    ),
+    raw_values AS (
+        SELECT
+            fd.spatial_id,
+            fd.attribute_id,
+            fd.form_id,
+            CASE
+                WHEN att.widget_id = 2 THEN ao.option_text
+                WHEN att.widget_id = 10 THEN 
+                    'https://jkiofs.in/fastapi/PincerApps/images/test'
+                    || COALESCE(mu.media_ids_str,'')
+                    || '/' || fd.spatial_id
+                ELSE fd.attribute_value
+            END AS value
+        FROM public.formdata fd
+        JOIN public.attributes att ON att.id = fd.attribute_id
+        LEFT JOIN public.attributes_option ao
+            ON ao.attribute_id = fd.attribute_id
+           AND att.widget_id = 2
+           AND ao.option_id = CAST(NULLIF(regexp_replace(fd.attribute_value, '[^0-9]', '', 'g'), '') AS BIGINT)
+        LEFT JOIN media_urls mu
+            ON mu.spatial_id = fd.spatial_id
+           AND mu.attribute_id = fd.attribute_id
+        WHERE att.tab_id = 14
+          AND fd.spatial_id IN (
+                SELECT id FROM public.spatialdata WHERE village_id = %s
+          )
+    ),
+    attribute_values AS (
+        SELECT
+            spatial_id,
+            attribute_id,
+            STRING_AGG(DISTINCT value, ', ' ORDER BY value) AS value
+        FROM raw_values
+        GROUP BY spatial_id, attribute_id
+    )
+    SELECT
+        s.survey_id,
+        s.spatial_id,
+        v.district_name,
+        v.village_name,
+        SPLIT_PART(s.geometry, ' ', 1) AS latitude,
+        SPLIT_PART(s.geometry, ' ', 2) AS longitude,
+        s.polygon_id AS point_id,
+        s.unique_id,
+        MIN(rv.form_id) AS form_id,
+        MAX(CASE WHEN a.attribute_name ILIKE '%Type of occupancy%' THEN av.value END) AS type_of_occupancy,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Photo with coordinates of the building%' THEN av.value END) AS photo,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Height of asset above ground (in feet)%' THEN av.value END) AS height_of_asset,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Fencing%' THEN av.value END) AS fencing,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Plinth height (in feet)%' THEN av.value END) AS plinth_height,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Building condition%' THEN av.value END) AS building_condition,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Water Tank structure type%' THEN av.value END) AS water_tank_structure_type,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Condition%' THEN av.value END) AS condition,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Observation%' THEN av.value END) AS observation,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Status (working)%' THEN av.value END) AS status,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Assets Type%' THEN av.value END) AS assets_type,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Material%' THEN av.value END) AS material,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Asset Name%' THEN av.value END) AS asset_name
+    FROM raw_values rv
+    JOIN attribute_values av
+      ON av.spatial_id = rv.spatial_id
+     AND av.attribute_id = rv.attribute_id
+    JOIN public.attributes a
+      ON a.id = rv.attribute_id
+    JOIN public.spatialdata s
+      ON s.id = rv.spatial_id
+    JOIN public.users u
+      ON u.id = s.user_id
+    JOIN public.villages v
+      ON v.id = s.village_id
+    WHERE a.tab_id = 14
+      AND v.id = %s
+    GROUP BY
+        s.survey_id, s.spatial_id,
+        v.district_name, v.village_name,
+        s.geometry, s.polygon_id, s.unique_id
+    ORDER BY s.survey_id
+    ': tuple index out of range
+2025-12-25 12:48:47,360 [ERROR] django.request: Internal Server Error: /en/api/update_vdmp_activity_status/6275/
+2025-12-25 12:48:47,361 [ERROR] django.server: "PATCH /en/api/update_vdmp_activity_status/6275/ HTTP/1.1" 500 138
+2025-12-25 12:50:18,180 [ERROR] vdmp_progress.data_pipeline: Database connection/query failed: Execution failed on sql '
+    WITH media_urls AS (
+        SELECT
+            fd.spatial_id,
+            fd.attribute_id,
+            STRING_AGG(fd.media_id::text, ',' ORDER BY fd.media_id) AS media_ids_str
+        FROM public.formdata fd
+        JOIN public.attributes att ON att.id = fd.attribute_id
+        WHERE att.widget_id = 10
+          AND att.tab_id = 14
+          AND fd.media_id IS NOT NULL
+        GROUP BY fd.spatial_id, fd.attribute_id
+    ),
+    raw_values AS (
+        SELECT
+            fd.spatial_id,
+            fd.attribute_id,
+            fd.form_id,
+            CASE
+                WHEN att.widget_id = 2 THEN ao.option_text
+                WHEN att.widget_id = 10 THEN 
+                    'https://jkiofs.in/fastapi/PincerApps/images/test'
+                    || COALESCE(mu.media_ids_str,'')
+                    || '/' || fd.spatial_id
+                ELSE fd.attribute_value
+            END AS value
+        FROM public.formdata fd
+        JOIN public.attributes att ON att.id = fd.attribute_id
+        LEFT JOIN public.attributes_option ao
+            ON ao.attribute_id = fd.attribute_id
+           AND att.widget_id = 2
+           AND ao.option_id = CAST(NULLIF(regexp_replace(fd.attribute_value, '[^0-9]', '', 'g'), '') AS BIGINT)
+        LEFT JOIN media_urls mu
+            ON mu.spatial_id = fd.spatial_id
+           AND mu.attribute_id = fd.attribute_id
+        WHERE att.tab_id = 14
+          AND fd.spatial_id IN (
+                SELECT id FROM public.spatialdata WHERE village_id = %s
+          )
+    ),
+    attribute_values AS (
+        SELECT
+            spatial_id,
+            attribute_id,
+            STRING_AGG(DISTINCT value, ', ' ORDER BY value) AS value
+        FROM raw_values
+        GROUP BY spatial_id, attribute_id
+    )
+    SELECT
+        s.survey_id,
+        s.spatial_id,
+        v.district_name,
+        v.village_name,
+        SPLIT_PART(s.geometry, ' ', 1) AS latitude,
+        SPLIT_PART(s.geometry, ' ', 2) AS longitude,
+        s.polygon_id AS point_id,
+        s.unique_id,
+        MIN(rv.form_id) AS form_id,
+        MAX(CASE WHEN a.attribute_name ILIKE '%Type of occupancy%' THEN av.value END) AS type_of_occupancy,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Photo with coordinates of the building%' THEN av.value END) AS photo,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Height of asset above ground (in feet)%' THEN av.value END) AS height_of_asset,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Fencing%' THEN av.value END) AS fencing,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Plinth height (in feet)%' THEN av.value END) AS plinth_height,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Building condition%' THEN av.value END) AS building_condition,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Water Tank structure type%' THEN av.value END) AS water_tank_structure_type,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Condition%' THEN av.value END) AS condition,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Observation%' THEN av.value END) AS observation,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Status (working)%' THEN av.value END) AS status,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Assets Type%' THEN av.value END) AS assets_type,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Material%' THEN av.value END) AS material,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Asset Name%' THEN av.value END) AS asset_name
+    FROM raw_values rv
+    JOIN attribute_values av
+      ON av.spatial_id = rv.spatial_id
+     AND av.attribute_id = rv.attribute_id
+    JOIN public.attributes a
+      ON a.id = rv.attribute_id
+    JOIN public.spatialdata s
+      ON s.id = rv.spatial_id
+    JOIN public.users u
+      ON u.id = s.user_id
+    JOIN public.villages v
+      ON v.id = s.village_id
+    WHERE a.tab_id = 14
+      AND v.id = %s
+    GROUP BY
+        s.survey_id, s.spatial_id,
+        v.district_name, v.village_name,
+        s.geometry, s.polygon_id, s.unique_id
+    ORDER BY s.survey_id
+    ': list index out of range
+2025-12-25 12:50:18,184 [ERROR] django.request: Internal Server Error: /en/api/update_vdmp_activity_status/6275/
+2025-12-25 12:50:18,185 [ERROR] django.server: "PATCH /en/api/update_vdmp_activity_status/6275/ HTTP/1.1" 500 138
+2025-12-25 12:51:44,044 [ERROR] vdmp_progress.data_pipeline: Database connection/query failed: Failed to generate or execute others SQL: Execution failed on sql '
+    WITH media_urls AS (
+        SELECT
+            fd.spatial_id,
+            fd.attribute_id,
+            STRING_AGG(fd.media_id::text, ',' ORDER BY fd.media_id) AS media_ids_str
+        FROM public.formdata fd
+        JOIN public.attributes att ON att.id = fd.attribute_id
+        WHERE att.widget_id = 10
+          AND att.tab_id = 14
+          AND fd.media_id IS NOT NULL
+        GROUP BY fd.spatial_id, fd.attribute_id
+    ),
+    raw_values AS (
+        SELECT
+            fd.spatial_id,
+            fd.attribute_id,
+            fd.form_id,
+            CASE
+                WHEN att.widget_id = 2 THEN ao.option_text
+                WHEN att.widget_id = 10 THEN 
+                    'https://jkiofs.in/fastapi/PincerApps/images/test'
+                    || COALESCE(mu.media_ids_str,'')
+                    || '/' || fd.spatial_id
+                ELSE fd.attribute_value
+            END AS value
+        FROM public.formdata fd
+        JOIN public.attributes att ON att.id = fd.attribute_id
+        LEFT JOIN public.attributes_option ao
+            ON ao.attribute_id = fd.attribute_id
+           AND att.widget_id = 2
+           AND ao.option_id = CAST(NULLIF(regexp_replace(fd.attribute_value, '[^0-9]', '', 'g'), '') AS BIGINT)
+        LEFT JOIN media_urls mu
+            ON mu.spatial_id = fd.spatial_id
+           AND mu.attribute_id = fd.attribute_id
+        WHERE att.tab_id = 14
+          AND fd.spatial_id IN (
+                SELECT id FROM public.spatialdata WHERE village_id = %s
+          )
+    ),
+    attribute_values AS (
+        SELECT
+            spatial_id,
+            attribute_id,
+            STRING_AGG(DISTINCT value, ', ' ORDER BY value) AS value
+        FROM raw_values
+        GROUP BY spatial_id, attribute_id
+    )
+    SELECT
+        s.survey_id,
+        s.spatial_id,
+        v.district_name,
+        v.village_name,
+        SPLIT_PART(s.geometry, ' ', 1) AS latitude,
+        SPLIT_PART(s.geometry, ' ', 2) AS longitude,
+        s.polygon_id AS point_id,
+        s.unique_id,
+        MIN(rv.form_id) AS form_id,
+        MAX(CASE WHEN a.attribute_name ILIKE '%Type of occupancy%' THEN av.value END) AS type_of_occupancy,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Photo with coordinates of the building%' THEN av.value END) AS photo,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Height of asset above ground (in feet)%' THEN av.value END) AS height_of_asset,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Fencing%' THEN av.value END) AS fencing,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Plinth height (in feet)%' THEN av.value END) AS plinth_height,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Building condition%' THEN av.value END) AS building_condition,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Water Tank structure type%' THEN av.value END) AS water_tank_structure_type,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Condition%' THEN av.value END) AS condition,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Observation%' THEN av.value END) AS observation,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Status (working)%' THEN av.value END) AS status,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Assets Type%' THEN av.value END) AS assets_type,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Material%' THEN av.value END) AS material,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Asset Name%' THEN av.value END) AS asset_name
+    FROM raw_values rv
+    JOIN attribute_values av
+      ON av.spatial_id = rv.spatial_id
+     AND av.attribute_id = rv.attribute_id
+    JOIN public.attributes a
+      ON a.id = rv.attribute_id
+    JOIN public.spatialdata s
+      ON s.id = rv.spatial_id
+    JOIN public.users u
+      ON u.id = s.user_id
+    JOIN public.villages v
+      ON v.id = s.village_id
+    WHERE a.tab_id = 14
+      AND v.id = %s
+    GROUP BY
+        s.survey_id, s.spatial_id,
+        v.district_name, v.village_name,
+        s.geometry, s.polygon_id, s.unique_id
+    ORDER BY s.survey_id
+    ': list index out of range
+2025-12-25 12:51:44,048 [ERROR] django.request: Internal Server Error: /en/api/update_vdmp_activity_status/6275/
+2025-12-25 12:51:44,049 [ERROR] django.server: "PATCH /en/api/update_vdmp_activity_status/6275/ HTTP/1.1" 500 138
+2025-12-25 12:52:16,982 [ERROR] vdmp_progress.data_pipeline: Database connection/query failed: Failed to generate or execute others SQL: Execution failed on sql '
+    WITH media_urls AS (
+        SELECT
+            fd.spatial_id,
+            fd.attribute_id,
+            STRING_AGG(fd.media_id::text, ',' ORDER BY fd.media_id) AS media_ids_str
+        FROM public.formdata fd
+        JOIN public.attributes att ON att.id = fd.attribute_id
+        WHERE att.widget_id = 10
+          AND att.tab_id = 14
+          AND fd.media_id IS NOT NULL
+        GROUP BY fd.spatial_id, fd.attribute_id
+    ),
+    raw_values AS (
+        SELECT
+            fd.spatial_id,
+            fd.attribute_id,
+            fd.form_id,
+            CASE
+                WHEN att.widget_id = 2 THEN ao.option_text
+                WHEN att.widget_id = 10 THEN 
+                    'https://jkiofs.in/fastapi/PincerApps/images/test'
+                    || COALESCE(mu.media_ids_str,'')
+                    || '/' || fd.spatial_id
+                ELSE fd.attribute_value
+            END AS value
+        FROM public.formdata fd
+        JOIN public.attributes att ON att.id = fd.attribute_id
+        LEFT JOIN public.attributes_option ao
+            ON ao.attribute_id = fd.attribute_id
+           AND att.widget_id = 2
+           AND ao.option_id = CAST(NULLIF(regexp_replace(fd.attribute_value, '[^0-9]', '', 'g'), '') AS BIGINT)
+        LEFT JOIN media_urls mu
+            ON mu.spatial_id = fd.spatial_id
+           AND mu.attribute_id = fd.attribute_id
+        WHERE att.tab_id = 14
+          AND fd.spatial_id IN (
+                SELECT id FROM public.spatialdata WHERE village_id = %s
+          )
+    ),
+    attribute_values AS (
+        SELECT
+            spatial_id,
+            attribute_id,
+            STRING_AGG(DISTINCT value, ', ' ORDER BY value) AS value
+        FROM raw_values
+        GROUP BY spatial_id, attribute_id
+    )
+    SELECT
+        s.survey_id,
+        s.spatial_id,
+        v.district_name,
+        v.village_name,
+        SPLIT_PART(s.geometry, ' ', 1) AS latitude,
+        SPLIT_PART(s.geometry, ' ', 2) AS longitude,
+        s.polygon_id AS point_id,
+        s.unique_id,
+        MIN(rv.form_id) AS form_id,
+        MAX(CASE WHEN a.attribute_name ILIKE '%Type of occupancy%' THEN av.value END) AS type_of_occupancy,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Photo with coordinates of the building%' THEN av.value END) AS photo,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Height of asset above ground (in feet)%' THEN av.value END) AS height_of_asset,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Fencing%' THEN av.value END) AS fencing,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Plinth height (in feet)%' THEN av.value END) AS plinth_height,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Building condition%' THEN av.value END) AS building_condition,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Water Tank structure type%' THEN av.value END) AS water_tank_structure_type,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Condition%' THEN av.value END) AS condition,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Observation%' THEN av.value END) AS observation,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Status (working)%' THEN av.value END) AS status,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Assets Type%' THEN av.value END) AS assets_type,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Material%' THEN av.value END) AS material,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Asset Name%' THEN av.value END) AS asset_name
+    FROM raw_values rv
+    JOIN attribute_values av
+      ON av.spatial_id = rv.spatial_id
+     AND av.attribute_id = rv.attribute_id
+    JOIN public.attributes a
+      ON a.id = rv.attribute_id
+    JOIN public.spatialdata s
+      ON s.id = rv.spatial_id
+    JOIN public.users u
+      ON u.id = s.user_id
+    JOIN public.villages v
+      ON v.id = s.village_id
+    WHERE a.tab_id = 14
+      AND v.id = %s
+    GROUP BY
+        s.survey_id, s.spatial_id,
+        v.district_name, v.village_name,
+        s.geometry, s.polygon_id, s.unique_id
+    ORDER BY s.survey_id
+    ': list index out of range
+2025-12-25 12:52:16,982 [ERROR] django.request: Internal Server Error: /en/api/update_vdmp_activity_status/6275/
+2025-12-25 12:52:16,998 [ERROR] django.server: "PATCH /en/api/update_vdmp_activity_status/6275/ HTTP/1.1" 500 138
+2025-12-25 12:53:45,772 [ERROR] vdmp_progress.data_pipeline: Database connection/query failed: Failed to generate or execute others SQL: Execution failed on sql '
+    WITH media_urls AS (
+        SELECT
+            fd.spatial_id,
+            fd.attribute_id,
+            STRING_AGG(fd.media_id::text, ',' ORDER BY fd.media_id) AS media_ids_str
+        FROM public.formdata fd
+        JOIN public.attributes att ON att.id = fd.attribute_id
+        WHERE att.widget_id = 10
+          AND att.tab_id = 14
+          AND fd.media_id IS NOT NULL
+        GROUP BY fd.spatial_id, fd.attribute_id
+    ),
+    raw_values AS (
+        SELECT
+            fd.spatial_id,
+            fd.attribute_id,
+            fd.form_id,
+            CASE
+                WHEN att.widget_id = 2 THEN ao.option_text
+                WHEN att.widget_id = 10 THEN 
+                    'https://jkiofs.in/fastapi/PincerApps/images/test'
+                    || COALESCE(mu.media_ids_str,'')
+                    || '/' || fd.spatial_id
+                ELSE fd.attribute_value
+            END AS value
+        FROM public.formdata fd
+        JOIN public.attributes att ON att.id = fd.attribute_id
+        LEFT JOIN public.attributes_option ao
+            ON ao.attribute_id = fd.attribute_id
+           AND att.widget_id = 2
+           AND ao.option_id = CAST(NULLIF(regexp_replace(fd.attribute_value, '[^0-9]', '', 'g'), '') AS BIGINT)
+        LEFT JOIN media_urls mu
+            ON mu.spatial_id = fd.spatial_id
+           AND mu.attribute_id = fd.attribute_id
+        WHERE att.tab_id = 14
+          AND fd.spatial_id IN (
+                SELECT id FROM public.spatialdata WHERE village_id = %s
+          )
+    ),
+    attribute_values AS (
+        SELECT
+            spatial_id,
+            attribute_id,
+            STRING_AGG(DISTINCT value, ', ' ORDER BY value) AS value
+        FROM raw_values
+        GROUP BY spatial_id, attribute_id
+    )
+    SELECT
+        s.survey_id,
+        s.spatial_id,
+        v.district_name,
+        v.village_name,
+        SPLIT_PART(s.geometry, ' ', 1) AS latitude,
+        SPLIT_PART(s.geometry, ' ', 2) AS longitude,
+        s.polygon_id AS point_id,
+        s.unique_id,
+        MIN(rv.form_id) AS form_id,
+        MAX(CASE WHEN a.attribute_name ILIKE '%Type of occupancy%' THEN av.value END) AS type_of_occupancy,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Photo with coordinates of the building%' THEN av.value END) AS photo,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Height of asset above ground (in feet)%' THEN av.value END) AS height_of_asset,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Fencing%' THEN av.value END) AS fencing,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Plinth height (in feet)%' THEN av.value END) AS plinth_height,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Building condition%' THEN av.value END) AS building_condition,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Water Tank structure type%' THEN av.value END) AS water_tank_structure_type,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Condition%' THEN av.value END) AS condition,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Observation%' THEN av.value END) AS observation,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Status (working)%' THEN av.value END) AS status,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Assets Type%' THEN av.value END) AS assets_type,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Material%' THEN av.value END) AS material,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Asset Name%' THEN av.value END) AS asset_name
+    FROM raw_values rv
+    JOIN attribute_values av
+      ON av.spatial_id = rv.spatial_id
+     AND av.attribute_id = rv.attribute_id
+    JOIN public.attributes a
+      ON a.id = rv.attribute_id
+    JOIN public.spatialdata s
+      ON s.id = rv.spatial_id
+    JOIN public.users u
+      ON u.id = s.user_id
+    JOIN public.villages v
+      ON v.id = s.village_id
+    WHERE a.tab_id = 14
+      AND v.id = %s
+    GROUP BY
+        s.survey_id, s.spatial_id,
+        v.district_name, v.village_name,
+        s.geometry, s.polygon_id, s.unique_id
+    ORDER BY s.survey_id
+    ': tuple index out of range
+2025-12-25 12:53:45,777 [ERROR] django.request: Internal Server Error: /en/api/update_vdmp_activity_status/6275/
+2025-12-25 12:53:45,779 [ERROR] django.server: "PATCH /en/api/update_vdmp_activity_status/6275/ HTTP/1.1" 500 138
+2025-12-25 12:59:31,075 [ERROR] vdmp_progress.data_pipeline: Database connection/query failed: Failed to generate or execute others SQL: Execution failed on sql '
+    WITH media_urls AS (
+        SELECT
+            fd.spatial_id,
+            fd.attribute_id,
+            STRING_AGG(fd.media_id::text, ',' ORDER BY fd.media_id) AS media_ids_str
+        FROM public.formdata fd
+        JOIN public.attributes att ON att.id = fd.attribute_id
+        WHERE att.widget_id = 10
+          AND att.tab_id = 14
+          AND fd.media_id IS NOT NULL
+        GROUP BY fd.spatial_id, fd.attribute_id
+    ),
+    raw_values AS (
+        SELECT
+            fd.spatial_id,
+            fd.attribute_id,
+            fd.form_id,
+            CASE
+                WHEN att.widget_id = 2 THEN ao.option_text
+                WHEN att.widget_id = 10 THEN 
+                    'https://jkiofs.in/fastapi/PincerApps/images/test'
+                    || COALESCE(mu.media_ids_str,'')
+                    || '/' || fd.spatial_id
+                ELSE fd.attribute_value
+            END AS value
+        FROM public.formdata fd
+        JOIN public.attributes att ON att.id = fd.attribute_id
+        LEFT JOIN public.attributes_option ao
+            ON ao.attribute_id = fd.attribute_id
+           AND att.widget_id = 2
+           AND ao.option_id = CAST(NULLIF(regexp_replace(fd.attribute_value, '[^0-9]', '', 'g'), '') AS BIGINT)
+        LEFT JOIN media_urls mu
+            ON mu.spatial_id = fd.spatial_id
+           AND mu.attribute_id = fd.attribute_id
+        WHERE att.tab_id = 14
+          AND fd.spatial_id IN (
+                SELECT id FROM public.spatialdata WHERE village_id = %s
+          )
+    ),
+    attribute_values AS (
+        SELECT
+            spatial_id,
+            attribute_id,
+            STRING_AGG(DISTINCT value, ', ' ORDER BY value) AS value
+        FROM raw_values
+        GROUP BY spatial_id, attribute_id
+    )
+    SELECT
+        s.survey_id,
+        s.spatial_id,
+        v.district_name,
+        v.village_name,
+        SPLIT_PART(s.geometry, ' ', 1) AS latitude,
+        SPLIT_PART(s.geometry, ' ', 2) AS longitude,
+        s.polygon_id AS point_id,
+        s.unique_id,
+        MIN(rv.form_id) AS form_id,
+        MAX(CASE WHEN a.attribute_name ILIKE '%Type of occupancy%' THEN av.value END) AS type_of_occupancy,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Photo with coordinates of the building%' THEN av.value END) AS photo,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Height of asset above ground (in feet)%' THEN av.value END) AS height_of_asset,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Fencing%' THEN av.value END) AS fencing,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Plinth height (in feet)%' THEN av.value END) AS plinth_height,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Building condition%' THEN av.value END) AS building_condition,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Water Tank structure type%' THEN av.value END) AS water_tank_structure_type,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Condition%' THEN av.value END) AS condition,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Observation%' THEN av.value END) AS observation,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Status (working)%' THEN av.value END) AS status,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Assets Type%' THEN av.value END) AS assets_type,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Material%' THEN av.value END) AS material,
+	MAX(CASE WHEN a.attribute_name ILIKE '%Asset Name%' THEN av.value END) AS asset_name
+    FROM raw_values rv
+    JOIN attribute_values av
+      ON av.spatial_id = rv.spatial_id
+     AND av.attribute_id = rv.attribute_id
+    JOIN public.attributes a
+      ON a.id = rv.attribute_id
+    JOIN public.spatialdata s
+      ON s.id = rv.spatial_id
+    JOIN public.users u
+      ON u.id = s.user_id
+    JOIN public.villages v
+      ON v.id = s.village_id
+    WHERE a.tab_id = 14
+      AND v.id = %s
+    GROUP BY
+        s.survey_id, s.spatial_id,
+        v.district_name, v.village_name,
+        s.geometry, s.polygon_id, s.unique_id
+    ORDER BY s.survey_id
+    ': tuple index out of range
+2025-12-25 12:59:31,075 [ERROR] django.request: Internal Server Error: /en/api/update_vdmp_activity_status/6275/
+2025-12-25 12:59:31,075 [ERROR] django.server: "PATCH /en/api/update_vdmp_activity_status/6275/ HTTP/1.1" 500 138
+2025-12-25 13:02:55,772 [ERROR] vdmp_progress.data_pipeline: Database connection/query failed: Failed to generate or execute others SQL: Execution failed on sql '
+    WITH media_urls AS (
+        SELECT
+            fd.spatial_id,
+            fd.attribute_id,
+            STRING_AGG(fd.media_id::text, ',' ORDER BY fd.media_id) AS media_ids_str
+        FROM public.formdata fd
+        JOIN public.attributes att ON att.id = fd.attribute_id
+        WHERE att.widget_id = 10
+          AND att.tab_id = 14
+          AND fd.media_id IS NOT NULL
+        GROUP BY fd.spatial_id, fd.attribute_id
+    ),
+    raw_values AS (
+        SELECT
+            fd.spatial_id,
+            fd.attribute_id,
+            fd.form_id,
+            CASE
+                WHEN att.widget_id = 2 THEN ao.option_text
+                WHEN att.widget_id = 10 THEN 
+                    'https://jkiofs.in/fastapi/PincerApps/images/test'
+                    || COALESCE(mu.media_ids_str,'')
+                    || '/' || fd.spatial_id
+                ELSE fd.attribute_value
+            END AS value
+        FROM public.formdata fd
+        JOIN public.attributes att ON att.id = fd.attribute_id
+        LEFT JOIN public.attributes_option ao
+            ON ao.attribute_id = fd.attribute_id
+           AND att.widget_id = 2
+           AND ao.option_id = CAST(NULLIF(regexp_replace(fd.attribute_value, '[^0-9]', '', 'g'), '') AS BIGINT)
+        LEFT JOIN media_urls mu
+            ON mu.spatial_id = fd.spatial_id
+           AND mu.attribute_id = fd.attribute_id
+        WHERE att.tab_id = 14
+          AND fd.spatial_id IN (
+                SELECT id FROM public.spatialdata WHERE village_id = %s
+          )
+    ),
+    attribute_values AS (
+        SELECT
+            spatial_id,
+            attribute_id,
+            STRING_AGG(DISTINCT value, ', ' ORDER BY value) AS value
+        FROM raw_values
+        GROUP BY spatial_id, attribute_id
+    )
+    SELECT
+        s.survey_id,
+        s.spatial_id,
+        v.district_name,
+        v.village_name,
+        SPLIT_PART(s.geometry, ' ', 1) AS latitude,
+        SPLIT_PART(s.geometry, ' ', 2) AS longitude,
+        s.polygon_id AS point_id,
+        s.unique_id,
+        MIN(rv.form_id) AS form_id,
+        MAX(CASE WHEN a.attribute_name ILIKE '%Assets Type%' THEN av.value END) AS assets_type,
+        MAX(CASE WHEN a.attribute_name ILIKE '%Asset Name%' THEN av.value END) AS asset_name,
+        MAX(CASE WHEN a.attribute_name ILIKE '%Material%' THEN av.value END) AS material,
+        MAX(CASE WHEN a.attribute_name ILIKE '%Condition%' THEN av.value END) AS condition,
+        MAX(CASE WHEN a.attribute_name ILIKE '%Photo with coordinates%' THEN av.value END) AS photo
+    FROM raw_values rv
+    JOIN attribute_values av
+      ON av.spatial_id = rv.spatial_id
+     AND av.attribute_id = rv.attribute_id
+    JOIN public.attributes a
+      ON a.id = rv.attribute_id
+    JOIN public.spatialdata s
+      ON s.id = rv.spatial_id
+    JOIN public.users u
+      ON u.id = s.user_id
+    JOIN public.villages v
+      ON v.id = s.village_id
+    WHERE a.tab_id = 14
+      AND v.id = %s
+    GROUP BY
+        s.survey_id, s.spatial_id,
+        v.district_name, v.village_name,
+        s.geometry, s.polygon_id, s.unique_id
+    ORDER BY s.survey_id
+    ': tuple index out of range
+2025-12-25 13:02:55,779 [ERROR] django.request: Internal Server Error: /en/api/update_vdmp_activity_status/6275/
+2025-12-25 13:02:55,779 [ERROR] django.server: "PATCH /en/api/update_vdmp_activity_status/6275/ HTTP/1.1" 500 138
+2025-12-25 13:03:19,380 [ERROR] vdmp_progress.data_pipeline: Database connection/query failed: Failed to generate or execute others SQL: Execution failed on sql '
+    WITH media_urls AS (
+        SELECT
+            fd.spatial_id,
+            fd.attribute_id,
+            STRING_AGG(fd.media_id::text, ',' ORDER BY fd.media_id) AS media_ids_str
+        FROM public.formdata fd
+        JOIN public.attributes att ON att.id = fd.attribute_id
+        WHERE att.widget_id = 10
+          AND att.tab_id = 14
+          AND fd.media_id IS NOT NULL
+        GROUP BY fd.spatial_id, fd.attribute_id
+    ),
+    raw_values AS (
+        SELECT
+            fd.spatial_id,
+            fd.attribute_id,
+            fd.form_id,
+            CASE
+                WHEN att.widget_id = 2 THEN ao.option_text
+                WHEN att.widget_id = 10 THEN 
+                    'https://jkiofs.in/fastapi/PincerApps/images/test'
+                    || COALESCE(mu.media_ids_str,'')
+                    || '/' || fd.spatial_id
+                ELSE fd.attribute_value
+            END AS value
+        FROM public.formdata fd
+        JOIN public.attributes att ON att.id = fd.attribute_id
+        LEFT JOIN public.attributes_option ao
+            ON ao.attribute_id = fd.attribute_id
+           AND att.widget_id = 2
+           AND ao.option_id = CAST(NULLIF(regexp_replace(fd.attribute_value, '[^0-9]', '', 'g'), '') AS BIGINT)
+        LEFT JOIN media_urls mu
+            ON mu.spatial_id = fd.spatial_id
+           AND mu.attribute_id = fd.attribute_id
+        WHERE att.tab_id = 14
+          AND fd.spatial_id IN (
+                SELECT id FROM public.spatialdata WHERE village_id = 35
+          )
+    ),
+    attribute_values AS (
+        SELECT
+            spatial_id,
+            attribute_id,
+            STRING_AGG(DISTINCT value, ', ' ORDER BY value) AS value
+        FROM raw_values
+        GROUP BY spatial_id, attribute_id
+    )
+    SELECT
+        s.survey_id,
+        s.spatial_id,
+        v.district_name,
+        v.village_name,
+        SPLIT_PART(s.geometry, ' ', 1) AS latitude,
+        SPLIT_PART(s.geometry, ' ', 2) AS longitude,
+        s.polygon_id AS point_id,
+        s.unique_id,
+        MIN(rv.form_id) AS form_id,
+        MAX(CASE WHEN a.attribute_name ILIKE '%Assets Type%' THEN av.value END) AS assets_type,
+        MAX(CASE WHEN a.attribute_name ILIKE '%Asset Name%' THEN av.value END) AS asset_name,
+        MAX(CASE WHEN a.attribute_name ILIKE '%Material%' THEN av.value END) AS material,
+        MAX(CASE WHEN a.attribute_name ILIKE '%Condition%' THEN av.value END) AS condition,
+        MAX(CASE WHEN a.attribute_name ILIKE '%Photo with coordinates%' THEN av.value END) AS photo
+    FROM raw_values rv
+    JOIN attribute_values av
+      ON av.spatial_id = rv.spatial_id
+     AND av.attribute_id = rv.attribute_id
+    JOIN public.attributes a
+      ON a.id = rv.attribute_id
+    JOIN public.spatialdata s
+      ON s.id = rv.spatial_id
+    JOIN public.users u
+      ON u.id = s.user_id
+    JOIN public.villages v
+      ON v.id = s.village_id
+    WHERE a.tab_id = 14
+      AND v.id = 35
+    GROUP BY
+        s.survey_id, s.spatial_id,
+        v.district_name, v.village_name,
+        s.geometry, s.polygon_id, s.unique_id
+    ORDER BY s.survey_id
+    ': tuple index out of range
+2025-12-25 13:03:19,380 [ERROR] django.request: Internal Server Error: /en/api/update_vdmp_activity_status/6275/
+2025-12-25 13:03:19,380 [ERROR] django.server: "PATCH /en/api/update_vdmp_activity_status/6275/ HTTP/1.1" 500 138
+2025-12-25 13:04:42,501 [ERROR] django.request: Internal Server Error: /en/api/update_vdmp_activity_status/6275/
+2025-12-25 13:04:42,504 [ERROR] django.server: "PATCH /en/api/update_vdmp_activity_status/6275/ HTTP/1.1" 500 138
+2025-12-25 13:05:20,863 [ERROR] django.request: Internal Server Error: /en/api/update_vdmp_activity_status/6275/
+2025-12-25 13:05:20,865 [ERROR] django.server: "PATCH /en/api/update_vdmp_activity_status/6275/ HTTP/1.1" 500 138
+2025-12-25 13:06:07,286 [ERROR] vdmp_progress.data_pipeline: Database connection/query failed: Failed to generate or execute others SQL: too many values to unpack (expected 2)
+2025-12-25 13:06:07,290 [ERROR] django.request: Internal Server Error: /en/api/update_vdmp_activity_status/6275/
+2025-12-25 13:06:07,291 [ERROR] django.server: "PATCH /en/api/update_vdmp_activity_status/6275/ HTTP/1.1" 500 138
+2025-12-25 13:07:45,036 [ERROR] vdmp_progress.data_pipeline: Database connection/query failed: Failed to generate or execute others SQL: too many values to unpack (expected 2)
+2025-12-25 13:07:45,036 [ERROR] django.request: Internal Server Error: /en/api/update_vdmp_activity_status/6275/
+2025-12-25 13:07:45,036 [ERROR] django.server: "PATCH /en/api/update_vdmp_activity_status/6275/ HTTP/1.1" 500 138
+2025-12-25 13:10:27,131 [ERROR] vdmp_progress.data_pipeline: Database connection/query failed: Failed to generate or execute others SQL: Execution failed on sql '
+    WITH media_urls AS (
+        SELECT
+            fd.spatial_id,
+            fd.attribute_id,
+            STRING_AGG(fd.media_id::text, ',' ORDER BY fd.media_id) AS media_ids_str
+        FROM public.formdata fd
+        JOIN public.attributes att ON att.id = fd.attribute_id
+        WHERE att.widget_id = 10
+          AND att.tab_id = 14
+          AND fd.media_id IS NOT NULL
+        GROUP BY fd.spatial_id, fd.attribute_id
+    ),
+    raw_values AS (
+        SELECT
+            fd.spatial_id,
+            fd.attribute_id,
+            fd.form_id,
+            CASE
+                WHEN att.widget_id = 2 THEN ao.option_text
+                WHEN att.widget_id = 10 THEN 
+                    'https://jkiofs.in/fastapi/PincerApps/images/test'
+                    || COALESCE(mu.media_ids_str,'')
+                    || '/' || fd.spatial_id
+                ELSE fd.attribute_value
+            END AS value
+        FROM public.formdata fd
+        JOIN public.attributes att ON att.id = fd.attribute_id
+        LEFT JOIN public.attributes_option ao
+            ON ao.attribute_id = fd.attribute_id
+           AND att.widget_id = 2
+           AND ao.option_id = CAST(NULLIF(regexp_replace(fd.attribute_value, '[^0-9]', '', 'g'), '') AS BIGINT)
+        LEFT JOIN media_urls mu
+            ON mu.spatial_id = fd.spatial_id
+           AND mu.attribute_id = fd.attribute_id
+        WHERE att.tab_id = 14
+          AND fd.spatial_id IN (
+                SELECT id FROM public.spatialdata WHERE village_id = %s
+          )
+    ),
+    attribute_values AS (
+        SELECT
+            spatial_id,
+            attribute_id,
+            STRING_AGG(DISTINCT value, ', ' ORDER BY value) AS value
+        FROM raw_values
+        GROUP BY spatial_id, attribute_id
+    )
+    SELECT
+        s.survey_id,
+        s.spatial_id,
+        v.district_name,
+        v.village_name,
+        SPLIT_PART(s.geometry, ' ', 1) AS latitude,
+        SPLIT_PART(s.geometry, ' ', 2) AS longitude,
+        s.polygon_id AS point_id,
+        s.unique_id,
+        MIN(rv.form_id) AS form_id,
+        MAX(CASE WHEN a.attribute_name ILIKE '%Assets Type%' THEN av.value END) AS assets_type,
+        MAX(CASE WHEN a.attribute_name ILIKE '%Asset Name%' THEN av.value END) AS asset_name,
+        MAX(CASE WHEN a.attribute_name ILIKE '%Material%' THEN av.value END) AS material,
+        MAX(CASE WHEN a.attribute_name ILIKE '%Condition%' THEN av.value END) AS condition,
+        MAX(CASE WHEN a.attribute_name ILIKE '%Photo with coordinates%' THEN av.value END) AS photo
+    FROM raw_values rv
+    JOIN attribute_values av
+      ON av.spatial_id = rv.spatial_id
+     AND av.attribute_id = rv.attribute_id
+    JOIN public.attributes a
+      ON a.id = rv.attribute_id
+    JOIN public.spatialdata s
+      ON s.id = rv.spatial_id
+    JOIN public.users u
+      ON u.id = s.user_id
+    JOIN public.villages v
+      ON v.id = s.village_id
+    WHERE a.tab_id = 14
+      AND v.id = %s
+    GROUP BY
+        s.survey_id, s.spatial_id,
+        v.district_name, v.village_name,
+        s.geometry, s.polygon_id, s.unique_id
+    ORDER BY s.survey_id
+    ': tuple index out of range
+2025-12-25 13:10:27,138 [ERROR] django.request: Internal Server Error: /en/api/update_vdmp_activity_status/6275/
+2025-12-25 13:10:27,140 [ERROR] django.server: "PATCH /en/api/update_vdmp_activity_status/6275/ HTTP/1.1" 500 138
+2025-12-25 13:11:36,858 [ERROR] vdmp_progress.data_pipeline: Database connection/query failed: Failed to generate or execute others SQL: tuple index out of range
+2025-12-25 13:11:36,861 [ERROR] django.request: Internal Server Error: /en/api/update_vdmp_activity_status/6275/
+2025-12-25 13:11:36,863 [ERROR] django.server: "PATCH /en/api/update_vdmp_activity_status/6275/ HTTP/1.1" 500 138
+2025-12-25 13:13:17,427 [ERROR] vdmp_progress.data_pipeline: Database connection/query failed: Failed to generate or execute others SQL: No parameters returned from get_others_sql_script
+2025-12-25 13:13:17,444 [ERROR] django.request: Internal Server Error: /en/api/update_vdmp_activity_status/6275/
+2025-12-25 13:13:17,446 [ERROR] django.server: "PATCH /en/api/update_vdmp_activity_status/6275/ HTTP/1.1" 500 138
+2025-12-25 13:20:00,636 [ERROR] vdmp_progress.data_pipeline: Database connection/query failed: Execution failed on sql '
+    WITH media_urls AS (
+        SELECT
+            fd.spatial_id,
+            fd.attribute_id,
+            STRING_AGG(fd.media_id::text, ',' ORDER BY fd.media_id) AS media_ids_str
+        FROM public.formdata fd
+        JOIN public.attributes att ON att.id = fd.attribute_id
+        WHERE att.widget_id = 10
+          AND att.tab_id = %(tab_id)s
+          AND fd.media_id IS NOT NULL
+        GROUP BY fd.spatial_id, fd.attribute_id
+    ),
+    raw_values AS (
+        SELECT
+            fd.spatial_id,
+            fd.attribute_id,
+            fd.form_id,
+            CASE
+                WHEN att.widget_id = 2 THEN ao.option_text
+                WHEN att.widget_id = 10 THEN 
+                    'https://jkiofs.in/fastapi/PincerApps/images/test'
+                    || COALESCE(mu.media_ids_str,'')
+                    || '/' || fd.spatial_id
+                ELSE fd.attribute_value
+            END AS value
+        FROM public.formdata fd
+        JOIN public.attributes att ON att.id = fd.attribute_id
+        LEFT JOIN public.attributes_option ao
+            ON ao.attribute_id = fd.attribute_id
+           AND att.widget_id = 2
+           AND ao.option_id = CAST(NULLIF(regexp_replace(fd.attribute_value, '[^0-9]', '', 'g'), '') AS BIGINT)
+        LEFT JOIN media_urls mu
+            ON mu.spatial_id = fd.spatial_id
+           AND mu.attribute_id = fd.attribute_id
+        WHERE att.tab_id = %(tab_id)s
+          AND fd.spatial_id IN (
+                SELECT id FROM public.spatialdata WHERE village_id = %(village_id)s
+          )
+    ),
+    attribute_values AS (
+        SELECT
+            spatial_id,
+            attribute_id,
+            STRING_AGG(DISTINCT value, ', ' ORDER BY value) AS value
+        FROM raw_values
+        GROUP BY spatial_id, attribute_id
+    )
+    SELECT
+        s.survey_id,
+        s.spatial_id,
+        v.district_name,
+        v.village_name,
+        SPLIT_PART(s.geometry, ' ', 1) AS latitude,
+        SPLIT_PART(s.geometry, ' ', 2) AS longitude,
+        s.polygon_id AS point_id,
+        s.unique_id,
+        MIN(rv.form_id) AS form_id,
+        MAX(CASE WHEN a.attribute_name ILIKE '%Assets Type%' THEN av.value END) AS assets_type,
+        MAX(CASE WHEN a.attribute_name ILIKE '%Asset Name%' THEN av.value END) AS asset_name,
+        MAX(CASE WHEN a.attribute_name ILIKE '%Material%' THEN av.value END) AS material,
+        MAX(CASE WHEN a.attribute_name ILIKE '%Condition%' THEN av.value END) AS condition,
+        MAX(CASE WHEN a.attribute_name ILIKE '%Photo%' THEN av.value END) AS photo
+    FROM raw_values rv
+    JOIN attribute_values av
+        ON av.spatial_id = rv.spatial_id
+       AND av.attribute_id = rv.attribute_id
+    JOIN public.attributes a ON a.id = rv.attribute_id
+    JOIN public.spatialdata s ON s.id = rv.spatial_id
+    JOIN public.villages v ON v.id = s.village_id
+    WHERE a.tab_id = %(tab_id)s
+      AND v.id = %(village_id)s
+    GROUP BY
+        s.survey_id, s.spatial_id,
+        v.district_name, v.village_name,
+        s.geometry, s.polygon_id, s.unique_id
+    ORDER BY s.survey_id
+    ': argument formats can't be mixed
+2025-12-25 13:20:00,636 [ERROR] django.request: Internal Server Error: /en/api/update_vdmp_activity_status/6275/
+2025-12-25 13:20:00,636 [ERROR] django.server: "PATCH /en/api/update_vdmp_activity_status/6275/ HTTP/1.1" 500 138
+2025-12-25 13:35:12,176 [ERROR] vdmp_progress.data_pipeline: No data found in mobile_db for village_id: 6
+2025-12-25 13:35:12,180 [ERROR] vdmp_progress.data_pipeline: Database connection/query failed: Data not exist in the mobile DB for this village: 6. Please ensure data collection is completed.
+2025-12-25 13:54:56,216 [ERROR] vdmp_progress.data_pipeline: Database connection/query failed: get_others_sql_script() got an unexpected keyword argument 'tab_id'
+2025-12-25 13:54:56,218 [ERROR] django.request: Internal Server Error: /en/api/update_vdmp_activity_status/6275/
+2025-12-25 13:54:56,220 [ERROR] django.server: "PATCH /en/api/update_vdmp_activity_status/6275/ HTTP/1.1" 500 138
+2025-12-25 13:56:14,336 [ERROR] vdmp_progress.data_pipeline: Database connection/query failed: get_others_sql_script() got an unexpected keyword argument 'tab_id'
+2025-12-25 13:56:14,338 [ERROR] django.request: Internal Server Error: /en/api/update_vdmp_activity_status/6275/
+2025-12-25 13:56:14,339 [ERROR] django.server: "PATCH /en/api/update_vdmp_activity_status/6275/ HTTP/1.1" 500 138
+2025-12-25 13:57:12,550 [ERROR] vdmp_progress.data_pipeline: Database connection/query failed: get_others_sql_script() got an unexpected keyword argument 'tab_id'
+2025-12-25 13:57:12,552 [ERROR] django.request: Internal Server Error: /en/api/update_vdmp_activity_status/6275/
+2025-12-25 13:57:12,554 [ERROR] django.server: "PATCH /en/api/update_vdmp_activity_status/6275/ HTTP/1.1" 500 138
+2025-12-25 13:58:22,389 [ERROR] vdmp_progress.data_pipeline: Database connection/query failed: get_others_sql_script() got an unexpected keyword argument 'tab_id'
+2025-12-25 13:58:22,391 [ERROR] django.request: Internal Server Error: /en/api/update_vdmp_activity_status/6275/
+2025-12-25 13:58:22,392 [ERROR] django.server: "PATCH /en/api/update_vdmp_activity_status/6275/ HTTP/1.1" 500 138
+2025-12-25 14:04:47,094 [ERROR] vdmp_progress.data_pipeline: Database connection/query failed: Execution failed on sql '
+    WITH media_urls AS (
+        SELECT
+            fd.spatial_id,
+            fd.attribute_id,
+            STRING_AGG(fd.media_id::text, ',' ORDER BY fd.media_id) AS media_ids_str
+        FROM public.formdata fd
+        JOIN public.attributes att ON att.id = fd.attribute_id
+        WHERE att.widget_id = 10
+          AND att.tab_id = %(tab_id)s
+          AND fd.media_id IS NOT NULL
+        GROUP BY fd.spatial_id, fd.attribute_id
+    ),
+    raw_values AS (
+        SELECT
+            fd.spatial_id,
+            fd.attribute_id,
+            fd.form_id,
+            CASE
+                WHEN att.widget_id = 2 THEN ao.option_text
+                WHEN att.widget_id = 10 THEN
+                    'https://jkiofs.in/fastapi/PincerApps/images/test'
+                    || COALESCE(mu.media_ids_str,'')
+                    || '/' || fd.spatial_id
+                ELSE fd.attribute_value
+            END AS value
+        FROM public.formdata fd
+        JOIN public.attributes att ON att.id = fd.attribute_id
+        LEFT JOIN public.attributes_option ao
+            ON ao.attribute_id = fd.attribute_id
+           AND att.widget_id = 2
+           AND ao.option_id = CAST(
+                NULLIF(regexp_replace(fd.attribute_value, '[^0-9]', '', 'g'), '') AS BIGINT
+           )
+        LEFT JOIN media_urls mu
+            ON mu.spatial_id = fd.spatial_id
+           AND mu.attribute_id = fd.attribute_id
+        WHERE att.tab_id = %(tab_id)s
+          AND fd.spatial_id IN (
+                SELECT id FROM public.spatialdata WHERE village_id = %(village_id)s
+          )
+    ),
+    attribute_values AS (
+        SELECT
+            spatial_id,
+            attribute_id,
+            STRING_AGG(DISTINCT value, ', ' ORDER BY value) AS value
+        FROM raw_values
+        GROUP BY spatial_id, attribute_id
+    )
+    SELECT
+        s.survey_id,
+        s.spatial_id,
+        v.district_name,
+        v.village_name,
+        SPLIT_PART(s.geometry, ' ', 1) AS latitude,
+        SPLIT_PART(s.geometry, ' ', 2) AS longitude,
+        s.polygon_id AS point_id,
+        s.unique_id,
+        MIN(rv.form_id) AS form_id,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%Type of occupancy%%' THEN av.value END) AS Type of occupancy,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%Photo with coordinates of the building%%' THEN av.value END) AS Photo with coordinates of the building,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%Height of asset above ground (in feet)%%' THEN av.value END) AS Height of asset above ground,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%Fencing%%' THEN av.value END) AS Fencing,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%Plinth height (in feet)%%' THEN av.value END) AS Plinth height,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%Building condition%%' THEN av.value END) AS Building condition,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%Water Tank structure type%%' THEN av.value END) AS Water Tank structure type,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%Condition%%' THEN av.value END) AS Condition,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%Observation%%' THEN av.value END) AS Observation,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%Status (working)%%' THEN av.value END) AS Status (working),
+        MAX(CASE WHEN a.attribute_name ILIKE '%%Assets Type%%' THEN av.value END) AS Assets Type,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%Material%%' THEN av.value END) AS Material,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%Asset Name%%' THEN av.value END) AS Asset Name
+    FROM raw_values rv
+    JOIN attribute_values av
+        ON av.spatial_id = rv.spatial_id
+       AND av.attribute_id = rv.attribute_id
+    JOIN public.attributes a ON a.id = rv.attribute_id
+    JOIN public.spatialdata s ON s.id = rv.spatial_id
+    JOIN public.villages v ON v.id = s.village_id
+    WHERE a.tab_id = %(tab_id)s
+      AND v.id = %(village_id)s
+    GROUP BY
+        s.survey_id, s.spatial_id,
+        v.district_name, v.village_name,
+        s.geometry, s.polygon_id, s.unique_id
+    ORDER BY s.survey_id
+    ': syntax error at or near "of"
+LINE 61: ... '%Type of occupancy%' THEN av.value END) AS Type of occupan...
+                                                              ^
+
+2025-12-25 14:04:47,098 [ERROR] django.request: Internal Server Error: /en/api/update_vdmp_activity_status/6275/
+2025-12-25 14:04:47,099 [ERROR] django.server: "PATCH /en/api/update_vdmp_activity_status/6275/ HTTP/1.1" 500 138

@@ -19,7 +19,7 @@ from .dynamic_sql import get_dynamic_sql_script
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-def process_household_survey_data(activity_name, village_id, district_id, mobile_village_id, district_code, village_code, activity_status,district_name, village_name):
+def process_survey_data(activity_name, village_id, district_id, mobile_village_id, district_code, village_code, activity_status,district_name, village_name):
     """
     Process survey data pipeline dynamically:
     1. Get model name from activity name
@@ -55,6 +55,10 @@ def process_household_survey_data(activity_name, village_id, district_id, mobile
     # Connect to mobile_db and extract data
     mobile_db_config = settings.DATABASES['mobile_db']
     (f"Connecting to mobile_db at {mobile_db_config['HOST']}")
+
+    if activity_name == 'others':
+        return process_others_data(activity_name, village_id, district_id, mobile_village_id, district_code, village_code, activity_status, district_name, village_name)
+    
     
     try:
         with psycopg2.connect(
@@ -76,7 +80,7 @@ def process_household_survey_data(activity_name, village_id, district_id, mobile
             # Check if data exists
             if len(df) == 0:
                 logger.error(f"No data found in mobile_db for village_id: {mobile_village_id}")
-                raise Exception(f"No household survey data found for village_id: {mobile_village_id}. Please ensure data collection is completed.")
+                raise Exception(f"Data not exist in the mobile DB for this village: {mobile_village_id}. Please ensure data collection is completed.")
     
     except Exception as e:
         import_status.error_count = 1
@@ -88,7 +92,7 @@ def process_household_survey_data(activity_name, village_id, district_id, mobile
     # Apply comprehensive data cleaning
     print("Starting data cleaning process")
     activity_type = model_name.lower().replace('survey', '').replace('_', '')
-    cleaned_df = clean_survey_data(df, district_code, village_code, activity_type=activity_type)
+    cleaned_df = clean_survey_data(df, district_code, village_code, activity_type=activity_type, village_id=village_id)
     
     # Save CSV for verification
     with tempfile.NamedTemporaryFile(mode='w', suffix=f'_village_{village_id}.csv', delete=False) as tmp_file:
@@ -116,13 +120,115 @@ def process_household_survey_data(activity_name, village_id, district_id, mobile
     print(f"Total execution time: {total_time.total_seconds():.2f} seconds")
     return import_status, records_saved
 
+def process_others_data(activity_name, village_id, district_id, mobile_village_id, district_code, village_code, activity_status, district_name, village_name):
+    """
+    Process others (transformer/electric pole) data pipeline:
+    1. Extract data from mobile_db using others SQL script
+    2. Apply data cleaning with flood depth mapping
+    3. Filter by asset type and save to appropriate models
+    """
+    print(f"Starting others data processing for village_id: {village_id}")
+    start_time = datetime.now()
+    
+    # Create import status record
+    import_status = tblVDMP_Activity_Import_Status.objects.create(
+        activity=activity_status.activity,
+        activity_status=activity_status,
+        rows_imported=0,
+        error_count=0
+    )
+    
+    # Validate input parameters
+    if not mobile_village_id:
+        import_status.error_count = 1
+        import_status.processing_time = datetime.now() - start_time
+        import_status.save()
+        logger.error(f"Mobile village ID not found for village_id: {village_id}")
+        raise Exception(f"Mobile village ID not found for village_id: {village_id}")
+    
+    # Connect to mobile_db and extract data
+    mobile_db_config = settings.DATABASES['mobile_db']
+    
+    try:
+        with psycopg2.connect(
+            host=mobile_db_config['HOST'],
+            port=mobile_db_config['PORT'],
+            database=mobile_db_config['NAME'],
+            user=mobile_db_config['USER'],
+            password=mobile_db_config['PASSWORD']
+        ) as conn:
+            
+            # Get others SQL script
+            from .dynamic_sql import get_others_sql_script
+            # sql_script, params = get_others_sql_script(mobile_village_id)
+            print(f"Executing others SQL query with hardcoded village_id: 35")
+
+            tab_id = 14  # Others tab (can be dynamic later)
+
+            sql_script, params = get_others_sql_script(
+                village_id=mobile_village_id,
+                model_name='others'
+            )
+
+            df = pd.read_sql(sql_script, conn, params=params)
+
+            
+            # Execute query without parameters since they're hardcoded
+            # df = pd.read_sql(sql_script, conn)
+            print(f"Extracted {len(df)} records from mobile_db")
+            
+            # Check if data exists
+            if len(df) == 0:
+                logger.error(f"No others data found in mobile_db for village_id: {mobile_village_id}")
+                raise Exception(f"No others data found for village_id: {mobile_village_id}. Please ensure data collection is completed.")
+    
+    except Exception as e:
+        import_status.error_count = 1
+        import_status.processing_time = datetime.now() - start_time
+        import_status.save()
+        logger.error(f"Database connection/query failed: {str(e)}")
+        print(f"----------------------- Database connection/query failed: {str(e)}")
+        raise Exception(f"Pipeline failed: {str(e)}")
+    
+    # Apply data cleaning with flood depth mapping
+    print("Starting data cleaning process for others")
+    cleaned_df = clean_survey_data(df, district_code, village_code, activity_type="others", village_id=village_id)
+    
+    # Save CSV for verification
+    with tempfile.NamedTemporaryFile(mode='w', suffix=f'_others_village_{village_id}.csv', delete=False) as tmp_file:
+        csv_path = tmp_file.name
+    cleaned_df.to_csv(csv_path, index=False)
+    print(f"Others CSV saved for verification: {csv_path}")
+    
+    # Save to models by asset type
+    try:
+        records_saved = save_others_to_models(cleaned_df, village_id, district_code)
+    except Exception as e:
+        import_status.error_count = 1
+        import_status.processing_time = datetime.now() - start_time
+        import_status.save()
+        raise Exception(f"Model save failed: {str(e)}")
+    
+    # Update import status with final results
+    import_status.rows_imported = records_saved
+    import_status.processing_time = datetime.now() - start_time
+    import_status.save()
+    
+    total_time = datetime.now() - start_time
+    print(f"Others pipeline completed successfully. Processed {records_saved} records")
+    print(f"Total execution time: {total_time.total_seconds():.2f} seconds")
+    return import_status, records_saved
+
 def get_model_name_from_activity(activity_name):
     """Map activity name to model name"""
     activity_to_model = {
         'household survey': 'HouseholdSurvey',
         'commercial': 'Commercial',
         'critical_facility': 'Critical_Facility',
-        'bridgesurvey': 'BridgeSurvey'
+        'bridgesurvey': 'BridgeSurvey',
+        'others': 'others',
+        'transformer': 'Transformer',
+        'electricpole': 'ElectricPole'
     }
     
     
@@ -140,7 +246,7 @@ def get_model_name_from_activity(activity_name):
     
     # Default to HouseholdSurvey if no match
     print(f"Warning: No model mapping found for activity '{activity_name}', defaulting to HouseholdSurvey")
-    return 'HouseholdSurvey'
+    return None
 
 def save_to_model_dynamic(df, village_id, district_code, model_name):
     """Save cleaned data to appropriate model dynamically"""
@@ -175,9 +281,10 @@ def save_to_model_dynamic(df, village_id, district_code, model_name):
             'point_id': row.get('point_id', ''),
             # 'geometry_id': row.get('geometry_id', ''),
             'form_id': row.get('form_id', ''),
-            'unique_id': row.get('unique_id', '')
+            'unique_id': row.get('unique_id', ''),
+            'latitude': row.get('latitude', ''),
+            'longitude': row.get('longitude', '')
         }
-        
         # Add mapped fields
         for mapping in mappings:
             alias_name = mapping['alias_name']
@@ -206,6 +313,124 @@ def save_to_model_dynamic(df, village_id, district_code, model_name):
     if error_count > 0 and (created_count + updated_count) == 0:
         raise Exception(f"Pipeline failed: {error_count} errors occurred, no records saved")
     
+    return created_count + updated_count
+
+def save_others_to_models(df, village_id, district_code):
+    """Save others data to Transformer and ElectricPole models based on asset type"""
+    from vdmp_dashboard.models import Transformer, ElectricPole
+    
+    print(f"Saving {len(df)} others records to appropriate models")
+    
+    total_saved = 0
+    
+    # Filter transformer data
+    transformer_df = df[df['assets_type'].str.contains('transformer', case=False, na=False)]
+    if not transformer_df.empty:
+        print(f"Processing {len(transformer_df)} transformer records")
+        transformer_saved = save_transformer_data(transformer_df, village_id, district_code)
+        total_saved += transformer_saved
+        print(f"Saved {transformer_saved} transformer records")
+    
+    # Filter electric pole data
+    electric_pole_df = df[df['assets_type'].str.contains('electric pole', case=False, na=False)]
+    if not electric_pole_df.empty:
+        print(f"Processing {len(electric_pole_df)} electric pole records")
+        electric_pole_saved = save_electric_pole_data(electric_pole_df, village_id, district_code)
+        total_saved += electric_pole_saved
+        print(f"Saved {electric_pole_saved} electric pole records")
+    
+    return total_saved
+
+def save_transformer_data(df, village_id, district_code):
+    """Save cleaned data to Transformer model"""
+    from vdmp_dashboard.models import Transformer
+    
+    created_count = 0
+    updated_count = 0
+    
+    for idx, row in df.iterrows():
+        if idx % 50 == 0:
+            print(f"Processing transformer record {idx + 1}/{len(df)}")
+        
+        defaults = {
+            'village_id': village_id,
+            'village_name': row.get('village_name', ''),
+            'district_name': row.get('district_name', ''),
+            'district_code': row.get('district_code', district_code),
+            'village_code': row.get('village_code', ''),
+            'transformer_site_address': row.get('Asset Name', ''),
+            'latitude': row.get('latitude', ''),
+            'longitude': row.get('longitude', ''),
+            'flood_depth_m': str(row.get('flood_depth_m', '')),
+            'flood_class': row.get('flood_class', ''),
+            'erosion_class': row.get('erosion_class', '')
+        }
+        
+        try:
+            obj, created = Transformer.objects.update_or_create(
+                village_id=village_id,
+                transformer_site_address=row.get('Asset Name', ''),
+                latitude=row.get('latitude', ''),
+                longitude=row.get('longitude', ''),
+                defaults=defaults
+            )
+            if created:
+                created_count += 1
+            else:
+                updated_count += 1
+        except Exception as e:
+            logger.error(f"Error processing transformer record {idx}: {str(e)}")
+            continue
+    
+    print(f"Transformer - Created: {created_count}, Updated: {updated_count}")
+    return created_count + updated_count
+
+def save_electric_pole_data(df, village_id, district_code):
+    """Save cleaned data to ElectricPole model"""
+    from vdmp_dashboard.models import ElectricPole
+    
+    created_count = 0
+    updated_count = 0
+    
+    for idx, row in df.iterrows():
+        if idx % 50 == 0:
+            print(f"Processing electric pole record {idx + 1}/{len(df)}")
+        
+        defaults = {
+            'village_id': village_id,
+            'village_name': row.get('village_name', ''),
+            'district_name': row.get('district_name', ''),
+            'district_code': row.get('district_code', district_code),
+            'village_code': row.get('village_code', ''),
+            'uid': row.get('unique_id', ''),
+            'latitude': row.get('latitude', ''),
+            'longitude': row.get('longitude', ''),
+            'electric_pole_name': row.get('Asset Name', ''),
+            'electric_pole_material': row.get('Material', ''),
+            'remarks_on_pole_condition': row.get('Condition', ''),
+            'photo': row.get('photo', ''),
+            'flood_depth_m': str(row.get('flood_depth_m', '')),
+            'flood_class': row.get('flood_class', ''),
+            'erosion_class': row.get('erosion_class', ''),
+            'unique_id': row.get('unique_id', ''),
+            'form_id': str(row.get('form_id', ''))
+        }
+        
+        try:
+            obj, created = ElectricPole.objects.update_or_create(
+                unique_id=row.get('unique_id', ''),
+                form_id=str(row.get('form_id', '')),
+                defaults=defaults
+            )
+            if created:
+                created_count += 1
+            else:
+                updated_count += 1
+        except Exception as e:
+            logger.error(f"Error processing electric pole record {idx}: {str(e)}")
+            continue
+    
+    print(f"ElectricPole - Created: {created_count}, Updated: {updated_count}")
     return created_count + updated_count
 
 def get_model_class(model_name):

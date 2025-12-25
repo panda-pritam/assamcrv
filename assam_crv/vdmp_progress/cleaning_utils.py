@@ -1,12 +1,13 @@
 import pandas as pd
 import re
 import logging
+from sklearn.neighbors import NearestNeighbors
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-def clean_survey_data(df, district_code, village_code, activity_type="household"):
+def clean_survey_data(df, district_code, village_code, activity_type="household", village_id=None):
     """
     Common data cleaning function for all VDMP activities
     
@@ -15,6 +16,7 @@ def clean_survey_data(df, district_code, village_code, activity_type="household"
         district_code: District code for the village
         village_code: Village code
         activity_type: Type of activity (household, commercial, etc.)
+        village_id: Village ID for fetching household data
     
     Returns:
         Cleaned dataframe with standardized columns and classifications
@@ -44,10 +46,175 @@ def clean_survey_data(df, district_code, village_code, activity_type="household"
     # Apply activity-specific processing
     if activity_type == "household":
         df = _process_household_specific(df)
-    elif activity_type == "commercial":
+    elif activity_type == "others":
+        # For others (transformer/electric pole), apply flood depth mapping and building area calculation
+        if village_id:
+            df = map_flood_depth_from_household_db(df, village_id)
+        df = _calculate_building_area(df)
+    else:
+        # For non-household activities, apply flood depth mapping and building area calculation
+        if village_id:
+            df = map_flood_depth_from_household_db(df, village_id)
+        df = _calculate_building_area(df)
         df = _process_commercial_specific(df)
     
     logger.info(f"Cleaning completed. Output dataframe shape: {df.shape}")
+    return df
+
+def map_flood_depth_from_household_db(child_df, village_id):
+    """Map flood depth, flood class, and erosion class from household database records to child activities"""
+    from vdmp_dashboard.models import HouseholdSurvey
+    
+    if "flood_depth_m" not in child_df.columns:
+        child_df["flood_depth_m"] = None
+    if "flood_class" not in child_df.columns:
+        child_df["flood_class"] = None
+    if "erosion_class" not in child_df.columns:
+        child_df["erosion_class"] = None
+
+    flood_mask = (
+        child_df["flood_depth_m"].isna() |
+        (child_df["flood_depth_m"] <= 0)
+    )
+    flood_class_mask = child_df["flood_class"].isna()
+    erosion_mask = child_df["erosion_class"].isna()
+
+    if flood_mask.sum() == 0 and flood_class_mask.sum() == 0 and erosion_mask.sum() == 0:
+        return child_df
+
+    logger.info(f"🌧 Mapping flood data and erosion class for {max(flood_mask.sum(), flood_class_mask.sum(), erosion_mask.sum())} rows from household database")
+
+    # Fetch household data from database
+    household_data = HouseholdSurvey.objects.filter(
+        village_id=village_id
+    ).exclude(
+        latitude__isnull=True
+    ).exclude(
+        longitude__isnull=True
+    ).values('latitude', 'longitude', 'flood_depth_m', 'flood_class', 'erosion_class')
+
+    if not household_data:
+        logger.warning("❌ No valid household data found in database")
+        return child_df
+
+    # Convert to DataFrame for processing
+    import pandas as pd
+    household_df = pd.DataFrame(household_data)
+    household_df['latitude'] = pd.to_numeric(household_df['latitude'], errors='coerce')
+    household_df['longitude'] = pd.to_numeric(household_df['longitude'], errors='coerce')
+    household_df['flood_depth_m'] = pd.to_numeric(household_df['flood_depth_m'], errors='coerce')
+    
+    # Remove invalid coordinates
+    household_df = household_df.dropna(subset=['latitude', 'longitude'])
+    
+    if household_df.empty:
+        logger.warning("❌ No valid household coordinates found")
+        return child_df
+
+    nbrs = NearestNeighbors(n_neighbors=1).fit(
+        household_df[['latitude', 'longitude']].values
+    )
+
+    _, idx = nbrs.kneighbors(
+        child_df.loc[flood_mask | flood_class_mask | erosion_mask, ['latitude', 'longitude']].values
+    )
+
+    # Map flood depth
+    if flood_mask.sum() > 0:
+        valid_flood_data = household_df.iloc[idx.flatten()]['flood_depth_m'].notna()
+        if valid_flood_data.any():
+            child_df.loc[flood_mask, 'flood_depth_m'] = (
+                household_df.iloc[idx.flatten()]['flood_depth_m'].values
+            )
+    
+    # Map flood class
+    if flood_class_mask.sum() > 0:
+        child_df.loc[flood_class_mask, 'flood_class'] = (
+            household_df.iloc[idx.flatten()]['flood_class'].values
+        )
+    
+    # Map erosion class
+    if erosion_mask.sum() > 0:
+        child_df.loc[erosion_mask, 'erosion_class'] = (
+            household_df.iloc[idx.flatten()]['erosion_class'].values
+        )
+
+    logger.info("✔ Flood depth, flood class, and erosion class mapped from household database")
+    return child_df
+
+def extract_numeric_value(value):
+    """Extract numeric value from string"""
+    if pd.isna(value):
+        return None
+    try:
+        return float(value)
+    except (ValueError, TypeError):
+        # Try to extract number from string
+        import re
+        match = re.search(r'(\d+(?:\.\d+)?)', str(value))
+        if match:
+            return float(match.group(1))
+        return None
+
+def _calculate_building_area(df):
+    """Calculate building area for non-household activities"""
+    logger.info("Calculating building area")
+    
+    # Fill default values for length/width
+    length_default = 30
+    width_default = 20
+
+    length_columns = [
+        "Approximate_length_feet_of_the_house_main_building",
+        "Approximate_length_feet_of_building",
+        "average_room_length_ft"
+    ]
+
+    width_columns = [
+        "Approximate_width_feet_of_the_house_main_building",
+        "Approximate_width_feet_of_building",
+        "average_room_width_ft"
+    ]
+
+    for col in length_columns:
+        if col in df.columns:
+            df[col] = pd.to_numeric(df[col], errors="coerce").fillna(length_default)
+
+    for col in width_columns:
+        if col in df.columns:
+            df[col] = pd.to_numeric(df[col], errors="coerce").fillna(width_default)
+
+    # Building area calculation
+    length_candidates = [
+        "Approximate_length_feet_of_the_house_main_building",
+        "Approx_length",
+        "average_room_length_ft",
+        "Approximate_length_feet_of_building"
+    ]
+    width_candidates = [
+        "Approximate_width_feet_of_the_house_main_building",
+        "Approx_width",
+        "average_room_width_ft",
+        "Approximate_width_feet_of_building"
+    ]
+    
+    length_col = next((c for c in length_candidates if c in df.columns), None)
+    width_col = next((c for c in width_candidates if c in df.columns), None)
+
+    if length_col and width_col:
+        df["Building_Area_sqft"] = df.apply(
+            lambda row: (extract_numeric_value(row[length_col]) * extract_numeric_value(row[width_col]))
+            if extract_numeric_value(row[length_col]) is not None and extract_numeric_value(row[width_col]) is not None
+            else None,
+            axis=1
+        )
+        logger.info(f"Calculated Building_Area_sqft using {length_col} x {width_col}")
+    else:
+        if "Building_Area_sqft" in df.columns:
+            logger.info("Found existing Building_Area_sqft column - using as is.")
+        else:
+            logger.info("Skipping Building_Area_sqft calculation (length/width not found).")
+    
     return df
 
 def _remove_empty_parentheses(x):

@@ -10,7 +10,7 @@ from utils import is_admin_or_superuser, apply_location_filters, apply_role_filt
 from django.db.models import Count, Q
 from django.utils.translation import get_language
 
-from .data_pipeline import process_household_survey_data
+from .data_pipeline import process_survey_data, process_others_data
 from village_profile.models import district_village_mapping, tblDistrict, tblVillage
 from vdmp_dashboard.models import HouseholdSurvey
 
@@ -233,7 +233,7 @@ def update_vdmp_activity_status(request, status_id):
                     village_name = tblVillage.objects.get(id=village_id).name
                     
                     # Process data pipeline for household survey only
-                    import_status, records_processed = process_household_survey_data(
+                    import_status, records_processed = process_survey_data(
                         activity_status.activity.name,
                         village_id,
                         district_id,
@@ -283,14 +283,15 @@ def update_vdmp_activity_status(request, status_id):
                     district_name = tblDistrict.objects.get(id=district_id).name
                     village_name = tblVillage.objects.get(id=village_id).name
                     # Process multiple activities for physical vulnerability survey
-                    activities_to_process = ['Commercial', 'Critical_Facility', 'BridgeSurvey']
+                    # activities_to_process = ['Commercial', 'Critical_Facility', 'BridgeSurvey']
+                    activities_to_process = ['others']
                     total_records = 0
                     import_statuses = []
                     failed_activities = []
                     
                     for activity_model in activities_to_process:
                         try:
-                            import_status, records_processed = process_household_survey_data(
+                            import_status, records_processed = process_survey_data(
                                 activity_model,
                                 village_id,
                                 district_id,
@@ -307,12 +308,18 @@ def update_vdmp_activity_status(request, status_id):
                             print(f"Error processing {activity_model}: {str(e)}")
                             failed_activities.append(activity_model)
                             continue
+
+                    print("Total records processed: ", total_records)
+                    print("Import statuses: ", import_statuses)
+                    print("Failed activities: ", failed_activities)
                     
                     # If all activities failed, return error
                     if len(failed_activities) == len(activities_to_process):
                         return Response({
                             'error': 'All physical vulnerability activities failed',
-                            'failed_activities': failed_activities
+                            'failed_activities': failed_activities,
+                            'total_records_processed': total_records,
+                            'import_status_ids': import_statuses
                         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
                     
                     serializer.save()

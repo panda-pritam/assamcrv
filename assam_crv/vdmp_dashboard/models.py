@@ -11,7 +11,8 @@ class AttributeMapping(models.Model):
         ("ElectricPole","ElectricPole"),
         ("VillageListOfAllTheDistricts","VillageListOfAllTheDistricts"),
         ("VillageRoadInfo","VillageRoadInfo"),
-        ("BridgeSurvey","")
+        ("BridgeSurvey","",),
+        ("others","others")
 
 
     ]
@@ -39,6 +40,8 @@ class HouseholdSurvey(models.Model):
     dist_code = models.CharField(max_length=255, null=True, blank=True)
     district_code = models.CharField(max_length=255, null=True, blank=True)
     village_code = models.CharField(max_length=255, null=True, blank=True)
+    latitude=models.CharField(max_length=255, null=True, blank=True)
+    longitude=models.CharField(max_length=255, null=True, blank=True)
     point_id = models.CharField(max_length=255, null=True, blank=True)
     property_owner = models.CharField(max_length=255, null=True, blank=True)
     name_of_person = models.CharField(max_length=255, null=True, blank=True)
@@ -146,6 +149,8 @@ class Commercial(models.Model):
     district_name = models.CharField(max_length=255, null=True, blank=True)
     village_name = models.CharField(max_length=255, null=True, blank=True)
     point_id = models.CharField(max_length=255, null=True, blank=True)
+    latitude=models.CharField(max_length=255, null=True, blank=True)
+    longitude=models.CharField(max_length=255, null=True, blank=True)
     type_of_occupancy = models.CharField(max_length=255, null=True, blank=True)
     type_of_occupancy_others = models.CharField(max_length=255, null=True, blank=True)
     property_owner = models.CharField(max_length=255, null=True, blank=True)
@@ -200,6 +205,8 @@ class Critical_Facility(models.Model):
     village_name = models.CharField(max_length=255, null=True, blank=True)
     village_code = models.CharField(max_length=255, null=True, blank=True)
     point_id = models.CharField(max_length=255, null=True, blank=True)
+    latitude=models.CharField(max_length=255, null=True, blank=True)
+    longitude=models.CharField(max_length=255, null=True, blank=True)
     occupancy_type = models.CharField(max_length=255, null=True, blank=True)
     photo = models.CharField(max_length=255, null=True, blank=True)
     name_of_building = models.CharField(max_length=255, null=True, blank=True)
@@ -284,6 +291,8 @@ class VillageRoadInfo(models.Model):
     district_code = models.CharField(max_length=20)
     village_name = models.CharField(max_length=100)
     village_code = models.CharField(max_length=20) 
+    latitude=models.CharField(max_length=255, null=True, blank=True)
+    longitude=models.CharField(max_length=255, null=True, blank=True)
     road_surface_type = models.CharField(max_length=100)
     road_constructed_by = models.CharField(max_length=100)
     road_length_m = models.FloatField()
@@ -300,6 +309,8 @@ class VillageRoadInfoErosion(models.Model):
     district_code = models.CharField(max_length=20)
     village_name = models.CharField(max_length=100)
     village_code = models.CharField(max_length=20)
+    latitude=models.CharField(max_length=255, null=True, blank=True)
+    longitude=models.CharField(max_length=255, null=True, blank=True)
     road_surface_type = models.CharField(max_length=100)
     road_constructed_by = models.CharField(max_length=100)
     road_length_m = models.FloatField()
@@ -336,6 +347,8 @@ class BridgeSurvey(models.Model):
     village_name = models.CharField(max_length=255, blank=True, null=True)
     district_name = models.CharField(max_length=255, blank=True, null=True)
     survey_id = models.CharField(max_length=255, blank=True, null=True)
+    latitude=models.CharField(max_length=255, null=True, blank=True)
+    longitude=models.CharField(max_length=255, null=True, blank=True)
     geometry = models.CharField(max_length=255, blank=True, null=True)
     user_id = models.CharField(max_length=255, blank=True, null=True)
     under_id = models.CharField(max_length=255, blank=True, null=True)
