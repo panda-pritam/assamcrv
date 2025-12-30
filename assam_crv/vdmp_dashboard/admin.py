@@ -1,7 +1,14 @@
 from django.contrib import admin
 from .models import ( HouseholdSurvey, Transformer, Commercial, Critical_Facility, ElectricPole,
-                      VillageListOfAllTheDistricts, VillageRoadInfo,VDMP_Maps_Data, BridgeSurvey, Risk_Assesment)
+                      VillageListOfAllTheDistricts, VillageRoadInfo,VDMP_Maps_Data, BridgeSurvey, Risk_Assesment,AttributeMapping)
 
+
+
+@admin.register(AttributeMapping)
+class AttributeMappingAdmin(admin.ModelAdmin):
+    list_display = ('id', 'alias_name', 'model_name', 'attribute_text')
+    search_fields = ('alias_name', 'model_name')
+    list_filter = ('model_name',)
 
 @admin.register(Risk_Assesment)
 class Risk_AssesmentAdmin(admin.ModelAdmin):

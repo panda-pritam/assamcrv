@@ -251,7 +251,6 @@ def get_model_name_from_activity(activity_name):
 def save_to_model_dynamic(df, village_id, district_code, model_name):
     """Save cleaned data to appropriate model dynamically"""
     
-    
     print(f"Saving {len(df)} records to {model_name} model")
     
     # Get model class
@@ -279,12 +278,28 @@ def save_to_model_dynamic(df, village_id, district_code, model_name):
             'district_code': row.get('dist_code', district_code),
             'village_code': row.get('village_code', ''),
             'point_id': row.get('point_id', ''),
-            # 'geometry_id': row.get('geometry_id', ''),
             'form_id': row.get('form_id', ''),
             'unique_id': row.get('unique_id', ''),
             'latitude': row.get('latitude', ''),
             'longitude': row.get('longitude', '')
         }
+        
+        # Add building dimensions for household model
+        if model_name.lower() == 'householdsurvey':
+            defaults.update({
+                'building_length_feet': str(row.get('building_length_feet', '')),
+                'building_width_feet': str(row.get('building_width_feet', '')),
+                'building_length_meter': str(row.get('building_length_meter', '')),
+                'building_width_meter': str(row.get('building_width_meter', '')),
+                'build_area_meter': str(row.get('build_area_meter', '')),
+                'maximum_flood_height_meter': str(row.get('maximum_flood_height_meter', '')),
+                'plinth_or_stilt_height_meter': str(row.get('plinth_or_stilt_height_meter', '')),
+                'flood_depth_from_survey_meter': str(row.get('flood_depth_from_survey_meter', '')),
+                'building_area_sqft': str(row.get('building_area_sqft', '')),
+                'loss_AgriLivli': str(row.get('loss_AgriLivli', ''))
+            })
+            logger.debug(f"Added building dimensions for household record {idx}")
+        
         # Add mapped fields
         for mapping in mappings:
             alias_name = mapping['alias_name']

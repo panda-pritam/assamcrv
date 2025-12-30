@@ -167,7 +167,8 @@ def _calculate_building_area(df):
     length_columns = [
         "Approximate_length_feet_of_the_house_main_building",
         "Approximate_length_feet_of_building",
-        "average_room_length_ft"
+        "average_room_length_ft",
+        
     ]
 
     width_columns = [
@@ -217,13 +218,70 @@ def _calculate_building_area(df):
     
     return df
 
+def _calculate_household_building_area(df):
+    """Calculate building dimensions and area for household surveys"""
+    logger.info("Calculating household building dimensions and area")
+    
+    # Default values for missing length/width
+    length_default = 30
+    width_default = 20
+    
+    # Building length columns to check
+    length_columns = [
+        "approximate_length_feet_of_the_house_main_building",
+        "building_length_feet"
+    ]
+    
+    # Building width columns to check
+    width_columns = [
+        "approximate_width_feet_of_the_house_main_building", 
+        "building_width_feet"
+    ]
+    
+    # Find the length column
+    length_col = next((c for c in length_columns if c in df.columns), None)
+    width_col = next((c for c in width_columns if c in df.columns), None)
+    
+    # Extract and clean length values
+    if length_col:
+        df['building_length_feet'] = df[length_col].apply(extract_numeric_value)
+        logger.debug(f"Extracted building length from {length_col}")
+    else:
+        df['building_length_feet'] = None
+        logger.debug("No building length column found")
+    
+    # Extract and clean width values  
+    if width_col:
+        df['building_width_feet'] = df[width_col].apply(extract_numeric_value)
+        logger.debug(f"Extracted building width from {width_col}")
+    else:
+        df['building_width_feet'] = None
+        logger.debug("No building width column found")
+    
+    # Fill missing values with defaults
+    df['building_length_feet'] = df['building_length_feet'].fillna(length_default)
+    df['building_width_feet'] = df['building_width_feet'].fillna(width_default)
+    
+    # Convert feet to meters (1 foot = 0.3048 meters)
+    df['building_length_meter'] = (df['building_length_feet'] * 0.3048).round(2)
+    df['building_width_meter'] = (df['building_width_feet'] * 0.3048).round(2)
+    
+    # Calculate area in square meters and square feet
+    df['build_area_meter'] = (df['building_length_meter'] * df['building_width_meter']).round(2)
+    df['building_area_sqft'] = (df['building_length_feet'] * df['building_width_feet']).round(2)
+    
+    logger.info(f"Calculated building dimensions - Length: {df['building_length_feet'].mean():.1f}ft, Width: {df['building_width_feet'].mean():.1f}ft, Area: {df['build_area_meter'].mean():.1f}m²")
+    
+    return df
+    
+
 def _remove_empty_parentheses(x):
     """Remove empty or punctuation-only parentheses"""
     if pd.isna(x) or not isinstance(x, str):
         return x
     
-    # Special case: Remove ( Or ), ( or ), ( OR ) - single word "or" in parentheses
-    x = re.sub(r'\(\s*[Oo][Rr]\s*\)', '', x)
+    # Special case: Remove ( Or ), ( or ), ( OR ), (/- Or -/) patterns
+    x = re.sub(r'\(\s*[/\-]*\s*[Oo][Rr]\s*[/\-]*\s*\)', '', x)
     
     # Remove empty or punctuation-only parentheses - multiple passes to handle nested cases
     for _ in range(3):  # Run multiple times to handle deeply nested cases
@@ -258,7 +316,7 @@ def _clean_text(x, col_name=None):
         x = re.sub(r'\bObc\b', 'OBC', x)
     
     # Remove empty parentheses after all other processing
-    # x = _remove_empty_parentheses(x)
+    x = _remove_empty_parentheses(x)
     
     return x
 
@@ -302,13 +360,24 @@ def _process_household_specific(df):
         )
         logger.debug("Converted plinth height from feet to meters")
     
-    # Calculate flood depth (keep as decimal)
+    # Calculate flood depth from survey (sum of both when present)
+    if 'maximum_flood_height_meter' in df.columns and 'plinth_or_stilt_height_meter' in df.columns:
+        df['flood_depth_from_survey_meter'] = (
+            df['maximum_flood_height_meter'].fillna(0) + 
+            df['plinth_or_stilt_height_meter'].fillna(0)
+        ).round(3)
+        logger.debug("Calculated flood depth from survey metric")
+    
+    # Calculate flood depth (keep as decimal) - existing calculation
     if 'maximum_flood_height_meter' in df.columns and 'plinth_or_stilt_height_meter' in df.columns:
         df['flood_depth_m'] = (
             df['maximum_flood_height_meter'].fillna(0) + 
             df['plinth_or_stilt_height_meter'].fillna(0)
         ).round(3)  # Keep as decimal with 3 decimal places
         logger.debug("Calculated flood depth metric")
+    
+    # Calculate building dimensions and area for household
+    df = _calculate_household_building_area(df)
     
     # Apply classifications
     df = _apply_classifications(df)
@@ -325,9 +394,17 @@ def _apply_classifications(df):
     """Apply classification logic to dataframe"""
     logger.info("Applying classification logic")
     
-    # Flood depth classification
-    if 'flood_depth_m' in df.columns:
-        df['flood_class'] = df['flood_depth_m'].apply(_classify_flood)
+    # Flood depth classification - use flood_depth_from_survey_meter or calculate from components
+    flood_depth_for_classification = None
+    if 'flood_depth_from_survey_meter' in df.columns:
+        flood_depth_for_classification = df['flood_depth_from_survey_meter']
+    elif 'maximum_flood_height_meter' in df.columns and 'plinth_or_stilt_height_meter' in df.columns:
+        flood_depth_for_classification = df['maximum_flood_height_meter'].fillna(0) + df['plinth_or_stilt_height_meter'].fillna(0)
+    elif 'flood_depth_m' in df.columns:
+        flood_depth_for_classification = df['flood_depth_m']
+    
+    if flood_depth_for_classification is not None:
+        df['flood_class'] = flood_depth_for_classification.apply(_classify_flood)
         logger.debug("Applied flood depth classification")
     
     # Loan classifications
@@ -363,6 +440,16 @@ def _apply_classifications(df):
     if 'amount_spent_for_agriculture_livestock' in df.columns:
         df['loss_agricultire_livelihood'] = df['amount_spent_for_agriculture_livestock'].apply(_classify_cost)
         logger.debug("Applied agriculture livelihood loss classification")
+    
+    if "amount_spent_for_agriculture_livestock_every_year" in df.columns:
+        df["loss_AgriLivli"] = df["amount_spent_for_agriculture_livestock_every_year"].apply(_classify_cost)
+        logger.debug("Applied Loss_AgriLivli classification")
+    elif "amount_spent_for_agriculture_livestock" in df.columns:
+        df["loss_AgriLivli"] = df["amount_spent_for_agriculture_livestock"].apply(_classify_cost)
+        logger.debug("Applied Loss_AgriLivli classification from amount_spent_for_agriculture_livestock")
+    else:
+        logger.debug(f"Agriculture livestock columns not found. Available columns: {[col for col in df.columns if 'agriculture' in col.lower() or 'livestock' in col.lower()]}")
+    
     
     # Big cattle classification
     if 'number_of_big_cattle_animals' in df.columns:
@@ -419,7 +506,7 @@ def _classify_flood(depth):
     """Classify flood depth into categories"""
     if pd.isna(depth): return None
     try:
-        depth = int(float(depth))
+        depth = float(depth)  # Use float instead of int to preserve decimals
         if depth < 0.3: return "0.3 m"
         elif depth < 0.5: return "0.3 - 0.5 m"
         elif depth < 1.0: return "0.5 - 1.0 m"
