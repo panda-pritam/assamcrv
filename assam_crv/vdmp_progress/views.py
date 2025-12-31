@@ -283,8 +283,8 @@ def update_vdmp_activity_status(request, status_id):
                     district_name = tblDistrict.objects.get(id=district_id).name
                     village_name = tblVillage.objects.get(id=village_id).name
                     # Process multiple activities for physical vulnerability survey
-                    # activities_to_process = ['Commercial', 'Critical_Facility', 'BridgeSurvey']
-                    activities_to_process = ['others']
+                    activities_to_process = ['Commercial', 'Critical_Facility', 'BridgeSurvey','others']
+                    # activities_to_process = ['others']
                     total_records = 0
                     import_statuses = []
                     failed_activities = []
@@ -335,6 +335,56 @@ def update_vdmp_activity_status(request, status_id):
                 except Exception as e:
                     return Response({
                         'error': 'Physical vulnerability pipeline processing failed',
+                        'pipeline_error': str(e)
+                    }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                
+            elif 'risk ass' in activity_name:
+                # Risk assessment pipeline
+                try:
+                    print("DEBUG: Starting risk assessment pipeline")
+                    
+                    village_id = activity_status.village.id
+                    print(f"DEBUG: Processing Risk_Ass for village_id -> {village_id}")
+                    
+                    print("DEBUG: Attempting to import risk_assessment_pipeline")
+                    from .risk_assessment_pipeline import run_risk_assessment_pipeline
+                    print("DEBUG: Successfully imported risk_assessment_pipeline")
+                    
+                    print("DEBUG: About to run pipeline")
+                    results = run_risk_assessment_pipeline(village_id)
+                    print(f"DEBUG: Pipeline completed with results: {results}")
+                    
+                    # Check if at least one dataset was processed
+                    success_count = sum(1 for r in results.values() if r['status'] == 'success')
+                    print(f"DEBUG: Success count: {success_count}")
+                    
+                    if success_count == 0:
+                        return Response({
+                            'error': 'No data available for risk assessment',
+                            'details': results
+                        }, status=status.HTTP_400_BAD_REQUEST)
+                    
+                    print("DEBUG: Saving activity status")
+                    serializer.save()
+                    print("DEBUG: Activity status saved successfully")
+                    
+                    return Response({
+                        'message': 'Risk assessment completed successfully',
+                        'results': results
+                    })
+
+                except ImportError as e:
+                    print(f"DEBUG: Import error -> {str(e)}")
+                    return Response({
+                        'error': 'Pipeline import failed',
+                        'pipeline_error': str(e)
+                    }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                except Exception as e:
+                    print(f"DEBUG: General error -> {str(e)}")
+                    import traceback
+                    print(f"DEBUG: Full traceback -> {traceback.format_exc()}")
+                    return Response({
+                        'error': 'Pipeline processing failed',
                         'pipeline_error': str(e)
                     }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
             else:

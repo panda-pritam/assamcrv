@@ -15026,3 +15026,65 @@ LINE 1: ...rd_householdsurvey"."loss_agricultire_livlihood", "vdmp_dash...
 
 2025-12-29 17:26:09,004 [ERROR] django.request: Internal Server Error: /en/api/update_vdmp_activity_status/5963/
 2025-12-29 17:26:09,004 [ERROR] django.server: "PATCH /en/api/update_vdmp_activity_status/5963/ HTTP/1.1" 500 132
+2025-12-30 10:59:04,527 [ERROR] vdmp_progress.data_pipeline: No data found in mobile_db for village_id: 12
+2025-12-30 10:59:04,533 [ERROR] vdmp_progress.data_pipeline: Database connection/query failed: Data not exist in the mobile DB for this village: 12. Please ensure data collection is completed.
+2025-12-30 10:59:04,533 [ERROR] django.request: Internal Server Error: /en/api/update_vdmp_activity_status/5923/
+2025-12-30 10:59:04,536 [ERROR] django.server: "PATCH /en/api/update_vdmp_activity_status/5923/ HTTP/1.1" 500 172
+2025-12-30 10:59:14,027 [ERROR] vdmp_progress.data_pipeline: No data found in mobile_db for village_id: 7
+2025-12-30 10:59:14,034 [ERROR] vdmp_progress.data_pipeline: Database connection/query failed: Data not exist in the mobile DB for this village: 7. Please ensure data collection is completed.
+2025-12-30 10:59:14,038 [ERROR] django.request: Internal Server Error: /en/api/update_vdmp_activity_status/5915/
+2025-12-30 10:59:14,038 [ERROR] django.server: "PATCH /en/api/update_vdmp_activity_status/5915/ HTTP/1.1" 500 171
+2025-12-30 11:02:31,647 [ERROR] vdmp_progress.data_pipeline: No data found in mobile_db for village_id: 6
+2025-12-30 11:02:31,648 [ERROR] vdmp_progress.data_pipeline: Database connection/query failed: Data not exist in the mobile DB for this village: 6. Please ensure data collection is completed.
+2025-12-30 11:04:30,813 [ERROR] django.request: Internal Server Error: /en/api/update_vdmp_activity_status/5920/
+2025-12-30 11:04:30,815 [ERROR] django.server: "PATCH /en/api/update_vdmp_activity_status/5920/ HTTP/1.1" 500 113
+2025-12-30 11:05:32,902 [ERROR] vdmp_progress.data_pipeline: No data found in mobile_db for village_id: 9
+2025-12-30 11:05:32,903 [ERROR] vdmp_progress.data_pipeline: Database connection/query failed: Data not exist in the mobile DB for this village: 9. Please ensure data collection is completed.
+2025-12-30 11:05:33,254 [ERROR] vdmp_progress.data_pipeline: No data found in mobile_db for village_id: 9
+2025-12-30 11:05:33,254 [ERROR] vdmp_progress.data_pipeline: Database connection/query failed: Data not exist in the mobile DB for this village: 9. Please ensure data collection is completed.
+2025-12-30 11:05:33,589 [ERROR] vdmp_progress.data_pipeline: No data found in mobile_db for village_id: 9
+2025-12-30 11:05:33,589 [ERROR] vdmp_progress.data_pipeline: Database connection/query failed: Data not exist in the mobile DB for this village: 9. Please ensure data collection is completed.
+2025-12-30 11:05:33,852 [ERROR] vdmp_progress.data_pipeline: No others data found in mobile_db for village_id: 9
+2025-12-30 11:05:33,852 [ERROR] vdmp_progress.data_pipeline: Database connection/query failed: No others data found for village_id: 9. Please ensure data collection is completed.
+2025-12-30 11:05:33,852 [ERROR] django.request: Internal Server Error: /en/api/update_vdmp_activity_status/6270/
+2025-12-30 11:05:33,863 [ERROR] django.server: "PATCH /en/api/update_vdmp_activity_status/6270/ HTTP/1.1" 500 186
+2025-12-30 18:12:05,430 [ERROR] django.request: Internal Server Error: /en/api/update_vdmp_activity_status/6331/
+2025-12-30 18:12:05,433 [ERROR] django.server: "PATCH /en/api/update_vdmp_activity_status/6331/ HTTP/1.1" 500 84
+2025-12-30 18:14:01,973 [ERROR] django.request: Internal Server Error: /en/api/update_vdmp_activity_status/6331/
+2025-12-30 18:14:01,975 [ERROR] django.server: "PATCH /en/api/update_vdmp_activity_status/6331/ HTTP/1.1" 500 84
+2025-12-30 18:26:35,807 [ERROR] django.request: Internal Server Error: /en/api/update_vdmp_activity_status/6331/
+2025-12-30 18:26:35,812 [ERROR] django.server: "PATCH /en/api/update_vdmp_activity_status/6331/ HTTP/1.1" 500 140
+2025-12-30 18:35:45,416 [ERROR] django.request: Internal Server Error: /en/api/update_vdmp_activity_status/6331/
+2025-12-30 18:35:45,416 [ERROR] django.server: "PATCH /en/api/update_vdmp_activity_status/6331/ HTTP/1.1" 500 109
+2025-12-30 18:36:08,334 [ERROR] django.request: Internal Server Error: /en/api/update_vdmp_activity_status/6331/
+2025-12-30 18:36:08,334 [ERROR] django.server: "PATCH /en/api/update_vdmp_activity_status/6331/ HTTP/1.1" 500 109
+2025-12-30 18:38:50,574 [ERROR] django.request: Internal Server Error: /en/api/update_vdmp_activity_status/6331/
+2025-12-30 18:38:50,574 [ERROR] django.server: "PATCH /en/api/update_vdmp_activity_status/6331/ HTTP/1.1" 500 140
+2025-12-30 18:57:30,242 [ERROR] django.request: Internal Server Error: /en/api/update_vdmp_activity_status/6331/
+2025-12-30 18:57:30,250 [ERROR] django.server: "PATCH /en/api/update_vdmp_activity_status/6331/ HTTP/1.1" 500 140
+2025-12-30 18:57:45,408 [ERROR] django.request: Internal Server Error: /en/api/update_vdmp_activity_status/6331/
+2025-12-30 18:57:45,413 [ERROR] django.server: "PATCH /en/api/update_vdmp_activity_status/6331/ HTTP/1.1" 500 140
+2025-12-31 10:07:12,941 [ERROR] django.request: Internal Server Error: /en/api/update_vdmp_activity_status/6331/
+2025-12-31 10:07:12,944 [ERROR] django.server: "PATCH /en/api/update_vdmp_activity_status/6331/ HTTP/1.1" 500 140
+2025-12-31 10:07:49,282 [ERROR] django.request: Internal Server Error: /en/api/update_vdmp_activity_status/6325/
+2025-12-31 10:07:49,284 [ERROR] django.server: "PATCH /en/api/update_vdmp_activity_status/6325/ HTTP/1.1" 500 140
+2025-12-31 10:11:13,815 [ERROR] django.request: Internal Server Error: /en/api/update_vdmp_activity_status/6325/
+2025-12-31 10:11:13,817 [ERROR] django.server: "PATCH /en/api/update_vdmp_activity_status/6325/ HTTP/1.1" 500 140
+2025-12-31 10:12:12,459 [ERROR] django.request: Internal Server Error: /en/api/update_vdmp_activity_status/6325/
+2025-12-31 10:12:12,460 [ERROR] django.server: "PATCH /en/api/update_vdmp_activity_status/6325/ HTTP/1.1" 500 140
+2025-12-31 10:14:33,281 [ERROR] django.request: Internal Server Error: /en/api/update_vdmp_activity_status/6325/
+2025-12-31 10:14:33,282 [ERROR] django.server: "PATCH /en/api/update_vdmp_activity_status/6325/ HTTP/1.1" 500 136
+2025-12-31 12:49:00,483 [ERROR] django.request: Internal Server Error: /en/api/update_vdmp_activity_status/6351/
+2025-12-31 12:49:00,483 [ERROR] django.server: "PATCH /en/api/update_vdmp_activity_status/6351/ HTTP/1.1" 500 136
+2025-12-31 12:53:32,191 [ERROR] django.request: Internal Server Error: /en/api/update_vdmp_activity_status/6351/
+2025-12-31 12:53:32,193 [ERROR] django.server: "PATCH /en/api/update_vdmp_activity_status/6351/ HTTP/1.1" 500 189
+2025-12-31 13:03:48,003 [ERROR] django.request: Internal Server Error: /en/api/update_vdmp_activity_status/6351/
+2025-12-31 13:03:48,003 [ERROR] django.server: "PATCH /en/api/update_vdmp_activity_status/6351/ HTTP/1.1" 500 189
+2025-12-31 13:27:28,319 [ERROR] django.request: Internal Server Error: /en/api/update_vdmp_activity_status/6351/
+2025-12-31 13:27:28,319 [ERROR] django.server: "PATCH /en/api/update_vdmp_activity_status/6351/ HTTP/1.1" 500 189
+2025-12-31 13:37:54,921 [ERROR] django.request: Internal Server Error: /en/api/update_vdmp_activity_status/6351/
+2025-12-31 13:37:54,921 [ERROR] django.server: "PATCH /en/api/update_vdmp_activity_status/6351/ HTTP/1.1" 500 189
+2025-12-31 14:38:47,504 [ERROR] django.request: Internal Server Error: /en/api/update_vdmp_activity_status/6351/
+2025-12-31 14:38:47,504 [ERROR] django.server: "PATCH /en/api/update_vdmp_activity_status/6351/ HTTP/1.1" 500 130
+2025-12-31 14:46:25,301 [ERROR] django.request: Internal Server Error: /en/api/update_vdmp_activity_status/6351/
+2025-12-31 14:46:25,305 [ERROR] django.server: "PATCH /en/api/update_vdmp_activity_status/6351/ HTTP/1.1" 500 130

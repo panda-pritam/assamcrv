@@ -405,4 +405,21 @@ class Risk_Assesment(models.Model):
 
     def __str__(self):
         return f"{self.village_name} - {self.hazard}"
+    
+
+
+
+class Risk_Assessment_with_MRD_mapping(models.Model):
+    village = models.ForeignKey(tblVillage, on_delete=models.CASCADE)
+    village_name = models.CharField(max_length=255, blank=True, null=True)
+    village_code = models.CharField(max_length=100, blank=True, null=True)
+    hazard = models.CharField(max_length=100, blank=True, null=True)
+    exposure_type = models.CharField(max_length=100, blank=True, null=True)
+    total_exposure_value_inr_crore = models.CharField(max_length=100, blank=True, null=True)
+    loss_inr_crore = models.CharField(max_length=100, blank=True, null=True)
+    loss_percent_wrt_exposure_value = models.CharField(max_length=100, blank=True, null=True)
+    mrd_mapping = models.CharField(max_length=100, blank=True, null=True)
+
+    def __str__(self):
+        return f"{self.village_name} - {self.hazard}"
 
