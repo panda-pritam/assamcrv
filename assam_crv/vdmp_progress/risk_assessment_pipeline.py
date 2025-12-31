@@ -69,9 +69,9 @@ def sample_raster_values_gdal(path, lats, lons, default_value=0.1):
         geotransform = ds.GetGeoTransform()
         projection = ds.GetProjection()
         
-        print(f"DEBUG: Raster projection: {projection}")
-        print(f"DEBUG: Raster size: {ds.RasterXSize} x {ds.RasterYSize}")
-        print(f"DEBUG: Geotransform: {geotransform}")
+        # print(f"DEBUG: Raster projection: {projection}")
+        # print(f"DEBUG: Raster size: {ds.RasterXSize} x {ds.RasterYSize}")
+        # print(f"DEBUG: Geotransform: {geotransform}")
         
         # Create coordinate transformation from WGS84 to raster's CRS
         source_srs = osr.SpatialReference()
@@ -178,11 +178,13 @@ def map_mdr_from_db(df, hazard_col, mdr_model, hazard_field):
         DataFrame with new MDR column (e.g., 'flood_hazard_mdr')
     """
     try:
+        print(f"DEBUG: Starting MDR mapping for {hazard_col}")
         out = []
         # Process each house type separately (R1, R2A, R3B, etc. have different vulnerability)
         for h_type_id in df["house_type_id"].dropna().unique():
             # Get all buildings of this house type
             sub = df[df["house_type_id"] == h_type_id].copy()
+            print(f"DEBUG: Processing house type {h_type_id} with {len(sub)} records")
             
             # Get MDR lookup table from database for this house type
             # Example: For R1 + Flood, get all flood_depth_m -> MDR_value pairs
@@ -190,8 +192,11 @@ def map_mdr_from_db(df, hazard_col, mdr_model, hazard_field):
                 hazard_field, 'MDR_value'
             ).order_by(hazard_field)  # Sort by hazard intensity (low to high)
             
+            print(f"DEBUG: Found {len(mdr_data)} MDR records for house type {h_type_id}")
+            
             # If no MDR data exists for this house type, set MDR to NaN
             if not mdr_data:
+                print(f"DEBUG: No MDR data for house type {h_type_id}, setting to NaN")
                 sub[f"{hazard_col}_mdr"] = np.nan
                 out.append(sub)
                 continue
@@ -202,8 +207,12 @@ def map_mdr_from_db(df, hazard_col, mdr_model, hazard_field):
             hazard_values = [float(d[hazard_field]) for d in mdr_data if d[hazard_field] is not None]
             mdr_values = [float(d['MDR_value']) for d in mdr_data if d['MDR_value'] is not None]
             
+            print(f"DEBUG: Hazard range: {min(hazard_values) if hazard_values else 'None'} to {max(hazard_values) if hazard_values else 'None'}")
+            print(f"DEBUG: MDR range: {min(mdr_values) if mdr_values else 'None':.6f} to {max(mdr_values) if mdr_values else 'None':.6f}")
+            
             # Skip if no valid data points
             if not hazard_values or not mdr_values:
+                print(f"DEBUG: No valid hazard/MDR data for house type {h_type_id}")
                 sub[f"{hazard_col}_mdr"] = np.nan
                 out.append(sub)
                 continue
@@ -215,6 +224,8 @@ def map_mdr_from_db(df, hazard_col, mdr_model, hazard_field):
             sub = sub.sort_values(hazard_col)
             hazard_input = sub[hazard_col].fillna(0)  # Replace NaN hazards with 0
             
+            print(f"DEBUG: Input hazard range: {hazard_input.min():.4f} to {hazard_input.max():.4f}")
+            
             # Check for extrapolation (values outside known range)
             min_hazard, max_hazard = min(hazard_values), max(hazard_values)
             extrapolated = (hazard_input < min_hazard) | (hazard_input > max_hazard)
@@ -225,16 +236,22 @@ def map_mdr_from_db(df, hazard_col, mdr_model, hazard_field):
             # If survey shows 1.5m flood and database has:
             # 1.0m -> 0.3 MDR, 2.0m -> 0.7 MDR
             # Result: 0.3 + (1.5-1.0)/(2.0-1.0) * (0.7-0.3) = 0.5 MDR
-            sub[f"{hazard_col}_mdr"] = np.interp(
+            interpolated_mdr = np.interp(
                 hazard_input,           # Actual hazard values from survey
                 hazard_values,          # Known hazard points from database
                 mdr_values,             # Corresponding MDR values
                 left=mdr_values[0],     # Use first MDR for values below range
                 right=mdr_values[-1]    # Use last MDR for values above range
             )
+            
+            sub[f"{hazard_col}_mdr"] = interpolated_mdr
+            print(f"DEBUG: Interpolated MDR range: {interpolated_mdr.min():.6f} to {interpolated_mdr.max():.6f}")
+            print(f"DEBUG: Sample interpolated MDRs: {interpolated_mdr[:5]}")
             out.append(sub)
         
-        return pd.concat(out) if out else df
+        result_df = pd.concat(out) if out else df
+        print(f"DEBUG: Final {hazard_col}_mdr range: {result_df[f'{hazard_col}_mdr'].min():.6f} to {result_df[f'{hazard_col}_mdr'].max():.6f}")
+        return result_df
     except Exception as e:
         print(f"Error processing MDR for {hazard_col}: {e}")
         df[f"{hazard_col}_mdr"] = np.nan
@@ -284,11 +301,49 @@ def process_hazards_and_losses(df):
     # STEP 3: CALCULATE EXPECTED LOSSES
     # Loss = Damage Ratio × Replacement Cost
     # Example: 0.3 MDR × ₹500,000 = ₹150,000 expected loss
-    df['flood_loss'] = df['flood_hazard_mdr'] * df['replacement_cost_inr']
-    df['eq_loss'] = df['eq_hazard_mdr'] * df['replacement_cost_inr']
-    df['wind_loss'] = df['wind_hazard_mdr'] * df['replacement_cost_inr']
+    df['flood_loss'] = (df['flood_hazard_mdr'] * df['replacement_cost_inr']).fillna(0).round(2)
+    df['eq_loss'] = (df['eq_hazard_mdr'] * df['replacement_cost_inr']).fillna(0).round(2)
+    df['wind_loss'] = (df['wind_hazard_mdr'] * df['replacement_cost_inr']).fillna(0).round(2)
+
     
     return df
+
+def validate_building_dimensions(length, width, area):
+    """
+    Validate and clean building dimensions to prevent database overflow
+    Sets unrealistic values to 0 to avoid pipeline failures
+    
+    Args:
+        length, width, area: Building dimensions
+    
+    Returns:
+        tuple: (cleaned_length, cleaned_width, cleaned_area)
+    """
+    # Maximum reasonable building dimensions (in feet)
+    MAX_LENGTH = 1000  # 1000 ft = ~300m (very large building)
+    MAX_WIDTH = 1000   # 1000 ft = ~300m
+    MAX_AREA = 100000  # 100,000 sqft = ~9,300 sqm (huge building)
+    
+    # Convert to numeric and handle NaN
+    length = pd.to_numeric(length, errors='coerce')
+    width = pd.to_numeric(width, errors='coerce')
+    area = pd.to_numeric(area, errors='coerce')
+    
+    # Check for unrealistic values and set to 0
+    if pd.isna(length) or length <= 0 or length > MAX_LENGTH:
+        length = 0
+    if pd.isna(width) or width <= 0 or width > MAX_WIDTH:
+        width = 0
+    if pd.isna(area) or area <= 0 or area > MAX_AREA:
+        area = 0
+        
+    # If area is 0 but length/width are valid, recalculate area
+    if area == 0 and length > 0 and width > 0:
+        calculated_area = length * width
+        if calculated_area <= MAX_AREA:
+            area = calculated_area
+    
+    return length, width, area
 
 def get_house_type_id(house_type_name):
     """Get house type ID from house type name"""
@@ -376,8 +431,10 @@ def process_household_data(village_id):
         lambda x: pd.Series(get_house_type_mapping(x['wall_type'], x['roof_type'], x['floor_type'])), axis=1
     )
     
-    # Calculate replacement cost using existing building_area_sqft
-    df['building_area_sqft'] = pd.to_numeric(df['building_area_sqft'], errors='coerce').fillna(0)
+    # For households, validate existing building_area_sqft
+    df['building_area_sqft'] = df.apply(
+        lambda row: validate_building_dimensions(0, 0, pd.to_numeric(row['building_area_sqft'], errors='coerce'))[2], axis=1
+    )
     df['replacement_cost_inr'] = df['building_area_sqft'] * df['unit_rate_inr']
     
     # Process hazards and losses
@@ -405,10 +462,19 @@ def process_commercial_data(village_id):
     df['village_code'] = village.code
     df['asset_type'] = 'commercial'
     
-    # Calculate area from room dimensions
-    df['building_length_ft'] = pd.to_numeric(df['average_room_length_ft'], errors='coerce').fillna(0)
-    df['building_width_ft'] = pd.to_numeric(df['average_room_width_ft'], errors='coerce').fillna(0)
-    df['building_area_sqft'] = df['building_length_ft'] * df['building_width_ft']
+    # Calculate area from room dimensions with validation
+    length = pd.to_numeric(df['average_room_length_ft'], errors='coerce').fillna(0)
+    width = pd.to_numeric(df['average_room_width_ft'], errors='coerce').fillna(0)
+    area = length * width
+    
+    # Apply validation to clean unrealistic values
+    df[['building_length_ft', 'building_width_ft', 'building_area_sqft']] = df.apply(
+        lambda row: pd.Series(validate_building_dimensions(
+            pd.to_numeric(row['average_room_length_ft'], errors='coerce'),
+            pd.to_numeric(row['average_room_width_ft'], errors='coerce'),
+            pd.to_numeric(row['average_room_length_ft'], errors='coerce') * pd.to_numeric(row['average_room_width_ft'], errors='coerce')
+        )), axis=1
+    )
     
     # Map house types and rates
     df[['mapped_house_type', 'unit_rate_inr']] = df.apply(
@@ -441,10 +507,14 @@ def process_critical_facility_data(village_id):
     df['village_code'] = village.code
     df['asset_type'] = 'critical_facility'
     
-    # Calculate area
-    df['building_length_ft'] = pd.to_numeric(df['average_room_length_ft'], errors='coerce').fillna(0)
-    df['building_width_ft'] = pd.to_numeric(df['average_room_width_ft'], errors='coerce').fillna(0)
-    df['building_area_sqft'] = df['building_length_ft'] * df['building_width_ft']
+    # Calculate area with validation
+    df[['building_length_ft', 'building_width_ft', 'building_area_sqft']] = df.apply(
+        lambda row: pd.Series(validate_building_dimensions(
+            pd.to_numeric(row['average_room_length_ft'], errors='coerce'),
+            pd.to_numeric(row['average_room_width_ft'], errors='coerce'),
+            pd.to_numeric(row['average_room_length_ft'], errors='coerce') * pd.to_numeric(row['average_room_width_ft'], errors='coerce')
+        )), axis=1
+    )
     
     # Map house types and rates
     df[['mapped_house_type', 'unit_rate_inr']] = df.apply(
@@ -477,9 +547,26 @@ def save_risk_results(df, village_id, asset_type):
         if row['mapped_house_type'] != 'Other / Unknown':
             house_type_obj = house_type.objects.filter(house_type=row['mapped_house_type']).first()
         
-        # Helper function to convert NaN to None for DecimalFields
-        def safe_decimal(value):
-            return None if pd.isna(value) else float(value)
+        # Helper function to convert NaN to None for DecimalFields and handle overflow
+        def safe_decimal(value, field_type='default'):
+            if pd.isna(value):
+                return None
+            val = float(value)
+            
+            # Different limits for different field types based on database schema
+            if field_type == 'mdr':  # MDR fields: max_digits=10, decimal_places=8
+                max_value = 99.99999999  # 10^2 - 1 with 8 decimal places
+            elif field_type == 'hazard':  # Hazard fields: max_digits=10, decimal_places=8  
+                max_value = 99.99999999
+            elif field_type == 'loss':  # Loss fields: max_digits=15, decimal_places=8
+                max_value = 9999999.99999999  # 10^7 - 1 with 8 decimal places
+            else:  # Default fields: max_digits=12, decimal_places=2
+                max_value = 9999999999.99
+            
+            if abs(val) > max_value:
+                print(f"WARNING: Value {val} exceeds {field_type} field limit, capping at {max_value}")
+                return max_value if val > 0 else -max_value
+            return val
         
         result = Risk_Assessment_Result(
             village=village,
@@ -501,17 +588,17 @@ def save_risk_results(df, village_id, asset_type):
             unit_cost=safe_decimal(row['unit_rate_inr']),
             replacement_cost_inr=safe_decimal(row['replacement_cost_inr']),
             # Hazard data
-            eq_hazard=safe_decimal(row.get('eq_hazard')),
-            wind_hazard=safe_decimal(row.get('wind_hazard')),
-            flood_hazard=safe_decimal(row.get('flood_hazard')),
+            eq_hazard=safe_decimal(row.get('eq_hazard'), 'hazard'),
+            wind_hazard=safe_decimal(row.get('wind_hazard'), 'hazard'),
+            flood_hazard=safe_decimal(row.get('flood_hazard'), 'hazard'),
             # MDR data
-            flood_hazard_mdr=safe_decimal(row.get('flood_hazard_mdr')),
-            eq_hazard_mdr=safe_decimal(row.get('eq_hazard_mdr')),
-            wind_hazard_mdr=safe_decimal(row.get('wind_hazard_mdr')),
+            flood_hazard_mdr=safe_decimal(row.get('flood_hazard_mdr'), 'mdr'),
+            eq_hazard_mdr=safe_decimal(row.get('eq_hazard_mdr'), 'mdr'),
+            wind_hazard_mdr=safe_decimal(row.get('wind_hazard_mdr'), 'mdr'),
             # Loss data
-            flood_loss=safe_decimal(row.get('flood_loss')),
-            eq_loss=safe_decimal(row.get('eq_loss')),
-            wind_loss=safe_decimal(row.get('wind_loss'))
+            flood_loss=safe_decimal(row.get('flood_loss'), 'loss'),
+            eq_loss=safe_decimal(row.get('eq_loss'), 'loss'),
+            wind_loss=safe_decimal(row.get('wind_loss'), 'loss')
         )
         results.append(result)
         

@@ -68,7 +68,7 @@ class house_type_combination_mapping(models.Model):
 
 class flood_MDR_table(models.Model):
     flood_depth_m=models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-    MDR_value=models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)  
+    MDR_value=models.DecimalField(max_digits=10, decimal_places=8, null=True, blank=True)  
     house_type = models.ForeignKey(house_type, on_delete=models.CASCADE, blank=True, null=True)
 
     def __str__(self):
@@ -77,7 +77,7 @@ class flood_MDR_table(models.Model):
 
 class EQ_MDR_table(models.Model):
     PGA_g=models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-    MDR_value=models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)  
+    MDR_value=models.DecimalField(max_digits=10, decimal_places=8, null=True, blank=True)  
     house_type = models.ForeignKey(house_type, on_delete=models.CASCADE, blank=True, null=True)
 
     def __str__(self):
@@ -85,7 +85,7 @@ class EQ_MDR_table(models.Model):
     
 class wind_MDR_table(models.Model):
     wind_speed_kmph=models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-    MDR_value=models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    MDR_value=models.DecimalField(max_digits=10, decimal_places=8, null=True, blank=True)
     house_type = models.ForeignKey(house_type, on_delete=models.CASCADE, blank=True, null=True)
 
     def __str__(self):
@@ -127,19 +127,19 @@ class Risk_Assessment_Result(models.Model):
     replacement_cost_inr = models.DecimalField(max_digits=15, decimal_places=2, default=0.00)
     
     # Hazard data
-    eq_hazard = models.DecimalField(max_digits=10, decimal_places=4, null=True, blank=True)
-    wind_hazard = models.DecimalField(max_digits=10, decimal_places=4, null=True, blank=True)
-    flood_hazard = models.DecimalField(max_digits=10, decimal_places=4, null=True, blank=True)
+    eq_hazard = models.DecimalField(max_digits=10, decimal_places=8, null=True, blank=True)
+    wind_hazard = models.DecimalField(max_digits=10, decimal_places=8, null=True, blank=True)
+    flood_hazard = models.DecimalField(max_digits=10, decimal_places=8, null=True, blank=True)
     
     # MDR (Mean Damage Ratio) data
-    flood_hazard_mdr = models.DecimalField(max_digits=10, decimal_places=4, null=True, blank=True)
-    eq_hazard_mdr = models.DecimalField(max_digits=10, decimal_places=4, null=True, blank=True)
-    wind_hazard_mdr = models.DecimalField(max_digits=10, decimal_places=4, null=True, blank=True)
+    flood_hazard_mdr = models.DecimalField(max_digits=10, decimal_places=8, null=True, blank=True)
+    eq_hazard_mdr = models.DecimalField(max_digits=10, decimal_places=8, null=True, blank=True)
+    wind_hazard_mdr = models.DecimalField(max_digits=10, decimal_places=8, null=True, blank=True)
     
     # Loss calculations
-    flood_loss = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)
-    eq_loss = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)
-    wind_loss = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)
+    flood_loss = models.DecimalField(max_digits=15, decimal_places=8, null=True, blank=True)
+    eq_loss = models.DecimalField(max_digits=15, decimal_places=8, null=True, blank=True)
+    wind_loss = models.DecimalField(max_digits=15, decimal_places=8, null=True, blank=True)
     
     # Metadata
     created_at = models.DateTimeField(auto_now_add=True)
