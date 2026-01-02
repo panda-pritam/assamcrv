@@ -326,6 +326,7 @@ function resetModal(type) {
         case 'village':
             $('#villageForm')[0].reset();
             $('#villageId').val('');
+            $('#villageGeojson').val('');
             $('#villageDistrictGroup').show();
             $('#villageCircleGroup').show();
             $('#villageGPGroup').show();
@@ -660,48 +661,47 @@ async function loadVillages(params = {}) {
 
 // Function to handle village edit button click
 function editVillage(id) {
-    const button = $(`button[onclick="editVillage(${id})"]`);
-    const village = {
-        id: id,
-        district_id: button.attr('data-district-id'),
-        district_name: button.attr('data-district-name') || '',
-        circle_id: button.attr('data-circle-id'),
-        circle_name: button.attr('data-circle-name') || '',
-        gp_id: button.attr('data-gp-id'),
-        gp_name: button.attr('data-gp-name') || '',
-        code: button.attr('data-code') || '',
-        name: button.attr('data-name') || '',
-        name_as: button.attr('data-name-as') || '',
-        name_bn: button.attr('data-name-bn') || ''
-    };
-    
     editingId = id;
     entityType = 'village';
     
-    $('#villageId').val(id);
-    $('#villageDistrictId').val(village.district_id);
-    $('#villageCircleId').val(village.circle_id);
-    $('#villageGPId').val(village.gp_id);
-    $('#villageCode').val(village.code);
-    $('#villageName').val(village.name);
-    $('#villageNameAs').val(village.name_as);
-    $('#villageNameBn').val(village.name_bn);
-    
-    // Hide dropdowns and show text instead
-    $('#villageDistrictGroup').hide();
-    $('#villageCircleGroup').hide();
-    $('#villageGPGroup').hide();
-    $('#villageDistrict').prop('required', false);
-    $('#villageCircle').prop('required', false);
-    $('#villageGP').prop('required', false);
-    $('#villageDistrictText').text(village.district_name).parent().show();
-    $('#villageCircleText').text(village.circle_name).parent().show();
-    $('#villageGPText').text(village.gp_name).parent().show();
-    
-    $('#villageModalLabel').text(gettext('Edit Village'));
-    $('#saveVillageBtn').text(gettext('Update'));
-    
-    $('#villageModal').modal('show');
+    // Fetch village data from API
+    fetch(`/api/get_village_by_id/${id}`)
+        .then(response => response.json())
+        .then(village => {
+            if (village.error) {
+                showErrorAlert(village.error);
+                return;
+            }
+            
+            $('#villageId').val(id);
+            $('#villageDistrictId').val(village.gram_panchayat_district_id || '');
+            $('#villageCircleId').val(village.gram_panchayat_circle_id || '');
+            $('#villageGPId').val(village.gram_panchayat);
+            $('#villageCode').val(village.code || '');
+            $('#villageName').val(village.name || '');
+            $('#villageNameAs').val(village.name_as || '');
+            $('#villageNameBn').val(village.name_bn || '');
+            
+            // Hide dropdowns and show text instead
+            $('#villageDistrictGroup').hide();
+            $('#villageCircleGroup').hide();
+            $('#villageGPGroup').hide();
+            $('#villageDistrict').prop('required', false);
+            $('#villageCircle').prop('required', false);
+            $('#villageGP').prop('required', false);
+            $('#villageDistrictText').text(village.district_name).parent().show();
+            $('#villageCircleText').text(village.circle_name).parent().show();
+            $('#villageGPText').text(village.gram_panchayat_name).parent().show();
+            
+            $('#villageModalLabel').text(gettext('Edit Village'));
+            $('#saveVillageBtn').text(gettext('Update'));
+            
+            $('#villageModal').modal('show');
+        })
+        .catch(error => {
+            console.error('Error fetching village data:', error);
+            showErrorAlert(gettext('Failed to load village data'));
+        });
 }
 
 // Dropdown loading functions
@@ -873,13 +873,22 @@ async function saveGramPanchayat() {
 
 // Save Village
 async function saveVillage() {
-    const formData = {
-        name: $('#villageName').val(),
-        name_as: $('#villageNameAs').val(),
-        name_bn: $('#villageNameBn').val(),
-        code: $('#villageCode').val(),
-        gram_panchayat: editingId ? $('#villageGPId').val() : $('#villageGP').val()
-    };
+    const formData = new FormData();
+    
+    // Add text fields
+    formData.append('name', $('#villageName').val());
+    formData.append('name_as', $('#villageNameAs').val());
+    formData.append('name_bn', $('#villageNameBn').val());
+    formData.append('code', $('#villageCode').val());
+    formData.append('gram_panchayat', editingId ? $('#villageGPId').val() : $('#villageGP').val());
+    
+    // Add file if selected
+    const fileInput = document.getElementById('villageGeojson');
+    if (fileInput.files[0]) {
+        formData.append('geojson_file', fileInput.files[0]);
+    }
+    
+    formData.append('csrfmiddlewaretoken', getCSRFToken());
 
     const url = editingId ? `/en/api/${editingId}/update_village` : '/en/api/create_village';
     const method = editingId ? 'PATCH' : 'POST';
@@ -888,10 +897,9 @@ async function saveVillage() {
         const response = await fetch(url, {
             method,
             headers: {
-                'Content-Type': 'application/json',
                 'X-CSRFToken': getCSRFToken()
             },
-            body: JSON.stringify(formData)
+            body: formData
         });
 
         const result = await response.json();

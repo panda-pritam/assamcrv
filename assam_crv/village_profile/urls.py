@@ -3,7 +3,7 @@ from django.urls import path
 from .views import ( get_districts, get_circles, get_gram_panchayats, get_villages, villages_by_district, 
                     add_district_crlcle_gp_vill_by_csv,get_all_districts, get_all_villages, get_all_circles, get_all_gram_panchayats,
                     create_circle, create_district, create_gram_panchayat, create_village, update_circle, update_district
-                     ,update_gram_panchayat, update_village, delete_circle, delete_district, delete_gram_panchayat, delete_village,update_locations, get_village_count, get_location_counts, sync_mobile_db_villages )
+                     ,update_gram_panchayat, update_village, delete_circle, delete_district, delete_gram_panchayat, delete_village,update_locations, get_village_count, get_location_counts, sync_mobile_db_villages, get_village_by_id )
 
 from .views import count_of_villages_with_survey
 
@@ -16,6 +16,7 @@ urlpatterns = [
 
     path('api/get_all_districts', get_all_districts, name='get_all_districts'),
     path('api/get_all_villages', get_all_villages, name='get_all_villages'),
+    path('api/get_village_by_id/<int:village_id>', get_village_by_id, name='get_village_by_id'),
     path('api/get_all_circles', get_all_circles, name='get_all_circles'),
     path('api/get_all_gram_panchayats', get_all_gram_panchayats, name='get_all_gram_panchayats'),
 

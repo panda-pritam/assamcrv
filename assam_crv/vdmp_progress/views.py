@@ -13,6 +13,7 @@ from django.utils.translation import get_language
 from .data_pipeline import process_survey_data, process_others_data
 from village_profile.models import district_village_mapping, tblDistrict, tblVillage
 from vdmp_dashboard.models import HouseholdSurvey
+from .risk_assessment_pipeline import run_risk_assessment_pipeline
 
 
 @api_view(['GET'])
@@ -245,6 +246,10 @@ def update_vdmp_activity_status(request, status_id):
                         village_name
                     )
                     
+                    # Run household risk assessment
+                    
+                    run_risk_assessment_pipeline(village_id, 'household')
+                    
                     serializer.save()
                     return Response({
                         **serializer.data,
@@ -322,6 +327,11 @@ def update_vdmp_activity_status(request, status_id):
                             'import_status_ids': import_statuses
                         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
                     
+                    # Run commercial and critical risk assessment
+                   
+                    run_risk_assessment_pipeline(village_id, 'commercial')
+                    run_risk_assessment_pipeline(village_id, 'critical')
+                    
                     serializer.save()
                     return Response({
                         **serializer.data,
@@ -338,55 +348,7 @@ def update_vdmp_activity_status(request, status_id):
                         'pipeline_error': str(e)
                     }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
                 
-            elif 'risk ass' in activity_name:
-                # Risk assessment pipeline
-                try:
-                    print("DEBUG: Starting risk assessment pipeline")
-                    
-                    village_id = activity_status.village.id
-                    print(f"DEBUG: Processing Risk_Ass for village_id -> {village_id}")
-                    
-                    print("DEBUG: Attempting to import risk_assessment_pipeline")
-                    from .risk_assessment_pipeline import run_risk_assessment_pipeline
-                    print("DEBUG: Successfully imported risk_assessment_pipeline")
-                    
-                    print("DEBUG: About to run pipeline")
-                    results = run_risk_assessment_pipeline(village_id)
-                    print(f"DEBUG: Pipeline completed with results: {results}")
-                    
-                    # Check if at least one dataset was processed
-                    success_count = sum(1 for r in results.values() if r['status'] == 'success')
-                    print(f"DEBUG: Success count: {success_count}")
-                    
-                    if success_count == 0:
-                        return Response({
-                            'error': 'No data available for risk assessment',
-                            'details': results
-                        }, status=status.HTTP_400_BAD_REQUEST)
-                    
-                    print("DEBUG: Saving activity status")
-                    serializer.save()
-                    print("DEBUG: Activity status saved successfully")
-                    
-                    return Response({
-                        'message': 'Risk assessment completed successfully',
-                        'results': results
-                    })
-
-                except ImportError as e:
-                    print(f"DEBUG: Import error -> {str(e)}")
-                    return Response({
-                        'error': 'Pipeline import failed',
-                        'pipeline_error': str(e)
-                    }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-                except Exception as e:
-                    print(f"DEBUG: General error -> {str(e)}")
-                    import traceback
-                    print(f"DEBUG: Full traceback -> {traceback.format_exc()}")
-                    return Response({
-                        'error': 'Pipeline processing failed',
-                        'pipeline_error': str(e)
-                    }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
             else:
                 # For other activities, just save without pipeline
                 serializer.save()

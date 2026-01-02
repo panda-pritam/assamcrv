@@ -440,6 +440,11 @@
               <label for="villageNameBn" class="form-label">{% trans "Village Name (Bengali)" %}</label>
               <input type="text" class="form-control" id="villageNameBn">
             </div>
+            <div class="col-md-12 mb-3">
+              <label for="villageGeojson" class="form-label">{% trans "Village GeoJSON File" %}</label>
+              <input type="file" class="form-control" id="villageGeojson" accept=".geojson,.json">
+              <div class="form-text">{% trans "Upload GeoJSON file for village boundaries (optional)" %}</div>
+            </div>
           </div>
         </div>
         <div class="modal-footer py-1">

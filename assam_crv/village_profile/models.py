@@ -40,6 +40,7 @@ class tblVillage(models.Model):
     code =  models.CharField(max_length=100,null=True, blank=True)
     latitude = models.FloatField(null=True, blank=True)
     longitude = models.FloatField(null=True, blank=True)
+    geojson_file = models.FileField(upload_to='village_geojson/', null=True, blank=True)
     
 
     def __str__(self):

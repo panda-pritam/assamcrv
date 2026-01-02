@@ -620,52 +620,55 @@ def export_to_csv(df, filename, village_id):
     df.to_csv(filepath, index=False)
     return filepath
 
-def run_risk_assessment_pipeline(village_id):
+def run_risk_assessment_pipeline(village_id,model_name):
     """Main pipeline function with debug logging"""
     print(f"DEBUG: Pipeline started for village_id: {village_id}")
     results = {}
     
-    try:
-        print("DEBUG: Processing household data")
-        household_df, error = process_household_data(village_id)
-        if household_df is not None:
-            print(f"DEBUG: Household data processed successfully, {len(household_df)} records")
-            csv_path = export_to_csv(household_df, 'household_risk_assessment', village_id)
-            results['household'] = {'status': 'success', 'csv_path': csv_path, 'records': len(household_df)}
-        else:
-            print(f"DEBUG: No household data found: {error}")
-            results['household'] = {'status': 'no_data', 'message': error}
-    except Exception as e:
-        print(f"DEBUG: Household processing error: {str(e)}")
-        results['household'] = {'status': 'error', 'message': str(e)}
+    if(model_name == 'household'):
+        try:
+            print("DEBUG: Processing household data")
+            household_df, error = process_household_data(village_id)
+            if household_df is not None:
+                print(f"DEBUG: Household data processed successfully, {len(household_df)} records")
+                # csv_path = export_to_csv(household_df, 'household_risk_assessment', village_id)
+                results['household'] = {'status': 'success', 'records': len(household_df)}
+            else:
+                print(f"DEBUG: No household data found: {error}")
+                results['household'] = {'status': 'no_data', 'message': error}
+        except Exception as e:
+            print(f"DEBUG: Household processing error: {str(e)}")
+            results['household'] = {'status': 'error', 'message': str(e)}
     
-    try:
-        print("DEBUG: Processing commercial data")
-        commercial_df, error = process_commercial_data(village_id)
-        if commercial_df is not None:
-            print(f"DEBUG: Commercial data processed successfully, {len(commercial_df)} records")
-            csv_path = export_to_csv(commercial_df, 'commercial_risk_assessment', village_id)
-            results['commercial'] = {'status': 'success', 'csv_path': csv_path, 'records': len(commercial_df)}
-        else:
-            print(f"DEBUG: No commercial data found: {error}")
-            results['commercial'] = {'status': 'no_data', 'message': error}
-    except Exception as e:
-        print(f"DEBUG: Commercial processing error: {str(e)}")
-        results['commercial'] = {'status': 'error', 'message': str(e)}
+    if(model_name == 'commercial'):
+        try:
+            print("DEBUG: Processing commercial data")
+            commercial_df, error = process_commercial_data(village_id)
+            if commercial_df is not None:
+                print(f"DEBUG: Commercial data processed successfully, {len(commercial_df)} records")
+                # csv_path = export_to_csv(commercial_df, 'commercial_risk_assessment', village_id)
+                results['commercial'] = {'status': 'success', 'records': len(commercial_df)}
+            else:
+                print(f"DEBUG: No commercial data found: {error}")
+                results['commercial'] = {'status': 'no_data', 'message': error}
+        except Exception as e:
+            print(f"DEBUG: Commercial processing error: {str(e)}")
+            results['commercial'] = {'status': 'error', 'message': str(e)}
     
-    try:
-        print("DEBUG: Processing critical facility data")
-        facility_df, error = process_critical_facility_data(village_id)
-        if facility_df is not None:
-            print(f"DEBUG: Critical facility data processed successfully, {len(facility_df)} records")
-            csv_path = export_to_csv(facility_df, 'critical_facility_risk_assessment', village_id)
-            results['critical_facility'] = {'status': 'success', 'csv_path': csv_path, 'records': len(facility_df)}
-        else:
-            print(f"DEBUG: No critical facility data found: {error}")
-            results['critical_facility'] = {'status': 'no_data', 'message': error}
-    except Exception as e:
-        print(f"DEBUG: Critical facility processing error: {str(e)}")
-        results['critical_facility'] = {'status': 'error', 'message': str(e)}
+    if(model_name == "critical"):
+        try:
+            print("DEBUG: Processing critical facility data")
+            facility_df, error = process_critical_facility_data(village_id)
+            if facility_df is not None:
+                print(f"DEBUG: Critical facility data processed successfully, {len(facility_df)} records")
+                # csv_path = export_to_csv(facility_df, 'critical_facility_risk_assessment', village_id)
+                results['critical_facility'] = {'status': 'success',  'records': len(facility_df)}
+            else:
+                print(f"DEBUG: No critical facility data found: {error}")
+                results['critical_facility'] = {'status': 'no_data', 'message': error}
+        except Exception as e:
+            print(f"DEBUG: Critical facility processing error: {str(e)}")
+            results['critical_facility'] = {'status': 'error', 'message': str(e)}
     
     print(f"DEBUG: Pipeline completed with results: {results}")
     return results

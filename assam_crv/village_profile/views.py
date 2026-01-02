@@ -157,6 +157,21 @@ def get_all_villages(request):
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 
+@login_required
+@api_view(['GET'])
+@user_passes_test(is_admin_or_superuser)
+def get_village_by_id(request, village_id):
+    """Get village details by ID."""
+    try:
+        village = tblVillage.objects.select_related(
+            'gram_panchayat__circle__district'
+        ).get(id=village_id)
+        serializer = ListVillageSerializer(village)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    except tblVillage.DoesNotExist:
+        return Response({"error": "Village not found"}, status=status.HTTP_404_NOT_FOUND)
+
+
 
 @login_required
 @api_view(['POST'])
@@ -200,6 +215,7 @@ def create_gram_panchayat(request):
 @login_required
 @api_view(['POST'])
 @user_passes_test(is_admin_or_superuser)
+@parser_classes([MultiPartParser, FormParser])
 def create_village(request):
     """Create a new village.
     Expects village data in the request body."""
@@ -209,10 +225,85 @@ def create_village(request):
             with transaction.atomic():
                 village = serializer.save()
                 create_village_with_mobile_db_mapping(village, request.user)
+                if village.geojson_file:
+                    create_geo_data_entry(village)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+def create_geo_data_entry(village):
+    """Create entry in mobile_db geo_data table."""
+    if not village.geojson_file:
+        return
+    
+    # Get the mobile DB village ID from mapping
+    try:
+        mapping = district_village_mapping.objects.get(village=village)
+        mobile_village_id = mapping.mobileDBVillageID
+    except district_village_mapping.DoesNotExist:
+        return  # No mapping exists, skip geo_data entry
+    
+    mobile_db = connections['mobile_db']
+    with mobile_db.cursor() as cursor:
+        # Get relative file path
+        file_path = str(village.geojson_file)
+        
+        cursor.execute(
+            'INSERT INTO public.geo_data ("countryId", "adminLevel", "adminId", lang, shapefile) VALUES (%s, %s, %s, %s, %s)',
+            [91, 1, mobile_village_id, 'en', file_path]
+        )
+
+
+def update_geo_data_entry(village):
+    """Update entry in mobile_db geo_data table."""
+    if not village.geojson_file:
+        return
+    
+    # Get the mobile DB village ID from mapping
+    try:
+        mapping = district_village_mapping.objects.get(village=village)
+        mobile_village_id = mapping.mobileDBVillageID
+    except district_village_mapping.DoesNotExist:
+        return  # No mapping exists, skip geo_data entry
+    
+    # Get old file path from database to delete it
+    mobile_db = connections['mobile_db']
+    with mobile_db.cursor() as cursor:
+        cursor.execute(
+            'SELECT shapefile FROM public.geo_data WHERE "adminId" = %s AND "countryId" = 91',
+            [mobile_village_id]
+        )
+        result = cursor.fetchone()
+        if result:
+            old_file_path = result[0]
+            # Delete old file if it exists
+            if old_file_path and os.path.exists(old_file_path):
+                os.remove(old_file_path)
+    
+    with mobile_db.cursor() as cursor:
+        # Get relative file path
+        file_path = str(village.geojson_file)
+        
+        # Check if entry exists
+        cursor.execute(
+            'SELECT id FROM public.geo_data WHERE "adminId" = %s AND "countryId" = 91',
+            [mobile_village_id]
+        )
+        
+        if cursor.fetchone():
+            # Update existing entry
+            cursor.execute(
+                'UPDATE public.geo_data SET shapefile = %s WHERE "adminId" = %s AND "countryId" = 91',
+                [file_path, mobile_village_id]
+            )
+        else:
+            # Create new entry
+            cursor.execute(
+                'INSERT INTO public.geo_data ("countryId", "adminLevel", "adminId", lang, shapefile) VALUES (%s, %s, %s, %s, %s)',
+                [91, 1, mobile_village_id, 'en', file_path]
+            )
 
 
 def create_village_with_mobile_db_mapping(village, user):
@@ -224,12 +315,20 @@ def create_village_with_mobile_db_mapping(village, user):
         # Insert into mobile_db
         mobile_db = connections['mobile_db']
         with mobile_db.cursor() as cursor:
-            # PostgreSQL auto-handles id if it's SERIAL/IDENTITY
-            cursor.execute(
-                "INSERT INTO public.villages (district_id, district_name, village_name, created_on, updated_on) VALUES (%s, %s, %s, NOW(), NOW()) RETURNING id",
-                [district.code, district.name, village.name]
-            )
-            mobile_village_id = cursor.fetchone()[0]
+            try:
+                cursor.execute(
+                    "INSERT INTO public.villages (district_id, district_name, village_name, created_on, updated_on) VALUES (%s, %s, %s, NOW(), NOW()) RETURNING id",
+                    [district.code, district.name, village.name]
+                )
+                mobile_village_id = cursor.fetchone()[0]
+            except Exception as e:
+                # Reset sequence and try again
+                cursor.execute("SELECT setval('public.villages_id_seq', (SELECT MAX(id) FROM public.villages))")
+                cursor.execute(
+                    "INSERT INTO public.villages (district_id, district_name, village_name, created_on, updated_on) VALUES (%s, %s, %s, NOW(), NOW()) RETURNING id",
+                    [district.code, district.name, village.name]
+                )
+                mobile_village_id = cursor.fetchone()[0]
         
         # Create mapping record
         district_village_mapping.objects.create(
@@ -319,6 +418,7 @@ def update_gram_panchayat(request, gram_panchayat_id):
 @login_required
 @api_view(['PATCH'])
 @user_passes_test(is_admin_or_superuser)
+@parser_classes([MultiPartParser, FormParser])
 def update_village(request, village_id):
     """Update an existing village.
     Expects village data in the request body."""
@@ -327,10 +427,16 @@ def update_village(request, village_id):
     except tblVillage.DoesNotExist:
         return Response({"error": "Village not found"}, status=status.HTTP_404_NOT_FOUND)
 
-    serializer = ListVillageSerializer(village, data=request.data)
+    serializer = ListVillageSerializer(village, data=request.data, partial=True)
     if serializer.is_valid():
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        try:
+            with transaction.atomic():
+                village = serializer.save()
+                if 'geojson_file' in request.data and village.geojson_file:
+                    update_geo_data_entry(village)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 

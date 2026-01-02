@@ -78,7 +78,7 @@ class ListVillageSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = tblVillage
-        fields = ['id','code', 'name', 'name_bn', 'name_as', 'district_name', 'circle_name', 'gram_panchayat_name','gram_panchayat','latitude', 'longitude']
+        fields = ['id','code', 'name', 'name_bn', 'name_as', 'district_name', 'circle_name', 'gram_panchayat_name','gram_panchayat','latitude', 'longitude', 'geojson_file']
 
     def get_district_name(self, obj):
         return translated(obj.gram_panchayat.circle.district, 'name')
