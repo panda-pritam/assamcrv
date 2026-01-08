@@ -787,19 +787,6 @@ def getHazardAssessment(village_id):
     ]
 
 
-def getVulnerabilityAssessment(village_id):
-    return [
-        ["Vulnerability Assessment"],
-        ['Economic Status', '-'],
-        ['Vulnerable Population', '-'],
-        ['Flood Vulnerability Houses', '-'],
-        ['Erosion Vulnerability Houses', '-'],
-        ['Flood Vulnerability Roads', '-'],
-        ['Erosion Vulnerability Roads', '-'],
-        ['Schools', '-'],
-        ['Livelihood Vulnerability Index', '-'],
-        ['Index Interpretation', '-']
-    ]
 
 # def getRiskAssessment(village_id):
 #     return [

@@ -7,11 +7,15 @@ from reportlab.lib.pagesizes import letter
 from village_profile.models import tblVillage
 from datetime import datetime
 
-from vdmp_dashboard.models import HouseholdSurvey
+from vdmp_dashboard.models import HouseholdSurvey, Critical_Facility
 from collections import Counter
 
+from .village_profile import getVillageArea, getLULCData
+from django.db.models import Count
 
-from .dummy_data import  getHazardAssessment,getVulnerabilityAssessment,getMitigationIntervention,getDistrictLevelOfficialsData,getEmergencyTollFreeContactData,getImportantEmergencyContactData
+
+
+from .dummy_data import  getHazardAssessment,getMitigationIntervention,getDistrictLevelOfficialsData,getEmergencyTollFreeContactData,getImportantEmergencyContactData
 
 from .global_styles import blue_heading, underline_heading, notes_style
 
@@ -30,8 +34,6 @@ VILLAGE_SUMMARY_DATA = {
 # Get village related data from the database
 def generate_general_summary_table(village_id=None):
    
-   
-    
     if village_id:
         # Optimized query with select_related to avoid N+1 queries
         village = tblVillage.objects.select_related(
@@ -40,13 +42,25 @@ def generate_general_summary_table(village_id=None):
             'gram_panchayat__circle__district'
         ).get(id=village_id)
         
+        # Get village area
+        village_area = getVillageArea(village_id)
+        area_text = f"{village_area:.2f} sq km" if village_area > 0 else "N/A"
+        
+        # Get major land use
+        lulc_data = getLULCData(village_id, 'assam', 'lulc', True)
+        major_land_use = lulc_data if lulc_data else "N/A"
+        print(major_land_use)
+        VILLAGE_SUMMARY_DATA['major_land_use'] = major_land_use
+        
         return [
             ['General Summary Table'],
             ['Date of Preparation', datetime.now().strftime('%B %Y')],
             ['Village Name', village.name],
             ['Block', village.gram_panchayat.name],
+            ['Village area', area_text],
             ['Revenue Circle', village.gram_panchayat.circle.name],
             ['District', village.gram_panchayat.circle.district.name]
+            
         ]
     else:
         return [
@@ -54,8 +68,10 @@ def generate_general_summary_table(village_id=None):
             ['Date of Preparation', datetime.now().strftime('%B %Y')],
             ['Village Name', 'N/A'],
             ['Block', 'N/A'],
+            ['Village area', 'N/A'],
             ['Revenue Circle', 'N/A'],
-            ['District', 'N/A']
+            ['District', 'N/A'],
+            ['Major Land Use', 'N/A']
         ] 
         
     
@@ -65,45 +81,69 @@ def generate_socio_economic_summary_table(village_id):
     
     households = HouseholdSurvey.objects.filter(village_id=village_id)
     
-    # Calculate and update global data
-    total_population = 0
-    sanitation_counts = Counter()
+    # Calculate total population
+    total_population = sum(
+        int(h.number_of_males_including_children or 0) + 
+        int(h.number_of_females_including_children or 0) 
+        for h in households
+    )
     
-    # Count all sanitation types
-    pucca_count = 0
-    kachcha_count = 0
-    no_toilet_count = 0
-    
-    for household in households:
-        males = int(household.number_of_males_including_children or 0)
-        females = int(household.number_of_females_including_children or 0)
-        total_population += males + females
-        
-        # Count sanitation types
-        sanitation_type = getattr(household, 'Sanitation_Type', None) or 'No toilet'
-        if sanitation_type == 'Pucca':
-            pucca_count += 1
-        elif sanitation_type == 'Kachcha':
-            kachcha_count += 1
-        else:
-            no_toilet_count += 1
-    
-    # Find dominant sanitation type (excluding No toilet)
+    # Count sanitation types using filter
+    community_toilet = households.filter(Sanitation_Type='Community Toilet').count()
+    own_toilet = households.filter(Sanitation_Type='Own').count()
+    open_defecation = households.filter(Sanitation_Type='Open').count()
     total_households_count = households.count()
-    if pucca_count >= kachcha_count and pucca_count > 0:
-        percentage = round((pucca_count / total_households_count) * 100)
-        sanitation_text = f"Pucca toilet - {percentage}%"
-    elif kachcha_count > 0:
-        percentage = round((kachcha_count / total_households_count) * 100)
-        sanitation_text = f"Kachcha toilet - {percentage}%"
+    
+    # Find dominant sanitation type
+    counts = {'Community Toilet': community_toilet, 'Own': own_toilet, 'Open': open_defecation}
+    if total_households_count > 0:
+        max_sanitation_type = max(counts, key=counts.get)
+        max_percentage = round((counts[max_sanitation_type] / total_households_count) * 100)
+        sanitation_text = f"{max_sanitation_type} - {max_percentage}%"
     else:
         sanitation_text = 'No data available'
-    print(sanitation_text,pucca_count,)
+    
     # Update global dictionary
     VILLAGE_SUMMARY_DATA['total_population'] = total_population
-    VILLAGE_SUMMARY_DATA['total_households'] = households.count()
+    VILLAGE_SUMMARY_DATA['total_households'] = total_households_count
     VILLAGE_SUMMARY_DATA['sanitation_facilities'] = sanitation_text
+
+    # Count households by house type
+    kachcha = households.filter(house_type='Kachcha').count()
+    semi_pucca = households.filter(house_type='Semi Pucca').count()
+    pucca = households.filter(house_type='Pucca').count()
     
+    # Find dominant house type and update global dictionary
+    counts = {'Kachcha': kachcha, 'Semi Pucca': semi_pucca, 'Pucca': pucca}
+    if total_households_count > 0:
+        max_house_type = max(counts, key=counts.get)
+        max_percentage = round((counts[max_house_type] / total_households_count) * 100, 1)
+        VILLAGE_SUMMARY_DATA['dominant_house_type'] = f"{max_house_type} - {max_percentage}%"
+    else:
+        VILLAGE_SUMMARY_DATA['dominant_house_type'] = 'N/A'
+        
+    
+    livelihood_qs = (
+        households
+        .exclude(livelihood_primary__isnull=True)
+        .exclude(livelihood_primary__exact='')
+        .values('livelihood_primary')
+        .annotate(count=Count('livelihood_primary'))
+        .order_by('-count')
+    )
+
+    if livelihood_qs.exists() and total_households_count > 0:
+        top_livelihood = livelihood_qs[0]['livelihood_primary']
+        top_count = livelihood_qs[0]['count']
+        percentage = round((top_count / total_households_count) * 100)
+
+        VILLAGE_SUMMARY_DATA['occupational_category'] = (
+            f"{top_livelihood} - {percentage}%"
+        )
+    else:
+        VILLAGE_SUMMARY_DATA['occupational_category'] = 'No data available'
+
+
     return [
         ['Socio-Economic Summary'],
         ['Total Population', VILLAGE_SUMMARY_DATA['total_population']],
@@ -114,7 +154,123 @@ def generate_socio_economic_summary_table(village_id):
         ['Sanitation Facilities', VILLAGE_SUMMARY_DATA['sanitation_facilities']]
     ]
 
+
+def getRiskAssessment(village_id):
+    return [
+        ['Risk Assessment (excluding content loss in INR Crore)'],
+        ['Sector', 'Flood 2022 Scenario (INR Crore)','Earthquake 475 RP','Strong wind 100 RP'],
+        ['Residential', '-', '-', '-'],
+        ['Commercial', '-', '-', '-'],
+        ['Critical Facilities', '-', '-', '-'],
+        ['Roads', '-', '-', '-'],
+        ['Agriculture', '-', '-', '-'],
+        ['Note', 'Excluding content loss', '', '']
+    ]
+
+
+def getVulnerabilityAssessment(village_id):
+    from django.db.models import Q
     
+    households = HouseholdSurvey.objects.filter(village_id=village_id)
+    total_households = households.count()
+    
+    if total_households == 0:
+        return [
+            ["Vulnerability Assessment"],
+            ['Economic Status', 'No data'],
+            ['Vulnerable Population', 'No data'],
+            ['Flood Vulnerability Houses', 'No data'],
+            ['Erosion Vulnerability Houses', 'No data'],
+            ['Flood Vulnerability Roads', 'No data'],
+            ['Erosion Vulnerability Roads', 'No data'],
+            ['Schools', 'No data'],
+            ['Livelihood Vulnerability Index', 'No data'],
+            ['Index Interpretation', 'No data']
+        ]
+    
+    # Economic Status - show BPL and PHH percentages only
+    bpl_count = 0
+    phh_count = 0
+    
+    for household in households:
+        economic = household.economic_status or ''
+        if economic.upper() == 'BPL' or 'below poverty line' in economic.lower():
+            bpl_count += 1
+        elif economic.upper() == 'PHH' or 'priority household' in economic.lower():
+            phh_count += 1
+    
+    bpl_percent = round((bpl_count / total_households) * 100) if bpl_count > 0 else 0
+    phh_percent = round((phh_count / total_households) * 100) if phh_count > 0 else 0
+    
+    economic_status = f"BPL - {bpl_percent}%, Priority Household - {phh_percent}%"
+    
+    # Vulnerable Population (age < 6, >60, pregnant women, lactating mother, permanently disabled or chronic disease)
+    vulnerable_count = 0
+    total_population = 0
+    
+    for household in households:
+        try:
+            vulnerable_count += int(household.persons_with_disability_or_chronic_disease or 0)
+            vulnerable_count += int(household.lactating_women or 0)
+            vulnerable_count += int(household.pregnant_women or 0)
+            vulnerable_count += int(household.senior_citizens or 0)
+            vulnerable_count += int(household.children_below_6_years or 0)
+            total_population += int(household.number_of_males_including_children or 0) + int(household.number_of_females_including_children or 0)
+        except (ValueError, TypeError):
+            continue
+    
+    if total_population > 0:
+        vulnerable_percent = round((vulnerable_count / total_population) * 100)
+        vulnerable_population = f"{vulnerable_count} ({vulnerable_percent}%)"
+    else:
+        vulnerable_population = 'No data'
+    
+    # Houses vulnerable to flood (flood_depth_m >= 0.5)
+    flood_vulnerable_houses = 0
+    for household in households:
+        try:
+            flood_depth = float(household.flood_depth_m or 0)
+            if flood_depth >= 0.5:
+                flood_vulnerable_houses += 1
+        except (ValueError, TypeError):
+            continue
+    
+    flood_vulnerable_percent = round((flood_vulnerable_houses / total_households) * 100) if flood_vulnerable_houses > 0 else 0
+    flood_vulnerability_houses = f"{flood_vulnerable_houses} ({flood_vulnerable_percent}%)"
+    
+    # Houses vulnerable to erosion
+    erosion_vulnerable_houses = households.filter(house_vulnerable_to_erosion__iexact='yes').count()
+    erosion_vulnerable_percent = round((erosion_vulnerable_houses / total_households) * 100) if erosion_vulnerable_houses > 0 else 0
+    erosion_vulnerability_houses = f"{erosion_vulnerable_houses} ({erosion_vulnerable_percent}%)"
+    
+    # Schools vulnerable to flood
+    schools_vulnerable = 0
+    critical_facilities = Critical_Facility.objects.filter(village_id=village_id)
+    
+    for facility in critical_facilities:
+        if facility.occupancy_type and 'school' in facility.occupancy_type.lower():
+            try:
+                flood_depth = float(facility.flood_depth_m or 0)
+                if flood_depth > 0.5:
+                    schools_vulnerable += 1
+            except (ValueError, TypeError):
+                continue
+    
+    schools_text = str(schools_vulnerable) if schools_vulnerable > 0 else '0'
+    
+    return [
+        ["Vulnerability Assessment"],
+        ['Economic Status', economic_status],
+        ['Vulnerable Population', vulnerable_population],
+        ['Flood Vulnerability Houses', flood_vulnerability_houses],
+        ['Erosion Vulnerability Houses', erosion_vulnerability_houses],
+        ['Flood Vulnerability Roads', '-'],
+        ['Erosion Vulnerability Roads', '-'],
+        ['Schools', schools_text],
+        ['Livelihood Vulnerability Index', '-'],
+        ['Index Interpretation', '-']
+    ]
+
 
 def village_summary(elements,village_id):
     styles = getSampleStyleSheet()

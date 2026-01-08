@@ -5,14 +5,21 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
 from shapefiles.models import PraBoundary,ExposureRiver
+from django.db.models import Count, Q, FloatField
+from django.db.models.functions import Cast
 
 def home(request):
     return render(request, 'dashboard/dashboard.html')
 
+def mitigation_intervention(request):
+    return render(request, 'mitigation/mitigation_intervention.html')
+
+def other_data(request):
+    return render(request, 'other_data/other_data.html')
 
 
-from django.db.models import Count, Q, FloatField
-from django.db.models.functions import Cast
+
+
 
 def calculate_flood_percentage(queryset, threshold=0.5):
     # Filter nulls and cast once

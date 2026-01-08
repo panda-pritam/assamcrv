@@ -1,0 +1,1235 @@
+{% extends "base.html" %}
+{% load static %}
+{% load i18n %}
+{% block title %}{% trans "Other Data" %} {% endblock %}
+
+{% block extraheader %}
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Work+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="{% static 'css/responsive.css' %}" rel="stylesheet">
+<style>
+body {
+  font-family: 'Roboto', 'Work Sans', sans-serif;
+}
+/* Other Data Page Specific Styles */
+.other-data-tabs .nav-tabs {
+ 
+  margin-bottom: 25px;
+}
+
+.other-data-tabs .nav-tabs .nav-link {
+  border: none;
+  border-radius: 5px;
+  color: #2C2C2C;
+  padding: 7px 15px;
+  margin-right: 13px;
+  background-color: #ffffff;
+  border: 1px solid #CADDF8;
+  transition: all 0.3s ease;
+  font-size: 16px;
+  font-family: 'Work Sans';
+  font-weight: 400;
+ 
+}
+.other-data-tabs  {
+    box-shadow: 0px 25px 50px -12px rgba(139, 139, 139, 0.11);
+    border-radius: 4px;
+    padding: 18px 18px 33px 18px;
+    background-color: #ffffff;
+}
+
+
+.other-data-tabs .nav-tabs .nav-link.active {
+  color: #ffffff;
+  background-color: #245FAE;
+  border-color: transparent;
+  border: 1px solid #245FAE;
+  font-weight: 400;
+}
+
+{% comment %} .other-data-tabs .tab-content {
+    box-shadow: 0px 25px 50px -12px rgba(139, 139, 139, 0.11);
+    border-radius: 4px;
+    padding: 18px 18px 33px 18px;
+    background-color: #ffffff;
+} {% endcomment %}
+
+.other-data-accordion .accordion-item {
+  border: 1px solid #D1D5DB!important;
+    margin-bottom: 10px;
+    border-radius: 4px;
+    background-color: #F4F8FF!important;
+    box-shadow: 0 1px 29px -5px #18274B24;
+}
+.other-data-tabs .accordion-body {
+    padding: 1.5rem;
+    background: transparent!important;
+}
+.other-data-accordion .accordion-button {
+  background-color: #ffffff;
+  
+  font-family: 'Work Sans';
+  font-weight: 500;
+  border: none;
+  color: #1D1D1D;
+    font-size: 16px;
+}
+
+.other-data-accordion .accordion-button:not(.collapsed) {
+  background-color: #ffffff;
+   color: #1D1D1D;
+    font-size: 16px;
+}
+
+.other-data-form .form-label {
+    font-size: 15px;
+    color: #141414;
+    font-family: 'Work Sans';
+    font-weight: 400;
+    margin-bottom: 5px;
+}
+
+#communityInfo .form-control {
+  border: 1px solid #CADDF8;
+  border-radius: 4px;
+  font-size: 14px;
+  font-family: 'Work Sans';
+}
+
+#communityInfo input[type="number"] {
+  -webkit-appearance: none;
+  -moz-appearance: textfield;
+}
+
+#communityInfo input[type="number"]::-webkit-outer-spin-button,
+#communityInfo input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+#communityInfo .number-input-wrapper {
+  position: relative;
+}
+
+#communityInfo .number-input-wrapper::after {
+    content: '';
+    position: absolute;
+    border-radius: 2px;
+    width: 23px;
+    background-color: #EBEBEB;
+    background-image: url("data:image/svg+xml,%3csvg width='14' height='18' xmlns='http://www.w3.org/2000/svg'%3e%3cg fill='%23666'%3e%3cpolygon points='7,2 12,7 2,7'/%3e%3cpolygon points='2,11 7,16 12,11'/%3e%3c/g%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 10px 14px;
+   
+    pointer-events: none;
+    height: 23px;
+   
+    right: 8px;
+    bottom: 6px!important;
+}
+#communityResources .number-input-wrapper::after {
+    content: '';
+    position: absolute;
+    border-radius: 2px;
+    width: 23px;
+    background-color: #D6D6D6;
+    background-image: url("data:image/svg+xml,%3csvg width='14' height='18' xmlns='http://www.w3.org/2000/svg'%3e%3cg fill='%23666'%3e%3cpolygon points='7,2 12,7 2,7'/%3e%3cpolygon points='2,11 7,16 12,11'/%3e%3c/g%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 10px 14px;
+   
+    pointer-events: none;
+    height: 23px;
+   
+    right: 8px;
+    bottom: 5px!important;
+}
+#communityResources .number-input-wrapper {
+    position: relative;
+    max-width: 113px;
+}
+#communityResources table thead th:nth-child(3) {
+    width: 10%;
+}
+.other-data-form input[type="number"] {
+  -webkit-appearance: auto;
+  -moz-appearance: auto;
+}
+
+.other-data-form input[type="number"]::-webkit-outer-spin-button,
+.other-data-form input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: auto;
+  opacity: 1;
+  background-color: #EBEBEB;
+}
+
+.other-data-form .number-input-wrapper {
+  position: relative;
+}
+#communityInfo input[type="number"]::after {
+    content: '';
+    position: absolute;
+    right: 7px;
+    top: 4px;
+    bottom: 1px;
+    width: 20px;
+    background-color: #EBEBEB;
+    background-image: url("data:image/svg+xml,%3csvg width='14' height='18' xmlns='http://www.w3.org/2000/svg'%3e%3cg fill='%23666'%3e%3cpolygon points='7,2 12,7 2,7'/%3e%3cpolygon points='2,11 7,16 12,11'/%3e%3c/g%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 10px 14px;
+    border-radius: 0 3px 3px 0;
+    height: 26px;
+    pointer-events: none;
+}
+
+ #communityResources table tbody tr td:nth-child(3) input {
+    border: 1px solid #B1CCF0!important;
+    background-color: #F0F0F0!important;
+    text-align: center;
+    height: 32px;
+    border-radius: 0px;
+  
+ }
+{% comment %} .other-data-form .number-input-wrapper::after {
+  content: '';
+  position: absolute;
+  right: 1px;
+  top: 1px;
+  bottom: 1px;
+  width: 20px;
+  background-color: #EBEBEB;
+  background-image: url("data:image/svg+xml,%3csvg width='14' height='18' xmlns='http://www.w3.org/2000/svg'%3e%3cg fill='%23666'%3e%3cpolygon points='7,2 12,7 2,7'/%3e%3cpolygon points='2,11 7,16 12,11'/%3e%3c/g%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 10px 14px;
+  border-radius: 0 3px 3px 0;
+} {% endcomment %}
+
+.other-data-form .number-input-wrapper .spinner-up,
+.other-data-form .number-input-wrapper .spinner-down {
+  position: absolute;
+  right: 1px;
+  width: 20px;
+  height: 50%;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  z-index: 10;
+}
+
+.other-data-form .number-input-wrapper .spinner-up {
+  top: 1px;
+}
+
+.other-data-form .number-input-wrapper .spinner-down {
+  bottom: 1px;
+}
+
+.other-data-form .table input {
+  border: none;
+  background: transparent;
+  padding: 8px;
+  width: 100%;
+}
+
+.manage-owners {
+    color: #0B4189;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 14px;
+    font-weight: 400;
+    height: 32px;
+}
+
+.manage-owners .badge {
+    font-size: 10px;
+    padding: 2px 6px;
+    background-color: #B5D0F3!important;
+    color: #0B4189!important;
+    width: 21px;
+    height: 21px;
+    display: flex!important;
+    justify-content: center;
+    align-items: center;
+      margin-left: 6px;
+    border-radius: 50%;
+}
+.bg_color {
+    background-color: #EDF4FF;
+    border-radius: 4px;
+   
+}
+.other-data-section-title {
+    font-size: 15px;
+    color: #000000;
+    font-family: 'Work Sans';
+    font-weight: 500;
+    margin-bottom: 11px;
+    padding-bottom: 8px;
+   
+}
+
+.other-data-buttons {
+  margin-top: 30px;
+  padding-top: 20px;
+
+}
+
+.other-data-btn-reset {
+  background-color: #ffffff;
+  border: 1px solid #245FAE;
+  color: #245FAE;
+  font-family: 'Work Sans';
+  font-weight: 500;
+  padding: 3px 17px;
+  border-radius: 4px;
+  font-size: 16px;
+}
+
+.other-data-btn-submit {
+    background-color: #245FAE;
+    border: 1px solid #245FAE;
+    color: #ffffff;
+    font-family: 'Work Sans';
+    font-weight: 500;
+    padding: 3px 17px;
+    border-radius: 4px;
+    font-size: 16px;
+}
+
+.other-data-btn-reset:hover {
+  background-color: #ffffff;
+  border: 1px solid #245FAE!important;
+  color: #245FAE;
+   padding: 3px 17px;
+}
+
+.other-data-btn-submit:hover {
+     background-color: #245FAE;
+    border: 1px solid #245FAE!important;
+    color: #ffffff;
+     padding: 3px 17px;
+}
+.child_health .bg_color {
+    padding-bottom: 25px;
+    padding-left: 16px;
+    padding-right: 16px;
+}
+.row.g-3.bg_color {
+    margin-top: unset;
+}
+.distance_div {
+  
+    padding: 16px 16px 25px 16px;
+}
+#communityResources table td, #communityResources table th {
+    border: 1px solid #96B9E7;
+    padding: 5px 22px;
+    vertical-align: middle;
+}
+  
+ #communityResources table th {
+    background-color: #E1EDFF!important;
+    font-size: 14px;
+    font-weight: 500;
+    color: #0B0B0B;
+    height:36px;
+}
+input.form-control.owner {
+    border: 1px solid #B1CCF0;
+    border-radius: 1px;
+    height: 32px;
+}
+input.form-control.owner:placeholder {
+      color:#0B0B0B;
+      font-size: 14px;
+      font-weight: 400;
+}
+.manage-owners svg{
+  color: #0B4189;
+  font-size: 16px;
+  margin-right: 6px;
+}
+#descriptiveNote label {
+    font-size: 14px;
+    color: #0B0B0B;
+    font-family: 'Work Sans';
+    font-weight: 400;
+    margin-bottom: 18px;
+}
+#descriptiveNote textarea.form-control {
+    border: 1px solid #96B9E7;
+    border-radius: 4px;
+    color:#818181;
+    font-size: 15px;
+    background-color: #ffffff;
+    height:99px;
+    margin-bottom: 33px;
+   
+}
+#communityResources table tr td:last-child input {
+    border: 1px solid #B1CCF0;
+    border-radius: 1px;
+    height: 32px;
+}
+#communityResources table tr td:nth-child(4)  {
+ vertical-align: middle;
+}
+#communityResources table tr td:last-child input[value*="-"] {
+  border: none;
+}
+#communityResources table tr td input  {
+    font-size: 14px;
+    font-weight: 400;
+    color:#0B0B0B;
+}
+
+#communityResources .table_textarea label {
+   font-size: 14px;
+    color: #0B0B0B;
+    font-family: 'Work Sans';
+    font-weight: 400;
+    margin-bottom: 8px;
+}
+#communityResources textarea.form-control {
+    border: 1px solid #96B9E7;
+    border-radius: 1px;
+    color:#818181;
+    font-size: 15px;
+    background-color: #ffffff;
+    height:35px;
+   
+}
+#manageOwnersModal .modal-body {
+    max-height: 600px;
+    overflow-y: auto;
+}
+#ownersContainer .row.bg_color {
+    padding: 11px 20px!important;
+    margin: unset;
+    position: relative;
+}
+h5#manageOwnersModalLabel {
+    font-size: 20px;
+    font-weight: 500;
+    font-family: 'Roboto';
+    color: #4F4F4F;
+}
+#manageOwnersModal .modal-header {
+    height: 56px;
+}
+.owner-entry h6 {
+    font-size: 15px;
+    font-weight: 500;
+    color: #000000;
+    margin-bottom: 7px;
+}
+#manageOwnersModal .modal-body {
+    padding: 13px 25px!important;
+}
+#manageOwnersModal .form-label {
+     font-size: 14px;
+    font-weight: 400;
+    color: #000000;
+    margin-bottom: 7px;
+}
+.owner-entry .col-md-12 {
+   margin-bottom: 19px;
+}
+button#saveOwners{
+  background-color:#3B71CA;
+   
+    box-shadow: 0px 4px 9px -4px #3B71CA;
+    color: #ffffff;
+    font-family: 'Roboto';
+    font-weight: 500;
+    padding: 5px 20px;
+    border-radius: 4px;
+    font-size: 12px;;
+    text-transform: uppercase;
+}
+#cancelBtn{
+      background-color:#E3EBF7;
+     border:none;
+      color: #285192;
+      font-family: 'Roboto';
+      font-weight: 500;
+      padding: 5px 20px;
+      border-radius: 4px;
+      font-size: 12px;;
+      text-transform: uppercase;    
+}
+button#saveOwners:hover {
+    border: 1px solid #3B71CA!important;
+}
+#manageOwnersModal .modal-header .btn-close {
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1;
+    color: #000000;
+    text-shadow: 0 1px 0 #fff;
+}
+#manageOwnersModal .modal-dialog.modal-md {
+    box-shadow: 0 10px 20px -2px rgba(0,0,0,0.7);
+}
+#manageOwnersModal button.btn-close-red {
+    position: absolute;
+    right: 10px;
+    top: 0px;
+}
+.owner-entry .col-md-12:last-child {
+    margin-bottom: 0px;
+}
+#manageOwnersModal small.text-muted {
+    font-size: 13px;
+    font-weight: 400;
+    color: #000000!important;
+}
+.custom_table table {
+    border-collapse: collapse;
+    width: 100%;
+    margin-bottom: 0px;
+}
+.custom_table table th {
+    border: 1px solid #96B9E7!important;
+    background-color: #E1EDFF!important;
+    font-size: 14px;
+    font-weight: 500;
+    font-family: 'Work Sans';
+    vertical-align: middle;
+    white-space: nowrap;
+}
+
+.custom_table table td {
+    color: #000000!important;
+    border: 1px solid #96B9E7!important;
+    font-size: 14px;
+    font-weight: 400;
+    font-family: 'Work Sans';
+    vertical-align: middle;
+    padding: 1px 9px;
+    height: 40px;
+     white-space: nowrap;
+}
+#keyOfficials .table-responsive , #villageSecondaryData .table-responsive {
+    border-radius: 4px;
+    overflow: hidden;
+}
+#keyOfficials .table-responsive{
+  margin-bottom: 34px;
+}
+#keyOfficials .table-responsive:last-child{
+  margin-bottom: 0px;
+}
+.other-data-tabs .accordion-body {
+    padding: 18px!important;
+   
+}
+#fgd input{
+  border: 1px solid #265BAB!important;
+    border-radius: 4px;
+    height: 35px;
+}
+#dataTab button{
+  
+}
+#fgd .other-data-buttons {
+     margin-top: 0px;
+    padding-top: 20px;
+}
+#communityInfo  input[type="number"] {
+   position: relative;
+   
+}
+.distance_div {
+    padding-top: 0px!important;
+}
+#communityInfo .accordion-body {
+    padding: 27px!important;
+}
+ #communityResources table td{
+  font-size: 14px;
+    font-weight: 400;
+    color:#0B0B0B;
+     font-family: 'Work Sans';
+ }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Breadcrumb Section -->
+<section id="broadcrump">
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-md-12">
+        <div class="broadcrump__wrapper">
+          <ul>
+            <li>
+              <span class="me-2"><i class="fa-solid fa-house mr-2" style="color: #0b0b0b;"></i> <i class="fa-solid fa-angle-right" style="color: #000;"></i></span><span
+                class="BrdCrmb">{% trans "Other Data" %}</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Main Content Section -->
+<section class="mt-4">
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-12">
+        <!-- Tabs -->
+        <div class="other-data-tabs">
+          <ul class="nav nav-tabs" id="dataTab" role="tablist">
+            <li class="nav-item" role="presentation">
+              <button class="nav-link active" id="pra-tab" data-bs-toggle="tab" data-bs-target="#pra" type="button" role="tab">{% trans "PRA and community related data" %}</button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="line-tab" data-bs-toggle="tab" data-bs-target="#line" type="button" role="tab">{% trans "Data from Line Departments" %}</button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="fgd-tab" data-bs-toggle="tab" data-bs-target="#fgd" type="button" role="tab">{% trans "FGD on WASH and livelihood" %}</button>
+            </li>
+          </ul>
+          
+          <div class="tab-content" id="dataTabContent">
+            <div class="tab-pane fade show active" id="pra" role="tabpanel">
+              <!-- Information from Community -->
+              <div class="accordion other-data-accordion" id="communityAccordion">
+                <div class="accordion-item">
+                  <h2 class="accordion-header">
+                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#communityInfo">
+                      {% trans "Information from Community" %}
+                    </button>
+                  </h2>
+                  <div id="communityInfo" class="accordion-collapse collapse show">
+                    <div class="accordion-body other-data-form">
+                      <div class="row child_health">
+                        <!-- Children Below 6 Years -->
+                        <div class="col-md-6">
+                          <h6 class="other-data-section-title">{% trans "Children Below 6 Years" %}</h6>
+                          <div class="row g-3 bg_color  ">
+                            <div class="col-sm-12 col-md-6">
+                              <label class="form-label">{% trans "Male" %}</label>
+                              <div class="number-input-wrapper">
+                                <input type="number" class="form-control" value="0">
+                              </div>
+                            </div>
+                            <div class="col-sm-12 col-md-6 ">
+                              <label class="form-label">{% trans "Female" %}</label>
+                              <div class="number-input-wrapper">
+                                <input type="number" class="form-control" value="0">
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <!-- Health Information -->
+                        <div class="col-md-6 mobile_mt_3">
+                          <h6 class="other-data-section-title">{% trans "Health Information" %}</h6>
+                          <div class="row g-3 bg_color">
+                            <div class="col-sm-12 col-md-6">
+                              <label class="form-label">{% trans "Persons with Disability" %}</label>
+                              <div class="number-input-wrapper">
+                                <input type="text" class="form-control" placeholder="Approximate count">
+                              </div>
+                            </div>
+                            <div class="col-sm-12 col-md-6">
+                              <label class="form-label">{% trans "Persons with Chronic Illness" %}</label>
+                              <div class="number-input-wrapper">
+                                <input type="text" class="form-control" placeholder="Approximate count">
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <!-- Distance to nearest key facilities -->
+                      <div class="mt-4">
+                        <h6 class="other-data-section-title">{% trans "Distance to nearest key facilities (km)" %}</h6>
+                        <div class="row g-3 bg_color distance_div">
+                          <div class="col-md-3">
+                            <label class="form-label">{% trans "PHC" %}</label>
+                            <div class="number-input-wrapper">
+                              <input type="number" class="form-control" value="0.0" step="0.1">
+                            </div>
+                          </div>
+                          <div class="col-md-3">
+                            <label class="form-label">{% trans "CHC" %}</label>
+                            <div class="number-input-wrapper">
+                              <input type="number" class="form-control" value="0.0" step="0.1">
+                            </div>
+                          </div>
+                          <div class="col-md-3">
+                            <label class="form-label">{% trans "Hospital" %}</label>
+                            <div class="number-input-wrapper">
+                              <input type="number" class="form-control" value="0.0" step="0.1">
+                            </div>
+                          </div>
+                          <div class="col-md-3">
+                            <label class="form-label">{% trans "Veterinary clinic" %}</label>
+                            <div class="number-input-wrapper">
+                              <input type="number" class="form-control" value="0.0" step="0.1">
+                            </div>
+                          </div>
+                          <div class="col-md-3">
+                            <label class="form-label">{% trans "Post Office" %}</label>
+                            <div class="number-input-wrapper">
+                              <input type="number" class="form-control" value="0.0" step="0.1">
+                            </div>
+                          </div>
+                          <div class="col-md-3">
+                            <label class="form-label">{% trans "Police station" %}</label>
+                            <div class="number-input-wrapper">
+                              <input type="number" class="form-control" value="0.0" step="0.1">
+                            </div>
+                          </div>
+                          <div class="col-md-3">
+                            <label class="form-label">{% trans "Bank/ATM" %}</label>
+                            <div class="number-input-wrapper">
+                              <input type="number" class="form-control" value="0.0" step="0.1">
+                            </div>
+                          </div>
+                          <div class="col-md-3">
+                            <label class="form-label">{% trans "Ambulance" %}</label>
+                            <div class="number-input-wrapper">
+                              <input type="number" class="form-control" value="0.0" step="0.1">
+                            </div>
+                          </div>
+                          <div class="col-md-3">
+                            <label class="form-label">{% trans "Ration shop" %}</label>
+                            <div class="number-input-wrapper">
+                              <input type="number" class="form-control" value="0.0" step="0.1">
+                            </div>
+                          </div>
+                          <div class="col-md-3">
+                            <label class="form-label">{% trans "High School" %}</label>
+                            <div class="number-input-wrapper">
+                              <input type="number" class="form-control" value="0.0" step="0.1">
+                            </div>
+                          </div>
+                          <div class="col-md-3">
+                            <label class="form-label">{% trans "Higher secondary" %}</label>
+                            <div class="number-input-wrapper">
+                              <input type="number" class="form-control" value="0.0" step="0.1">
+                            </div>
+                          </div>
+                          <div class="col-md-3">
+                            <label class="form-label">{% trans "College" %}</label>
+                            <div class="number-input-wrapper">
+                              <input type="number" class="form-control" value="0.0" step="0.1">
+                            </div>
+                          </div>
+                          <div class="col-md-3">
+                            <label class="form-label">{% trans "Bus service" %}</label>
+                            <div class="number-input-wrapper">
+                              <input type="number" class="form-control" value="0.0" step="0.1">
+                            </div>
+                          </div>
+                          <div class="col-md-3">
+                            <label class="form-label">{% trans "Main market" %}</label>
+                            <div class="number-input-wrapper">
+                              <input type="number" class="form-control" value="0.0" step="0.1">
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Descriptive note -->
+                <div class="accordion-item">
+                  <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#descriptiveNote">
+                      {% trans "Descriptive note" %}
+                    </button>
+                  </h2>
+                  <div id="descriptiveNote" class="accordion-collapse collapse">
+                    <div class="accordion-body other-data-form">
+                      <div class="mb-3">
+                        <label class="form-label">1. Presence of cooperatives/ collective (for agriculture, livestock, fisheries) for input supplies, and produce aggregators. If so, explain the structure. Any issues farmers facing related to farm inputs, skill development, crop diversification and selling of produce. Level of mechanisation and irrigation facilities available. Presence of Minimum Support Price (MSP), extension service.</label>
+                        <textarea class="form-control" rows="3" placeholder="Enter text here..."></textarea>
+                      </div>
+                      
+                      <div class="mb-3">
+                        <label class="form-label">2. Weaving community/other handicraft have any cooperatives or SHG group working together? If so explain. What is the mechanism of procuring of input materials and selling of finished products? Problems faced.</label>
+                        <textarea class="form-control" rows="3" placeholder="Enter text here..."></textarea>
+                      </div>
+                      
+                      <div class="mb-3">
+                        <label class="form-label">3. Approximate farmers availing agriculture insurance.</label>
+                        <textarea class="form-control" rows="3" placeholder="Enter text here..."></textarea>
+                      </div>
+                      
+                      <div class="mb-3">
+                        <label class="form-label">4. Approximate farmers availing livestock insurance.</label>
+                        <textarea class="form-control" rows="3" placeholder="Enter text here..."></textarea>
+                      </div>
+                      
+                      <div class="mb-3">
+                        <label class="form-label">5. Details (name of the facility, contact person in-charge of safe shelter, community use during flood. If school specify number of rooms available. If community is using bridge/road specify that and no need of contact number.</label>
+                        <textarea class="form-control" rows="3" placeholder="Enter text here..."></textarea>
+                      </div>
+                      
+                      <div class="mb-3">
+                        <label class="form-label">6. Existing Government Scheme and Non- Scheme Developmental Activity (provide details of the scheme, number of HH availing this, contact person name and phone in-charge, include number of HH availing agri insurance).</label>
+                        <textarea class="form-control" rows="3" placeholder="Enter text here..."></textarea>
+                      </div>
+                      
+                      <div class="mb-3">
+                        <label class="form-label">7. Practices of domestic waste management in the village (also collect information of issues of waste management during normal and flood time). Any mechanism of collecting waste. If available mention the agency name and contact details.</label>
+                        <textarea class="form-control" rows="3" placeholder="Enter text here..."></textarea>
+                      </div>
+                      
+                      <div class="mb-3">
+                        <label class="form-label">8. Name and contact details of NGO/CBOs working in the village.</label>
+                        <textarea class="form-control" rows="3" placeholder="Enter text here..."></textarea>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Resources of community -->
+                <div class="accordion-item">
+                  <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#communityResources">
+                      {% trans "Resources of community which can be used during emergency" %}
+                    </button>
+                  </h2>
+                  <div id="communityResources" class="accordion-collapse collapse">
+                    <div class="accordion-body other-data-form">
+                      <div class="table-responsive">
+                        <table class="table ">
+                          <thead>
+                            <tr>
+                              <th>S. No.</th>
+                              <th>Resources</th>
+                              <th>Quantity</th>
+                              <th>Name of owner</th>
+                              <th>Phone number</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr>
+                              <td>1</td>
+                              <td>Tractor</td>
+                              <td>
+                                <div class="number-input-wrapper">
+                                  <input type="number" class="form-control" value="1"></td>
+                                </div>
+                              <td><input type="text" class="form-control owner" value="Ranjit Baruah"></td>
+                              <td><input type="text" class="form-control" value="+91 98765 43210"></td>
+                            </tr>
+                            <tr>
+                              <td>2</td>
+                              <td>JCB</td>
+                              <td>
+                                <div class="number-input-wrapper">
+                                  <input type="number" class="form-control" value="3"></td>
+                                </div>
+                              <td><span class="manage-owners"><img src="/static/images/peo.png">Manage Owners <span class="badge bg-primary">3</span></span></td>
+                              <td><input type="text" class="form-control" value="-"></td>
+                            </tr>
+                            <tr>
+                              <td>3</td>
+                              <td>Four Wheeler</td>
+                              <td>
+                                <div class="number-input-wrapper">
+                                  <input type="number" class="form-control" value="2"></td>
+                                </div>
+                              <td><span class="manage-owners"><img src="/static/images/peo.png"> Manage Owners <span class="badge bg-primary">3</span></span></td>
+                              <td><input type="text" class="form-control" value="-"></td>
+                            </tr>
+                            <tr>
+                              <td>4</td>
+                              <td>Boat</td>
+                              <td>
+                                <div class="number-input-wrapper">
+                                  <input type="number" class="form-control" value="1"></td>
+                                </div>
+                              <td><input type="text" class="form-control owner" value="Anima Gogoi"></td>
+                              <td><input type="text" class="form-control" value="+91 98765 43210"></td>
+                            </tr>
+                            <tr>
+                              <td>5</td>
+                              <td>Generator sets</td>
+                              <td>
+                                <div class="number-input-wrapper">
+                                  <input type="number" class="form-control" value="4"></td>
+                                </div>
+                              <td><span class="manage-owners"><img src="/static/images/peo.png"> Manage Owners <span class="badge bg-primary">3</span></span></td>
+                              <td><input type="text" class="form-control" value="-"></td>
+                            </tr>
+                            <tr>
+                              <td>6</td>
+                              <td>Pump Sets</td>
+                              <td>
+                                <div class="number-input-wrapper">
+                                  <input type="number" class="form-control" value="1"></td>
+                                </div>
+                              <td><input type="text" class="form-control owner" value="Dipankar Saikia"></td>
+                              <td><input type="text" class="form-control" value="+91 98765 43210"></td>
+                            </tr>
+                            <tr>
+                              <td>7</td>
+                              <td>Solar Lantern/light</td>
+                              <td>
+                                <div class="number-input-wrapper">
+                                  <input type="number" class="form-control" value="1"></td>
+                                </div>
+                              <td><input type="text" class="form-control owner" value="Mousumi Das"></td>
+                              <td><input type="text" class="form-control" value="+91 98765 43210"></td>
+                            </tr>
+                            <tr>
+                              <td>8</td>
+                              <td>Tents</td>
+                              <td>
+                                <div class="number-input-wrapper">
+                                  <input type="number" class="form-control" value="1"></td>
+                                </div>
+                              <td><input type="text" class="form-control owner" value="Bikash Kalita"></td>
+                              <td><input type="text" class="form-control" value="+91 98765 43210"></td>
+                            </tr>
+                            <tr>
+                              <td>9</td>
+                              <td>Tarpaulin</td>
+                              <td>
+                                <div class="number-input-wrapper">
+                                  <input type="number" class="form-control" value="1"></td>
+                                </div>
+                              <td><input type="text" class="form-control owner" value="Pallavi Bhuyan"></td>
+                              <td><input type="text" class="form-control" value="+91 98765 43210"></td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                      
+                      <div class="mt-3 table_textarea">
+                        <label class="form-label">Others, specify any that can be used during an emergency.</label>
+                        <textarea class="form-control" rows="3" placeholder="Enter text here..."></textarea>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Action Buttons -->
+              <div class="text-end other-data-buttons">
+                <button class="btn other-data-btn-reset me-2">{% trans "Reset" %}</button>
+                <button class="btn other-data-btn-submit">{% trans "Submit" %}</button>
+              </div>
+            </div>
+            
+            <div class="tab-pane fade" id="line" role="tabpanel">
+              <div class="accordion other-data-accordion" id="lineAccordion">
+                <div class="accordion-item">
+                  <h2 class="accordion-header">
+                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#keyOfficials">
+                      {% trans "Key Officials & Emergency Contact Information" %}
+                    </button>
+                  </h2>
+                  <div id="keyOfficials" class="accordion-collapse collapse show">
+                    <div class="accordion-body other-data-form">
+                      <div class="table-responsive custom_table">
+                        <table class="table">
+                          <thead>
+                            <tr>
+                              <th>S. No.</th>
+                              <th>Name</th>
+                              <th>Phone number</th>
+                              <th>Position/Responsibility</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr>
+                              <td>1</td>
+                              <td></td>
+                              <td></td>
+                              <td>DPO, DDMA</td>
+                            </tr>
+                            <tr>
+                              <td>2</td>
+                            <td></td>
+                              <td></td>
+                              <td>FO</td>
+                            </tr>
+                            <tr>
+                              <td>3</td>
+                               <td></td>
+                              <td></td>
+                              <td>Village Head</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                      
+                      <div class="table-responsive  custom_table">
+                        <table class="table">
+                          <thead>
+                            <tr>
+                              <th>S. No.</th>
+                              <th>Important Contacts</th>
+                              <th>Phone number</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr>
+                              <td>1</td>
+                              <td>Police station</td>
+                              <td><input type="text" class="form-control"></td>
+                            </tr>
+                            <tr>
+                              <td>2</td>
+                              <td>Fire station</td>
+                              <td><input type="text" class="form-control"></td>
+                            </tr>
+                            <tr>
+                              <td>3</td>
+                              <td>Ambulance</td>
+                              <td><input type="text" class="form-control"></td>
+                            </tr>
+                            <tr>
+                              <td>4</td>
+                              <td>District level Commissioner (Emergency Toll Free)</td>
+                              <td><input type="text" class="form-control"></td>
+                            </tr>
+                            <tr>
+                              <td>5</td>
+                              <td>District Emergency Operation Centre</td>
+                              <td><input type="text" class="form-control"></td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                      
+                      <div class="table-responsive custom_table">
+                        <table class="table">
+                          <thead>
+                            <tr>
+                              <th>S. No.</th>
+                              <th>Important Contacts</th>
+                              <th>Phone number</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr>
+                              <td>1</td>
+                              <td>District Collector</td>
+                              <td><input type="text" class="form-control"></td>
+                            </tr>
+                            <tr>
+                              <td>2</td>
+                              <td>DDMA/DEOC contact number (Help Line Toll Free)</td>
+                              <td><input type="text" class="form-control"></td>
+                            </tr>
+                            <tr>
+                              <td>3</td>
+                              <td>Circle Officer</td>
+                              <td><input type="text" class="form-control"></td>
+                            </tr>
+                            <tr>
+                              <td>4</td>
+                              <td>Field Officer</td>
+                              <td><input type="text" class="form-control"></td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="accordion-item">
+                  <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#villageSecondaryData">
+                      {% trans "Village-wise Secondary Data from Line Departments" %}
+                    </button>
+                  </h2>
+                  <div id="villageSecondaryData" class="accordion-collapse collapse">
+                    <div class="accordion-body other-data-form">
+                      <div class="table-responsive custom_table">
+                        <table class="table">
+                          <thead>
+                            <tr>
+                              <th>Source of data/Department</th>
+                              <th>Secondary data needed village wise</th>
+                              <th>2024</th>
+                              <th>2023</th>
+                              <th>Planned activities 2025</th>
+                              <th>Number</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr>
+                              <td>Panchayat/PNRD</td>
+                              <td>Number of PMAY houses constructed (last 2 year)</td>
+                              <td><input type="text" class="form-control"></td>
+                              <td><input type="text" class="form-control"></td>
+                              <td>Number of houses allocated</td>
+                              <td><input type="text" class="form-control"></td>
+                            </tr>
+                            <tr>
+                              <td>Panchayat/PNRD</td>
+                              <td>Length of all weather roads constructed (last 2 year)</td>
+                              <td><input type="text" class="form-control"></td>
+                              <td><input type="text" class="form-control"></td>
+                              <td>Length of road planned this year</td>
+                              <td><input type="text" class="form-control"></td>
+                            </tr>
+                            <tr>
+                              <td>Panchayat/PNRD</td>
+                              <td>Number of bridges constructed (last 2 year)</td>
+                              <td><input type="text" class="form-control"></td>
+                              <td><input type="text" class="form-control"></td>
+                              <td>Bridge planned to construct this year</td>
+                              <td><input type="text" class="form-control"></td>
+                            </tr>
+                            <tr>
+                              <td>Health Dept</td>
+                              <td>Any investment in health facilities (last 2 year)</td>
+                              <td><input type="text" class="form-control"></td>
+                              <td><input type="text" class="form-control"></td>
+                              <td>Planned investment in health facilities</td>
+                              <td><input type="text" class="form-control"></td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="text-end other-data-buttons">
+                <button class="btn other-data-btn-reset me-2">{% trans "Reset" %}</button>
+                <button class="btn other-data-btn-submit">{% trans "Submit" %}</button>
+              </div>
+            </div>
+            
+            <div class="tab-pane fade" id="fgd" role="tabpanel">
+              <div class="other-data-form p-2">
+                <div class="row">
+                  <div class="col-md-4">
+                    <label class="form-label">Upload FGD WASH note</label>
+                    <input type="file" class="form-control" accept=".pdf,.doc,.docx">
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label">Upload FGD Livelihood note</label>
+                    <input type="file" class="form-control" accept=".pdf,.doc,.docx">
+                  </div>
+                </div>
+              </div>
+              
+              <div class="text-end other-data-buttons">
+                <button class="btn other-data-btn-reset me-2">{% trans "Reset" %}</button>
+                <button class="btn other-data-btn-submit">{% trans "Submit" %}</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Manage Owners Modal -->
+<div class="modal fade" id="manageOwnersModal" tabindex="-1" aria-labelledby="manageOwnersModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-md">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="manageOwnersModalLabel">Manage Owners - <span id="resourceName">JCB</span></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div id="ownersContainer">
+          <div class="owner-entry mb-3">
+            <h6>Owner 1</h6>
+            <div class="row bg_color">
+              <div class="col-md-12 p-0">
+                <label class="form-label">Owner Name <button type="button" class="btn-close-red" style="float: right; background: none; border: none; color: #dc3545; font-size: 18px;">×</button></label>
+                <input type="text" class="form-control" placeholder="Enter owner name">
+              </div>
+              <div class="col-md-12 p-0">
+                <label class="form-label">Phone Number</label>
+                <input type="text" class="form-control" placeholder="+91 XXXXX XXXXX">
+                <small class="text-muted">Format: +91 XXXXX XXXXX</small>
+              </div>
+            </div>
+          </div>
+          <div class="owner-entry mb-3">
+            <h6>Owner 2</h6>
+            <div class="row bg_color">
+              <div class="col-md-12 p-0">
+                <label class="form-label">Owner Name <button type="button" class="btn-close-red" style="float: right; background: none; border: none; color: #dc3545; font-size: 18px;">×</button></label>
+                <input type="text" class="form-control" placeholder="Enter owner name">
+              </div>
+              <div class="col-md-12 p-0">
+                <label class="form-label">Phone Number</label>
+                <input type="text" class="form-control" placeholder="+91 XXXXX XXXXX">
+                <small class="text-muted">Format: +91 XXXXX XXXXX</small>
+              </div>
+            </div>
+          </div>
+          <div class="owner-entry mb-3">
+            <h6>Owner 3</h6>
+            <div class="row bg_color">
+              <div class="col-md-12 p-0">
+                <label class="form-label">Owner Name <button type="button" class="btn-close-red" style="float: right; background: none; border: none; color: #dc3545; font-size: 18px;">×</button></label>
+                <input type="text" class="form-control" placeholder="Enter owner name">
+              </div>
+              <div class="col-md-12 p-0">
+                <label class="form-label">Phone Number</label>
+                <input type="text" class="form-control" placeholder="+91 XXXXX XXXXX">
+                <small class="text-muted">Format: +91 XXXXX XXXXX</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" id="cancelBtn" data-bs-dismiss="modal">CANCEL</button>
+        <button type="button" class="btn btn-primary" id="saveOwners">SAVE CHANGES</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const submitBtn = document.querySelector('.other-data-btn-submit');
+  const modal = new bootstrap.Modal(document.getElementById('manageOwnersModal'));
+  
+  submitBtn.addEventListener('click', function(e) {
+    e.preventDefault();
+    modal.show();
+  });
+  
+  // Add increment/decrement functionality
+  document.querySelectorAll('.number-input-wrapper').forEach(wrapper => {
+    const input = wrapper.querySelector('input[type="number"]');
+    if (input) {
+      wrapper.addEventListener('click', function(e) {
+        const rect = wrapper.getBoundingClientRect();
+        const clickY = e.clientY - rect.top;
+        const wrapperHeight = rect.height;
+        
+        if (clickY < wrapperHeight / 2) {
+          // Clicked upper half - increment
+          input.stepUp();
+        } else {
+          // Clicked lower half - decrement
+          input.stepDown();
+        }
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+      });
+    }
+  });
+});
+</script>
+{% endblock %}

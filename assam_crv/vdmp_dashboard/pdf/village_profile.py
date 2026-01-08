@@ -16,7 +16,7 @@ from .utils.geoserverLayerImage import  get_geoserver_legend_path,get_geoserver_
 from ..models import VillageListOfAllTheDistricts,HouseholdSurvey,Commercial,Critical_Facility,VillageRoadInfo
 from village_profile.models import tblVillage
 from .dummy_data import getFacilityAccessData
-from vdmp_dashboard.models import HouseholdSurvey,VillageRoadInfo, VillageRoadInfoErosion,Critical_Facility,ElectricPole,Transformer
+from vdmp_dashboard.models import HouseholdSurvey,Critical_Facility,ElectricPole,Transformer
 
 from django.db.models import Sum, Count
 
@@ -25,7 +25,7 @@ from collections import defaultdict
 from decimal import Decimal, ROUND_HALF_UP
 from reportlab.platypus import Paragraph, Spacer, PageBreak
 from reportlab.platypus import Table as ReportLabTable
-from .village_summary import VILLAGE_SUMMARY_DATA
+# from .village_summary import VILLAGE_SUMMARY_DATA
 
 styles = getSampleStyleSheet()
 page_width, page_height = A4
@@ -101,11 +101,12 @@ def getVillageDemographic(village_id):
         total_population = total_males + total_females
         total_households = households.count()
         
-        avg_family_size = round(total_population / total_households, 1) if total_households > 0 else 0
+        avg_family_size = int(round(total_population / total_households)) if total_households > 0 else 0
+
         male_female_ratio = round((total_males / total_females) * 1000) if total_females > 0 else 0
         
-        VILLAGE_SUMMARY_DATA['total_population']=total_population
-        VILLAGE_SUMMARY_DATA['total_households']=total_households
+        # VILLAGE_SUMMARY_DATA['total_population']=total_population
+        # VILLAGE_SUMMARY_DATA['total_households']=total_households
         
         return [
             ['Sr. No.',"Household Characteristic", "Total"],
@@ -252,7 +253,7 @@ def getIncomeGroupData(village_id):
         
         # Count households by income class
         upto_50k = households.filter(income_class='Upto 50K').count()
-        upto_150k = households.filter(income_class='Upto 1000K').count()
+        upto_150k = households.filter(income_class='Upto 100K').count()
         upto_250k = households.filter(income_class='Upto 250K').count()
         above_250k = households.filter(income_class='>250K').count()
         
@@ -495,7 +496,7 @@ def getPrimaryLivelihoodDistributionData(village_id, type='primary'):
         if type == 'primary':
             counts = {'Agriculture': agriculture, 'Fishing': fishing, 'Livestock': livestock, 'Manual Labour': manual_labour, 'No Job': no_job, 'Service': service, 'Shop': shop}
             max_occupation = max(counts, key=counts.get)
-            VILLAGE_SUMMARY_DATA['occupational_category'] = max_occupation
+            # VILLAGE_SUMMARY_DATA['occupational_category'] = max_occupation
         
         # Calculate percentages
         agriculture_pct = f"{round(agriculture/total_households*100)}%"
@@ -657,7 +658,7 @@ def getHousingTypologyData(village_id):
         counts = {'Kachcha': kachcha, 'Semi Pucca': semi_pucca, 'Pucca': pucca}
         max_house_type = max(counts, key=counts.get)
         max_percentage = round((counts[max_house_type] / total_households) * 100, 1)
-        VILLAGE_SUMMARY_DATA['dominant_house_type'] = f"{max_house_type} - {max_percentage}%"
+        # VILLAGE_SUMMARY_DATA['dominant_house_type'] = f"{max_house_type} - {max_percentage}%"
         
         # Calculate percentages as numbers first
         kachcha_pct_val = round(kachcha / total_households * 100, 1)
@@ -926,7 +927,42 @@ def getRoadLengthByTypologyData(village_id, workspace, layer):
 
 
 
-def getLULCData(village_id, workspace, layer):
+def getVillageArea(village_id):
+    try:
+        village = tblVillage.objects.get(id=village_id)
+        village_code = village.code
+    except tblVillage.DoesNotExist:
+        return 0
+
+    wfs_url = "http://localhost:8080/geoserver/assam/ows"
+    params = {
+        "service": "WFS",
+        "version": "1.0.0",
+        "request": "GetFeature",
+        "typeName": "assam:village_boundary",
+        "outputFormat": "application/json",
+        "CQL_FILTER": f"vill_id='{village_code}'"
+    }
+
+    try:
+        response = requests.get(wfs_url, params=params)
+        if response.status_code != 200:
+            return 0
+
+        geojson = response.json()
+        features = geojson.get("features", [])
+        
+        if features:
+            props = features[0].get("properties", {})
+            area_sqkm = props.get("area_sqkm", 0) or 0
+            return float(area_sqkm)
+        
+        return 0
+    except Exception:
+        return 0
+
+
+def getLULCData(village_id, workspace, layer, onlymax=False):
     try:
         village = tblVillage.objects.get(id=village_id)
         village_code = village.code
@@ -950,6 +986,8 @@ def getLULCData(village_id, workspace, layer):
     geojson = response.json()
     features = geojson.get("features", [])
 
+    if not features and onlymax:
+        return "N/A"
     if not features:
         return [["Sr. No.", "Landuse", "Area (sqm)", "Percentage"], ["", "No data available for this village", "0", "0%"]]
 
@@ -970,7 +1008,16 @@ def getLULCData(village_id, workspace, layer):
         max_land_use = max(class_area, key=class_area.get)
         max_area = class_area[max_land_use]
         percentage = round((max_area / total_area) * 100) if total_area > 0 else 0
-        VILLAGE_SUMMARY_DATA['major_land_use'] = f"{max_land_use} - {percentage}%"
+        # VILLAGE_SUMMARY_DATA['major_land_use'] = f"{max_land_use} - {percentage}%"
+    print("LULC Data Debug:", village_id, workspace, layer ,onlymax)
+    print("Class Area:", class_area, "Total Area:", total_area, "Max Land Use:", max_land_use if class_area else "N/A", "Max Area:", max_area if class_area else "N/A", "Percentage:", percentage if class_area else "N/A")
+    if onlymax:
+        max_land_use = max(class_area, key=class_area.get)
+        max_area = class_area[max_land_use]
+        percentage = round((max_area / total_area) * 100) if total_area > 0 else 0
+        return f"{max_land_use} - {percentage}%"
+    elif onlymax:
+        return "N/A"
 
     def format_number(n):
         return f"{int(n):,}"
