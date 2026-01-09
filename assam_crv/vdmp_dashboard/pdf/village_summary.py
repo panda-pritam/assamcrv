@@ -7,11 +7,12 @@ from reportlab.lib.pagesizes import letter
 from village_profile.models import tblVillage
 from datetime import datetime
 
-from vdmp_dashboard.models import HouseholdSurvey, Critical_Facility
+from vdmp_dashboard.models import HouseholdSurvey, Critical_Facility, Risk_Assesment
+from vdmp_progress.models import Risk_Assessment_Result
 from collections import Counter
 
 from .village_profile import getVillageArea, getLULCData
-from django.db.models import Count
+from django.db.models import Count,Sum
 
 
 
@@ -156,12 +157,43 @@ def generate_socio_economic_summary_table(village_id):
 
 
 def getRiskAssessment(village_id):
+   
+   
+    
+    # Get risk assessment data for the village
+    risk_data = Risk_Assessment_Result.objects.filter(village_id=village_id)
+    
+    if not risk_data.exists():
+        return [
+            ['Risk Assessment (excluding content loss in INR Crore)'],
+            ['Sector', Paragraph('Flood 2022 Scenario (INR Crore)'), 'Earthquake 475 RP', 'Strong wind 100 RP'],
+            ['Residential', 'No data', 'No data', 'No data'],
+            ['Commercial', 'No data', 'No data', 'No data'],
+            ['Critical Facilities', 'No data', 'No data', 'No data'],
+            ['Roads', '-', '-', '-'],
+            ['Agriculture', '-', '-', '-'],
+            ['Note', 'Excluding content loss', '', '']
+        ]
+    
+    # Calculate losses by asset type (convert to crores)
+    household_flood = (risk_data.filter(asset_type='household').aggregate(Sum('flood_loss'))['flood_loss__sum'] or 0) / 10000000
+    household_eq = (risk_data.filter(asset_type='household').aggregate(Sum('eq_loss'))['eq_loss__sum'] or 0) / 10000000
+    household_wind = (risk_data.filter(asset_type='household').aggregate(Sum('wind_loss'))['wind_loss__sum'] or 0) / 10000000
+    
+    commercial_flood = (risk_data.filter(asset_type='commercial').aggregate(Sum('flood_loss'))['flood_loss__sum'] or 0) / 10000000
+    commercial_eq = (risk_data.filter(asset_type='commercial').aggregate(Sum('eq_loss'))['eq_loss__sum'] or 0) / 10000000
+    commercial_wind = (risk_data.filter(asset_type='commercial').aggregate(Sum('wind_loss'))['wind_loss__sum'] or 0) / 10000000
+    
+    critical_flood = (risk_data.filter(asset_type='critical_facility').aggregate(Sum('flood_loss'))['flood_loss__sum'] or 0) / 10000000
+    critical_eq = (risk_data.filter(asset_type='critical_facility').aggregate(Sum('eq_loss'))['eq_loss__sum'] or 0) / 10000000
+    critical_wind = (risk_data.filter(asset_type='critical_facility').aggregate(Sum('wind_loss'))['wind_loss__sum'] or 0) / 10000000
+    
     return [
         ['Risk Assessment (excluding content loss in INR Crore)'],
-        ['Sector', 'Flood 2022 Scenario (INR Crore)','Earthquake 475 RP','Strong wind 100 RP'],
-        ['Residential', '-', '-', '-'],
-        ['Commercial', '-', '-', '-'],
-        ['Critical Facilities', '-', '-', '-'],
+        ['Sector', Paragraph('Flood 2022 Scenario (INR Crore)'), 'Earthquake 475 RP', 'Strong wind 100 RP'],
+        ['Residential', f'{household_flood:.2f}', f'{household_eq:.2f}', f'{household_wind:.2f}'],
+        ['Commercial', f'{commercial_flood:.2f}', f'{commercial_eq:.2f}', f'{commercial_wind:.2f}'],
+        ['Critical Facilities', f'{critical_flood:.2f}', f'{critical_eq:.2f}', f'{critical_wind:.2f}'],
         ['Roads', '-', '-', '-'],
         ['Agriculture', '-', '-', '-'],
         ['Note', 'Excluding content loss', '', '']
@@ -407,88 +439,88 @@ def draw_Village_summery_tables(elements,table_sections,village_id):
    
     
     
-from vdmp_dashboard.models import Risk_Assesment
-from village_profile.models import tblVillage
+# from vdmp_dashboard.models import Risk_Assesment
+# from village_profile.models import tblVillage
 
-def getRiskAssessment(village_id):
-    try:
-        # Validate and fetch village safely
-        village = tblVillage.objects.filter(id=village_id).first()
-        if not village:
-            return [
-                ['Risk Assessment (excluding content loss in INR Crore)'],
-                ['Sector', Paragraph('Flood 2022 Scenario (INR Crore)'), 'Earthquake 475 RP', 'Strong wind 100 RP'],
-                ['Residential', '-'],
-                ['Commercial', '-'],
-                ['Critical Facilities', '-'],
-                ['Roads', '-'],
-                ['Agriculture', '-'],
-                ['Note', '-']
-            ]
+# def getRiskAssessment(village_id):
+#     try:
+#         # Validate and fetch village safely
+#         village = tblVillage.objects.filter(id=village_id).first()
+#         if not village:
+#             return [
+#                 ['Risk Assessment (excluding content loss in INR Crore)'],
+#                 ['Sector', Paragraph('Flood 2022 Scenario (INR Crore)'), 'Earthquake 475 RP', 'Strong wind 100 RP'],
+#                 ['Residential', '-'],
+#                 ['Commercial', '-'],
+#                 ['Critical Facilities', '-'],
+#                 ['Roads', '-'],
+#                 ['Agriculture', '-'],
+#                 ['Note', '-']
+#             ]
         
-        risk_data = Risk_Assesment.objects.filter(village=village)
-        if risk_data.exists():
-            # Helper function to safely fetch value
-            def get_value(qs, hazard, exposure_filter):
-                record = qs.filter(hazard__iexact=hazard, **exposure_filter).first()
-                return record.total_exposure_value_inr_crore if record else '-'
+#         risk_data = Risk_Assesment.objects.filter(village=village)
+#         if risk_data.exists():
+#             # Helper function to safely fetch value
+#             def get_value(qs, hazard, exposure_filter):
+#                 record = qs.filter(hazard__iexact=hazard, **exposure_filter).first()
+#                 return record.total_exposure_value_inr_crore if record else '-'
 
-            # Residential
-            residential_flood = get_value(risk_data, "Flood", {"exposure_type__istartswith": "Residential"})
-            residential_earthquake = get_value(risk_data, "Earthquake", {"exposure_type__istartswith": "Residential"})
-            residential_cyclone = get_value(risk_data, "Cyclone", {"exposure_type__istartswith": "Residential"})
+#             # Residential
+#             residential_flood = get_value(risk_data, "Flood", {"exposure_type__istartswith": "Residential"})
+#             residential_earthquake = get_value(risk_data, "Earthquake", {"exposure_type__istartswith": "Residential"})
+#             residential_cyclone = get_value(risk_data, "Cyclone", {"exposure_type__istartswith": "Residential"})
 
-            # Commercial
-            commercial_flood = get_value(risk_data, "Flood", {"exposure_type__istartswith": "Commercial"})
-            commercial_earthquake = get_value(risk_data, "Earthquake", {"exposure_type__istartswith": "Commercial"})
-            commercial_cyclone = get_value(risk_data, "Cyclone", {"exposure_type__istartswith": "Commercial"})
+#             # Commercial
+#             commercial_flood = get_value(risk_data, "Flood", {"exposure_type__istartswith": "Commercial"})
+#             commercial_earthquake = get_value(risk_data, "Earthquake", {"exposure_type__istartswith": "Commercial"})
+#             commercial_cyclone = get_value(risk_data, "Cyclone", {"exposure_type__istartswith": "Commercial"})
 
-            # Critical Facilities
-            critical_facilities_flood = get_value(risk_data, "Flood", {"exposure_type__icontains": "Critical"})
-            critical_facilities_earthquake = get_value(risk_data, "Earthquake", {"exposure_type__icontains": "Critical"})
-            critical_facilities_cyclone = get_value(risk_data, "Cyclone", {"exposure_type__icontains": "Essential"})
+#             # Critical Facilities
+#             critical_facilities_flood = get_value(risk_data, "Flood", {"exposure_type__icontains": "Critical"})
+#             critical_facilities_earthquake = get_value(risk_data, "Earthquake", {"exposure_type__icontains": "Critical"})
+#             critical_facilities_cyclone = get_value(risk_data, "Cyclone", {"exposure_type__icontains": "Essential"})
 
-            # Roads
-            roads_flood = get_value(risk_data, "Flood", {"exposure_type__istartswith": "Roads"})
-            roads_earthquake = get_value(risk_data, "Earthquake", {"exposure_type__istartswith": "Roads"})
-            roads_cyclone = get_value(risk_data, "Cyclone", {"exposure_type__istartswith": "Roads"})
+#             # Roads
+#             roads_flood = get_value(risk_data, "Flood", {"exposure_type__istartswith": "Roads"})
+#             roads_earthquake = get_value(risk_data, "Earthquake", {"exposure_type__istartswith": "Roads"})
+#             roads_cyclone = get_value(risk_data, "Cyclone", {"exposure_type__istartswith": "Roads"})
 
-            # Agriculture
-            agriculture_flood = get_value(risk_data, "Flood", {"exposure_type__istartswith": "Agriculture"})
-            agriculture_earthquake = get_value(risk_data, "Earthquake", {"exposure_type__istartswith": "Agriculture"})
-            agriculture_cyclone = get_value(risk_data, "Cyclone", {"exposure_type__istartswith": "Agriculture"})
+#             # Agriculture
+#             agriculture_flood = get_value(risk_data, "Flood", {"exposure_type__istartswith": "Agriculture"})
+#             agriculture_earthquake = get_value(risk_data, "Earthquake", {"exposure_type__istartswith": "Agriculture"})
+#             agriculture_cyclone = get_value(risk_data, "Cyclone", {"exposure_type__istartswith": "Agriculture"})
 
-            return [
-                ['Risk Assessment (excluding content loss in INR Crore)'],
-                ['Sector', Paragraph('Flood 2022 Scenario (INR Crore)'), 'Earthquake 475 RP', 'Strong wind 100 RP'],
-                ['Residential', str(residential_flood), str(residential_earthquake), str(residential_cyclone)],
-                ['Commercial', str(commercial_flood), str(commercial_earthquake), str(commercial_cyclone)],
-                ['Critical Facilities', str(critical_facilities_flood), str(critical_facilities_earthquake), str(critical_facilities_cyclone)],
-                ['Roads', str(roads_flood), str(roads_earthquake), str(roads_cyclone)],
-                ['Agriculture', str(agriculture_flood), str(agriculture_earthquake), str(agriculture_cyclone)],
-                ['Note', '-', '-', '-']
-            ]
-        else:
-            return [
-                ['Risk Assessment (excluding content loss in INR Crore)'],
-                ['Sector', Paragraph('Flood 2022 Scenario (INR Crore)'), 'Earthquake 475 RP', 'Strong wind 100 RP'],
-                ['Residential', '-'],
-                ['Commercial', '-'],
-                ['Critical Facilities', '-'],
-                ['Roads', '-'],
-                ['Agriculture', '-'],
-                ['Note', '-']
-            ]
-    except Exception as e:
-        # In case of invalid village_id or unexpected error
-        return [
-                ['Risk Assessment (excluding content loss in INR Crore)'],
-                ['Sector', Paragraph('Flood 2022 Scenario (INR Crore)'), 'Earthquake 475 RP', 'Strong wind 100 RP'],
-                ['Residential', '-'],
-                ['Commercial', '-'],
-                ['Critical Facilities', '-'],
-                ['Roads', '-'],
-                ['Agriculture', '-'],
-                ['Note', '-']
-        ]
+#             return [
+#                 ['Risk Assessment (excluding content loss in INR Crore)'],
+#                 ['Sector', Paragraph('Flood 2022 Scenario (INR Crore)'), 'Earthquake 475 RP', 'Strong wind 100 RP'],
+#                 ['Residential', str(residential_flood), str(residential_earthquake), str(residential_cyclone)],
+#                 ['Commercial', str(commercial_flood), str(commercial_earthquake), str(commercial_cyclone)],
+#                 ['Critical Facilities', str(critical_facilities_flood), str(critical_facilities_earthquake), str(critical_facilities_cyclone)],
+#                 ['Roads', str(roads_flood), str(roads_earthquake), str(roads_cyclone)],
+#                 ['Agriculture', str(agriculture_flood), str(agriculture_earthquake), str(agriculture_cyclone)],
+#                 ['Note', '-', '-', '-']
+#             ]
+#         else:
+#             return [
+#                 ['Risk Assessment (excluding content loss in INR Crore)'],
+#                 ['Sector', Paragraph('Flood 2022 Scenario (INR Crore)'), 'Earthquake 475 RP', 'Strong wind 100 RP'],
+#                 ['Residential', '-'],
+#                 ['Commercial', '-'],
+#                 ['Critical Facilities', '-'],
+#                 ['Roads', '-'],
+#                 ['Agriculture', '-'],
+#                 ['Note', '-']
+#             ]
+#     except Exception as e:
+#         # In case of invalid village_id or unexpected error
+#         return [
+#                 ['Risk Assessment (excluding content loss in INR Crore)'],
+#                 ['Sector', Paragraph('Flood 2022 Scenario (INR Crore)'), 'Earthquake 475 RP', 'Strong wind 100 RP'],
+#                 ['Residential', '-'],
+#                 ['Commercial', '-'],
+#                 ['Critical Facilities', '-'],
+#                 ['Roads', '-'],
+#                 ['Agriculture', '-'],
+#                 ['Note', '-']
+#         ]
 

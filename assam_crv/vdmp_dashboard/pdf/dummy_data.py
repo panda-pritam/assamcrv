@@ -766,16 +766,6 @@ def getPublicAssetsData(village_id):
 # Original functions commented out and copied with values replaced by "-"
 
 
-def generate_socio_economic_summary_table(village_id):
-    return [
-        ['Socio-Economic Summary'],
-        ['Total Population', '-'],
-        ['Total Households', ''],
-        ['Dominant House Type', ''],
-        ['Major Land Use', '-'],
-        ['Occupational Category', '-'],
-        ['Sanitation Facilities', '-']
-    ]
 
 def getHazardAssessment(village_id):
     return [
