@@ -77,88 +77,127 @@ def generate_general_summary_table(village_id=None):
         
     
     
+from django.db.models.functions import Lower, Trim
+
+
 def generate_socio_economic_summary_table(village_id):
-  
-    
+
     households = HouseholdSurvey.objects.filter(village_id=village_id)
-    
-    # Calculate total population
+
+    # =========================
+    # TOTAL POPULATION
+    # =========================
     total_population = sum(
-        int(h.number_of_males_including_children or 0) + 
-        int(h.number_of_females_including_children or 0) 
+        int(h.number_of_males_including_children or 0) +
+        int(h.number_of_females_including_children or 0)
         for h in households
     )
-    
-    # Count sanitation types using filter
-    community_toilet = households.filter(Sanitation_Type='Community Toilet').count()
-    own_toilet = households.filter(Sanitation_Type='Own').count()
-    open_defecation = households.filter(Sanitation_Type='Open').count()
-    total_households_count = households.count()
-    
-    # Find dominant sanitation type
-    counts = {'Community Toilet': community_toilet, 'Own': own_toilet, 'Open': open_defecation}
-    if total_households_count > 0:
-        max_sanitation_type = max(counts, key=counts.get)
-        max_percentage = round((counts[max_sanitation_type] / total_households_count) * 100)
-        sanitation_text = f"{max_sanitation_type} - {max_percentage}%"
-    else:
-        sanitation_text = 'No data available'
-    
-    # Update global dictionary
-    VILLAGE_SUMMARY_DATA['total_population'] = total_population
-    VILLAGE_SUMMARY_DATA['total_households'] = total_households_count
-    VILLAGE_SUMMARY_DATA['sanitation_facilities'] = sanitation_text
 
-    # Count households by house type
-    kachcha = households.filter(house_type='Kachcha').count()
-    semi_pucca = households.filter(house_type='Semi Pucca').count()
-    pucca = households.filter(house_type='Pucca').count()
-    
-    # Find dominant house type and update global dictionary
-    counts = {'Kachcha': kachcha, 'Semi Pucca': semi_pucca, 'Pucca': pucca}
-    if total_households_count > 0:
-        max_house_type = max(counts, key=counts.get)
-        max_percentage = round((counts[max_house_type] / total_households_count) * 100, 1)
-        VILLAGE_SUMMARY_DATA['dominant_house_type'] = f"{max_house_type} - {max_percentage}%"
+    total_households_count = households.count()
+
+    # =========================
+    # NORMALIZE TEXT FIELDS
+    # =========================
+    households_n = households.annotate(
+        house_type_n=Lower(Trim('house_type')),
+        toilet_class_n=Lower(Trim('toilet_class')),
+        sanitation_type_n=Lower(Trim('Sanitation_Type')),
+        livelihood_n=Lower(Trim('livelihood_primary')),
+    )
+
+    # =========================
+    # SANITATION (OWN TOILETS)
+    # =========================
+    own_households = households_n.filter(sanitation_type_n='own')
+    own_total = own_households.count()
+
+    if own_total > 0:
+        pucca_toilet = own_households.filter(toilet_class_n='pucca').count()
+        semi_pucca_toilet = own_households.filter(toilet_class_n='semi pucca').count()
+        kachcha_toilet = own_households.filter(toilet_class_n='kachcha').count()
+
+        toilet_counts = {
+            'Pucca': pucca_toilet,
+            'Semi Pucca': semi_pucca_toilet,
+            'Kachcha': kachcha_toilet
+        }
+
+        max_toilet_type = max(toilet_counts, key=toilet_counts.get)
+        max_percentage = round((toilet_counts[max_toilet_type] / own_total) * 100)
+
+        sanitation_text = f"{max_toilet_type} - {max_percentage}%"
     else:
-        VILLAGE_SUMMARY_DATA['dominant_house_type'] = 'N/A'
-        
-    
+        sanitation_text = 'No own toilets'
+
+    # =========================
+    # HOUSE TYPE
+    # =========================
+    kachcha = households_n.filter(house_type_n='kachcha').count()
+    semi_pucca = households_n.filter(house_type_n='semi pucca').count()
+    pucca = households_n.filter(house_type_n='pucca').count()
+
+    house_counts = {
+        'Kachcha': kachcha,
+        'Semi Pucca': semi_pucca,
+        'Pucca': pucca
+    }
+
+    if total_households_count > 0:
+        max_house_type = max(house_counts, key=house_counts.get)
+        max_percentage = round(
+            (house_counts[max_house_type] / total_households_count) * 100, 1
+        )
+        dominant_house_type = f"{max_house_type} - {max_percentage}%"
+    else:
+        dominant_house_type = 'N/A'
+
+    # =========================
+    # OCCUPATION
+    # =========================
     livelihood_qs = (
-        households
-        .exclude(livelihood_primary__isnull=True)
-        .exclude(livelihood_primary__exact='')
-        .values('livelihood_primary')
-        .annotate(count=Count('livelihood_primary'))
+        households_n
+        .exclude(livelihood_n__isnull=True)
+        .exclude(livelihood_n='')
+        .values('livelihood_n')
+        .annotate(count=Count('livelihood_n'))
         .order_by('-count')
     )
 
     if livelihood_qs.exists() and total_households_count > 0:
-        top_livelihood = livelihood_qs[0]['livelihood_primary']
+        top_livelihood = livelihood_qs[0]['livelihood_n'].title()
         top_count = livelihood_qs[0]['count']
         percentage = round((top_count / total_households_count) * 100)
 
-        VILLAGE_SUMMARY_DATA['occupational_category'] = (
-            f"{top_livelihood} - {percentage}%"
-        )
+        occupational_category = f"{top_livelihood} - {percentage}%"
     else:
-        VILLAGE_SUMMARY_DATA['occupational_category'] = 'No data available'
+        occupational_category = 'No data available'
 
+    # =========================
+    # UPDATE GLOBAL SUMMARY
+    # =========================
+    VILLAGE_SUMMARY_DATA['total_population'] = total_population
+    VILLAGE_SUMMARY_DATA['total_households'] = total_households_count
+    VILLAGE_SUMMARY_DATA['dominant_house_type'] = dominant_house_type
+    VILLAGE_SUMMARY_DATA['sanitation_facilities'] = sanitation_text
+    VILLAGE_SUMMARY_DATA['occupational_category'] = occupational_category
 
+    # =========================
+    # FINAL TABLE (REPORTLAB SAFE)
+    # =========================
     return [
         ['Socio-Economic Summary'],
-        ['Total Population', VILLAGE_SUMMARY_DATA['total_population']],
-        ['Total Households', VILLAGE_SUMMARY_DATA['total_households']],
-        ['Dominant House Type', VILLAGE_SUMMARY_DATA['dominant_house_type']],
-        ['Major Land Use', VILLAGE_SUMMARY_DATA['major_land_use']],
-        ['Occupational Category', VILLAGE_SUMMARY_DATA['occupational_category']],
-        ['Sanitation Facilities', VILLAGE_SUMMARY_DATA['sanitation_facilities']]
+        ['Total Population', total_population],
+        ['Total Households', total_households_count],
+        ['Dominant House Type', dominant_house_type],
+        ['Major Land Use', VILLAGE_SUMMARY_DATA.get('major_land_use', 'N/A')],
+        ['Occupational Category', occupational_category],
+        ['Sanitation Facilities', sanitation_text],
     ]
 
 
+
+
 def getRiskAssessment(village_id):
-   
-   
     
     # Get risk assessment data for the village
     risk_data = Risk_Assessment_Result.objects.filter(village_id=village_id)

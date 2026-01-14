@@ -500,6 +500,13 @@ def _apply_classifications(df):
         df['crops_diversity'] = df['number_of_crops_normally_raised_every_year'].apply(_classify_crops_diversity)
         logger.debug("Applied crops diversity classification")
     
+    # Toilet classification
+    if 'toilet_wall_material' in df.columns and 'toilet_roof_material' in df.columns and 'sanitation_facility' in df.columns:
+        df['toilet_class'] = df.apply(
+            lambda row: _classify_toilet_type(row['toilet_wall_material'], row['toilet_roof_material'], row['sanitation_facility']), axis=1
+        )
+        logger.debug("Applied toilet classification")
+    
     return df
 
 def _classify_flood(depth):
@@ -830,6 +837,37 @@ def _classify_erosion(vulnerable):
         return "Yes"
     else:
         return "No"
+def _classify_toilet_type(wall, roof, sanitation_facility):
+    """Classify toilet type based on wall, roof materials and sanitation facility"""
+    if pd.isna(sanitation_facility) or str(sanitation_facility).strip().lower() != 'own':
+        return None
+    
+    wall_map = {
+        "brick": "brick",
+        "brick with cement": "brick",
+        "brick without cement": "brick",
+        "concrete": "brick"
+    }
+    roof_map = {
+        "brick": "brick",
+        "concrete": "brick",
+        "tin": "tin"
+    }
+    
+    w = str(wall).strip().lower()
+    r = str(roof).strip().lower()
+    
+    w_norm = next((v for k, v in wall_map.items() if k in w), None)
+    r_norm = next((v for k, v in roof_map.items() if k in r), None)
+    
+    if w_norm == "brick" and r_norm == "brick":
+        return "Pucca"
+    elif w_norm == "brick" and r_norm == "tin":
+        return "Semi Pucca"
+    else:
+        return "Kachcha"
+    
+
 def _classify_crops_diversity(num_crops):
     """Classify crops diversity"""
     if pd.isna(num_crops): return "No crops"

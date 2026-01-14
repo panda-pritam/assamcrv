@@ -149,6 +149,11 @@ class HouseholdSurvey(models.Model):
     flood_depth_from_survey_meter=models.CharField(max_length=255, null=True, blank=True)
     building_area_sqft=models.CharField(max_length=255, null=True, blank=True)
     building_area_sqft=models.CharField(max_length=255, null=True, blank=True)
+    toilet_class=models.CharField(max_length=255, null=True, blank=True)
+    JJM_or_other_taped_water_connection=models.CharField(max_length=255, null=True, blank=True)
+    type_of_toilet=models.CharField(max_length=255, null=True, blank=True)
+    sludge_be_disposed_type=models.CharField(max_length=255, null=True, blank=True)
+    adequate_water_supply=models.CharField(max_length=255, null=True, blank=True)
     unique_id=models.CharField(max_length=255, null=True, blank=True, unique=True)
     form_id=models.CharField(max_length=255, null=True, blank=True, unique=True)
 

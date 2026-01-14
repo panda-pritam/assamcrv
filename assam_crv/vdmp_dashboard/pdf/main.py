@@ -203,11 +203,11 @@ def generate_pdf(village_id=None, village=None):
     elements.append(PageBreak())
     draw_hazard_Vulnerability_risk(elements,village_id)
     elements.append(PageBreak())
-    draw_disaster_preparedness_and_response_plan(elements, village_id)
-    elements.append(PageBreak())
-    draw_mitigation_intervention_and_investment_plan(elements, village_id)
-    elements.append(PageBreak())
-    draw_PRA_map_and_field_photos(elements, village_id)
+    # draw_disaster_preparedness_and_response_plan(elements, village_id)
+    # elements.append(PageBreak())
+    # draw_mitigation_intervention_and_investment_plan(elements, village_id)
+    # elements.append(PageBreak())
+    # draw_PRA_map_and_field_photos(elements, village_id)
     
     # Build first time to populate figure_list and table_list
     doc.multiBuild(elements)
@@ -238,11 +238,11 @@ def generate_pdf(village_id=None, village=None):
     elements.append(PageBreak())
     draw_hazard_Vulnerability_risk(elements,village_id)
     elements.append(PageBreak())
-    draw_disaster_preparedness_and_response_plan(elements, village_id)
-    elements.append(PageBreak())
-    draw_mitigation_intervention_and_investment_plan(elements, village_id)
-    elements.append(PageBreak())
-    draw_PRA_map_and_field_photos(elements, village_id)
+    # draw_disaster_preparedness_and_response_plan(elements, village_id)
+    # elements.append(PageBreak())
+    # draw_mitigation_intervention_and_investment_plan(elements, village_id)
+    # elements.append(PageBreak())
+    # draw_PRA_map_and_field_photos(elements, village_id)
     
     # Final build with complete lists
     doc.multiBuild(elements)

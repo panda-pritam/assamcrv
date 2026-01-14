@@ -106,7 +106,7 @@ def get_dynamic_sql_script(village_id, model_name='HouseholdSurvey'):
            AND mu.attribute_id = fd.attribute_id
         WHERE att.tab_id = {tab_id}
           AND fd.spatial_id IN (
-              SELECT id FROM public.spatialdata WHERE village_id = %s
+              SELECT id FROM public.spatialdata WHERE village_id = %s AND user_id != 1
           )
         GROUP BY
             fd.form_id,
@@ -141,6 +141,7 @@ def get_dynamic_sql_script(village_id, model_name='HouseholdSurvey'):
         ON v.id = s.village_id
     WHERE a.tab_id = {tab_id}
       AND v.id = %s
+      AND u.id != 1
     GROUP BY
         s.survey_id, s.spatial_id, v.district_name, v.village_name,
         s.geometry, s.polygon_id, s.unique_id
@@ -336,7 +337,7 @@ def get_others_sql_script(village_id, model_name):
            AND mu.attribute_id = fd.attribute_id
         WHERE att.tab_id = %(tab_id)s
           AND fd.spatial_id IN (
-                SELECT id FROM public.spatialdata WHERE village_id = %(village_id)s
+                SELECT id FROM public.spatialdata WHERE village_id = %(village_id)s AND user_id != 1
           )
     ),
     attribute_values AS (
@@ -364,9 +365,11 @@ def get_others_sql_script(village_id, model_name):
        AND av.attribute_id = rv.attribute_id
     JOIN public.attributes a ON a.id = rv.attribute_id
     JOIN public.spatialdata s ON s.id = rv.spatial_id
+    JOIN public.users u ON u.id = s.user_id
     JOIN public.villages v ON v.id = s.village_id
     WHERE a.tab_id = %(tab_id)s
       AND v.id = %(village_id)s
+      AND u.id != 1
     GROUP BY
         s.survey_id, s.spatial_id,
         v.district_name, v.village_name,
