@@ -7,7 +7,7 @@ from .serializers import  HouseholdSurveySerializer
 from utils import (
     HOUSEHOLD_MAPPING, apply_location_filters, get_village_codes, BRIDGE_SURVEY_INFO, TRANSFORMER_MAPPING, 
     CRITICAL_FACILITY, COMMERCIAL_MAPPING, ELECTRIC_POLES,VILLAGES_OF_ALL_THE_DISTRICTS,VILLAGE_ROAD_INFO_MAPPING,VILLAGE_ROAD_INFO_EROSION
-    ,RISK_ASSESMENT_MAPPING)
+    ,RISK_ASSESMENT_MAPPING, PRA_MAIN_MAPPING)
 import pandas as pd
 from django.http import JsonResponse, HttpResponse, FileResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -15,6 +15,7 @@ from django.views.decorators.http import require_POST
 from django.core.exceptions import ObjectDoesNotExist
 from .models import (HouseholdSurvey, tblVillage, Transformer, Commercial,Critical_Facility,ElectricPole,VillageListOfAllTheDistricts,
                      VillageRoadInfo,VillageRoadInfoErosion, BridgeSurvey, Risk_Assesment)
+from administrator.models import PRA_main
 from django.db.models.functions import Cast
 from django.db.models import Sum, Count, Q, FloatField, Avg, Max
 from django.db import models as django_models
@@ -25,6 +26,8 @@ import requests
 from collections import defaultdict
 from shapefiles.models import PraBoundary,ExposureRiver
 import re
+from django.db import models
+import pandas as pd
 
 def vdmp_dashboard(request):
     """Render the VDMP dashboard page.
@@ -40,6 +43,58 @@ def vdmp_dashboard(request):
         'village_name': getattr(request.user, 'village', None) and request.user.village.name,
     }
     return render(request, 'vdmp_dashboard/dashboard.html', {'user_location': user_location})
+
+
+def normalize_value(value, field):
+    """
+    Convert pandas/Excel values into Django-field-safe Python values
+    """
+
+    # Handle NaN / empty
+    if value is None or (isinstance(value, float) and pd.isna(value)):
+        return None
+
+    # Integer fields
+    if isinstance(field, (
+        models.IntegerField,
+        models.PositiveIntegerField,
+        models.BigIntegerField,
+        models.SmallIntegerField,
+        models.PositiveSmallIntegerField,
+    )):
+        try:
+            return int(float(value))
+        except Exception:
+            return None
+
+    # Float fields
+    if isinstance(field, models.FloatField):
+        try:
+            return float(value)
+        except Exception:
+            return None
+
+    # Boolean fields
+    if isinstance(field, models.BooleanField):
+        if isinstance(value, bool):
+            return value
+        val = str(value).strip().lower()
+        if val in ("1", "true", "yes", "y"):
+            return True
+        if val in ("0", "false", "no", "n"):
+            return False
+        return None
+
+    # Date / DateTime fields (optional but safe)
+    if isinstance(field, (models.DateField, models.DateTimeField)):
+        try:
+            return pd.to_datetime(value)
+        except Exception:
+            return None
+
+    # Char / Text / fallback
+    val = str(value).strip()
+    return val if val else None
 
 @csrf_exempt
 @require_POST
@@ -57,7 +112,7 @@ def upload_data_vdmp(request):
             print("No file uploaded")
             return JsonResponse({"status": "error", "error": "No file uploaded"}, status=400)
         if data_type not in ["household", "transformer", "critical_facility", "commercial", "electric_poles", "villagesOfAllTheDistricts", 
-                             "VillageRoadInfo","VillageRoadInfoErosion", "bridge_survey", "risk_assesment"]:
+                             "VillageRoadInfo","VillageRoadInfoErosion", "bridge_survey", "risk_assesment", "pra_main"]:
             print("Invalid data type")
             return JsonResponse({"status": "error", "error": "Invalid data_type"}, status=400)
 
@@ -88,6 +143,7 @@ def upload_data_vdmp(request):
             "VillageRoadInfoErosion": (VILLAGE_ROAD_INFO_EROSION, VillageRoadInfoErosion),
             "bridge_survey": (BRIDGE_SURVEY_INFO, BridgeSurvey),
             "risk_assesment": (RISK_ASSESMENT_MAPPING, Risk_Assesment),
+            "pra_main": (PRA_MAIN_MAPPING, PRA_main),
         }
 
         mapping, model_class = MODEL_MAP[data_type]
@@ -102,9 +158,21 @@ def upload_data_vdmp(request):
                 #     print(f"Processing row {index}/{len(df)} ... elapsed {time.time() - start_time:.2f} sec")
 
                 data = {}
+                model_fields = {
+                    f.name: f for f in model_class._meta.get_fields()
+                    if isinstance(f, models.Field)
+                }
+
                 for excel_field, model_field in mapping.items():
                     excel_field = excel_field.lower()
-                    data[model_field] = str(row.get(excel_field, '')).strip()
+                    raw_value = row.get(excel_field)
+
+                    field = model_fields.get(model_field)
+                    if not field:
+                        continue
+
+                    data[model_field] = normalize_value(raw_value, field)
+
 
                 # for excel_field, model_field in mapping.items():
                 #     value = str(row.get(excel_field, '')).strip()
@@ -113,11 +181,20 @@ def upload_data_vdmp(request):
                 #         value = ""
                 #     data[model_field] = value
 
-                vill_code = data.get("village_code")
+                vill_code = None
+                for key in ("village_code", "vill_code", "vill_id", "villid"):
+                    if data.get(key):
+                        vill_code = data[key]
+                        break
+
+
+                # vill_code = data.get("village_code" or "vill_code" or "Vill_id" or "vill_id")
                 if vill_code:
                     vill_code = str(vill_code).strip()  # remove leading/trailing spaces
                     vill_code = vill_code.replace("_x000D_", "").replace("\r", "").replace("\n", "")
                     vill_code = re.sub(r"\s+", "", vill_code)  # remove all whitespace
+
+                    
                 else:
                     failed.append(f"Row {index+2}: Missing village_code")
                     continue
