@@ -23,6 +23,12 @@ EQUIPMENT_CHOICES = [
 class PRA_assets(models.Model):
 
      village = models.ForeignKey(tblVillage, on_delete=models.CASCADE) 
+     village_code = models.CharField(
+          max_length=50,
+          db_index=True,
+          blank=True,
+          null=True
+     )
      equipment = models.CharField(max_length=200, choices=EQUIPMENT_CHOICES, blank=True, null=True)   
      name_of_the_owner = models.CharField(max_length=500,blank=True, null=True)
      phone_number = models.CharField(max_length=15,blank=True, null=True)
@@ -129,6 +135,12 @@ class PRA_main(models.Model):
 class PRA_shelter(models.Model):
 
      village = models.ForeignKey(tblVillage, on_delete=models.CASCADE)
+     village_code = models.CharField(
+          max_length=50,
+          db_index=True,
+          blank=True,
+          null=True
+     )
      name_of_shelter = models.CharField(max_length=350, blank=True, null=True)
      contact_person = models.CharField(max_length=200, blank=True, null=True)
      phone_number = models.CharField(max_length=15, blank=True, null=True)
@@ -150,7 +162,12 @@ class PRA_shelter(models.Model):
 class FGD_livelihood_summary(models.Model):
 
      village = models.ForeignKey(tblVillage, on_delete=models.CASCADE)
-
+     village_code = models.CharField(
+          max_length=50,
+          db_index=True,
+          blank=True,
+          null=True
+     )
 
      cropping_pattern = models.TextField(blank=True, null=True)
 
@@ -182,7 +199,12 @@ class FGD_livelihood_summary(models.Model):
 class Line_department(models.Model):
 
      village = models.ForeignKey(tblVillage, on_delete=models.CASCADE)
-
+     village_code = models.CharField(
+          max_length=50,
+          db_index=True,
+          blank=True,
+          null=True
+     )
 
      section = models.CharField(max_length=100, blank=True, null=True)
 
@@ -206,7 +228,12 @@ class Line_department(models.Model):
 class FGD_wash_summary(models.Model):
 
      village = models.ForeignKey(tblVillage, on_delete=models.CASCADE)
-
+     village_code = models.CharField(
+          max_length=50,
+          db_index=True,
+          blank=True,
+          null=True
+     )
      # Drinking Water
 
      drinking_water_sources_access = models.TextField(blank=True, null=True)
