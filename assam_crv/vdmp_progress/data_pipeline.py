@@ -296,9 +296,17 @@ def save_to_model_dynamic(df, village_id, district_code, model_name):
                 'plinth_or_stilt_height_meter': str(row.get('plinth_or_stilt_height_meter', '')),
                 'flood_depth_from_survey_meter': str(row.get('flood_depth_from_survey_meter', '')),
                 'building_area_sqft': str(row.get('building_area_sqft', '')),
-                'loss_AgriLivli': str(row.get('loss_AgriLivli', ''))
+                'loss_AgriLivli': str(row.get('loss_AgriLivli', '')),
+                'erosion_value': str(row.get('erosion_value', ''))
             })
             logger.debug(f"Added building dimensions for household record {idx}")
+
+        if model_name.lower() == 'commercial' or model_name.lower() == 'critical_facility':
+            defaults.update({
+                
+                'erosion_value': str(row.get('erosion_value', ''))
+            })
+            logger.debug(f"Added building dimensions for commercial record {idx}")
         
         # Add mapped fields
         for mapping in mappings:

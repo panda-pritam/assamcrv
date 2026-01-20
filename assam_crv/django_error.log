@@ -20363,3 +20363,49 @@ Traceback (most recent call last):
               ^^^^^^^^^^^^^^^^^^^^^^^^^
 AttributeError: 'tblVillage' object has no attribute 'village_name'
 2026-01-19 12:27:18,172 [ERROR] django.server: "POST /en/admin/layers/village_flood_raster_files/add/ HTTP/1.1" 500 141263
+2026-01-19 16:59:04,461 [ERROR] vdmp_progress.cleaning_utils: Error extracting flood depth from raster: 'village_flood_raster_Files' object has no attribute 'file_path'
+2026-01-19 16:59:25,964 [ERROR] vdmp_progress.cleaning_utils: No buffer shapefiles could be loaded
+2026-01-19 17:36:37,391 [ERROR] vdmp_progress.cleaning_utils: Error extracting flood depth from raster: 'village_flood_raster_Files' object has no attribute 'file_path'
+2026-01-19 17:36:37,640 [ERROR] vdmp_progress.cleaning_utils: No buffer shapefiles could be loaded
+2026-01-19 17:36:37,640 [ERROR] vdmp_progress.cleaning_utils: Error extracting flood depth from raster: 'village_flood_raster_Files' object has no attribute 'file_path'
+2026-01-19 17:36:37,657 [ERROR] vdmp_progress.cleaning_utils: No buffer shapefiles could be loaded
+2026-01-19 17:45:13,554 [ERROR] vdmp_progress.cleaning_utils: Error extracting flood depth from raster: 'village_flood_raster_Files' object has no attribute 'file_path'
+2026-01-19 17:45:13,776 [ERROR] vdmp_progress.cleaning_utils: No buffer shapefiles could be loaded
+2026-01-19 17:45:13,780 [ERROR] vdmp_progress.cleaning_utils: Error extracting flood depth from raster: 'village_flood_raster_Files' object has no attribute 'file_path'
+2026-01-19 17:45:13,786 [ERROR] vdmp_progress.cleaning_utils: No buffer shapefiles could be loaded
+2026-01-19 17:49:07,707 [ERROR] vdmp_progress.cleaning_utils: Error extracting flood depth from raster: 'village_flood_raster_Files' object has no attribute 'file_path'
+2026-01-19 17:49:07,707 [ERROR] vdmp_progress.cleaning_utils: No buffer shapefiles could be loaded
+2026-01-19 17:49:07,707 [ERROR] vdmp_progress.cleaning_utils: Error extracting flood depth from raster: 'village_flood_raster_Files' object has no attribute 'file_path'
+2026-01-19 17:49:07,707 [ERROR] vdmp_progress.cleaning_utils: No buffer shapefiles could be loaded
+2026-01-19 18:10:06,325 [ERROR] vdmp_progress.cleaning_utils: No buffer shapefiles could be loaded
+2026-01-19 18:10:06,406 [ERROR] vdmp_progress.cleaning_utils: No buffer shapefiles could be loaded
+2026-01-19 18:17:04,477 [ERROR] vdmp_progress.cleaning_utils: No buffer shapefiles could be loaded
+2026-01-19 18:17:04,562 [ERROR] vdmp_progress.cleaning_utils: No buffer shapefiles could be loaded
+2026-01-19 18:18:08,295 [ERROR] vdmp_progress.cleaning_utils: No buffer shapefiles could be loaded
+2026-01-19 18:18:08,395 [ERROR] vdmp_progress.cleaning_utils: No buffer shapefiles could be loaded
+2026-01-19 18:21:12,417 [ERROR] vdmp_progress.cleaning_utils: No buffer shapefiles could be loaded
+2026-01-19 18:21:12,499 [ERROR] vdmp_progress.cleaning_utils: No buffer shapefiles could be loaded
+2026-01-19 18:22:54,517 [ERROR] vdmp_progress.cleaning_utils: Error extracting erosion buffer values: could not convert string to float: ''
+2026-01-19 18:22:54,637 [ERROR] vdmp_progress.cleaning_utils: Error extracting erosion buffer values: could not convert string to float: ''
+2026-01-19 18:49:11,589 [ERROR] django.request: Internal Server Error: /en/api/update_vdmp_activity_status/5962/
+2026-01-19 18:49:11,590 [ERROR] django.server: "PATCH /en/api/update_vdmp_activity_status/5962/ HTTP/1.1" 500 95
+2026-01-19 18:50:39,254 [ERROR] django.request: Internal Server Error: /en/api/update_vdmp_activity_status/5962/
+2026-01-19 18:50:39,254 [ERROR] django.server: "PATCH /en/api/update_vdmp_activity_status/5962/ HTTP/1.1" 500 95
+2026-01-19 18:54:25,443 [ERROR] django.request: Internal Server Error: /en/api/update_vdmp_activity_status/5962/
+2026-01-19 18:54:25,443 [ERROR] django.server: "PATCH /en/api/update_vdmp_activity_status/5962/ HTTP/1.1" 500 336
+2026-01-19 19:08:38,727 [ERROR] django.request: Internal Server Error: /en/api/update_vdmp_activity_status/5962/
+2026-01-19 19:08:38,732 [ERROR] django.server: "PATCH /en/api/update_vdmp_activity_status/5962/ HTTP/1.1" 500 139
+2026-01-20 11:57:49,151 [ERROR] django.request: Internal Server Error: /en/api/update_vdmp_activity_status/5962/
+2026-01-20 11:57:49,151 [ERROR] django.server: "PATCH /en/api/update_vdmp_activity_status/5962/ HTTP/1.1" 500 319
+2026-01-20 12:02:19,508 [ERROR] django.request: Internal Server Error: /en/api/update_vdmp_activity_status/5962/
+2026-01-20 12:02:19,508 [ERROR] django.server: "PATCH /en/api/update_vdmp_activity_status/5962/ HTTP/1.1" 500 319
+2026-01-20 12:03:28,895 [ERROR] django.request: Internal Server Error: /en/api/update_vdmp_activity_status/5962/
+2026-01-20 12:03:28,895 [ERROR] django.server: "PATCH /en/api/update_vdmp_activity_status/5962/ HTTP/1.1" 500 243
+2026-01-20 12:27:29,087 [ERROR] django.request: Internal Server Error: /en/api/update_vdmp_activity_status/5962/
+2026-01-20 12:27:29,089 [ERROR] django.server: "PATCH /en/api/update_vdmp_activity_status/5962/ HTTP/1.1" 500 285
+2026-01-20 12:29:43,210 [ERROR] django.request: Internal Server Error: /en/api/update_vdmp_activity_status/5963/
+2026-01-20 12:29:43,210 [ERROR] django.server: "PATCH /en/api/update_vdmp_activity_status/5963/ HTTP/1.1" 500 285
+2026-01-20 12:33:09,241 [ERROR] django.request: Internal Server Error: /en/api/update_vdmp_activity_status/5955/
+2026-01-20 12:33:09,241 [ERROR] django.server: "PATCH /en/api/update_vdmp_activity_status/5955/ HTTP/1.1" 500 285
+2026-01-20 14:50:03,560 [ERROR] django.request: Internal Server Error: /en/api/update_vdmp_activity_status/5940/
+2026-01-20 14:50:03,562 [ERROR] django.server: "PATCH /en/api/update_vdmp_activity_status/5940/ HTTP/1.1" 500 178

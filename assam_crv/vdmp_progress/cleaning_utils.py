@@ -3,6 +3,227 @@ import re
 import logging
 from sklearn.neighbors import NearestNeighbors
 
+from osgeo import gdal, osr
+import numpy as np
+import geopandas as gpd
+from shapely.geometry import Point
+from vdmp_dashboard.models import HouseholdSurvey
+from layers.models import village_flood_raster_Files
+from village_profile.models import tblVillage
+
+def extract_flood_depth_from_raster(df, village_id):
+    """Extract flood depth values from raster file based on lat/lon coordinates"""
+    try:
+        # Get raster file path from database
+        print("---------------------------- getting raster value -------------------")
+        raster_file = village_flood_raster_Files.objects.filter(village_id=village_id).first()
+        if not raster_file or not raster_file.raster_file:
+            logger.warning(f"No raster file found for village_id: {village_id}")
+            return df
+        
+        raster_path = f"c:\\assamcrv\\assam_crv\\media\\{raster_file.raster_file}"
+        
+        # Open raster file
+        dataset = gdal.Open(raster_path)
+        if not dataset:
+            logger.error(f"Could not open raster file: {raster_path}")
+            return df
+        
+        band = dataset.GetRasterBand(1)
+        geotransform = dataset.GetGeoTransform()
+        
+        # Extract flood depth for each coordinate
+        flood_depths = []
+        for _, row in df.iterrows():
+            try:
+                lat, lon = float(row['latitude']), float(row['longitude'])
+                
+                # Convert lat/lon to pixel coordinates
+                px = int((lon - geotransform[0]) / geotransform[1])
+                py = int((lat - geotransform[3]) / geotransform[5])
+                
+                # Check bounds
+                if 0 <= px < dataset.RasterXSize and 0 <= py < dataset.RasterYSize:
+                    value = band.ReadAsArray(px, py, 1, 1)[0, 0]
+                    flood_depths.append(round(float(value), 3) if value != band.GetNoDataValue() else 0)
+                else:
+                    flood_depths.append(0)
+            except:
+                flood_depths.append(0)
+        
+        df['flood_depth_m'] = flood_depths
+        logger.info(f"Extracted flood depth from raster for {len(flood_depths)} points")
+        
+    except Exception as e:
+        logger.error(f"Error extracting flood depth from raster: {e}")
+    
+    return df
+
+
+def safe_float(x):
+    try:
+        if x is None:
+            return None
+        x = str(x).strip()
+        if x == "" or x.lower() in {"na", "null", "none"}:
+            return None
+        return float(x)
+    except Exception:
+        return None
+
+
+def extract_erosion_buffer_values(df):
+    """
+    Loop-based point-in-polygon check against river buffer GeoJSON.
+    Silent fail if extents do not overlap.
+    """
+
+    import geopandas as gpd
+    from shapely.geometry import Point
+    import os
+
+    geojson_path = (
+        r"c:\assamcrv\assam_crv\media\pipeline_data"
+        r"\river_buff_shp_file\new_river_buff.geojson"
+    )
+
+    if not os.path.exists(geojson_path):
+        return df
+
+    # --------------------------------------------------
+    # 1. Sanitize coordinates
+    # --------------------------------------------------
+    df["latitude_f"] = df["latitude"].apply(safe_float)
+    df["longitude_f"] = df["longitude"].apply(safe_float)
+    df["erosion_buffer_m"] = None
+    df["erosion_value"] = None
+
+    valid_df = df[
+        df["latitude_f"].notna() & df["longitude_f"].notna()
+    ].copy()
+
+    if valid_df.empty:
+        return df
+
+    # --------------------------------------------------
+    # 2. Create points GeoDataFrame (EPSG:4326 → meters)
+    # --------------------------------------------------
+    points_4326 = gpd.GeoDataFrame(
+        valid_df,
+        geometry=gpd.points_from_xy(
+            valid_df["longitude_f"],
+            valid_df["latitude_f"]
+        ),
+        crs="EPSG:4326"
+    )
+
+    points_m = points_4326.to_crs("EPSG:32646")  # Assam UTM
+
+    # --------------------------------------------------
+    # 3. Load buffers and project to meters
+    # --------------------------------------------------
+    buff_4326 = gpd.read_file(geojson_path)
+    buff_m = buff_4326.to_crs("EPSG:32646")
+
+    # --------------------------------------------------
+    # 4. EXTENT CHECK (silent skip if mismatch)
+    # --------------------------------------------------
+    p_minx, p_miny, p_maxx, p_maxy = points_4326.total_bounds
+    b_minx, b_miny, b_maxx, b_maxy = buff_4326.total_bounds
+
+    if (
+        p_maxx < b_minx or p_minx > b_maxx or
+        p_maxy < b_miny or p_miny > b_maxy
+    ):
+        return df  # 👈 silently skip
+
+    # --------------------------------------------------
+    # 5. Loop over points
+    # --------------------------------------------------
+    for idx, pt_row in points_m.iterrows():
+
+        pt = pt_row.geometry
+        matched_buffers = []
+
+        for _, buff in buff_m.iterrows():
+            if pt.intersects(buff.geometry):
+                matched_buffers.append(buff["BUFF_DIST"])
+
+        if matched_buffers:
+            value = str(int(min(matched_buffers)))  # smallest buffer wins
+            df.at[idx, "erosion_buffer_m"] = value
+            df.at[idx, "erosion_value"] = value
+
+    return df
+
+
+def extract_erosion_buffer_values_postgis(
+    df,
+    buffer_table="public.new_river_buff",
+    db_name="crv_assam",
+    db_user="postgres",
+    db_password="admin",
+    db_host="localhost",
+    db_port="5434",
+):
+    """
+    Extract erosion buffer using PostGIS ST_Intersects.
+    Smallest BUFF_DIST wins.
+    """
+
+    import psycopg2
+
+    # sanitize coords
+    df["latitude_f"] = df["latitude"].apply(safe_float)
+    df["longitude_f"] = df["longitude"].apply(safe_float)
+    df["erosion_buffer_m"] = None
+    df["erosion_value"] = None
+
+    conn = psycopg2.connect(
+        dbname=db_name,
+        user=db_user,
+        password=db_password,
+        host=db_host,
+        port=db_port,
+    )
+
+    sql = f"""
+        SELECT
+            MIN("BUFF_DIST") AS erosion_buffer_m
+        FROM {buffer_table}
+        WHERE ST_Intersects(
+            ST_Transform(
+                ST_SetSRID(
+                    ST_MakePoint(%s, %s),
+                    4326
+                ),
+                32646
+            ),
+            ST_Transform(geom, 32646)
+        );
+    """
+
+    with conn.cursor() as cur:
+        for idx, row in df.iterrows():
+
+            lat = row["latitude_f"]
+            lon = row["longitude_f"]
+
+            if lat is None or lon is None:
+                continue
+
+            cur.execute(sql, (lon, lat))
+            result = cur.fetchone()[0]
+
+            if result is not None:
+                value = str(int(result))
+                df.at[idx, "erosion_buffer_m"] = value
+                df.at[idx, "erosion_value"] = value
+
+    conn.close()
+    return df
+
+
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -43,9 +264,23 @@ def clean_survey_data(df, district_code, village_code, activity_type="household"
     df['village_code'] = village_code
     logger.info(f"Added district_code: {district_code}, village_code: {village_code}")
     
+    # Get village_id if not provided
+    if not village_id and village_code:
+        try:
+            village = tblVillage.objects.get(code=village_code)
+            village_id = village.id
+            logger.info(f"Found village_id: {village_id} for village_code: {village_code}")
+        except tblVillage.DoesNotExist:
+            logger.warning(f"Village not found for code: {village_code}")
+    
+    # Extract flood depth from raster file and erosion buffer values (for all activity types)
+    if village_id:
+        df = extract_flood_depth_from_raster(df, village_id)
+    df = extract_erosion_buffer_values_postgis(df)
+    
     # Apply activity-specific processing
     if activity_type == "household":
-        df = _process_household_specific(df)
+        df = _process_household_specific(df, village_id)
     elif activity_type == "others":
         # For others (transformer/electric pole), apply flood depth mapping and building area calculation
         if village_id:
@@ -63,7 +298,7 @@ def clean_survey_data(df, district_code, village_code, activity_type="household"
 
 def map_flood_depth_from_household_db(child_df, village_id):
     """Map flood depth, flood class, and erosion class from household database records to child activities"""
-    from vdmp_dashboard.models import HouseholdSurvey
+   
     
     if "flood_depth_m" not in child_df.columns:
         child_df["flood_depth_m"] = None
@@ -343,7 +578,7 @@ def _convert_numeric(x, col_name=None):
                 return x
     return x
 
-def _process_household_specific(df):
+def _process_household_specific(df, village_id=None):
     """Apply household-specific processing and classifications"""
     logger.info("Applying household-specific processing")
     
@@ -360,21 +595,12 @@ def _process_household_specific(df):
         )
         logger.debug("Converted plinth height from feet to meters")
     
-    # Calculate flood depth from survey (sum of both when present)
-    if 'maximum_flood_height_meter' in df.columns and 'plinth_or_stilt_height_meter' in df.columns:
-        df['flood_depth_from_survey_meter'] = (
-            df['maximum_flood_height_meter'].fillna(0) + 
-            df['plinth_or_stilt_height_meter'].fillna(0)
-        ).round(3)
-        logger.debug("Calculated flood depth from survey metric")
+    # Extract flood depth from raster file
+    if village_id:
+        df = extract_flood_depth_from_raster(df, village_id)
     
-    # Calculate flood depth (keep as decimal) - existing calculation
-    if 'maximum_flood_height_meter' in df.columns and 'plinth_or_stilt_height_meter' in df.columns:
-        df['flood_depth_m'] = (
-            df['maximum_flood_height_meter'].fillna(0) + 
-            df['plinth_or_stilt_height_meter'].fillna(0)
-        ).round(3)  # Keep as decimal with 3 decimal places
-        logger.debug("Calculated flood depth metric")
+    # Extract erosion buffer values from shapefiles
+    df = extract_erosion_buffer_values_postgis(df)
     
     # Calculate building dimensions and area for household
     df = _calculate_household_building_area(df)
@@ -394,18 +620,11 @@ def _apply_classifications(df):
     """Apply classification logic to dataframe"""
     logger.info("Applying classification logic")
     
-    # Flood depth classification - use flood_depth_from_survey_meter or calculate from components
-    flood_depth_for_classification = None
-    if 'flood_depth_from_survey_meter' in df.columns:
-        flood_depth_for_classification = df['flood_depth_from_survey_meter']
-    elif 'maximum_flood_height_meter' in df.columns and 'plinth_or_stilt_height_meter' in df.columns:
-        flood_depth_for_classification = df['maximum_flood_height_meter'].fillna(0) + df['plinth_or_stilt_height_meter'].fillna(0)
-    elif 'flood_depth_m' in df.columns:
-        flood_depth_for_classification = df['flood_depth_m']
-    
-    if flood_depth_for_classification is not None:
-        df['flood_class'] = flood_depth_for_classification.apply(_classify_flood)
-        logger.debug("Applied flood depth classification")
+    # Flood depth classification - use raster value from flood_depth_m
+    if 'flood_depth_m' in df.columns:
+        df['flood_class'] = df['flood_depth_m'].apply(_classify_flood)
+        df['FLOOD_CLASS2'] = df['flood_depth_m'].apply(_classify_flood)
+        logger.debug("Applied flood depth classification from raster")
     
     # Loan classifications
     if 'loan_amount' in df.columns:
@@ -478,8 +697,11 @@ def _apply_classifications(df):
     #     df['duration_class'] = df['duration_of_flood_stay_in_your_agriculture_field'].apply(_classify_duration)
     #     logger.debug("Applied duration classification")
     
-    # Erosion classification
-    if 'your_agriculture_field_vulnerable_to_erosion' in df.columns:
+    # Erosion classification - use buffer values from erosion_buffer_m
+    if 'erosion_buffer_m' in df.columns:
+        df['erosion_class'] = df['erosion_buffer_m'].apply(_classify_erosion_buffer)
+        logger.debug("Applied erosion buffer classification")
+    elif 'your_agriculture_field_vulnerable_to_erosion' in df.columns:
         df['erosion_class'] = df['your_agriculture_field_vulnerable_to_erosion'].apply(_classify_erosion)
     else:
         df['erosion_class'] = None
@@ -488,6 +710,7 @@ def _apply_classifications(df):
     # Flood depth from survey classification (FLOOD_CLASS2)
     if 'flood_depth_m' in df.columns:
         df['FLOOD_CLASS2'] = df['flood_depth_m'].apply(_classify_flood)
+        logger.debug("Applied FLOOD_CLASS2 classification")
         logger.debug("Applied FLOOD_CLASS2 classification")
     
     # Sanitation type classification
@@ -828,6 +1051,24 @@ def _classify_duration(duration):
         return "7-15 Days"
     else:
         return duration_str
+
+def _classify_erosion_buffer(buffer_value):
+    """Classify erosion based on buffer distance"""
+    if pd.isna(buffer_value) or buffer_value is None:
+        return "No"
+    print("------------ erosion value ---------------- >",buffer_value)
+    try:
+        buffer_value = int(buffer_value)
+        if buffer_value == 50:
+            return "High"
+        elif buffer_value == 100:
+            return "Medium"
+        elif buffer_value == 150:
+            return "Low"
+        else:
+            return "No"
+    except (ValueError, TypeError):
+        return "No"
 
 def _classify_erosion(vulnerable):
     """Classify erosion vulnerability"""

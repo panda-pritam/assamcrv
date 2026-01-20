@@ -156,6 +156,7 @@ class HouseholdSurvey(models.Model):
     adequate_water_supply=models.CharField(max_length=255, null=True, blank=True)
     unique_id=models.CharField(max_length=255, null=True, blank=True, unique=True)
     form_id=models.CharField(max_length=255, null=True, blank=True, unique=True)
+    erosion_value=models.CharField(max_length=255, null=True, blank=True)
 
     def __str__(self):
         return f"{self.village_code} - {self.point_id}"
@@ -196,6 +197,7 @@ class Commercial(models.Model):
     erosion_class = models.CharField(max_length=255, null=True, blank=True)
     unique_id=models.CharField(max_length=255, null=True, blank=True, unique=True)
     form_id=models.CharField(max_length=255, null=True, blank=True, unique=True)
+    erosion_value=models.CharField(max_length=255, null=True, blank=True)
 
     def __str__(self):
         return f"{self.district_code} - {self.village_name}"
@@ -258,6 +260,7 @@ class Critical_Facility(models.Model):
     erosion_class = models.CharField(max_length=255, null=True, blank=True)
     unique_id=models.CharField(max_length=255, null=True, blank=True, unique=True)
     form_id=models.CharField(max_length=255, null=True, blank=True, unique=True)
+    erosion_value=models.CharField(max_length=255, null=True, blank=True)
 
     def __str__(self):
         return f"{self.district_code} - {self.village_name}"
