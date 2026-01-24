@@ -121,6 +121,7 @@ dependencies:
       - flexcache==0.3
       - flexparser==0.4
       - fsspec==2025.12.0
+      - geopandas==1.1.2
       - googletrans==4.0.2
       - greenlet==3.3.0
       - h11==0.16.0
@@ -161,7 +162,9 @@ dependencies:
       - pydantic-core==2.41.5
       - pydantic-settings==2.12.0
       - pyecospold==4.0.0
+      - pyogrio==0.12.1
       - pyprind==2.11.3
+      - pyproj==3.7.2
       - python-decouple==3.8
       - python-dotenv==1.2.1
       - python-json-logger==4.0.0
@@ -179,6 +182,7 @@ dependencies:
       - s3transfer==0.16.0
       - scikit-learn==1.7.2
       - scipy==1.15.3
+      - shapely==2.1.2
       - sniffio==1.3.1
       - snowflake-id==1.0.2
       - sparqlwrapper==2.0.0

@@ -224,6 +224,295 @@ def extract_erosion_buffer_values_postgis(
     return df
 
 
+def process_road_data_pipeline(
+    village_id,
+    village_code,
+    district_code,
+    district_name,
+    village_name,
+    db_name="crv_assam",
+    db_user="postgres",
+    db_password="admin",
+    db_host="localhost",
+    db_port="5434",
+):
+    """
+    Process road data for flood and erosion analysis.
+    
+    1. Get all road linestrings for village from PostGIS
+    2. Segment roads into 10m pieces for flood analysis
+    3. Calculate erosion buffer intersections for road lengths
+    4. Save to VillageRoadInfo and VillageRoadInfoErosion models
+    """
+    import psycopg2
+    import pandas as pd
+    from vdmp_dashboard.models import VillageRoadInfo, VillageRoadInfoErosion
+    from village_profile.models import tblVillage
+    
+    print(f"🛣️ Starting road processing for village: {village_name} ({village_code})")
+    logger.info(f"Processing road data for village: {village_name} ({village_code})")
+    
+    try:
+        # Get village object
+        village_obj = tblVillage.objects.get(id=village_id)
+        print(f"✅ Found village object: {village_obj}")
+        
+        # Connect to PostGIS database
+        print(f"🔌 Connecting to PostGIS: {db_host}:{db_port}/{db_name}")
+        conn = psycopg2.connect(
+            dbname=db_name,
+            user=db_user,
+            password=db_password,
+            host=db_host,
+            port=db_port,
+        )
+        print("✅ PostGIS connection established")
+        
+        # Clear existing road data for this village
+        flood_deleted = VillageRoadInfo.objects.filter(village_id=village_id).count()
+        erosion_deleted = VillageRoadInfoErosion.objects.filter(village_id=village_id).count()
+        VillageRoadInfo.objects.filter(village_id=village_id).delete()
+        VillageRoadInfoErosion.objects.filter(village_id=village_id).delete()
+        print(f"🗑️ Cleared existing data: {flood_deleted} flood records, {erosion_deleted} erosion records")
+        
+        # Process flood-affected roads
+        print("🌊 Processing flood-affected roads...")
+        _process_road_flood_data(conn, village_obj, village_code, district_code, district_name, village_name)
+        
+        # Process erosion-affected roads  
+        print("🏔️ Processing erosion-affected roads...")
+        _process_road_erosion_data(conn, village_obj, village_code, district_code, district_name, village_name)
+        
+        conn.close()
+        print(f"✅ Road data processing completed for village: {village_name}")
+        logger.info(f"Road data processing completed for village: {village_name}")
+        
+    except Exception as e:
+        print(f"❌ Error processing road data: {e}")
+        logger.error(f"Error processing road data: {e}")
+        raise
+
+def _process_road_flood_data(
+    conn, village_obj, village_code,
+    district_code, district_name, village_name
+):
+    """
+    Flood analysis (FINAL & CORRECT):
+    - Roads from PostGIS (EPSG:4326)
+    - 10m segmentation
+    - Raster sampling (start, mid, end)
+    - MAX flood depth per segment
+    """
+
+    from vdmp_dashboard.models import VillageRoadInfo
+    from layers.models import village_flood_raster_Files
+    from osgeo import gdal
+    from shapely import wkt
+    import math
+
+    raster_file = village_flood_raster_Files.objects.filter(
+        village_id=village_obj.id
+    ).first()
+
+    if not raster_file:
+        return
+
+    raster_path = f"c:\\assamcrv\\assam_crv\\media\\{raster_file.raster_file}"
+    ds = gdal.Open(raster_path)
+    band = ds.GetRasterBand(1)
+    gt = ds.GetGeoTransform()
+
+    inv_gt = gdal.InvGeoTransform(gt)
+    if inv_gt is None:
+        return
+
+    sql = """
+    WITH road_segments AS (
+        SELECT
+            gid,
+            rd_surface,
+            rsur_type,
+            ST_Length(segment_geom) AS seg_len,
+            ST_AsText(ST_StartPoint(segment_geom)) AS p_start,
+            ST_AsText(ST_Centroid(segment_geom)) AS p_mid,
+            ST_AsText(ST_EndPoint(segment_geom)) AS p_end
+        FROM (
+            SELECT
+                gid,
+                rd_surface,
+                rsur_type,
+                ST_LineSubstring(
+                    geom,
+                    gs / ST_Length(geom),
+                    LEAST((gs + 10) / ST_Length(geom), 1)
+                ) AS segment_geom
+            FROM public.road_network
+            CROSS JOIN generate_series(
+                0,
+                ST_Length(geom)::int,
+                10
+            ) AS gs
+            WHERE vill_id = %s
+        ) t
+        WHERE ST_Length(segment_geom) > 0
+    )
+    SELECT gid, rd_surface, rsur_type, seg_len, p_start, p_mid, p_end
+    FROM road_segments;
+    """
+
+    with conn.cursor() as cur:
+        cur.execute(sql, (village_code,))
+        rows = cur.fetchall()
+
+    records = []
+
+    for gid, surface, rsur, seg_len, p_start, p_mid, p_end in rows:
+        flood_values = []
+        lat = lon = None
+
+        for pt_wkt in (p_start, p_mid, p_end):
+            if not pt_wkt:
+                continue
+
+            pt = wkt.loads(pt_wkt)
+            lon, lat = pt.x, pt.y
+
+            px, py = gdal.ApplyGeoTransform(inv_gt, lon, lat)
+            px, py = int(px), int(py)
+
+            if (
+                px < 0 or py < 0 or
+                px >= ds.RasterXSize or
+                py >= ds.RasterYSize
+            ):
+                continue
+
+            val = band.ReadAsArray(px, py, 1, 1)[0, 0]
+
+            if val is None:
+                continue
+            if isinstance(val, float) and math.isnan(val):
+                continue
+
+            flood_values.append(float(val))
+
+        # ✅ SAFE flood depth
+        if flood_values:
+            flood_depth = max(flood_values)
+            if math.isnan(flood_depth):
+                flood_depth = 0.0
+        else:
+            flood_depth = None
+
+        flood_class = _classify_flood(flood_depth)
+
+        print(f"Segment GID {gid}: Flood Depth = {flood_depth} m")
+
+        records.append(
+            VillageRoadInfo(
+                village=village_obj,
+                district_name=district_name,
+                district_code=district_code,
+                village_name=village_name,
+                village_code=village_code,
+                latitude=str(lat) if lat else None,
+                longitude=str(lon) if lon else None,
+                road_surface_type=rsur or surface,
+                road_constructed_by="Unknown",
+                road_length_m=seg_len,
+                flood_depth_m=flood_depth,
+                flood_class=flood_class,
+            )
+        )
+
+    if records:
+        VillageRoadInfo.objects.bulk_create(records, batch_size=1000)
+
+
+
+
+
+def _process_road_erosion_data(conn, village_obj,
+                               village_code, district_code,
+                               district_name, village_name):
+    """
+    Erosion analysis:
+    - Line × Polygon intersection
+    - Measure road length inside buffer
+    """
+
+    from vdmp_dashboard.models import VillageRoadInfoErosion
+
+    sql = """
+    WITH road_buffer_intersections AS (
+        SELECT
+            r.gid,
+            r.rd_surface,
+            r.rsur_type,
+            b."BUFF_DIST" AS buffer_distance,
+
+            ST_Intersection(
+                ST_Transform(ST_SetSRID(r.geom, 4326), 32646),
+                ST_Transform(ST_SetSRID(b.geom, 4326), 32646)
+            ) AS intersection_geom
+
+        FROM public.road_network r
+        JOIN public.new_river_buff b
+          ON ST_Intersects(
+                ST_Transform(ST_SetSRID(r.geom, 4326), 32646),
+                ST_Transform(ST_SetSRID(b.geom, 4326), 32646)
+             )
+        WHERE r.vill_id = %s
+    ),
+
+    erosion_summary AS (
+        SELECT
+            gid,
+            rd_surface,
+            rsur_type,
+            MIN(buffer_distance) AS min_buffer_distance,
+            SUM(ST_Length(intersection_geom)) AS total_length,
+            ST_Centroid(ST_Collect(intersection_geom)) AS centroid_geom
+        FROM road_buffer_intersections
+        WHERE NOT ST_IsEmpty(intersection_geom)
+        GROUP BY gid, rd_surface, rsur_type
+    )
+
+    SELECT
+        gid,
+        rd_surface,
+        rsur_type,
+        min_buffer_distance,
+        total_length,
+        ST_Y(ST_Transform(centroid_geom, 4326)),
+        ST_X(ST_Transform(centroid_geom, 4326))
+    FROM erosion_summary;
+    """
+
+    with conn.cursor() as cur:
+        cur.execute(sql, (village_code,))
+        rows = cur.fetchall()
+
+    records = []
+    for gid, surf, rsur, buff_dist, length, lat, lon in rows:
+        records.append(
+            VillageRoadInfoErosion(
+                village=village_obj,
+                district_name=district_name,
+                district_code=district_code,
+                village_name=village_name,
+                village_code=village_code,
+                latitude=str(lat),
+                longitude=str(lon),
+                road_surface_type=rsur or surf,
+                road_constructed_by="Unknown",
+                road_length_m=length,
+                erosion_class=_classify_erosion_buffer(buff_dist),
+            )
+        )
+
+    VillageRoadInfoErosion.objects.bulk_create(records, batch_size=1000)
+
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -629,7 +918,7 @@ def _apply_classifications(df):
     # Loan classifications
     if 'loan_amount' in df.columns:
         df['loan_class'] = df['loan_amount'].apply(_classify_loan)
-        df['loan_class_1'] = df['loan_amount'].apply(_classify_loan)  # Same as loan_class
+        # df['loan_class_1'] = df['loan_amount'].apply(_classify_loan)  # Same as loan_class
         logger.debug("Applied loan classification")
     
     # Agricultural land classification
@@ -1060,15 +1349,15 @@ def _classify_erosion_buffer(buffer_value):
     try:
         buffer_value = int(buffer_value)
         if buffer_value == 50:
-            return "High"
+            return "Seviere"
         elif buffer_value == 100:
-            return "Medium"
+            return "High"
         elif buffer_value == 150:
-            return "Low"
+            return "medium"
         else:
-            return "No"
+            return "Low"
     except (ValueError, TypeError):
-        return "No"
+        return "Low"
 
 def _classify_erosion(vulnerable):
     """Classify erosion vulnerability"""

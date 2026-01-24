@@ -341,14 +341,50 @@ def update_vdmp_activity_status(request, status_id):
                         'activities_processed': activities_to_process,
                         'failed_activities': failed_activities
                     })
-                    
                 except Exception as e:
                     return Response({
                         'error': 'Physical vulnerability pipeline processing failed',
                         'pipeline_error': str(e)
                     }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
                 
-            
+            elif 'road' in activity_name:
+                # Road infrastructure processing pipeline
+                try:
+                    village_id = activity_status.village.id
+                    print("Processing Road Infrastructure Survey for village_id -> ", village_id)
+                    
+                    # Get mapping record
+                    mapping = district_village_mapping.objects.get(village_id=village_id)
+                    district_code = mapping.district_code
+                    village_code = mapping.village_code
+                    district_name = tblDistrict.objects.get(id=mapping.district.id).name
+                    village_name = tblVillage.objects.get(id=village_id).name
+                    
+                    # Import road processing function
+                    from .cleaning_utils import process_road_data_pipeline
+                    
+                    # Process road data for flood and erosion
+                    process_road_data_pipeline(
+                        village_id=village_id,
+                        village_code=village_code,
+                        district_code=district_code,
+                        district_name=district_name,
+                        village_name=village_name
+                    )
+                    
+                    serializer.save()
+                    return Response({
+                        **serializer.data,
+                        'pipeline_status': 'success',
+                        'message': 'Road infrastructure data processed successfully'
+                    })
+                    
+                except Exception as e:
+                    return Response({
+                        'error': 'Road pipeline processing failed',
+                        'pipeline_error': str(e)
+                    }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                
             else:
                 # For other activities, just save without pipeline
                 serializer.save()
