@@ -2,7 +2,7 @@
 from django.urls import path
 
 from .views import (administrator_home_view, admin_get_training_activities, get_rescue_equipment, get_users_list, 
-                    admin_get_roles_list, get_village_profile, get_department_list, get_vdmp_progres_dashboard, get_vdmp_dashboard, upload_master_data)
+                    admin_get_roles_list, get_village_profile, get_department_list, get_vdmp_progres_dashboard, get_vdmp_dashboard, upload_master_data,upload_line_department_data)
 
 from task_force.views import task_force_admin  
 from field_images.views import getAdmin 
@@ -22,5 +22,8 @@ urlpatterns = [
     #____APIS____
     path('api/upload_master_data/', upload_master_data, name='upload_master_data'),
     path('field_images', getAdmin, name='getAdmin'),
+
+    # api to upload line department master data
+    path('api/upload-line-department/', upload_line_department_data, name='upload_line_department_data'),
 
 ]

@@ -37,14 +37,12 @@ class AttributeMapping(models.Model):
 
 class HouseholdSurvey(models.Model):
     village = models.ForeignKey(tblVillage, on_delete=models.CASCADE)
-    dist_code = models.CharField(max_length=255, null=True, blank=True)
     district_code = models.CharField(max_length=255, null=True, blank=True)
     village_code = models.CharField(max_length=255, null=True, blank=True)
     latitude=models.CharField(max_length=255, null=True, blank=True)
     longitude=models.CharField(max_length=255, null=True, blank=True)
     point_id = models.CharField(max_length=255, null=True, blank=True)
     property_owner = models.CharField(max_length=255, null=True, blank=True)
-    name_of_person = models.CharField(max_length=255, null=True, blank=True)
     name_of_hohh = models.CharField(max_length=255, null=True, blank=True)
     photo = models.CharField(max_length=255, null=True, blank=True)
     mobile_number = models.CharField(max_length=255, null=True, blank=True)
@@ -103,7 +101,6 @@ class HouseholdSurvey(models.Model):
     amount_towards_flood_recovery_expenditure = models.CharField(max_length=255, null=True, blank=True)
     maximum_flood_height_in_house_ft = models.CharField(max_length=255, null=True, blank=True)
     maximum_flood_height_meter=models.CharField(max_length=255, null=True, blank=True)
-    
     flood_depth_from_survey_meter=models.CharField(max_length=255, null=True, blank=True)
     year_in_which_maximum_flood_experience_in_your_house = models.CharField(max_length=255, null=True, blank=True)
     your_agriculture_affected_by_flood = models.CharField(max_length=255, null=True, blank=True)
@@ -126,7 +123,6 @@ class HouseholdSurvey(models.Model):
     erosion_class = models.CharField(max_length=255, null=True, blank=True)
     loan_class = models.CharField(max_length=255, null=True, blank=True)
     agrculture_land_class = models.CharField(max_length=255, null=True, blank=True)
-    loan_class_1 = models.CharField(max_length=255, null=True, blank=True)
     fld_hh_class = models.CharField(max_length=255, null=True, blank=True)
     repair_class = models.CharField(max_length=255, null=True, blank=True)
     economic_loss_hh = models.CharField(max_length=255, null=True, blank=True)

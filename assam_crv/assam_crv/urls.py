@@ -20,6 +20,7 @@ from django.conf.urls.i18n import i18n_patterns
 from django.views.i18n import JavaScriptCatalog
 from django.conf import settings
 from django.conf.urls.static import static
+from administrator.views import upload_line_department_data
 
 urlpatterns = [
     path('i18n/', include('django.conf.urls.i18n')), 
@@ -37,7 +38,8 @@ urlpatterns += i18n_patterns(
     path('', include('layers.urls')),
     path('', include('task_force.urls')),
     path('api/', include('field_images.urls')),  
-    path('', include('dashboard.urls')),      
+    path('', include('dashboard.urls')),
+    path('api/upload_line_department_data/', upload_line_department_data, name='upload_line_department_data'),      
 )
 
 urlpatterns += [

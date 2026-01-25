@@ -7,7 +7,7 @@ from .serializers import  HouseholdSurveySerializer
 from utils import (
     HOUSEHOLD_MAPPING, apply_location_filters, get_village_codes, BRIDGE_SURVEY_INFO, TRANSFORMER_MAPPING, 
     CRITICAL_FACILITY, COMMERCIAL_MAPPING, ELECTRIC_POLES,VILLAGES_OF_ALL_THE_DISTRICTS,VILLAGE_ROAD_INFO_MAPPING,VILLAGE_ROAD_INFO_EROSION
-    ,RISK_ASSESMENT_MAPPING, PRA_MAIN_MAPPING)
+    ,RISK_ASSESMENT_MAPPING, PRA_MAIN_MAPPING, PRA_ASSETS_MAPPING, PRA_SHELTER_MAPPING, FGD_WASH_SUMMARY_MAPPING, FGD_LIVELIHOOD_SUMMARY_MAPPING)
 import pandas as pd
 from django.http import JsonResponse, HttpResponse, FileResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -15,7 +15,7 @@ from django.views.decorators.http import require_POST
 from django.core.exceptions import ObjectDoesNotExist
 from .models import (HouseholdSurvey, tblVillage, Transformer, Commercial,Critical_Facility,ElectricPole,VillageListOfAllTheDistricts,
                      VillageRoadInfo,VillageRoadInfoErosion, BridgeSurvey, Risk_Assesment)
-from administrator.models import PRA_main
+from administrator.models import PRA_main, PRA_assets, PRA_shelter, FGD_wash_summary, FGD_livelihood_summary
 from django.db.models.functions import Cast
 from django.db.models import Sum, Count, Q, FloatField, Avg, Max
 from django.db import models as django_models
@@ -112,7 +112,7 @@ def upload_data_vdmp(request):
             print("No file uploaded")
             return JsonResponse({"status": "error", "error": "No file uploaded"}, status=400)
         if data_type not in ["household", "transformer", "critical_facility", "commercial", "electric_poles", "villagesOfAllTheDistricts", 
-                             "VillageRoadInfo","VillageRoadInfoErosion", "bridge_survey", "risk_assesment", "pra_main"]:
+                             "VillageRoadInfo","VillageRoadInfoErosion", "bridge_survey", "risk_assesment", "pra_main", "pra_assets", "pra_shelter", "fgd_wash_summary", "fgd_livelihood_summary"]:
             print("Invalid data type")
             return JsonResponse({"status": "error", "error": "Invalid data_type"}, status=400)
 
@@ -144,6 +144,10 @@ def upload_data_vdmp(request):
             "bridge_survey": (BRIDGE_SURVEY_INFO, BridgeSurvey),
             "risk_assesment": (RISK_ASSESMENT_MAPPING, Risk_Assesment),
             "pra_main": (PRA_MAIN_MAPPING, PRA_main),
+            "pra_assets": (PRA_ASSETS_MAPPING, PRA_assets),
+            "pra_shelter": (PRA_SHELTER_MAPPING, PRA_shelter),
+            "fgd_wash_summary": (FGD_WASH_SUMMARY_MAPPING, FGD_wash_summary),
+            "fgd_livelihood_summary": (FGD_LIVELIHOOD_SUMMARY_MAPPING, FGD_livelihood_summary),
         }
 
         mapping, model_class = MODEL_MAP[data_type]

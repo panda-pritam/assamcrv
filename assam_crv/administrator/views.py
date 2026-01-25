@@ -18,6 +18,11 @@ from django.http import JsonResponse
 from django.core.exceptions import ObjectDoesNotExist
 from utils import TRAINING_MASTER_LIST,RESCUE_EQUEP_MASTER_LIST,VDMP_ACTIVITIES
 
+from administrator.models import LineDepartmentMaster, LineDepartment
+from village_profile.models import tblVillage
+from utils import LINE_DEPARTMENT_MAPPING
+import time
+
 
 
 def administrator_home_view(request):
@@ -391,3 +396,107 @@ def validate_file_before_processing(file):
         return True, None
     except Exception as e:
         return False, f"File validation error: {str(e)}"
+    
+
+
+# -------------- api view to upload line department master data --------------
+from django.views.decorators.csrf import csrf_exempt
+
+@csrf_exempt
+@require_POST
+def upload_line_department_data(request):
+    start_time = time.time()
+    print("===== Line Department Upload started =====")
+    
+    try:
+        file = request.FILES.get("file")
+        data_type = request.POST.get("data_type")
+        if not file:
+            return JsonResponse({"status": "error", "error": "No file uploaded"}, status=400)
+        
+        # Read file
+        if file.name.endswith(".csv"):
+            df = pd.read_csv(file)
+        elif file.name.endswith((".xls", ".xlsx")):
+            df = pd.read_excel(file)
+        else:
+            return JsonResponse({"status": "error", "error": "Unsupported file format"}, status=400)
+        
+        df.columns = [col.strip() for col in df.columns]
+        
+        created = 0
+        updated = 0
+        failed = []
+        village_cache = {}
+        section_cache = {}
+        
+        for index, row in df.iterrows():
+            try:
+                # Extract data
+                vill_id = str(row.get('Vill_Id', '')).strip()
+                section = str(row.get('Section', '')).strip()
+                contact_name = str(row.get('Contact Name', '')).strip()
+                phone_number = str(row.get('Phone Number', '')).strip()
+                
+                if not vill_id or vill_id.lower() == 'nan':
+                    failed.append(f"Row {index+2}: Missing village ID")
+                    continue
+                
+                if not section or section.lower() == 'nan':
+                    failed.append(f"Row {index+2}: Missing section")
+                    continue
+                
+                # Get village
+                if vill_id in village_cache:
+                    village = village_cache[vill_id]
+                else:
+                    village = tblVillage.objects.get(code=vill_id)
+                    village_cache[vill_id] = village
+                
+                # Get or create section master (case insensitive)
+                section_lower = section.lower()
+                if section_lower in section_cache:
+                    section_master = section_cache[section_lower]
+                else:
+                    section_master, created_master = LineDepartmentMaster.objects.get_or_create(
+                        section__iexact=section,
+                        defaults={'section': section}
+                    )
+                    section_cache[section_lower] = section_master
+                
+                # Check if record exists
+                existing_record = LineDepartment.objects.filter(
+                    village=village, 
+                    section_master=section_master
+                ).first()
+                
+                if existing_record:
+                    existing_record.contact_name = contact_name if contact_name != 'nan' else None
+                    existing_record.phone_number = phone_number if phone_number != 'nan' else None
+                    existing_record.save()
+                    updated += 1
+                else:
+                    LineDepartment.objects.create(
+                        village=village,
+                        vill_id=vill_id,
+                        section_master=section_master,
+                        contact_name=contact_name if contact_name != 'nan' else None,
+                        phone_number=phone_number if phone_number != 'nan' else None
+                    )
+                    created += 1
+                    
+            except ObjectDoesNotExist:
+                failed.append(f"Row {index+2}: Village not found for code = {vill_id}")
+            except Exception as e:
+                failed.append(f"Row {index+2}: {str(e)}")
+        
+        print(f"===== Line Department Upload completed in {time.time() - start_time:.2f} seconds =====")
+        return JsonResponse({
+            "status": "success",
+            "records_created": created,
+            "records_updated": updated,
+            "errors": failed
+        })
+        
+    except Exception as e:
+        return JsonResponse({"status": "error", "error": f"Unexpected error: {str(e)}"}, status=500)

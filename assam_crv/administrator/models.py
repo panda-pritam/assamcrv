@@ -21,24 +21,21 @@ EQUIPMENT_CHOICES = [
 
 
 class PRA_assets(models.Model):
-
      village = models.ForeignKey(tblVillage, on_delete=models.CASCADE) 
-     village_code = models.CharField(
-          max_length=50,
-          db_index=True,
-          blank=True,
-          null=True
-     )
-     equipment = models.CharField(max_length=200, choices=EQUIPMENT_CHOICES, blank=True, null=True)   
-     name_of_the_owner = models.CharField(max_length=500,blank=True, null=True)
-     phone_number = models.CharField(max_length=15,blank=True, null=True)
+     state = models.CharField(max_length=100, blank=True, null=True)
+     district = models.CharField(max_length=100, blank=True, null=True)
+     dist_id = models.CharField(max_length=50, blank=True, null=True)
+     village_name = models.CharField(max_length=200, blank=True, null=True)
+     vill_id = models.CharField(max_length=50, blank=True, null=True)
+     equipment = models.CharField(max_length=200, blank=True, null=True)   
+     name_of_the_owner = models.CharField(max_length=500, blank=True, null=True)
+     phone_number = models.CharField(max_length=15, blank=True, null=True)
      remark = models.TextField(blank=True, null=True)
      created_at = models.DateTimeField(auto_now_add=True, blank=True, null=True)
      updated_at = models.DateTimeField(auto_now=True, blank=True, null=True)
 
      def __str__(self):
-
-         return f"{self.vill_id} - {self.equipment}"
+         return f"{self.village_name} - {self.equipment}"
 
 
 class PRA_main(models.Model):
@@ -133,151 +130,102 @@ class PRA_main(models.Model):
 
 
 class PRA_shelter(models.Model):
-
      village = models.ForeignKey(tblVillage, on_delete=models.CASCADE)
-     village_code = models.CharField(
-          max_length=50,
-          db_index=True,
-          blank=True,
-          null=True
-     )
-     name_of_shelter = models.CharField(max_length=350, blank=True, null=True)
-     contact_person = models.CharField(max_length=200, blank=True, null=True)
+     state = models.CharField(max_length=100, blank=True, null=True)
+     district = models.CharField(max_length=100, blank=True, null=True)
+     dist_id = models.CharField(max_length=50, blank=True, null=True)
+     village_name = models.CharField(max_length=200, blank=True, null=True)
+     vill_id = models.CharField(max_length=50, blank=True, null=True)
+     equipment = models.CharField(max_length=200, blank=True, null=True)
+     name_of_the_owner = models.CharField(max_length=500, blank=True, null=True)
      phone_number = models.CharField(max_length=15, blank=True, null=True)
-     number_of_rooms = models.PositiveIntegerField(blank=True, null=True)
-     capacity = models.PositiveIntegerField(blank=True, null=True)
-     toilet_facilities_available = models.BooleanField(default=False, blank=True, null=True)
-     drinking_water_available = models.BooleanField(default=False, blank=True, null=True)
-     alternate_power_supply_available = models.BooleanField(default=False, blank=True, null=True)
+     remark = models.TextField(blank=True, null=True)
      created_at = models.DateTimeField(auto_now_add=True, blank=True, null=True)
-     
      updated_at = models.DateTimeField(auto_now=True, blank=True, null=True)
 
-
      def __str__(self):
-
-         return f"{self.name_of_shelter} ({self.village})"
+         return f"{self.village_name} - {self.equipment}"
 
 
 class FGD_livelihood_summary(models.Model):
+    village = models.ForeignKey(tblVillage, on_delete=models.CASCADE)
+    village_name = models.CharField(max_length=200, blank=True, null=True)
+    district = models.CharField(max_length=100, blank=True, null=True)
+    dist_id = models.CharField(max_length=50, blank=True, null=True)
+    vill_id = models.CharField(max_length=50, blank=True, null=True)
+    
+    cropping_pattern = models.TextField(blank=True, null=True)
+    cropping_calendar = models.TextField(blank=True, null=True)
+    livestock_and_allied_activities = models.TextField(blank=True, null=True)
+    departmental_support = models.TextField(blank=True, null=True)
+    challenges_in_agriculture = models.TextField(blank=True, null=True)
+    challenges_in_livestock = models.TextField(blank=True, null=True)
+    
+    created_at = models.DateTimeField(auto_now_add=True, blank=True, null=True)
+    updated_at = models.DateTimeField(auto_now=True, blank=True, null=True)
 
-     village = models.ForeignKey(tblVillage, on_delete=models.CASCADE)
-     village_code = models.CharField(
-          max_length=50,
-          db_index=True,
-          blank=True,
-          null=True
-     )
-
-     cropping_pattern = models.TextField(blank=True, null=True)
-
-     cropping_calendar = models.TextField(blank=True, null=True)
-
-
-     livestock_and_allied_activities = models.TextField(blank=True, null=True)
-
-     departmental_support = models.TextField(blank=True, null=True)
-
-
-     challenges_in_agriculture = models.TextField(blank=True, null=True)
-
-     challenges_in_livestock = models.TextField(blank=True, null=True)
-
-
-     created_at = models.DateTimeField(auto_now_add=True, blank=True, null=True)
-
-     updated_at = models.DateTimeField(auto_now=True, blank=True, null=True)
-
-
-     def __str__(self):
-
-         return f"Agriculture & Livestock - Village {self.village}"
+    def __str__(self):
+        return f"Agriculture & Livestock - Village {self.village}"
 
 
 
 
-class Line_department(models.Model):
+class LineDepartmentMaster(models.Model):
+    section = models.CharField(max_length=200, unique=True)
+    description = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
-     village = models.ForeignKey(tblVillage, on_delete=models.CASCADE)
-     village_code = models.CharField(
-          max_length=50,
-          db_index=True,
-          blank=True,
-          null=True
-     )
-
-     section = models.CharField(max_length=100, blank=True, null=True)
-
-     contact_name = models.CharField(max_length=100, blank=True, null=True)
-
-     phone_number = models.CharField(max_length=15, blank=True, null=True)
+    def __str__(self):
+        return self.section
 
 
-     created_at = models.DateTimeField(auto_now_add=True, blank=True, null=True)
+class LineDepartment(models.Model):
+    village = models.ForeignKey(tblVillage, on_delete=models.CASCADE)
+    vill_id = models.CharField(max_length=50, blank=True, null=True)
+    section_master = models.ForeignKey(LineDepartmentMaster, on_delete=models.CASCADE)
+    contact_name = models.CharField(max_length=200, blank=True, null=True)
+    phone_number = models.CharField(max_length=100, blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
-     updated_at = models.DateTimeField(auto_now=True, blank=True, null=True)
+    def __str__(self):
+        return f"{self.section_master.section} - {self.village.name}"
 
-
-     def __str__(self):
-
-         return f"{self.section} - {self.contact_name} ({self.village})"
 
 
 
 
 class FGD_wash_summary(models.Model):
+    village = models.ForeignKey(tblVillage, on_delete=models.CASCADE)
+    village_name = models.CharField(max_length=200, blank=True, null=True)
+    district = models.CharField(max_length=100, blank=True, null=True)
+    dist_id = models.CharField(max_length=50, blank=True, null=True)
+    vill_id = models.CharField(max_length=50, blank=True, null=True)
+    
+    # Drinking Water
+    drinking_water_sources_access = models.TextField(blank=True, null=True)
+    adequacy_reliability = models.TextField(blank=True, null=True)
+    equity_inclusion = models.TextField(blank=True, null=True)
+    affordability = models.TextField(blank=True, null=True)
+    water_quality = models.TextField(blank=True, null=True)
+    traditional_practices = models.TextField(blank=True, null=True)
+    community_role_jjm_implementation = models.TextField(blank=True, null=True)
+    infrastructure_damage = models.TextField(blank=True, null=True)
 
-     village = models.ForeignKey(tblVillage, on_delete=models.CASCADE)
-     village_code = models.CharField(
-          max_length=50,
-          db_index=True,
-          blank=True,
-          null=True
-     )
-     # Drinking Water
+    # Sanitation & Hygiene
+    sanitation_existing_facilities = models.TextField(blank=True, null=True)
+    impact_of_floods = models.TextField(blank=True, null=True)
+    erosion_impact = models.TextField(blank=True, null=True)
+    hygiene_practices = models.TextField(blank=True, null=True)
+    health_concerns = models.TextField(blank=True, null=True)
 
-     drinking_water_sources_access = models.TextField(blank=True, null=True)
+    # Community
+    community_awareness = models.TextField(blank=True, null=True)
+    community_participation_resilience = models.TextField(blank=True, null=True)
 
-     adequacy_reliability = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True, blank=True, null=True)
+    updated_at = models.DateTimeField(auto_now=True, blank=True, null=True)
 
-     equity_inclusion = models.TextField(blank=True, null=True)
-
-     affordability = models.TextField(blank=True, null=True)
-
-     water_quality = models.TextField(blank=True, null=True)
-
-     traditional_practices = models.TextField(blank=True, null=True)
-
-     community_role_jjm_implementation = models.TextField(blank=True, null=True)
-
-     infrastructure_damage = models.TextField(blank=True, null=True)
-
-
-     # Sanitation & Hygiene
-
-     sanitation_existing_facilities = models.TextField(blank=True, null=True)
-
-     impact_of_floods = models.TextField(blank=True, null=True)
-
-     erosion_impact = models.TextField(blank=True, null=True)
-
-     hygiene_practices = models.TextField(blank=True, null=True)
-
-     health_concerns = models.TextField(blank=True, null=True)
-
-
-     # Community
-
-     community_awareness = models.TextField(blank=True, null=True)
-
-     community_participation_resilience = models.TextField(blank=True, null=True)
-
-
-     created_at = models.DateTimeField(auto_now_add=True, blank=True, null=True)
-
-     updated_at = models.DateTimeField(auto_now=True, blank=True, null=True)
-
-
-     def __str__(self):
-
-         return f"Water & Sanitation - Village {self.village}"
+    def __str__(self):
+        return f"Water & Sanitation - Village {self.village}"

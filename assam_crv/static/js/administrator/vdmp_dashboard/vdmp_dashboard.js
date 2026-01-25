@@ -33,8 +33,16 @@ document.addEventListener('DOMContentLoaded', function () {
                 formData.append("file", fileInput);
                 formData.append("data_type", dataType);
 
-                fetch("/en/api/upload_data_vdmp", {
+                // Determine API endpoint based on data type
+                const apiEndpoint = dataType == "line_department" 
+                    ? "/en/api/upload_line_department_data/"
+                    : "/en/api/upload_data_vdmp";
+
+                fetch(apiEndpoint, {
                     method: "POST",
+                    headers: {
+                        "X-CSRFToken": getCSRFToken(),
+                    },
                     body: formData
                 })
                 .then(response => response.json())
