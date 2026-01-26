@@ -278,6 +278,25 @@ async function updateVDMPProgress() {
                 const activity = $('#VDMP_Activities').val();
                 getVDMPProgressData(villageId, districtId, circle_id, gram_panchayat_id, status, activity);
             });
+        } else if (response.status === 409) {
+            // Handle duplicate data case
+            const errorData = await response.json();
+            Swal.fire({
+                title: gettext('Data Already Exists'),
+                html: `<div style="text-align: left;">
+                        <p><strong>⚠️ Warning:</strong> Data already exists for this village</p>
+                        <p>Activity: ${errorData.activity_name}</p>
+                        <p>Would you like to delete existing data and re-run the pipeline?</p>
+                       </div>`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Delete & Re-run',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    deleteAndRerunPipeline(id);
+                }
+            });
         } else {
             const errorData = await response.json();
             Swal.fire({
@@ -618,4 +637,80 @@ function showVDMPTableLoader() {
 
 function hideVDMPTableLoader() {
     // Loader is hidden when table populates
+}
+
+// Function to delete existing data and re-run pipeline
+async function deleteAndRerunPipeline(statusId) {
+    Swal.fire({
+        title: gettext('Processing...'),
+        text: gettext('Deleting existing data and re-running pipeline...'),
+        icon: 'info',
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        showConfirmButton: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+
+    try {
+        const response = await fetch(`/en/api/delete_and_rerun_pipeline/${statusId}/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken()
+            }
+        });
+
+        if (response.ok) {
+            const result = await response.json();
+            
+            // After successful delete, call update API with status 'Completed'
+            const updateResponse = await fetch(`/api/update_vdmp_activity_status/${statusId}/`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCSRFToken()
+                },
+                body: JSON.stringify({ status: 'Completed' })
+            });
+            
+            if (updateResponse.ok) {
+                Swal.fire({
+                    icon: 'success',
+                    title: gettext('Success'),
+                    text: gettext('Data deleted and pipeline re-run successfully!')
+                }).then(() => {
+                    $('#editVDMPProgressModal').modal('hide');
+                    const districtId = $('#district').val();
+                    const villageId = $('#village').val();
+                    const circle_id = $('#circle').val();
+                    const gram_panchayat_id = $('#gram_panchayat').val();
+                    const status = $('#VDMP_status').val();
+                    const activity = $('#VDMP_Activities').val();
+                    getVDMPProgressData(villageId, districtId, circle_id, gram_panchayat_id, status, activity);
+                });
+            } else {
+                const errorData = await updateResponse.json();
+                Swal.fire({
+                    icon: 'error',
+                    title: gettext('Error'),
+                    text: gettext('Failed to re-run pipeline: ') + (errorData.error || 'Unknown error')
+                });
+            }
+        } else {
+            const errorData = await response.json();
+            Swal.fire({
+                icon: 'error',
+                title: gettext('Error'),
+                text: gettext('Failed to delete data: ') + (errorData.error || 'Unknown error')
+            });
+        }
+    } catch (error) {
+        Swal.fire({
+            icon: 'error',
+            title: gettext('Error'),
+            text: gettext('An unexpected error occurred. Please try again.')
+        });
+    }
 }

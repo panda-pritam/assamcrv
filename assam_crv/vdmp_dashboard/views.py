@@ -7,7 +7,7 @@ from .serializers import  HouseholdSurveySerializer
 from utils import (
     HOUSEHOLD_MAPPING, apply_location_filters, get_village_codes, BRIDGE_SURVEY_INFO, TRANSFORMER_MAPPING, 
     CRITICAL_FACILITY, COMMERCIAL_MAPPING, ELECTRIC_POLES,VILLAGES_OF_ALL_THE_DISTRICTS,VILLAGE_ROAD_INFO_MAPPING,VILLAGE_ROAD_INFO_EROSION
-    ,RISK_ASSESMENT_MAPPING, PRA_MAIN_MAPPING, PRA_ASSETS_MAPPING, PRA_SHELTER_MAPPING, FGD_WASH_SUMMARY_MAPPING, FGD_LIVELIHOOD_SUMMARY_MAPPING)
+    ,RISK_ASSESMENT_MAPPING, PRA_MAIN_MAPPING, PRA_ASSETS_MAPPING, PRA_SHELTER_MAPPING, FGD_WASH_SUMMARY_MAPPING, FGD_LIVELIHOOD_SUMMARY_MAPPING, check_existing_village_data)
 import pandas as pd
 from django.http import JsonResponse, HttpResponse, FileResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -151,6 +151,16 @@ def upload_data_vdmp(request):
         }
 
         mapping, model_class = MODEL_MAP[data_type]
+        
+        # Check for existing data
+        existing_villages = check_existing_village_data(df, model_class)
+        if existing_villages:
+            return JsonResponse({
+                "status": "error",
+                "error": "Data already exists for some villages",
+                "existing_villages": existing_villages,
+                "total_existing": len(existing_villages)
+            }, status=400)
         created = 0
         updated = 0
         failed = []

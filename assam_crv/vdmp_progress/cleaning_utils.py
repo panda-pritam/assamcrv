@@ -10,53 +10,89 @@ from shapely.geometry import Point
 from vdmp_dashboard.models import HouseholdSurvey
 from layers.models import village_flood_raster_Files
 from village_profile.models import tblVillage
+import math
 
 def extract_flood_depth_from_raster(df, village_id):
-    """Extract flood depth values from raster file based on lat/lon coordinates"""
-    try:
-        # Get raster file path from database
-        print("---------------------------- getting raster value -------------------")
-        raster_file = village_flood_raster_Files.objects.filter(village_id=village_id).first()
-        if not raster_file or not raster_file.raster_file:
-            logger.warning(f"No raster file found for village_id: {village_id}")
-            return df
-        
-        raster_path = f"c:\\assamcrv\\assam_crv\\media\\{raster_file.raster_file}"
-        
-        # Open raster file
-        dataset = gdal.Open(raster_path)
-        if not dataset:
-            logger.error(f"Could not open raster file: {raster_path}")
-            return df
-        
-        band = dataset.GetRasterBand(1)
-        geotransform = dataset.GetGeoTransform()
-        
-        # Extract flood depth for each coordinate
-        flood_depths = []
-        for _, row in df.iterrows():
-            try:
-                lat, lon = float(row['latitude']), float(row['longitude'])
-                
-                # Convert lat/lon to pixel coordinates
-                px = int((lon - geotransform[0]) / geotransform[1])
-                py = int((lat - geotransform[3]) / geotransform[5])
-                
-                # Check bounds
-                if 0 <= px < dataset.RasterXSize and 0 <= py < dataset.RasterYSize:
-                    value = band.ReadAsArray(px, py, 1, 1)[0, 0]
-                    flood_depths.append(round(float(value), 3) if value != band.GetNoDataValue() else 0)
-                else:
-                    flood_depths.append(0)
-            except:
-                flood_depths.append(0)
-        
-        df['flood_depth_m'] = flood_depths
-        logger.info(f"Extracted flood depth from raster for {len(flood_depths)} points")
-        
-    except Exception as e:
-        logger.error(f"Error extracting flood depth from raster: {e}")
-    
+    """
+    SAFE flood depth extraction from raster (EPSG:4326)
+    - Uses inverse geotransform
+    - Checks raster extent
+    - Skips invalid / outside points
+    """
+
+  
+
+    print("---- Extracting flood depth from raster ----")
+
+    raster_file = village_flood_raster_Files.objects.filter(
+        village_id=village_id
+    ).first()
+
+    if not raster_file or not raster_file.raster_file:
+        return df
+
+    raster_path = f"c:\\assamcrv\\assam_crv\\media\\{raster_file.raster_file}"
+    ds = gdal.Open(raster_path)
+
+    if not ds:
+        return df
+
+    band = ds.GetRasterBand(1)
+    gt = ds.GetGeoTransform()
+    nodata = band.GetNoDataValue()
+
+    inv_gt = gdal.InvGeoTransform(gt)
+    if inv_gt is None:
+        return df
+
+    # Raster extent (lon/lat)
+    minx = gt[0]
+    maxy = gt[3]
+    maxx = minx + gt[1] * ds.RasterXSize
+    miny = maxy + gt[5] * ds.RasterYSize
+
+    flood_values = []
+
+    for _, row in df.iterrows():
+        try:
+            lat = safe_float(row["latitude"])
+            lon = safe_float(row["longitude"])
+
+            if lat is None or lon is None:
+                flood_values.append(0.0)
+                continue
+
+            # 🔒 EXTENT CHECK (CRITICAL)
+            if not (minx <= lon <= maxx and miny <= lat <= maxy):
+                flood_values.append(0.0)
+                continue
+
+            px, py = gdal.ApplyGeoTransform(inv_gt, lon, lat)
+            px, py = int(px), int(py)
+
+            if (
+                px < 0 or py < 0 or
+                px >= ds.RasterXSize or
+                py >= ds.RasterYSize
+            ):
+                flood_values.append(0.0)
+                continue
+
+            val = band.ReadAsArray(px, py, 1, 1)[0, 0]
+
+            if val is None or (isinstance(val, float) and math.isnan(val)):
+                flood_values.append(0.0)
+            elif nodata is not None and val == nodata:
+                flood_values.append(0.0)
+            else:
+                flood_values.append(round(float(val), 3))
+
+        except Exception:
+            flood_values.append(0.0)
+
+    df["flood_depth_m"] = flood_values
+    df["flood_class"] = df["flood_depth_m"].apply(_classify_flood)
+
     return df
 
 
@@ -167,13 +203,13 @@ def extract_erosion_buffer_values_postgis(
     db_port="5434",
 ):
     """
-    Extract erosion buffer using PostGIS ST_Intersects.
-    Smallest BUFF_DIST wins.
+    SAFE erosion extraction using PostGIS
+    - Skips invalid coordinates
+    - NEVER crashes on bad data
     """
 
     import psycopg2
 
-    # sanitize coords
     df["latitude_f"] = df["latitude"].apply(safe_float)
     df["longitude_f"] = df["longitude"].apply(safe_float)
     df["erosion_buffer_m"] = None
@@ -188,8 +224,7 @@ def extract_erosion_buffer_values_postgis(
     )
 
     sql = f"""
-        SELECT
-            MIN("BUFF_DIST") AS erosion_buffer_m
+        SELECT MIN("BUFF_DIST")
         FROM {buffer_table}
         WHERE ST_Intersects(
             ST_Transform(
@@ -209,16 +244,25 @@ def extract_erosion_buffer_values_postgis(
             lat = row["latitude_f"]
             lon = row["longitude_f"]
 
-            if lat is None or lon is None:
+            # 🔒 HARD SAFETY CHECK (THIS FIXES EVERYTHING)
+            if (
+                lat is None or lon is None or
+                lat < -90 or lat > 90 or
+                lon < -180 or lon > 180
+            ):
                 continue
 
-            cur.execute(sql, (lon, lat))
-            result = cur.fetchone()[0]
+            try:
+                cur.execute(sql, (lon, lat))
+                result = cur.fetchone()[0]
+            except Exception:
+                # 🔕 SILENT SKIP — DO NOT CRASH PIPELINE
+                continue
 
             if result is not None:
-                value = str(int(result))
-                df.at[idx, "erosion_buffer_m"] = value
-                df.at[idx, "erosion_value"] = value
+                val = str(int(result))
+                df.at[idx, "erosion_buffer_m"] = val
+                df.at[idx, "erosion_value"] = val
 
     conn.close()
     return df
@@ -549,7 +593,7 @@ def clean_survey_data(df, district_code, village_code, activity_type="household"
         df[col] = df[col].apply(lambda v: _convert_numeric(v, col_name=col))
     
     # Add standard codes
-    df['dist_code'] = district_code
+    df['district_code'] = district_code
     df['village_code'] = village_code
     logger.info(f"Added district_code: {district_code}, village_code: {village_code}")
     
@@ -1344,7 +1388,7 @@ def _classify_duration(duration):
 def _classify_erosion_buffer(buffer_value):
     """Classify erosion based on buffer distance"""
     if pd.isna(buffer_value) or buffer_value is None:
-        return "No"
+        return "Low"
     print("------------ erosion value ---------------- >",buffer_value)
     try:
         buffer_value = int(buffer_value)

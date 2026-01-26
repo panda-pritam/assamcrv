@@ -45,12 +45,15 @@ document.addEventListener('DOMContentLoaded', function () {
                     },
                     body: formData
                 })
-                .then(response => response.json())
                 .then(response => {
-                    if (response.status === "success") {
-                        const created = response.records_created || 0;
-                        const updated = response.records_updated || 0;
-                        const rejected = response.errors ? response.errors.length : 0;
+                    // Handle both success (200) and error (400) responses
+                    return response.json().then(data => ({ status: response.status, data }));
+                })
+                .then(({ status, data }) => {
+                    if (data.status === "success") {
+                        const created = data.records_created || 0;
+                        const updated = data.records_updated || 0;
+                        const rejected = data.errors ? data.errors.length : 0;
                         const total = created + updated;
                         
                         Swal.fire({
@@ -66,12 +69,31 @@ document.addEventListener('DOMContentLoaded', function () {
                         });
                         document.getElementById("fileInput").value = '';
                         document.getElementById("dataType").value = '';
+                    } else if (data.existing_villages) {
+                        // Handle duplicate data case (status 400)
+                        const existingCount = data.total_existing || data.existing_villages.length;
+                        Swal.fire({
+                            title: "Data Already Exists",
+                            html: `<div style="text-align: left;">
+                                    <p><strong>⚠️ Warning:</strong> Data already exists for <strong>${existingCount}</strong> villages</p>
+                                    <p>Villages: ${data.existing_villages.slice(0, 5).join(', ')}${data.existing_villages.length > 5 ? '...' : ''}</p>
+                                    <p>Would you like to delete existing data and re-upload?</p>
+                                   </div>`,
+                            icon: "warning",
+                            showCancelButton: true,
+                            confirmButtonText: "Delete & Re-upload",
+                            cancelButtonText: "Cancel"
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                deleteAndReupload(dataType, data.existing_villages, fileInput);
+                            }
+                        });
                     } else {
-                        const errorCount = response.errors ? response.errors.length : 0;
+                        const errorCount = data.errors ? data.errors.length : 0;
                         Swal.fire({
                             title: "Upload Failed",
                             html: `<div style="text-align: left;">
-                                    <p><strong>❌ Error:</strong> ${response.error || "Upload failed"}</p>
+                                    <p><strong>❌ Error:</strong> ${data.error || "Upload failed"}</p>
                                     ${errorCount > 0 ? `<p><strong>📊 Total Errors:</strong> ${errorCount}</p>` : ''}
                                    </div>`,
                             icon: "error"
@@ -194,5 +216,80 @@ document.getElementById("deletedata").addEventListener("click", function (e) {
         }
     });
 });
+
+// Function to delete existing data and re-upload
+function deleteAndReupload(dataType, villagesCodes, fileInput) {
+    const button = document.getElementById("uploadnewdata");
+    button.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Deleting & Re-uploading...';
+    button.disabled = true;
+    
+    // First delete existing data
+    fetch("/en/api/delete_village_data", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": getCSRFToken(),
+        },
+        body: JSON.stringify({
+            data_type: dataType,
+            village_codes: villagesCodes
+        })
+    })
+    .then(response => response.json())
+    .then(deleteResponse => {
+        if (deleteResponse.status === "success") {
+            // Now re-upload the file
+            const formData = new FormData();
+            formData.append("file", fileInput);
+            formData.append("data_type", dataType);
+            
+            // Determine API endpoint based on data type
+            const apiEndpoint = dataType == "line_department" 
+                ? "/en/api/upload_line_department_data/"
+                : "/en/api/upload_data_vdmp";
+            
+            return fetch(apiEndpoint, {
+                method: "POST",
+                headers: {
+                    "X-CSRFToken": getCSRFToken(),
+                },
+                body: formData
+            });
+        } else {
+            throw new Error(deleteResponse.error || "Delete failed");
+        }
+    })
+    .then(response => response.json())
+    .then(uploadResponse => {
+        if (uploadResponse.status === "success") {
+            const created = uploadResponse.records_created || 0;
+            const updated = uploadResponse.records_updated || 0;
+            
+            Swal.fire({
+                title: "Re-upload Successful",
+                html: `<div style="text-align: left;">
+                        <p><strong>✅ Records Created:</strong> ${created}</p>
+                        <p><strong>🔄 Records Updated:</strong> ${updated}</p>
+                       </div>`,
+                icon: "success"
+            });
+            document.getElementById("fileInput").value = '';
+            document.getElementById("dataType").value = '';
+        } else {
+            throw new Error(uploadResponse.error || "Re-upload failed");
+        }
+    })
+    .catch(error => {
+        Swal.fire({
+            title: "Operation Failed",
+            text: error.message || "An error occurred during delete and re-upload",
+            icon: "error"
+        });
+    })
+    .finally(() => {
+        button.innerHTML = 'Upload';
+        button.disabled = false;
+    });
+}
 
 

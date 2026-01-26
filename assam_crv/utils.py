@@ -910,8 +910,32 @@ def get_lat_lon(name):
     return None, None
 
 
-def store_lat_lon():
+def check_existing_village_data(df, model_class):
+    """Check which villages already have data in the database"""
+    village_codes = set()
+    
+    for _, row in df.iterrows():
+        for col in ['vill_id', 'vill_id', 'village_code']:
+            if col.lower() in [c.lower() for c in df.columns]:
+                vill_code = str(row.get(col, '')).strip()
+                if vill_code and vill_code.lower() != 'nan':
+                    village_codes.add(vill_code)
+                    break
+    
+    existing_villages = []
+    for vill_code in village_codes:
+        try:
+            village = tblVillage.objects.get(code=vill_code)
+            if model_class.objects.filter(village=village).exists():
+                existing_villages.append(vill_code)
+        except:
+            continue
+    
+    return existing_villages
     # Update Districts
+
+
+def store_lat_lon():
     all_districts = tblDistrict.objects.all()
     for district in all_districts:
         district_name = district.name.strip().title()

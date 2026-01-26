@@ -213,6 +213,34 @@ def update_vdmp_activity_status(request, status_id):
 
     serializer = VDMPActivityStatusSerializer(activity_status, data=request.data, partial=True)
     if serializer.is_valid():
+        # Check for existing data before triggering pipeline
+        if serializer.validated_data.get('status') == 'Completed':
+            activity_name = activity_status.activity.name.lower()
+            village_id = activity_status.village.id
+            
+            # Check if data already exists for this village
+            existing_data = None
+            if 'household survey' in activity_name:
+                existing_data = HouseholdSurvey.objects.filter(village_id=village_id).exists()
+            elif 'physical vulnerability survey' in activity_name:
+                from vdmp_dashboard.models import Commercial, Critical_Facility, BridgeSurvey
+                existing_data = (Commercial.objects.filter(village_id=village_id).exists() or 
+                               Critical_Facility.objects.filter(village_id=village_id).exists() or 
+                               BridgeSurvey.objects.filter(village_id=village_id).exists())
+            elif 'road' in activity_name:
+                from vdmp_dashboard.models import VillageRoadInfo, VillageRoadInfoErosion
+                existing_data = (VillageRoadInfo.objects.filter(village_id=village_id).exists() or 
+                               VillageRoadInfoErosion.objects.filter(village_id=village_id).exists())
+            
+            # If data exists, return warning
+            if existing_data:
+                return Response({
+                    'status': 'warning',
+                    'message': 'Data already exists for this village',
+                    'existing_data': True,
+                    'village_id': village_id,
+                    'activity_name': activity_name
+                }, status=status.HTTP_409_CONFLICT)
         # Trigger data pipeline if status is marked as 'Completed'
         if serializer.validated_data.get('status') == 'Completed':
             activity_name = activity_status.activity.name.lower()
@@ -247,7 +275,6 @@ def update_vdmp_activity_status(request, status_id):
                     )
                     
                     # Run household risk assessment
-                    
                     run_risk_assessment_pipeline(village_id, 'household')
                     
                     serializer.save()
@@ -394,6 +421,46 @@ def update_vdmp_activity_status(request, status_id):
             serializer.save()
             return Response(serializer.data)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+
+
+@api_view(['POST'])
+def delete_and_rerun_pipeline(request, status_id):
+    """
+    Delete village data and re-run pipeline safely
+    """
+    try:
+        activity_status = tblVDMP_Activity_Status.objects.get(id=status_id)
+        village = activity_status.village
+        activity_name = activity_status.activity.name.lower()
+
+        # 🧹 Delete existing data
+        if 'household survey' in activity_name:
+            HouseholdSurvey.objects.filter(village=village).delete()
+
+        elif 'physical vulnerability survey' in activity_name:
+            from vdmp_dashboard.models import Commercial, Critical_Facility, BridgeSurvey
+            Commercial.objects.filter(village=village).delete()
+            Critical_Facility.objects.filter(village=village).delete()
+            BridgeSurvey.objects.filter(village=village).delete()
+
+        elif 'road' in activity_name:
+            from vdmp_dashboard.models import VillageRoadInfo, VillageRoadInfoErosion
+            VillageRoadInfo.objects.filter(village=village).delete()
+            VillageRoadInfoErosion.objects.filter(village=village).delete()
+
+        return Response({
+            "status": "success",
+            "message": "Data deleted successfully"
+        })
+
+    except tblVDMP_Activity_Status.DoesNotExist:
+        return Response({"error": "Activity not found"}, status=404)
+
+    except Exception as e:
+        return Response({"error": str(e)}, status=500)
 
 
 @api_view(['DELETE'])
