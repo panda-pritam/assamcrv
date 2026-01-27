@@ -210,6 +210,7 @@ def upload_data_vdmp(request):
 
                     
                 else:
+                    # print(f"Missing village code at row {index+2}: {data}")
                     failed.append(f"Row {index+2}: Missing village_code")
                     continue
 
@@ -223,24 +224,25 @@ def upload_data_vdmp(request):
                 
                 # Get unique identifier for the record
                 point_id = data.get("point_id")
+                unique_id = data.get("unique_id")
                 uid = data.get("uid")
                 spatial_id = data.get("spatial_id")
                 polygon_id = data.get("polygon_id")
                 
                 # Try to find existing record
                 existing_record = None
-                if point_id:
-                    existing_record = model_class.objects.filter(village=village, point_id=point_id).first()
-                elif uid:
-                    existing_record = model_class.objects.filter(village=village, uid=uid).first()
+                if unique_id:
+                    existing_record = model_class.objects.filter(village=village, unique_id=unique_id).first()
+                # elif uid:
+                #     existing_record = model_class.objects.filter(village=village, uid=uid).first()
 
-                elif spatial_id:
-                    existing_record = model_class.objects.filter(village=village, spatial_id=spatial_id).first()
-                elif polygon_id:
-                    existing_record = model_class.objects.filter(village=village, polygon_id=polygon_id).first()
-                else:
-                    # For models without point_id/uid, check by village only
-                    pass
+                # elif spatial_id:
+                #     existing_record = model_class.objects.filter(village=village, spatial_id=spatial_id).first()
+                # elif polygon_id:
+                #     existing_record = model_class.objects.filter(village=village, polygon_id=polygon_id).first()
+                # else:
+                #     # For models without point_id/uid, check by village only
+                #     pass
                 
                 if existing_record:
                     # Update existing record
@@ -255,10 +257,12 @@ def upload_data_vdmp(request):
 
             except ObjectDoesNotExist:
                 failed.append(f"Row {index+2}: tblVillage not found for village_code = {vill_code}")
+                print(f"Missing village code in DB: {vill_code}")
             except Exception as e:
                 failed.append(f"Row {index+2}: {str(e)}")
 
         print(f"===== Upload completed in {time.time() - start_time:.2f} seconds =====")
+        print(f"Missing village code in DB: {vill_code}")
         print("failed records:", failed)
         return JsonResponse({
             "status": "success",

@@ -22574,3 +22574,37 @@ django.db.utils.DataError: invalid input syntax for type double precision: "None
 2026-01-26 11:25:15,174 [ERROR] django.server: "POST /en/api/delete_and_rerun_pipeline/5962/ HTTP/1.1" 500 122
 2026-01-26 11:40:33,667 [ERROR] django.request: Internal Server Error: /en/api/delete_and_rerun_pipeline/5962/
 2026-01-26 11:40:33,669 [ERROR] django.server: "POST /en/api/delete_and_rerun_pipeline/5962/ HTTP/1.1" 500 122
+2026-01-26 13:33:40,626 [ERROR] vdmp_progress.data_pipeline: No data found in mobile_db for village_id: 6
+2026-01-26 13:33:40,634 [ERROR] vdmp_progress.data_pipeline: Database connection/query failed: Data not exist in the mobile DB for this village: 6. Please ensure data collection is completed.
+2026-01-26 13:46:08,509 [ERROR] vdmp_progress.data_pipeline: Error processing record 0: Cannot resolve keyword 'form_id' into field. Choices are: bridge_pillar_material, bridge_surface_type, condition_of_deck, deck_material, district_code, general_condition, id, latitude, length_meters, longitude, number_of_pillars, photographs, point_id, remarks, spatial_ref, status_access_part, survey_id, village, village_code, village_id, village_name, width_meters
+2026-01-26 13:49:19,599 [ERROR] vdmp_progress.data_pipeline: Error processing record 0: Invalid field name(s) for model BridgeSurvey: 'district_name'.
+2026-01-26 22:44:53,227 [ERROR] vdmp_progress.cleaning_utils: Error processing road data: ST_Transform: Input geometry has unknown (0) SRID
+
+2026-01-26 22:44:53,233 [ERROR] django.request: Internal Server Error: /en/api/update_vdmp_activity_status/6455/
+2026-01-26 22:44:53,235 [ERROR] django.server: "PATCH /en/api/update_vdmp_activity_status/6455/ HTTP/1.1" 500 114
+2026-01-26 22:52:04,009 [ERROR] vdmp_progress.cleaning_utils: Error processing road data: line_interpolate_point: 2nd arg isn't within [0,1]
+
+2026-01-26 22:52:04,020 [ERROR] django.request: Internal Server Error: /en/api/update_vdmp_activity_status/6455/
+2026-01-26 22:52:04,023 [ERROR] django.server: "PATCH /en/api/update_vdmp_activity_status/6455/ HTTP/1.1" 500 115
+2026-01-26 23:43:28,396 [ERROR] vdmp_progress.cleaning_utils: Error processing road data: null value in column "flood_class" of relation "vdmp_dashboard_villageroadinfo" violates not-null constraint
+DETAIL:  Failing row contains (33723, Barpeta, 280, Ag Mandia, 280_6, PWD (Bituminous road), Unknown, 9.999999999977053, NaN, null, 550, 26.264959706810018, 90.96858533703694, null, null, null, null, null, 0.00, null, null, 0.00, null, null, null).
+
+2026-01-26 23:43:28,403 [ERROR] django.request: Internal Server Error: /en/api/update_vdmp_activity_status/6455/
+2026-01-26 23:43:28,409 [ERROR] django.server: "PATCH /en/api/update_vdmp_activity_status/6455/ HTTP/1.1" 500 427
+2026-01-26 23:48:04,916 [ERROR] vdmp_progress.cleaning_utils: Error processing road data: null value in column "flood_class" of relation "vdmp_dashboard_villageroadinfo" violates not-null constraint
+DETAIL:  Failing row contains (33742, Barpeta, 280, Ag Mandia, 280_6, PWD (Bituminous road), Unknown, 9.999999999977053, NaN, null, 550, 26.264959706810018, 90.96858533703694, null, null, null, null, null, 0.00, null, null, 0.00, null, null, null).
+
+2026-01-26 23:48:04,922 [ERROR] django.request: Internal Server Error: /en/api/update_vdmp_activity_status/6455/
+2026-01-26 23:48:04,924 [ERROR] django.server: "PATCH /en/api/update_vdmp_activity_status/6455/ HTTP/1.1" 500 427
+2026-01-26 23:48:24,002 [ERROR] vdmp_progress.cleaning_utils: Error processing road data: null value in column "flood_class" of relation "vdmp_dashboard_villageroadinfo" violates not-null constraint
+DETAIL:  Failing row contains (33761, Barpeta, 280, Ag Mandia, 280_6, PWD (Bituminous road), Unknown, 9.999999999977053, NaN, null, 550, 26.264959706810018, 90.96858533703694, null, null, null, null, null, 0.00, null, null, 0.00, null, null, null).
+
+2026-01-26 23:48:24,002 [ERROR] django.request: Internal Server Error: /en/api/update_vdmp_activity_status/6455/
+2026-01-26 23:48:24,002 [ERROR] django.server: "PATCH /en/api/update_vdmp_activity_status/6455/ HTTP/1.1" 500 427
+2026-01-26 23:49:21,250 [ERROR] vdmp_progress.cleaning_utils: Error processing road data: null value in column "flood_class" of relation "vdmp_dashboard_villageroadinfo" violates not-null constraint
+DETAIL:  Failing row contains (33780, Barpeta, 280, Ag Mandia, 280_6, PWD (Bituminous road), Unknown, 9.999999999977053, NaN, null, 550, 26.264959706810018, 90.96858533703694, null, null, null, null, null, 0.00, null, null, 0.00, null, null, null).
+
+2026-01-26 23:49:21,255 [ERROR] django.request: Internal Server Error: /en/api/update_vdmp_activity_status/6455/
+2026-01-26 23:49:21,258 [ERROR] django.server: "PATCH /en/api/update_vdmp_activity_status/6455/ HTTP/1.1" 500 427
+2026-01-27 15:01:07,980 [ERROR] django.request: Internal Server Error: /en/api/update_vdmp_activity_status/6455/
+2026-01-27 15:01:07,980 [ERROR] django.server: "PATCH /en/api/update_vdmp_activity_status/6455/ HTTP/1.1" 500 301

@@ -11,7 +11,7 @@ class AttributeMapping(models.Model):
         ("ElectricPole","ElectricPole"),
         ("VillageListOfAllTheDistricts","VillageListOfAllTheDistricts"),
         ("VillageRoadInfo","VillageRoadInfo"),
-        ("BridgeSurvey","",),
+        ("BridgeSurvey","BridgeSurvey",),
         ("others","others")
 
 
@@ -317,10 +317,68 @@ class VillageRoadInfo(models.Model):
     road_length_m = models.FloatField()
     flood_depth_m = models.FloatField(null=True, blank=True)
     flood_class = models.CharField(max_length=50)
+    road_width_m = models.FloatField(null=True, blank=True)
+    road_type_id = models.IntegerField(null=True, blank=True)
+    unit_cost = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    replacement_cost_inr = models.DecimalField(max_digits=15, decimal_places=2, default=0.00)
+    
+    
+    # MDR (Mean Damage Ratio) data
+    flood_hazard_mdr = models.DecimalField(max_digits=10, decimal_places=8, null=True, blank=True)
+    
+    # Loss calculations
+    flood_loss = models.DecimalField(max_digits=15, decimal_places=8, null=True, blank=True)
 
+    
     def __str__(self):
         return f"{self.village_name} ({self.road_surface_type})"
     
+# This model is for road affected by earthquake hazard
+class VillageRoadInfoEQ(models.Model):
+    village = models.ForeignKey(tblVillage, on_delete=models.CASCADE)
+    district_name = models.CharField(max_length=100)
+    district_code = models.CharField(max_length=20)
+    village_name = models.CharField(max_length=100)
+    village_code = models.CharField(max_length=20)
+    latitude = models.CharField(max_length=255, null=True, blank=True)
+    longitude = models.CharField(max_length=255, null=True, blank=True)
+    road_surface_type = models.CharField(max_length=100)
+    road_constructed_by = models.CharField(max_length=100)
+    road_length_m = models.FloatField()
+    road_width_m = models.FloatField(null=True, blank=True)
+    road_type_id = models.IntegerField(null=True, blank=True)
+    unit_cost = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    replacement_cost_inr = models.DecimalField(max_digits=15, decimal_places=2, default=0.00)
+    eq_hazard = models.DecimalField(max_digits=10, decimal_places=8, null=True, blank=True)
+    eq_hazard_mdr = models.DecimalField(max_digits=10, decimal_places=8, null=True, blank=True)
+    eq_loss = models.DecimalField(max_digits=15, decimal_places=8, null=True, blank=True)
+    
+    def __str__(self):
+        return f"{self.village_name} EQ ({self.road_surface_type})"
+
+# This model is for road affected by wind hazard
+class VillageRoadInfoWind(models.Model):
+    village = models.ForeignKey(tblVillage, on_delete=models.CASCADE)
+    district_name = models.CharField(max_length=100)
+    district_code = models.CharField(max_length=20)
+    village_name = models.CharField(max_length=100)
+    village_code = models.CharField(max_length=20)
+    latitude = models.CharField(max_length=255, null=True, blank=True)
+    longitude = models.CharField(max_length=255, null=True, blank=True)
+    road_surface_type = models.CharField(max_length=100)
+    road_constructed_by = models.CharField(max_length=100)
+    road_length_m = models.FloatField()
+    road_width_m = models.FloatField(null=True, blank=True)
+    road_type_id = models.IntegerField(null=True, blank=True)
+    unit_cost = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    replacement_cost_inr = models.DecimalField(max_digits=15, decimal_places=2, default=0.00)
+    wind_hazard = models.DecimalField(max_digits=10, decimal_places=8, null=True, blank=True)
+    wind_hazard_mdr = models.DecimalField(max_digits=10, decimal_places=8, null=True, blank=True)
+    wind_loss = models.DecimalField(max_digits=15, decimal_places=8, null=True, blank=True)
+    
+    def __str__(self):
+        return f"{self.village_name} Wind ({self.road_surface_type})"
+
 # This model is for road affected by erosion
 class VillageRoadInfoErosion(models.Model):
     village = models.ForeignKey(tblVillage, on_delete=models.CASCADE)
@@ -358,26 +416,15 @@ class VDMP_Maps_Data(models.Model):
 
 class BridgeSurvey(models.Model):
     village = models.ForeignKey(tblVillage, on_delete=models.CASCADE)
-    username = models.CharField(max_length=255, blank=True, null=True)
-    spatial_id = models.CharField(max_length=255, blank=True, null=True)
     spatial_ref = models.CharField(max_length=255, blank=True, null=True)
-    polygon_id = models.CharField(max_length=255, blank=True, null=True)
     village_code = models.CharField(max_length=255, blank=True, null=True)
     village_name = models.CharField(max_length=255, blank=True, null=True)
-    district_name = models.CharField(max_length=255, blank=True, null=True)
+    district_code = models.CharField(max_length=255, blank=True, null=True)
     survey_id = models.CharField(max_length=255, blank=True, null=True)
     latitude=models.CharField(max_length=255, null=True, blank=True)
     longitude=models.CharField(max_length=255, null=True, blank=True)
-    geometry = models.CharField(max_length=255, blank=True, null=True)
-    user_id = models.CharField(max_length=255, blank=True, null=True)
-    under_id = models.CharField(max_length=255, blank=True, null=True)
     district_code = models.CharField(max_length=255, null=True, blank=True)
     point_id = models.CharField(max_length=255, null=True, blank=True)
-    date = models.CharField(max_length=255, blank=True, null=True)
-    form_id = models.CharField(max_length=255, blank=True, null=True)
-    tab_id = models.CharField(max_length=255, blank=True, null=True)
-    tab_name = models.CharField(max_length=255, blank=True, null=True)
-
     bridge_surface_type = models.CharField(max_length=255, blank=True, null=True)
     length_meters = models.CharField(max_length=255, blank=True, null=True)
     width_meters = models.CharField(max_length=255, blank=True, null=True)
@@ -391,6 +438,7 @@ class BridgeSurvey(models.Model):
     remarks = models.CharField(max_length=255, blank=True, null=True)
     unique_id=models.CharField(max_length=255, null=True, blank=True, unique=True)
     form_id=models.CharField(max_length=255, null=True, blank=True, unique=True)
+   
 
     def __str__(self):
         return f"{self.village_name} - {self.unique_id}"
@@ -426,4 +474,19 @@ class Risk_Assessment_with_MRD_mapping(models.Model):
 
     def __str__(self):
         return f"{self.village_name} - {self.hazard}"
+
+
+
+class RoadUnitCost(models.Model):
+    asset_typology = models.CharField(max_length=255)
+    department = models.CharField(max_length=100)
+    unit = models.CharField(max_length=50, null=True, blank=True)
+    type_id = models.IntegerField(blank=True, null=True)
+    unit_cost = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)
+    remarks = models.TextField(blank=True, null=True)
+    cost_per_km = models.DecimalField(max_digits=14, decimal_places=2, blank=True, null=True)
+    reference = models.TextField(blank=True, null=True)
+
+    def __str__(self):
+        return self.asset_typology
 
