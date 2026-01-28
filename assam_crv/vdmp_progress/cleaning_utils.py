@@ -11,6 +11,8 @@ from vdmp_dashboard.models import HouseholdSurvey
 from layers.models import village_flood_raster_Files
 from village_profile.models import tblVillage
 import math
+import psycopg2
+from village_profile.models import tblVillage
 
 def extract_flood_depth_from_raster(df, village_id):
     """
@@ -280,344 +282,500 @@ def process_road_data_pipeline(
     db_host="localhost",
     db_port="5434",
 ):
-    """
-    Process road data for all hazards (flood, earthquake, wind) and erosion.
-    """
-    import psycopg2
-    from vdmp_dashboard.models import VillageRoadInfo, VillageRoadInfoErosion, VillageRoadInfoEQ, VillageRoadInfoWind
-    from village_profile.models import tblVillage
-    
-    print(f"🛣️ Starting road processing for village: {village_name} ({village_code})")
-    
-    try:
-        village_obj = tblVillage.objects.get(id=village_id)
-        
-        conn = psycopg2.connect(
-            dbname=db_name,
-            user=db_user,
-            password=db_password,
-            host=db_host,
-            port=db_port,
-        )
-        
-        # Clear existing data
-        VillageRoadInfo.objects.filter(village_id=village_id).delete()
-        VillageRoadInfoEQ.objects.filter(village_id=village_id).delete()
-        VillageRoadInfoWind.objects.filter(village_id=village_id).delete()
-        VillageRoadInfoErosion.objects.filter(village_id=village_id).delete()
-        
-        # Process each hazard type
-        print("🌊 Processing flood hazard...")
-        _process_road_flood_data(conn, village_obj, village_code, district_code, district_name, village_name)
-        
-        print("🏔️ Processing earthquake hazard...")
-        _process_road_eq_data(conn, village_obj, village_code, district_code, district_name, village_name)
-        
-        print("💨 Processing wind hazard...")
-        _process_road_wind_data(conn, village_obj, village_code, district_code, district_name, village_name)
-        
-        print("🏔️ Processing erosion...")
-        _process_road_erosion_data(conn, village_obj, village_code, district_code, district_name, village_name)
-        
-        conn.close()
-        print(f"✅ Road data processing completed for village: {village_name}")
-        
-    except Exception as e:
-        print(f"❌ Error processing road data: {e}")
-        raise
+   
+  
 
-def extract_eq_hazard_from_raster(lat, lon):
-    """Extract earthquake hazard (PGA) from raster"""
-    from osgeo import gdal
-    import math
-    
-    raster_path = r"c:\assamcrv\assam_crv\static\risk_assessment_raster\PGA_Raster.img"
-    ds = gdal.Open(raster_path)
-    if not ds:
-        return 0.0
-        
-    band = ds.GetRasterBand(1)
-    gt = ds.GetGeoTransform()
-    inv_gt = gdal.InvGeoTransform(gt)
-    
-    if inv_gt is None:
-        return 0.0
-        
-    px, py = gdal.ApplyGeoTransform(inv_gt, lon, lat)
-    px, py = int(px), int(py)
-    
-    if px < 0 or py < 0 or px >= ds.RasterXSize or py >= ds.RasterYSize:
-        return 0.0
-        
-    val = band.ReadAsArray(px, py, 1, 1)[0, 0]
-    if val is None or (isinstance(val, float) and math.isnan(val)):
-        return 0.0
-        
-    return float(val)
+    print(f"🛣️ Processing roads for village: {village_name}")
 
-def extract_wind_hazard_from_raster(lat, lon):
-    """Extract wind hazard from raster"""
-    from osgeo import gdal
-    import math
-    
-    raster_path = r"c:\assamcrv\assam_crv\static\risk_assessment_raster\Wind_Raster.tif"
-    ds = gdal.Open(raster_path)
-    if not ds:
-        return 0.0
-        
-    band = ds.GetRasterBand(1)
-    gt = ds.GetGeoTransform()
-    inv_gt = gdal.InvGeoTransform(gt)
-    
-    if inv_gt is None:
-        return 0.0
-        
-    px, py = gdal.ApplyGeoTransform(inv_gt, lon, lat)
-    px, py = int(px), int(py)
-    
-    if px < 0 or py < 0 or px >= ds.RasterXSize or py >= ds.RasterYSize:
-        return 0.0
-        
-    val = band.ReadAsArray(px, py, 1, 1)[0, 0]
-    if val is None or (isinstance(val, float) and math.isnan(val)):
-        return 0.0
-        
-    return float(val)
+    village_obj = tblVillage.objects.get(id=village_id)
 
-def get_mdr_value(hazard_value, hazard_type, road_type_id):
-    """Get MDR value from database based on hazard value and road_type_id"""
-    from vdmp_progress.models import flood_MDR_table, EQ_MDR_table, wind_MDR_table, house_type
-    
-    try:
-        # Get house_type object by road_type_id
-        house_type_obj = house_type.objects.filter(house_type_id=road_type_id).first()
-        
-        if not house_type_obj:
-            return 0.0
-            
-        if hazard_type == 'flood':
-            mdr_record = flood_MDR_table.objects.filter(
-                house_type=house_type_obj,
-                flood_depth_m__lte=hazard_value
-            ).order_by('-flood_depth_m').first()
-        elif hazard_type == 'eq':
-            mdr_record = EQ_MDR_table.objects.filter(
-                house_type=house_type_obj,
-                PGA_g__lte=hazard_value
-            ).order_by('-PGA_g').first()
-        elif hazard_type == 'wind':
-            mdr_record = wind_MDR_table.objects.filter(
-                house_type=house_type_obj,
-                wind_speed_kmph__lte=hazard_value
-            ).order_by('-wind_speed_kmph').first()
-        else:
-            return 0.0
-            
-        return float(mdr_record.MDR_value) if mdr_record and mdr_record.MDR_value else 0.0
-    except Exception:
-        return 0.0
-
-def get_road_unit_cost_by_id(road_type_id):
-    """Get unit cost for road by type ID"""
-    from vdmp_dashboard.models import RoadUnitCost
-    
-    try:
-        cost_record = RoadUnitCost.objects.filter(
-            type_id=road_type_id
-        ).first()
-        return float(cost_record.unit_cost) if cost_record and cost_record.unit_cost else 0.0
-    except Exception:
-        return 0.0
-
-def get_road_unit_cost(asset_typology):
-    """Get unit cost for road surface type"""
-    from vdmp_dashboard.models import RoadUnitCost
-    
-    try:
-        cost_record = RoadUnitCost.objects.filter(
-            asset_typology__iexact=asset_typology
-        ).first()
-        return float(cost_record.unit_cost) if cost_record and cost_record.unit_cost else 0.0
-    except Exception:
-        return 0.0
-
-def _process_road_flood_data(
-    conn, village_obj, village_code,
-    district_code, district_name, village_name
-):
-    """
-    Enhanced road analysis for all hazards:
-    - Extract flood, earthquake, and wind hazard values
-    - Calculate unit costs and replacement costs
-    - Get MDR values and calculate losses
-    """
-
-    from vdmp_dashboard.models import VillageRoadInfo
-    from layers.models import village_flood_raster_Files
-    from osgeo import gdal
-    from shapely import wkt
-    import math
-
-    # ------------------------------------------------------------------
-    # 1. Get flood raster for village
-    # ------------------------------------------------------------------
-    raster_file = village_flood_raster_Files.objects.filter(
-        village_id=village_obj.id
-    ).first()
-
-    if not raster_file:
-        return
-
-    raster_path = f"c:\\assamcrv\\assam_crv\\media\\{raster_file.raster_file}"
-    ds = gdal.Open(raster_path)
-    band = ds.GetRasterBand(1)
-    gt = ds.GetGeoTransform()
-    inv_gt = gdal.InvGeoTransform(gt)
-
-    if inv_gt is None:
-        return
-
-    # ------------------------------------------------------------------
-    # 2. SQL: road selection + SAFE segmentation (keeps <10 m segments)
-    # ------------------------------------------------------------------
-    sql = """
-    WITH road_utm AS (
-        SELECT
-            gid,
-            rd_surface,
-            rsur_type,
-            ST_Transform(ST_SetSRID(geom, 4326), 32646) AS geom_utm
-        FROM public.road_network
-        WHERE vill_id = %s
-    ),
-
-    road_segments AS (
-        SELECT
-            gid,
-            rd_surface,
-            rsur_type,
-
-            ST_LineSubstring(
-                geom_utm,
-                LEAST(gs / ST_Length(geom_utm), 1),
-                LEAST((gs + 10) / ST_Length(geom_utm), 1)
-            ) AS segment_geom_utm
-
-        FROM road_utm
-        CROSS JOIN LATERAL generate_series(
-            0,
-            ST_Length(geom_utm)::int,
-            10
-        ) AS gs
+    conn = psycopg2.connect(
+        dbname=db_name,
+        user=db_user,
+        password=db_password,
+        host=db_host,
+        port=db_port,
     )
 
+ 
+
+    # Flood / EQ / Wind (combined in one function)
+    print("🌊 Processing flood, earthquake, and wind hazards...")
+    _process_road_flood_data(
+        conn,
+        village_obj,
+        village_code,
+        district_code,
+        district_name,
+        village_name,
+    )
+
+    # # ✅ Erosion (vector only)
+    # print("🌊 Processing erosion hazard...")
+    # _process_road_erosion_data(
+    #     conn,
+    #     village_obj,
+    #     village_code,
+    #     district_code,
+    #     district_name,
+    #     village_name,
+    # )
+
+    conn.close()
+    print("✅ Road processing completed")
+
+
+
+
+def get_road_unit_cost(asset_typology):
+    from vdmp_dashboard.models import RoadUnitCost
+    rec = RoadUnitCost.objects.filter(
+        asset_typology__iexact=asset_typology
+    ).first()
+    return float(rec.unit_cost) if rec and rec.unit_cost else 0.0
+
+
+
+
+def get_mdr_value(hazard_value, hazard_type, road_type_id):
+    from vdmp_progress.models import (
+        flood_MDR_table,
+        EQ_MDR_table,
+        wind_MDR_table,
+        house_type,
+    )
+
+    ht = house_type.objects.filter(
+        house_type_id=road_type_id
+    ).first()
+    if not ht:
+        return 0.0
+
+    if hazard_type == "flood":
+        rec = flood_MDR_table.objects.filter(
+            house_type=ht,
+            flood_depth_m__lte=hazard_value
+        ).order_by("-flood_depth_m").first()
+
+    elif hazard_type == "eq":
+        rec = EQ_MDR_table.objects.filter(
+            house_type=ht,
+            PGA_g__lte=hazard_value
+        ).order_by("-PGA_g").first()
+
+    elif hazard_type == "wind":
+        rec = wind_MDR_table.objects.filter(
+            house_type=ht,
+            wind_speed_kmph__lte=hazard_value
+        ).order_by("-wind_speed_kmph").first()
+    else:
+        return 0.0
+
+    return float(rec.MDR_value) if rec else 0.0
+
+
+
+
+
+# -------------------------------
+
+from osgeo import gdal
+from shapely.geometry import box
+import geopandas as gpd
+import numpy as np
+import os
+
+
+def raster_to_grid_gdf(
+    raster_path,
+    export_geojson=True,
+    geojson_name="flood_grid_debug.geojson"
+):
+    """
+    Convert raster pixels into vector grid polygons.
+    Each polygon represents ONE raster pixel.
+
+    Optionally exports the grid as GeoJSON
+    to assam_crv/media for visual verification.
+    """
+
+    # --------------------------------------------------
+    # 1. Open raster
+    # --------------------------------------------------
+    ds = gdal.Open(raster_path)
+    if not ds:
+        raise RuntimeError("Cannot open raster")
+
+    band = ds.GetRasterBand(1)
+    arr = band.ReadAsArray()
+
+    gt = ds.GetGeoTransform()
+    nodata = band.GetNoDataValue()
+    crs = ds.GetProjection()
+
+    rows, cols = arr.shape
+
+    polygons = []
+    values = []
+
+    # --------------------------------------------------
+    # 2. Loop through each pixel
+    # --------------------------------------------------
+    for row in range(rows):
+        for col in range(cols):
+
+            val = arr[row, col]
+
+            # Skip NoData pixels
+            if nodata is not None and val == nodata:
+                val = 0.0   # treat as no hazard
+
+
+            # Pixel bounds (lon/lat)
+            x_min = gt[0] + col * gt[1]
+            x_max = x_min + gt[1]
+            y_max = gt[3] + row * gt[5]
+            y_min = y_max + gt[5]
+
+            polygons.append(
+                box(x_min, y_min, x_max, y_max)
+            )
+            values.append(float(val))
+
+    # --------------------------------------------------
+    # 3. Create GeoDataFrame
+    # --------------------------------------------------
+    grid_gdf = gpd.GeoDataFrame(
+        {"flood_depth_m": values},
+        geometry=polygons,
+        crs=crs
+    )
+
+    # Unique ID per pixel
+    grid_gdf["grid_id"] = grid_gdf.index
+
+    # --------------------------------------------------
+    # 4. OPTIONAL: Export to GeoJSON for verification
+    # --------------------------------------------------
+    if export_geojson:
+        media_dir = r"c:\assamcrv\assam_crv\media"
+        os.makedirs(media_dir, exist_ok=True)
+
+        geojson_path = os.path.join(media_dir, geojson_name)
+
+        # GeoJSON driver
+        grid_gdf.to_file(
+            geojson_path,
+            driver="GeoJSON"
+        )
+
+        print(f"✅ Grid GeoJSON exported to: {geojson_path}")
+
+    return grid_gdf
+
+# -------------------------------
+# Load village roads (PostGIS)
+import geopandas as gpd
+from sqlalchemy import create_engine
+from django.conf import settings
+def get_sqlalchemy_engine():
+    """
+    Create SQLAlchemy engine using Django DB settings.
+    Keeps DB config in ONE place (env → settings.py).
+    """
+
+    db = settings.DATABASES["default"]
+
+    engine_url = (
+        f"postgresql+psycopg2://"
+        f"{db['USER']}:{db['PASSWORD']}@"
+        f"{db['HOST']}:{db['PORT']}/"
+        f"{db['NAME']}"
+    )
+
+    return create_engine(engine_url)
+
+
+def load_village_roads(village_code):
+    """
+    Load all road geometries and related attributes
+    for a given village from PostGIS.
+
+    Geometry CRS: EPSG:4326
+    Length calculation will be done later in EPSG:32646
+    """
+
+    engine = get_sqlalchemy_engine()
+
+    sql = """
     SELECT
         gid,
+        geom,
         rd_surface,
         rsur_type,
         rsurtypeid,
         width,
-        ST_Length(segment_geom_utm) AS seg_len,
-        ST_AsText(ST_Transform(ST_StartPoint(segment_geom_utm), 4326)) AS p_start,
-        ST_AsText(ST_Transform(ST_Centroid(segment_geom_utm), 4326)) AS p_mid,
-        ST_AsText(ST_Transform(ST_EndPoint(segment_geom_utm), 4326)) AS p_end
-    FROM road_segments
-    WHERE ST_Length(segment_geom_utm) > 0;
+        length
+    FROM public.road_network
+    WHERE vill_id = %s
+      AND geom IS NOT NULL;
     """
 
-    with conn.cursor() as cur:
-        cur.execute(sql, (village_code,))
-        rows = cur.fetchall()
+    roads_gdf = gpd.read_postgis(
+        sql,
+        engine,
+        params=(village_code,),
+        geom_col="geom",
+        crs="EPSG:4326"
+    )
 
-    # ------------------------------------------------------------------
-    # 3. Raster sampling + record creation with all hazards
-    # ------------------------------------------------------------------
+    # Safety check
+    if roads_gdf.empty:
+        print(f"⚠️ No roads found for village_code={village_code}")
+
+    return roads_gdf
+
+
+# Lengths in meters are only valid in projected CRS
+def reproject_for_length(roads_gdf, grid_gdf):
+    """
+    Reproject both roads and grid to EPSG:32646
+    so that length is measured in meters.
+    """
+    roads_utm = roads_gdf.to_crs("EPSG:32646")
+    grid_utm = grid_gdf.to_crs("EPSG:32646")
+
+    return roads_utm, grid_utm
+
+# ZONAL INTERSECTION (THIS IS THE KEY STEP)
+def intersect_roads_with_grid(roads_utm, grid_utm):
+    """
+    Intersect roads with raster grid.
+    Each output geometry lies inside ONE grid cell.
+    """
+
+    intersections = gpd.overlay(
+        roads_utm,
+        grid_utm,
+        how="intersection"
+    )
+
+    return intersections
+
+# Calculate road length per pixel
+def calculate_road_length(intersections):
+    """
+    Calculate road length inside each grid cell.
+    """
+    intersections["road_length_m"] = intersections.geometry.length
+    return intersections
+
+# If multiple road pieces fall in the same pixel:
+def aggregate_by_grid(intersections):
+    """
+    Aggregate total road length per raster pixel.
+    """
+
+    result = (
+        intersections
+        .groupby(["grid_id", "flood_depth_m"])["road_length_m"]
+        .sum()
+        .reset_index()
+    )
+
+    return result
+
+
+def save_grid_results(result_df, village_obj, village_code):
+    from vdmp_dashboard.models import VillageRoadInfo
+
     records = []
 
-    for gid, surface, rsur, seg_len, p_start, p_mid, p_end in rows:
-        flood_values = []
-        lat = lon = None
-
-        # Sample flood raster at multiple points
-        for pt_wkt in (p_start, p_mid, p_end):
-            if not pt_wkt:
-                continue
-
-            pt = wkt.loads(pt_wkt)
-            lon, lat = pt.x, pt.y
-
-            px, py = gdal.ApplyGeoTransform(inv_gt, lon, lat)
-            px, py = int(px), int(py)
-
-            if (
-                px < 0 or py < 0 or
-                px >= ds.RasterXSize or
-                py >= ds.RasterYSize
-            ):
-                continue
-
-            val = band.ReadAsArray(px, py, 1, 1)[0, 0]
-
-            if val is None or (isinstance(val, float) and math.isnan(val)):
-                continue
-
-            flood_values.append(float(val))
-
-        # Get hazard values
-        flood_depth = max(flood_values) if flood_values else 0.0
-        eq_hazard = extract_eq_hazard_from_raster(lat, lon) if lat and lon else 0.0
-        wind_hazard = extract_wind_hazard_from_raster(lat, lon) if lat and lon else 0.0
-        
-        # Get asset typology (road surface type)
-        asset_typology = rsur or surface or "Unknown"
-        
-        # Get unit cost and calculate replacement cost
-        unit_cost = get_road_unit_cost(asset_typology)
-        replacement_cost = seg_len * unit_cost
-        
-        # Get MDR values
-        flood_mdr = get_mdr_value(flood_depth, 'flood', asset_typology)
-        eq_mdr = get_mdr_value(eq_hazard, 'eq', asset_typology)
-        wind_mdr = get_mdr_value(wind_hazard, 'wind', asset_typology)
-        
-        # Calculate losses
-        flood_loss = replacement_cost * flood_mdr
-        eq_loss = replacement_cost * eq_mdr
-        wind_loss = replacement_cost * wind_mdr
-        
-        flood_class = _classify_flood(flood_depth)
-
+    for _, row in result_df.iterrows():
         records.append(
             VillageRoadInfo(
                 village=village_obj,
-                district_name=district_name,
-                district_code=district_code,
-                village_name=village_name,
                 village_code=village_code,
-                latitude=str(lat) if lat is not None else None,
-                longitude=str(lon) if lon is not None else None,
-                road_surface_type=asset_typology,
-                road_constructed_by="Unknown",
-                road_length_m=seg_len,
-                flood_depth_m=flood_depth,
-                flood_class=flood_class,
-               
-              
-                unit_cost=unit_cost,
-                replacement_cost_inr=replacement_cost,
-                flood_hazard_mdr=flood_mdr,
-               
-                wind_hazard_mdr=wind_mdr,
-                flood_loss=flood_loss,
-              
+                # grid_id=int(row["grid_id"]),
+                flood_depth_m=float(row["flood_depth_m"]),
+                road_length_m=float(row["road_length_m"]),
             )
         )
 
-    # ------------------------------------------------------------------
-    # 4. Bulk insert
-    # ------------------------------------------------------------------
     if records:
-        VillageRoadInfo.objects.bulk_create(records, batch_size=1000)
+        VillageRoadInfo.objects.bulk_create(
+            records,
+            batch_size=1000
+        )
+
+
+
+
+def process_road_flood_zonal_length(
+    village_obj,
+    village_code,
+    flood_raster_path
+):
+    """
+    Full zonal line length analysis:
+    road length per flood raster pixel.
+    """
+
+    # 1. Raster → grid
+    grid_gdf = raster_to_grid_gdf(flood_raster_path)
+
+    # 2. Roads
+    roads_gdf = load_village_roads(village_code)
+
+    if roads_gdf.empty or grid_gdf.empty:
+        return
+
+    # 3. Reproject
+    roads_utm, grid_utm = reproject_for_length(
+        roads_gdf, grid_gdf
+    )
+
+    # 4. Intersection
+    intersections = intersect_roads_with_grid(
+        roads_utm, grid_utm
+    )
+
+    if intersections.empty:
+        return
+
+    # 5. Length calculation
+    intersections = calculate_road_length(intersections)
+
+    # 6. Aggregate
+    result = aggregate_by_grid(intersections)
+
+    # 7. Save
+    save_grid_results(result, village_obj, village_code)
+
+
+
+def _process_road_flood_data(
+    conn,
+    village_obj,
+    village_code,
+    district_code,
+    district_name,
+    village_name,
+):
+    from vdmp_dashboard.models import VillageRoadInfo
+    from layers.models import village_flood_raster_Files
+    from shapely import wkt
+
+    # ------------------------------------------------------------------
+    # Load rasters ONCE
+    # ------------------------------------------------------------------
+    flood_raster = village_flood_raster_Files.objects.filter(
+        village_id=village_obj.id
+    ).first()
+
+    if not flood_raster:
+        return
+
+    print("🌊 Processing flood hazard zonal length...")
+    process_road_flood_zonal_length(
+        village_obj,
+        village_code,
+       f"c:\\assamcrv\\assam_crv\\media\\{flood_raster.raster_file}"
+    )
+
+    # eq_sampler = RasterSampler(
+    #     r"c:\assamcrv\assam_crv\static\risk_assessment_raster\PGA_Raster.img"
+    # )
+
+    # wind_sampler = RasterSampler(
+    #     r"c:\assamcrv\assam_crv\static\risk_assessment_raster\Wind_Raster.tif"
+    # )
+
+    # # ------------------------------------------------------------------
+    # # SQL: WHOLE ROAD, LENGTH IN UTM, POINT IN WGS84
+    # # ------------------------------------------------------------------
+    # sql = """
+    # SELECT
+    #     gid,
+    #     rd_surface,
+    #     rsur_type,
+    #     rsurtypeid,
+    #     width,
+
+    #     ST_Length(
+    #         ST_Transform(geom, 32646)
+    #     ) AS road_len_m,
+
+    #     ST_AsText(
+    #         ST_Centroid(geom)
+    #     ) AS centroid_wkt
+
+    # FROM public.road_network
+    # WHERE vill_id = %s
+    #   AND geom IS NOT NULL;
+    # """
+
+    # with conn.cursor() as cur:
+    #     cur.execute(sql, (village_code,))
+    #     rows = cur.fetchall()
+
+    # records = []
+
+    # for (
+    #     gid,
+    #     surface,
+    #     rsur,
+    #     rsurtypeid,
+    #     width,
+    #     road_len,
+    #     centroid_wkt,
+    # ) in rows:
+
+    #     if not centroid_wkt or road_len <= 0:
+    #         continue
+
+    #     pt = wkt.loads(centroid_wkt)
+    #     lon, lat = pt.x, pt.y
+
+    #     flood = flood_sampler.sample(lon, lat)
+    #     eq = eq_sampler.sample(lon, lat)
+    #     wind = wind_sampler.sample(lon, lat)
+
+    #     asset_typology = rsur or surface or "Unknown"
+
+    #     unit_cost = get_road_unit_cost(asset_typology)
+    #     replacement_cost = road_len * unit_cost
+
+    #     flood_mdr = get_mdr_value(flood, "flood", rsurtypeid)
+    #     eq_mdr = get_mdr_value(eq, "eq", rsurtypeid)
+    #     wind_mdr = get_mdr_value(wind, "wind", rsurtypeid)
+
+    #     records.append(
+    #         VillageRoadInfo(
+    #             village=village_obj,
+    #             district_name=district_name,
+    #             district_code=district_code,
+    #             village_name=village_name,
+    #             village_code=village_code,
+    #             latitude=str(lat),
+    #             longitude=str(lon),
+    #             road_surface_type=asset_typology,
+    #             road_length_m=road_len,
+    #             flood_depth_m=flood,
+    #             unit_cost=unit_cost,
+    #             replacement_cost_inr=replacement_cost,
+    #             flood_hazard_mdr=flood_mdr,
+    #             eq_hazard_mdr=eq_mdr,
+    #             wind_hazard_mdr=wind_mdr,
+    #             flood_loss=replacement_cost * flood_mdr,
+    #             eq_loss=replacement_cost * eq_mdr,
+    #             wind_loss=replacement_cost * wind_mdr,
+    #         )
+    #     )
+
+    # if records:
+    #     VillageRoadInfo.objects.bulk_create(records, batch_size=1000)
+
 
 
 
@@ -1608,116 +1766,7 @@ def _classify_crops_diversity(num_crops):
     except (ValueError, TypeError):
         return "No crops"
 
-def _process_road_flood_data(
-    conn, village_obj, village_code,
-    district_code, district_name, village_name
-):
-    """Process flood hazard for roads with 10m segmentation"""
-    from vdmp_dashboard.models import VillageRoadInfo
-    from layers.models import village_flood_raster_Files
-    from osgeo import gdal
-    from shapely import wkt
-    import math
 
-    raster_file = village_flood_raster_Files.objects.filter(
-        village_id=village_obj.id
-    ).first()
-
-    if not raster_file:
-        return
-
-    raster_path = f"c:\\assamcrv\\assam_crv\\media\\{raster_file.raster_file}"
-    ds = gdal.Open(raster_path)
-    if not ds:
-        return
-        
-    band = ds.GetRasterBand(1)
-    gt = ds.GetGeoTransform()
-    inv_gt = gdal.InvGeoTransform(gt)
-
-    if inv_gt is None:
-        return
-
-    sql = """
-    WITH road_utm AS (
-        SELECT
-            gid, rd_surface, rsur_type, rsurtypeid, width,
-            ST_Transform(ST_SetSRID(geom, 4326), 32646) AS geom_utm
-        FROM public.road_network
-        WHERE vill_id = %s
-    ),
-    road_segments AS (
-        SELECT
-            gid, rd_surface, rsur_type, rsurtypeid, width,
-            ST_LineSubstring(
-                geom_utm,
-                LEAST(gs / ST_Length(geom_utm), 1),
-                LEAST((gs + 10) / ST_Length(geom_utm), 1)
-            ) AS segment_geom_utm
-        FROM road_utm
-        CROSS JOIN LATERAL generate_series(0, ST_Length(geom_utm)::int, 10) AS gs
-    )
-    SELECT
-        gid, rd_surface, rsur_type, rsurtypeid, width,
-        ST_Length(segment_geom_utm) AS seg_len,
-        ST_AsText(ST_Transform(ST_Centroid(segment_geom_utm), 4326)) AS p_center
-    FROM road_segments
-    WHERE ST_Length(segment_geom_utm) > 0;
-    """
-
-    with conn.cursor() as cur:
-        cur.execute(sql, (village_code,))
-        rows = cur.fetchall()
-
-    records = []
-    for gid, surface, rsur, rsurtypeid, width, seg_len, p_center in rows:
-        if not p_center:
-            continue
-            
-        pt = wkt.loads(p_center)
-        lon, lat = pt.x, pt.y
-
-        px, py = gdal.ApplyGeoTransform(inv_gt, lon, lat)
-        px, py = int(px), int(py)
-
-        if px < 0 or py < 0 or px >= ds.RasterXSize or py >= ds.RasterYSize:
-            flood_depth = 0.0
-        else:
-            val = band.ReadAsArray(px, py, 1, 1)[0, 0]
-            flood_depth = float(val) if val is not None and not (isinstance(val, float) and math.isnan(val)) else 0.0
-
-        asset_typology = rsur or surface or "Unknown"
-        unit_cost = get_road_unit_cost_by_id(rsurtypeid) if rsurtypeid else get_road_unit_cost(asset_typology)
-        replacement_cost = seg_len * unit_cost
-        flood_mdr = get_mdr_value(flood_depth, 'flood', rsurtypeid) if rsurtypeid else 0.0
-        flood_loss = replacement_cost * flood_mdr
-        flood_class = _classify_flood(flood_depth)
-
-        records.append(
-            VillageRoadInfo(
-                village=village_obj,
-                district_name=district_name,
-                district_code=district_code,
-                village_name=village_name,
-                village_code=village_code,
-                latitude=str(lat),
-                longitude=str(lon),
-                road_surface_type=asset_typology,
-                road_constructed_by="Unknown",
-                road_length_m=seg_len,
-                road_width_m=width,
-                road_type_id=rsurtypeid,
-                flood_depth_m=flood_depth,
-                flood_class=flood_class,
-                unit_cost=unit_cost,
-                replacement_cost_inr=replacement_cost,
-                flood_hazard_mdr=flood_mdr,
-                flood_loss=flood_loss,
-            )
-        )
-
-    if records:
-        VillageRoadInfo.objects.bulk_create(records, batch_size=1000)
 
 def _process_road_eq_data(
     conn, village_obj, village_code,

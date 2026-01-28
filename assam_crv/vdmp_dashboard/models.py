@@ -322,6 +322,13 @@ class VillageRoadInfo(models.Model):
     unit_cost = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     replacement_cost_inr = models.DecimalField(max_digits=15, decimal_places=2, default=0.00)
     
+    eq_hazard = models.DecimalField(max_digits=10, decimal_places=8, null=True, blank=True)
+    eq_hazard_mdr = models.DecimalField(max_digits=10, decimal_places=8, null=True, blank=True)
+    eq_loss = models.DecimalField(max_digits=15, decimal_places=8, null=True, blank=True)
+
+    wind_hazard = models.DecimalField(max_digits=10, decimal_places=8, null=True, blank=True)
+    wind_hazard_mdr = models.DecimalField(max_digits=10, decimal_places=8, null=True, blank=True)
+    wind_loss = models.DecimalField(max_digits=15, decimal_places=8, null=True, blank=True)
     
     # MDR (Mean Damage Ratio) data
     flood_hazard_mdr = models.DecimalField(max_digits=10, decimal_places=8, null=True, blank=True)
