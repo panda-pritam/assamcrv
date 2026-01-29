@@ -1,7 +1,7 @@
 
 from django.urls import path
 from .views import ( vdmp_dashboard,get_household_summary_data, generate_pdf_view,
-                     upload_data_vdmp, delete_vdmp_data, download_report)
+                     upload_data_vdmp, delete_vdmp_data, download_report, get_upload_data_catalog)
 from .delete_village_data import delete_village_data
 from administrator.views import upload_line_department_data
 from .views import download_excels_format
@@ -12,6 +12,8 @@ urlpatterns = [
     path('api/delete_vdmp_data', delete_vdmp_data, name='delete_vdmp_data'),
     path('api/delete_village_data', delete_village_data, name='delete_village_data'),
     path('api/get_household_summary_data', get_household_summary_data, name='get_household_summary_data'),
+    path('api/get_upload_data_catalog', get_upload_data_catalog, name='get_upload_data_catalog'),
+
     path('api/download_report', download_report, name='download_report'),
     path('report', generate_pdf_view, name='generate_pdf'),
     path('api/download_excels_format', download_excels_format, name='download_excels_format'),

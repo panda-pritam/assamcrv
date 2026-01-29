@@ -14,7 +14,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.core.exceptions import ObjectDoesNotExist
 from .models import (HouseholdSurvey, tblVillage, Transformer, Commercial,Critical_Facility,ElectricPole,VillageListOfAllTheDistricts,
-                     VillageRoadInfo,VillageRoadInfoErosion, BridgeSurvey, Risk_Assesment)
+                     VillageRoadInfo,VillageRoadInfoErosion, BridgeSurvey, Risk_Assesment, Upload_data_vdmp)
 from administrator.models import PRA_main, PRA_assets, PRA_shelter, FGD_wash_summary, FGD_livelihood_summary
 from django.db.models.functions import Cast
 from django.db.models import Sum, Count, Q, FloatField, Avg, Max
@@ -27,6 +27,7 @@ from collections import defaultdict
 from shapefiles.models import PraBoundary,ExposureRiver
 import re
 from django.db import models
+import os
 import pandas as pd
 
 def vdmp_dashboard(request):
@@ -96,6 +97,36 @@ def normalize_value(value, field):
     val = str(value).strip()
     return val if val else None
 
+def parse_allowed_extensions(format_value):
+    if not format_value:
+        return set()
+    value = str(format_value).lower()
+    allowed = set()
+    if "csv" in value or "excel" in value:
+        allowed.update({".csv", ".xls", ".xlsx"})
+    for token in re.split(r"[\\s,;/]+", value):
+        token = token.strip()
+        if not token:
+            continue
+        if token.startswith("."):
+            allowed.add(token)
+    for token in re.findall(r"\\.[a-z0-9]+", value):
+        allowed.add(token)
+    return allowed
+
+def get_upload_rules(type_name):
+    rows = Upload_data_vdmp.objects.filter(type_of_data=type_name).values("format", "number_of_files")
+    if not rows:
+        return None
+    expected_files = 1
+    allowed_exts = set()
+    for row in rows:
+        allowed_exts |= parse_allowed_extensions(row.get("format"))
+        number_of_files = row.get("number_of_files") or 1
+        if number_of_files > expected_files:
+            expected_files = number_of_files
+    return expected_files, allowed_exts
+
 @csrf_exempt
 @require_POST
 def upload_data_vdmp(request):
@@ -105,6 +136,8 @@ def upload_data_vdmp(request):
     try:
         file = request.FILES.get("file")
         data_type = request.POST.get("data_type")
+        type_name = request.POST.get("type_name")
+        total_files = request.POST.get("total_files")
         # print(f"File name: {file.name if file else 'None'}")
         # print(f"Data type: {data_type}")
 
@@ -115,6 +148,29 @@ def upload_data_vdmp(request):
                              "VillageRoadInfo","VillageRoadInfoErosion", "bridge_survey", "risk_assesment", "pra_main", "pra_assets", "pra_shelter", "fgd_wash_summary", "fgd_livelihood_summary"]:
             print("Invalid data type")
             return JsonResponse({"status": "error", "error": "Invalid data_type"}, status=400)
+
+        if type_name:
+            rules = get_upload_rules(type_name)
+            if not rules:
+                return JsonResponse({"status": "error", "error": "Invalid type_name"}, status=400)
+            expected_files, allowed_exts = rules
+            if total_files:
+                try:
+                    total_files_int = int(total_files)
+                except ValueError:
+                    return JsonResponse({"status": "error", "error": "Invalid total_files"}, status=400)
+                if total_files_int != expected_files:
+                    return JsonResponse({
+                        "status": "error",
+                        "error": f"Expected {expected_files} file(s) for this type"
+                    }, status=400)
+            if allowed_exts:
+                ext = os.path.splitext(file.name)[1].lower()
+                if ext not in allowed_exts:
+                    return JsonResponse({
+                        "status": "error",
+                        "error": f"Unsupported file format. Allowed: {', '.join(sorted(allowed_exts))}"
+                    }, status=400)
 
         try:
             read_start = time.time()
@@ -277,6 +333,45 @@ def upload_data_vdmp(request):
             "status": "error",
             "error": f"Unexpected error: {str(e)}"
         }, status=500)
+
+@api_view(['GET'])
+def get_upload_data_catalog(request):
+    """Return category/type catalog for VDMP upload metadata."""
+    rows = Upload_data_vdmp.objects.values('category', 'type_of_data', 'number_of_files', 'selection_level')
+    label_map = dict(Upload_data_vdmp.CATEGORY_CHOICES)
+
+    catalog = {}
+    all_types = set()
+    type_files = {}
+    type_levels = {}
+    for row in rows:
+        category = row['category']
+        type_of_data = row['type_of_data']
+        number_of_files = row.get('number_of_files') or 1
+        selection_level = row.get('selection_level') or ''
+        all_types.add(type_of_data)
+        catalog.setdefault(category, set()).add(type_of_data)
+        current_files = type_files.get(type_of_data)
+        if current_files is None or number_of_files > current_files:
+            type_files[type_of_data] = number_of_files
+        current_level = type_levels.get(type_of_data)
+        if not current_level:
+            type_levels[type_of_data] = selection_level
+
+    categories = [
+        {"value": category, "label": label_map.get(category, category)}
+        for category in sorted(catalog.keys())
+    ]
+    mapping = {category: sorted(list(types)) for category, types in catalog.items()}
+
+    return Response({
+        "categories": categories,
+        "types": sorted(list(all_types)),
+        "mapping": mapping,
+        "type_files": type_files,
+        "type_levels": type_levels
+    })
+
 
 @api_view(['POST'])
 def delete_vdmp_data(request):

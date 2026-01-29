@@ -21,6 +21,9 @@ from utils import TRAINING_MASTER_LIST,RESCUE_EQUEP_MASTER_LIST,VDMP_ACTIVITIES
 from administrator.models import LineDepartmentMaster, LineDepartment
 from village_profile.models import tblVillage
 from utils import LINE_DEPARTMENT_MAPPING
+from vdmp_dashboard.models import Upload_data_vdmp
+import os
+import re
 import time
 
 
@@ -402,6 +405,36 @@ def validate_file_before_processing(file):
 # -------------- api view to upload line department master data --------------
 from django.views.decorators.csrf import csrf_exempt
 
+def parse_allowed_extensions(format_value):
+    if not format_value:
+        return set()
+    value = str(format_value).lower()
+    allowed = set()
+    if "csv" in value or "excel" in value:
+        allowed.update({".csv", ".xls", ".xlsx"})
+    for token in re.split(r"[\\s,;/]+", value):
+        token = token.strip()
+        if not token:
+            continue
+        if token.startswith("."):
+            allowed.add(token)
+    for token in re.findall(r"\\.[a-z0-9]+", value):
+        allowed.add(token)
+    return allowed
+
+def get_upload_rules(type_name):
+    rows = Upload_data_vdmp.objects.filter(type_of_data=type_name).values("format", "number_of_files")
+    if not rows:
+        return None
+    expected_files = 1
+    allowed_exts = set()
+    for row in rows:
+        allowed_exts |= parse_allowed_extensions(row.get("format"))
+        number_of_files = row.get("number_of_files") or 1
+        if number_of_files > expected_files:
+            expected_files = number_of_files
+    return expected_files, allowed_exts
+
 @csrf_exempt
 @require_POST
 def upload_line_department_data(request):
@@ -411,8 +444,33 @@ def upload_line_department_data(request):
     try:
         file = request.FILES.get("file")
         data_type = request.POST.get("data_type")
+        type_name = request.POST.get("type_name")
+        total_files = request.POST.get("total_files")
         if not file:
             return JsonResponse({"status": "error", "error": "No file uploaded"}, status=400)
+
+        if type_name:
+            rules = get_upload_rules(type_name)
+            if not rules:
+                return JsonResponse({"status": "error", "error": "Invalid type_name"}, status=400)
+            expected_files, allowed_exts = rules
+            if total_files:
+                try:
+                    total_files_int = int(total_files)
+                except ValueError:
+                    return JsonResponse({"status": "error", "error": "Invalid total_files"}, status=400)
+                if total_files_int != expected_files:
+                    return JsonResponse({
+                        "status": "error",
+                        "error": f"Expected {expected_files} file(s) for this type"
+                    }, status=400)
+            if allowed_exts:
+                ext = os.path.splitext(file.name)[1].lower()
+                if ext not in allowed_exts:
+                    return JsonResponse({
+                        "status": "error",
+                        "error": f"Unsupported file format. Allowed: {', '.join(sorted(allowed_exts))}"
+                    }, status=400)
         
         # Read file
         if file.name.endswith(".csv"):

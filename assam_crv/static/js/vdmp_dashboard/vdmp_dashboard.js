@@ -11,6 +11,53 @@ function hideLoader() {
     }
 }
 
+let uploadCatalog = null;
+
+async function loadUploadCatalog() {
+    try {
+        const response = await fetch('/api/get_upload_data_catalog');
+        if (!response.ok) {
+            throw new Error('Failed to load upload catalog');
+        }
+        uploadCatalog = await response.json();
+        populateCategorySelect(uploadCatalog.categories);
+        populateTypeSelect(uploadCatalog.types);
+    } catch (error) {
+        console.error('Error loading upload catalog:', error);
+    }
+}
+
+function populateCategorySelect(categories) {
+    const select = $('#uploadCategory');
+    if (!select.length) return;
+    let options = `<option value="" selected disabled>${gettext('Select Category')}</option>`;
+    categories.forEach(item => {
+        options += `<option value="${item.value}">${item.label}</option>`;
+    });
+    select.html(options).trigger('change.select2');
+}
+
+function populateTypeSelect(types) {
+    const select = $('#uploadType');
+    if (!select.length) return;
+    let options = `<option value="" selected disabled>${gettext('Select Data Type')}</option>`;
+    types.forEach(item => {
+        options += `<option value="${item}">${item}</option>`;
+    });
+    select.html(options).trigger('change.select2');
+}
+
+function updateUploadTypesForCategory() {
+    if (!uploadCatalog) return;
+    const category = $('#uploadCategory').val();
+    if (!category) {
+        populateTypeSelect(uploadCatalog.types);
+        return;
+    }
+    const types = uploadCatalog.mapping[category] || [];
+    populateTypeSelect(types);
+}
+
 document.addEventListener('DOMContentLoaded', async function () {
     colorChange('vdmp_dashboard');
 
@@ -21,6 +68,8 @@ document.addEventListener('DOMContentLoaded', async function () {
     initializeSelect2('gram_panchayat', gettext('Select Gram Panchayat'));
     initializeSelect2('circle', gettext('Select Circle'));
     initializeSelect2('status', gettext('Select Status'));
+    initializeSelect2('uploadCategory', gettext('Select Category'));
+    initializeSelect2('uploadType', gettext('Select Data Type'));
     // Load districts and villages using common function
     // loadDistrictsAndVillages('district', 'village');
 
@@ -35,6 +84,9 @@ document.addEventListener('DOMContentLoaded', async function () {
     const userVillageId = document.getElementById('userVillageId')?.value || '';
 
     await setupLocationSelectors('district', 'circle', 'gram_panchayat', 'village', userDistrictId, userCircleId, userGramPanchayatId, userVillageId);
+
+    await loadUploadCatalog();
+    $('#uploadCategory').on('change', updateUploadTypesForCategory);
 
     // Helper to get current filter values
     function getFilters() {

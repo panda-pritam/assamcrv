@@ -497,3 +497,23 @@ class RoadUnitCost(models.Model):
     def __str__(self):
         return self.asset_typology
 
+class Upload_data_vdmp(models.Model):
+
+    CATEGORY_CHOICES = [
+        ("survey", "Survey"),
+        ("gis", "GIS"),
+        ("hazard", "Hazard"),
+        ("photos", "Photos"),
+    ]
+    category = models.CharField(max_length=20,choices=CATEGORY_CHOICES)
+    type_of_data = models.CharField(max_length=500)
+    format = models.CharField(max_length=100)
+    selection_level = models.CharField(max_length=50,blank=True,null=True)
+    number_of_files = models.PositiveIntegerField(default=1)
+    remark = models.CharField(max_length=200)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)    
+
+    def __str__(self):
+        return self.category

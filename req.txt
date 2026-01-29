@@ -1,14 +1,14 @@
-affine @ file:///home/conda/feedstock_root/build_artifacts/affine_1733762038348/work
+affine
 anyio==4.12.0
 asgiref==3.11.0
-attrs @ file:///home/conda/feedstock_root/build_artifacts/bld/rattler-build_attrs_1764875182/work
-certifi @ file:///home/conda/feedstock_root/build_artifacts/certifi_1762976168352/work/certifi
+attrs
+certifi
 chardet==5.2.0
 charset-normalizer==3.4.3
 click 
 click-plugins 
-cligj @ file:///home/conda/feedstock_root/build_artifacts/cligj_1733749956636/work
-colorama @ file:///home/conda/feedstock_root/build_artifacts/colorama_1733218098505/work
+cligj
+colorama
 Django==5.2.9
 djangorestframework==3.16.1
 et_xmlfile==2.0.0
@@ -29,18 +29,18 @@ openpyxl==3.1.5
 pillow==12.0.0
 psycopg2==2.9.10
 psycopg2-binary==2.9.11
-pyparsing @ file:///home/conda/feedstock_root/build_artifacts/bld/rattler-build_pyparsing_1766475444/work
-python-dateutil @ file:///home/conda/feedstock_root/build_artifacts/bld/rattler-build_python-dateutil_1751104122/work
+pyparsing
+python-dateutil
 python-decouple==3.8
-pytz @ file:///home/conda/feedstock_root/build_artifacts/pytz_1742920838005/work
+pytz
 
 reportlab==4.4.3
 requests==2.32.5
 scikit-learn==1.7.2
 scipy==1.15.3
-six @ file:///home/conda/feedstock_root/build_artifacts/bld/rattler-build_six_1753199211/work
+six
 sniffio==1.3.1
-snuggs @ file:///home/conda/feedstock_root/build_artifacts/snuggs_1733818638588/work
+snuggs
 sqlparse==0.5.5
 threadpoolctl==3.6.0
 typing_extensions==4.15.0
