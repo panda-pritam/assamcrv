@@ -328,6 +328,8 @@ class CastDecimal(Func):
     function = 'CAST'
     template = "%(expressions)s::decimal"
 
+from administrator.models import PRA_main
+
 @api_view(['GET'])
 def get_household_summary_data(request):
     """
@@ -376,9 +378,9 @@ def get_household_summary_data(request):
     
     # STEP 4: Calculate housing type distribution
     # Count houses by construction type for asset summary
-    kachcha_houses = data.filter(house_type='Kachcha').count()
-    semi_pucca_houses = data.filter(house_type='Semi Pucca').count()
-    pucca_houses = data.filter(house_type='Pucca').count()
+    kachcha_houses = data.filter(house_type__iexact='Kachcha').count()
+    semi_pucca_houses = data.filter(house_type__iexact='Semi Pucca').count()
+    pucca_houses = data.filter(house_type__iexact='Pucca').count()
 
     # STEP 5: Query Critical Facilities data for educational/religious infrastructure
     ca_data = Critical_Facility.objects.select_related(
@@ -392,11 +394,11 @@ def get_household_summary_data(request):
     ca_data = apply_location_filters(ca_data, district_id, circle_id, gram_panchayat_id, village_id)
 
     # STEP 6: Count facilities by type for asset summary
-    school = ca_data.filter(occupancy_type='School').count()
-    religous_places = ca_data.filter(occupancy_type='Religious Place').count()
-    anganwadi = ca_data.filter(occupancy_type='Anganwadi').count()
-    gov_office = ca_data.filter(occupancy_type='Govt Office').count()
-    others = ca_data.filter(occupancy_type='Others').count()
+    school = ca_data.filter(occupancy_type__iexact='School').count()
+    religous_places = ca_data.filter(occupancy_type__iexact='Religious Place').count()
+    anganwadi = ca_data.filter(occupancy_type__iexact='Anganwadi').count()
+    gov_office = ca_data.filter(occupancy_type__iexact='Govt Office').count()
+    others = ca_data.filter(occupancy_type__iexact='Others').count()
 
     # STEP 7: Define safe aggregation function to handle null/empty values
     # Excludes null, empty string, and 'nan' values before summing
@@ -416,13 +418,20 @@ def get_household_summary_data(request):
     pregnant_count = int(safe_sum('pregnant_women'))
     disabled_count = int(safe_sum('persons_with_disability_or_chronic_disease'))
     
+    # Get chronic illness data from PRA_main model
+   
+    pra_data = PRA_main.objects.select_related('village').all()
+    pra_data = apply_location_filters(pra_data, district_id, circle_id, gram_panchayat_id, village_id)
+    pra_record = pra_data.first()
+    chronic_illness_count = pra_record.persons_with_chronic_illness if pra_record else 0
+    
     # Calculate total population (male + female, excluding seniors to avoid double counting)
     total_pop = male_pop + female_pop 
     
     # STEP 9: Calculate vulnerable household categories
     # Count households by economic status for priority targeting
-    priority_households = data.filter(economic_status='Phh Priority Household').count()
-    bpl_households = data.filter(economic_status='Bpl Below Poverty Line').count()
+    priority_households = data.filter(economic_status__iexact='PHH- Priority Household').count()
+    bpl_households = data.filter(economic_status__iexact='BPL- Below Poverty Line').count()
     
     # STEP 10: Calculate maternal health statistics
     # Combine pregnant and lactating women counts
@@ -473,7 +482,8 @@ def get_household_summary_data(request):
         # Vulnerable Populations - Special categories for targeting
         'population_bl_six': int(safe_sum('children_below_6_years')),  # Children under 6
         'senior_citizens': senior_pop,
-        'total_disabled': disabled_count,        
+        'total_disabled': disabled_count,
+        'chronic_illness': int(chronic_illness_count),  # From PRA_main model
         'priority_households': priority_households,
         'bpl_households': bpl_households,
         'pregnant_lactating': pregnant_lactating,

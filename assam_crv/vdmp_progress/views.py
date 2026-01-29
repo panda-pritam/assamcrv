@@ -228,10 +228,20 @@ def update_vdmp_activity_status(request, status_id):
                                Critical_Facility.objects.filter(village_id=village_id).exists() or 
                                BridgeSurvey.objects.filter(village_id=village_id).exists())
             elif 'road' in activity_name:
-                from vdmp_dashboard.models import VillageRoadInfo, VillageRoadInfoErosion
+                from vdmp_dashboard.models import VillageRoadInfo, VillageRoadInfoErosion, VillageRoadInfoEQ, VillageRoadInfoWind
+                
                 existing_data = (VillageRoadInfo.objects.filter(village_id=village_id).exists() or 
-                               VillageRoadInfoErosion.objects.filter(village_id=village_id).exists())
-            
+                               VillageRoadInfoErosion.objects.filter(village_id=village_id).exists() or
+                               VillageRoadInfoEQ.objects.filter(village_id=village_id).exists() or
+                               VillageRoadInfoWind.objects.filter(village_id=village_id).exists())
+                
+            elif 'agriculture' in activity_name:
+                from vdmp_dashboard.models import villageAgricultureLandFloodInfo, villageAgricultureLandErosionInfo, villageAgricultureLandWindInfo, villageAgricultureLandEQInfo
+                existing_data = (villageAgricultureLandFloodInfo.objects.filter(village_id=village_id).exists() or
+                               villageAgricultureLandErosionInfo.objects.filter(village_id=village_id).exists() or
+                               villageAgricultureLandWindInfo.objects.filter(village_id=village_id).exists() or
+                               villageAgricultureLandEQInfo.objects.filter(village_id=village_id).exists())
+
             # If data exists, return warning
             if existing_data:
                 return Response({
@@ -405,12 +415,52 @@ def update_vdmp_activity_status(request, status_id):
                         'pipeline_status': 'success',
                         'message': 'Road infrastructure data processed successfully'
                     })
+                
+            
                     
                 except Exception as e:
                     return Response({
                         'error': 'Road pipeline processing failed',
                         'pipeline_error': str(e)
                     }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                
+            elif "agriculture" in activity_name:
+                    # For agriculture activity, just save without pipeline
+                    
+                try:
+                    village_id = activity_status.village.id
+                    print("Processing Agriculture Activity Survey for village_id -> ", village_id)
+                    # Get mapping record
+                    mapping = district_village_mapping.objects.get(village_id=village_id)
+                    district_code = mapping.district_code
+                    village_code = mapping.village_code
+                    district_name = tblDistrict.objects.get(id=mapping.district.id).name
+                    village_name = tblVillage.objects.get(id=village_id).name
+                    
+                    # Import road processing function
+                    from .cleaning_utils import process_arrgicultural_data_pipeline,process_all_agriculture_hazards
+                    
+                    # Process road data for flood and erosion
+                    process_all_agriculture_hazards(
+                        village_obj=village_id,
+                        village_code=village_code,
+                        district_code=district_code,
+                        district_name=district_name,
+                        village_name=village_name
+                    )
+                    
+                    serializer.save()
+                    return Response({
+                        **serializer.data,
+                        'pipeline_status': 'success',
+                        'message': 'Road infrastructure data processed successfully'
+                    })
+                
+                except Exception as e:
+                    return Response({
+                        'error': 'Agriculture activity processing failed',
+                        'pipeline_error': str(e)
+                    }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)  
                 
             else:
                 # For other activities, just save without pipeline
@@ -441,15 +491,26 @@ def delete_and_rerun_pipeline(request, status_id):
             HouseholdSurvey.objects.filter(village=village).delete()
 
         elif 'physical vulnerability survey' in activity_name:
-            from vdmp_dashboard.models import Commercial, Critical_Facility, BridgeSurvey
+            from vdmp_dashboard.models import Commercial, Critical_Facility, BridgeSurvey,Transformer,ElectricPole
             Commercial.objects.filter(village=village).delete()
             Critical_Facility.objects.filter(village=village).delete()
             BridgeSurvey.objects.filter(village=village).delete()
+            Transformer.objects.filter(village=village).delete()
+            ElectricPole.objects.filter(village=village).delete()
 
         elif 'road' in activity_name:
-            from vdmp_dashboard.models import VillageRoadInfo, VillageRoadInfoErosion
+            from vdmp_dashboard.models import VillageRoadInfo, VillageRoadInfoErosion, VillageRoadInfoEQ, VillageRoadInfoWind
             VillageRoadInfo.objects.filter(village=village).delete()
             VillageRoadInfoErosion.objects.filter(village=village).delete()
+            VillageRoadInfoEQ.objects.filter(village=village).delete()
+            VillageRoadInfoWind.objects.filter(village=village).delete()
+        # 🏗 Re-run data pipeline
+        elif "agriculture" in activity_name:
+            from vdmp_dashboard.models import villageAgricultureLandFloodInfo, villageAgricultureLandErosionInfo, villageAgricultureLandWindInfo, villageAgricultureLandEQInfo
+            villageAgricultureLandFloodInfo.objects.filter(village=village).delete()
+            villageAgricultureLandErosionInfo.objects.filter(village=village).delete()
+            villageAgricultureLandWindInfo.objects.filter(village=village).delete()
+            villageAgricultureLandEQInfo.objects.filter(village=village).delete()
 
         return Response({
             "status": "success",

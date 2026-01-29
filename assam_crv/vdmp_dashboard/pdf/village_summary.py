@@ -79,6 +79,12 @@ def generate_general_summary_table(village_id=None):
     
 from django.db.models.functions import Lower, Trim
 
+def to_int(val):
+    try:
+        return int(float(val))
+    except (TypeError, ValueError):
+        return 0
+
 
 def generate_socio_economic_summary_table(village_id):
 
@@ -87,9 +93,12 @@ def generate_socio_economic_summary_table(village_id):
     # =========================
     # TOTAL POPULATION
     # =========================
+    # =========================
+# TOTAL POPULATION
+# =========================
     total_population = sum(
-        int(h.number_of_males_including_children or 0) +
-        int(h.number_of_females_including_children or 0)
+        to_int(h.number_of_males_including_children) +
+        to_int(h.number_of_females_including_children)
         for h in households
     )
 

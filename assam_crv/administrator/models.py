@@ -22,9 +22,7 @@ EQUIPMENT_CHOICES = [
 
 class PRA_assets(models.Model):
      village = models.ForeignKey(tblVillage, on_delete=models.CASCADE) 
-     state = models.CharField(max_length=100, blank=True, null=True)
-     district = models.CharField(max_length=100, blank=True, null=True)
-     dist_id = models.CharField(max_length=50, blank=True, null=True)
+     
      village_name = models.CharField(max_length=200, blank=True, null=True)
      vill_id = models.CharField(max_length=50, blank=True, null=True)
      equipment = models.CharField(max_length=200, blank=True, null=True)   
@@ -133,18 +131,23 @@ class PRA_shelter(models.Model):
      village = models.ForeignKey(tblVillage, on_delete=models.CASCADE)
      state = models.CharField(max_length=100, blank=True, null=True)
      district = models.CharField(max_length=100, blank=True, null=True)
-     dist_id = models.CharField(max_length=50, blank=True, null=True)
      village_name = models.CharField(max_length=200, blank=True, null=True)
      vill_id = models.CharField(max_length=50, blank=True, null=True)
-     equipment = models.CharField(max_length=200, blank=True, null=True)
-     name_of_the_owner = models.CharField(max_length=500, blank=True, null=True)
+     name_of_shelter = models.CharField(max_length=500, blank=True, null=True)
+     contact_person = models.CharField(max_length=200, blank=True, null=True)
      phone_number = models.CharField(max_length=15, blank=True, null=True)
-     remark = models.TextField(blank=True, null=True)
+     number_of_rooms = models.PositiveIntegerField(blank=True, null=True)
+     capacity = models.PositiveIntegerField(blank=True, null=True)
+     toilet_facility_available = models.CharField(max_length=100, blank=True, null=True)
+     drinking_water_facility_available = models.CharField(max_length=100, blank=True, null=True)
+     alternate_power_source = models.CharField(max_length=100, blank=True, null=True)
      created_at = models.DateTimeField(auto_now_add=True, blank=True, null=True)
      updated_at = models.DateTimeField(auto_now=True, blank=True, null=True)
 
      def __str__(self):
-         return f"{self.village_name} - {self.equipment}"
+         return f"{self.village_name} - {self.name_of_shelter}"
+     
+
 
 
 class FGD_livelihood_summary(models.Model):

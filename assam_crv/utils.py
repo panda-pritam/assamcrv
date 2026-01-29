@@ -822,9 +822,6 @@ PRA_MAIN_MAPPING = {
 }
 
 PRA_ASSETS_MAPPING = {
-    'State': 'state',
-    'District': 'district',
-    'Dist_ID': 'dist_id',
     'Village Name': 'village_name',
     'Vill_ID': 'vill_id',
     'Equipment': 'equipment',
@@ -834,15 +831,16 @@ PRA_ASSETS_MAPPING = {
 }
 
 PRA_SHELTER_MAPPING = {
-    'State': 'state',
-    'District': 'district',
-    'Dist_ID': 'dist_id',
     'Village Name': 'village_name',
     'Vill_ID': 'vill_id',
-    'Equipment': 'equipment',
-    'Name of the owner': 'name_of_the_owner',
+    'Name of shelter': 'name_of_shelter',
+    'Contact Person': 'contact_person',
     'Phone Number': 'phone_number',
-    'Remark': 'remark'
+    'Number of rooms': 'number_of_rooms',
+    'Capacity': 'capacity',
+    'Toilet facilities available': 'toilet_facility_available',
+    'Drinking water available': 'drinking_water_facility_available',
+    'Alternate power supply available': 'alternate_power_source'
 }
 
 LINE_DEPARTMENT_MAPPING = {

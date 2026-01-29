@@ -310,8 +310,6 @@ class VillageRoadInfo(models.Model):
     district_code = models.CharField(max_length=20)
     village_name = models.CharField(max_length=100)
     village_code = models.CharField(max_length=20) 
-    latitude=models.CharField(max_length=255, null=True, blank=True)
-    longitude=models.CharField(max_length=255, null=True, blank=True)
     road_surface_type = models.CharField(max_length=100)
     road_constructed_by = models.CharField(max_length=100)
     road_length_m = models.FloatField()
@@ -321,15 +319,7 @@ class VillageRoadInfo(models.Model):
     road_type_id = models.IntegerField(null=True, blank=True)
     unit_cost = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     replacement_cost_inr = models.DecimalField(max_digits=15, decimal_places=2, default=0.00)
-    
-    eq_hazard = models.DecimalField(max_digits=10, decimal_places=8, null=True, blank=True)
-    eq_hazard_mdr = models.DecimalField(max_digits=10, decimal_places=8, null=True, blank=True)
-    eq_loss = models.DecimalField(max_digits=15, decimal_places=8, null=True, blank=True)
-
-    wind_hazard = models.DecimalField(max_digits=10, decimal_places=8, null=True, blank=True)
-    wind_hazard_mdr = models.DecimalField(max_digits=10, decimal_places=8, null=True, blank=True)
-    wind_loss = models.DecimalField(max_digits=15, decimal_places=8, null=True, blank=True)
-    
+    # Flood hazard data
     # MDR (Mean Damage Ratio) data
     flood_hazard_mdr = models.DecimalField(max_digits=10, decimal_places=8, null=True, blank=True)
     
@@ -347,8 +337,6 @@ class VillageRoadInfoEQ(models.Model):
     district_code = models.CharField(max_length=20)
     village_name = models.CharField(max_length=100)
     village_code = models.CharField(max_length=20)
-    latitude = models.CharField(max_length=255, null=True, blank=True)
-    longitude = models.CharField(max_length=255, null=True, blank=True)
     road_surface_type = models.CharField(max_length=100)
     road_constructed_by = models.CharField(max_length=100)
     road_length_m = models.FloatField()
@@ -370,8 +358,6 @@ class VillageRoadInfoWind(models.Model):
     district_code = models.CharField(max_length=20)
     village_name = models.CharField(max_length=100)
     village_code = models.CharField(max_length=20)
-    latitude = models.CharField(max_length=255, null=True, blank=True)
-    longitude = models.CharField(max_length=255, null=True, blank=True)
     road_surface_type = models.CharField(max_length=100)
     road_constructed_by = models.CharField(max_length=100)
     road_length_m = models.FloatField()
@@ -385,6 +371,84 @@ class VillageRoadInfoWind(models.Model):
     
     def __str__(self):
         return f"{self.village_name} Wind ({self.road_surface_type})"
+    
+class villageAgricultureLandFloodInfo(models.Model):
+    village = models.ForeignKey(tblVillage, on_delete=models.CASCADE)
+    district_name = models.CharField(max_length=100)
+    district_code = models.CharField(max_length=20)
+    village_name = models.CharField(max_length=100)
+    village_code = models.CharField(max_length=20)
+    total_area_sqm = models.FloatField()
+    flood_depth_m = models.FloatField(null=True, blank=True)
+    flood_class = models.CharField(max_length=50)
+    unit_cost_per_sqm = models.DecimalField(max_digits=15, decimal_places=2, default=0.00)
+    total_replacement_cost_inr = models.DecimalField(max_digits=20, decimal_places=2, default=0.00)
+    # Flood hazard data 
+    flood_hazard_mdr = models.DecimalField(max_digits=10, decimal_places=8, null=True, blank=True)
+
+    flood_loss = models.DecimalField(max_digits=20, decimal_places=2, null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.village_name}"
+    
+class villageAgricultureLandWindInfo(models.Model):
+    village = models.ForeignKey(tblVillage, on_delete=models.CASCADE)
+    district_name = models.CharField(max_length=100)
+    district_code = models.CharField(max_length=20)
+    village_name = models.CharField(max_length=100)
+    village_code = models.CharField(max_length=20)
+    total_area_sqm = models.FloatField()
+    wind_hazard = models.DecimalField(max_digits=10, decimal_places=8, null=True, blank=True)
+    wind_hazard_mdr = models.DecimalField(max_digits=10, decimal_places=8, null=True, blank=True)
+    unit_cost_per_sqm = models.DecimalField(max_digits=15, decimal_places=2, default=0.00)
+    total_replacement_cost_inr = models.DecimalField(max_digits=20, decimal_places=2, default=0.00)
+    wind_loss = models.DecimalField(max_digits=20, decimal_places=2, null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.village_name}"
+    
+
+class villageAgricultureLandEQInfo(models.Model):
+    village = models.ForeignKey(tblVillage, on_delete=models.CASCADE)
+    district_name = models.CharField(max_length=100)
+    district_code = models.CharField(max_length=20)
+    village_name = models.CharField(max_length=100)
+    village_code = models.CharField(max_length=20)
+    total_area_sqm = models.FloatField()
+    eq_hazard = models.DecimalField(max_digits=10, decimal_places=8, null=True, blank=True)
+    eq_hazard_mdr = models.DecimalField(max_digits=10, decimal_places=8, null=True, blank=True)
+    unit_cost_per_sqm = models.DecimalField(max_digits=15, decimal_places=2, default=0.00)
+    total_replacement_cost_inr = models.DecimalField(max_digits=20, decimal_places=2, default=0.00)
+    eq_loss = models.DecimalField(max_digits=20, decimal_places=2, null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.village_name}"
+    
+
+    
+class villageAgricultureLandErosionInfo(models.Model):
+    village = models.ForeignKey(tblVillage, on_delete=models.CASCADE)
+    district_name = models.CharField(max_length=100)
+    district_code = models.CharField(max_length=20)
+    village_name = models.CharField(max_length=100)
+    village_code = models.CharField(max_length=20)
+    total_area_sqm = models.FloatField()
+    erosion_class = models.CharField(max_length=50)
+    unit_cost_per_sqm = models.DecimalField(max_digits=15, decimal_places=2, default=0.00)
+    total_replacement_cost_inr = models.DecimalField(max_digits=20, decimal_places=2, default=0.00)
+
+    def __str__(self):
+        return f"{self.village_name}"
+    
+
+class AgricultureLandCostMaping(models.Model):
+    land_type = models.CharField(max_length=100)
+    unit_cost_per_sqm = models.DecimalField(max_digits=15, decimal_places=2, default=0.00)
+
+    def __str__(self):
+        return f"{self.land_type} - {self.unit_cost_per_sqm}"
+    
+
 
 # This model is for road affected by erosion
 class VillageRoadInfoErosion(models.Model):
