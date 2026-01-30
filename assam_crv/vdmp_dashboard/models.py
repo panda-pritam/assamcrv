@@ -449,6 +449,29 @@ class AgricultureLandCostMaping(models.Model):
         return f"{self.land_type} - {self.unit_cost_per_sqm}"
     
 
+class agricultureLandFloodMDRMapping(models.Model):
+    flood_depth_m = models.FloatField()
+    mdr = models.DecimalField(max_digits=10, decimal_places=8)
+    crop_type = models.CharField(max_length=100)
+
+    def __str__(self):
+        return f"Flood Depth: {self.flood_depth_m} m - MDR: {self.mdr}"
+    
+class agricultureLandWindMDRMapping(models.Model):
+    wind_hazard = models.FloatField()
+    mdr = models.DecimalField(max_digits=10, decimal_places=8)
+    crop_type = models.CharField(max_length=100)
+
+    def __str__(self):
+        return f"Wind Hazard: {self.wind_hazard} - MDR: {self.mdr}"
+    
+class agricultureLandEQMDRMapping(models.Model):
+    eq_hazard = models.FloatField()
+    mdr = models.DecimalField(max_digits=10, decimal_places=8)
+    crop_type = models.CharField(max_length=100)
+
+    def __str__(self):
+        return f"EQ Hazard: {self.eq_hazard} - MDR: {self.mdr}"
 
 # This model is for road affected by erosion
 class VillageRoadInfoErosion(models.Model):

@@ -449,7 +449,7 @@ def get_zonal_stats_gdal(raster_path, polygon_geom):
     }
 
 
-def get_raster_fallback_stats(raster_path, village_code, stat_type='median',eq=False):
+def get_raster_fallback_stats(raster_path, village_code, stat_type='max',eq=False):
     """
     Get fallback statistics from clipped raster when polygon-level data is insufficient
     Returns median or max value from the entire clipped raster
@@ -511,50 +511,49 @@ def get_agriculture_unit_cost(land_type="Agriculture Land"):
     if cost_mapping:
         return float(cost_mapping.unit_cost_per_sqm)
     
-    # Default fallback cost if not found
-    return 0.00
+    return 0.0
+
+
+def get_agriculture_flood_mdr(flood_depth_m, crop_type):
     """
-    Get minimum erosion buffer distance for a polygon using PostGIS intersection
-    Returns: buffer distance (50, 100, 150) or None
+    Get MDR value for agriculture flood based on flood depth and crop type
     """
-    if db_config is None:
-        db_config = {
-            'dbname': 'crv_assam',
-            'user': 'postgres',
-            'password': 'admin',
-            'host': 'localhost',
-            'port': '5434'
-        }
+    from vdmp_dashboard.models import agricultureLandFloodMDRMapping
     
-    try:
-        conn = psycopg2.connect(**db_config)
-        cur = conn.cursor()
-        
-        # PostGIS query to find intersecting buffers
-        sql = f"""
-            SELECT MIN("BUFF_DIST") as min_buffer
-            FROM {buffer_table}
-            WHERE ST_Intersects(
-                ST_GeomFromText(%s, 4326),
-                geom
-            );
-        """
-        
-        cur.execute(sql, (polygon_wkt,))
-        result = cur.fetchone()
-        
-        cur.close()
-        conn.close()
-        
-        if result and result[0] is not None:
-            return int(result[0])
-        return None
-        
-    except Exception as e:
-        print(f"⚠️ Erosion buffer query failed: {e}")
-        return None
+    mdr_record = agricultureLandFloodMDRMapping.objects.filter(
+        flood_depth_m__lte=flood_depth_m,
+        crop_type=crop_type
+    ).order_by('-flood_depth_m').first()
+    
+    return float(mdr_record.mdr) if mdr_record else 0.0
 
 
+def get_agriculture_wind_mdr(wind_hazard, crop_type):
+    """
+    Get MDR value for agriculture wind based on wind hazard and crop type
+    """
+    from vdmp_dashboard.models import agricultureLandWindMDRMapping
+    
+    mdr_record = agricultureLandWindMDRMapping.objects.filter(
+        wind_hazard__lte=wind_hazard,
+        crop_type=crop_type
+    ).order_by('-wind_hazard').first()
+    
+    return float(mdr_record.mdr) if mdr_record else 0.0
+
+
+def get_agriculture_eq_mdr(eq_hazard, crop_type):
+    """
+    Get MDR value for agriculture earthquake based on EQ hazard and crop type
+    """
+    from vdmp_dashboard.models import agricultureLandEQMDRMapping
+    
+    mdr_record = agricultureLandEQMDRMapping.objects.filter(
+        eq_hazard__lte=eq_hazard,
+        crop_type=crop_type
+    ).order_by('-eq_hazard').first()
+    
+    return float(mdr_record.mdr) if mdr_record else 0.0
 
 
 
@@ -607,10 +606,11 @@ def process_agriculture_wind_pipeline(
             stats_summary['no_coverage'] += 1
             wind_hazard = 0.0
 
-        # Calculate costs (you can update these values)
+        # Calculate costs and get MDR from database
         unit_cost = Decimal(str(get_agriculture_unit_cost("Agriculture Land")))
         replacement_cost = Decimal(str(area_sqm)) * unit_cost
-        mdr = Decimal(str(wind_hazard)) if wind_hazard > 0 else Decimal("0.00")
+        crop_type = row.get("Class_name", "Agriculture Land")
+        mdr = Decimal(str(get_agriculture_wind_mdr(wind_hazard, crop_type)))
         loss = replacement_cost * mdr
 
         records.append(
@@ -632,15 +632,21 @@ def process_agriculture_wind_pipeline(
     # 🔥 FALLBACK: If no coverage, use clipped raster median
     if stats_summary['with_hazard'] == 0 and stats_summary['no_coverage'] > 0:
         print("🔄 No wind data coverage, applying fallback using clipped raster...")
-        fallback_value = get_raster_fallback_stats(raster_path, village_code, 'median')
+        fallback_value = get_raster_fallback_stats(raster_path, village_code, 'max')
         
         if fallback_value > 0:
             # Update records with fallback value
             updated_records = []
-            for record in records:
+            for i, record in enumerate(records):
                 if record.wind_hazard == 0:
+                    # Get crop_type from original lulc_gdf data
+                    crop_type = lulc_gdf.iloc[i].get("Class_name", "Agriculture Land")
+                    
                     record.wind_hazard = Decimal(str(fallback_value))
-                    record.wind_hazard_mdr = Decimal(str(fallback_value))
+                    mdr = Decimal(str(get_agriculture_wind_mdr(fallback_value, crop_type)))
+                    record.wind_hazard_mdr = mdr
+                    record.wind_loss = record.total_replacement_cost_inr * mdr
+                    
                     stats_summary['with_hazard'] += 1
                     stats_summary['no_coverage'] -= 1
                 updated_records.append(record)
@@ -710,10 +716,11 @@ def process_agriculture_earthquake_pipeline(
             stats_summary['no_coverage'] += 1
             eq_hazard = 0.0
 
-        # Calculate costs (you can update these values)
+        # Calculate costs and get MDR from database
         unit_cost = Decimal(str(get_agriculture_unit_cost("Agriculture Land")))
         replacement_cost = Decimal(str(area_sqm)) * unit_cost
-        mdr = Decimal(str(eq_hazard)) if eq_hazard > 0 else Decimal("0.00")
+        crop_type = row.get("Class_name", "Agriculture Land")
+        mdr = Decimal(str(get_agriculture_eq_mdr(eq_hazard, crop_type)))
         loss = replacement_cost * mdr
 
         records.append(
@@ -740,10 +747,16 @@ def process_agriculture_earthquake_pipeline(
         if fallback_value > 0:
             # Update records with fallback value
             updated_records = []
-            for record in records:
+            for i, record in enumerate(records):
                 if record.eq_hazard == 0:
+                    # Get crop_type from original lulc_gdf data
+                    crop_type = lulc_gdf.iloc[i].get("Class_name", "Agriculture Land")
+                    
                     record.eq_hazard = Decimal(str(fallback_value))
-                    record.eq_hazard_mdr = Decimal(str(fallback_value))
+                    mdr = Decimal(str(get_agriculture_eq_mdr(fallback_value, crop_type)))
+                    record.eq_hazard_mdr = mdr
+                    record.eq_loss = record.total_replacement_cost_inr * mdr
+                    
                     stats_summary['with_hazard'] += 1
                     stats_summary['no_coverage'] -= 1
                 updated_records.append(record)
@@ -818,10 +831,11 @@ def process_arrgicultural_data_pipeline(
         else:
             stats_summary['no_flood'] += 1
 
-        # Calculate costs
+        # Calculate costs and get MDR from database
         unit_cost = Decimal(str(get_agriculture_unit_cost("Agriculture Land")))
         replacement_cost = Decimal(str(area_sqm)) * unit_cost
-        mdr = Decimal("0.00")
+        crop_type = row.get("Class_name", "Agriculture Land")
+        mdr = Decimal(str(get_agriculture_flood_mdr(flood_depth, crop_type)))
         loss = replacement_cost * mdr
 
         records.append(
@@ -849,10 +863,17 @@ def process_arrgicultural_data_pipeline(
         if fallback_value > 0:
             # Update records with fallback value for polygons with no coverage
             updated_records = []
-            for record in records:
+            for i, record in enumerate(records):
                 if record.flood_depth_m == 0.0:  # No coverage polygons
+                    # Get crop_type from original lulc_gdf data
+                    crop_type = lulc_gdf.iloc[i].get("Class_name", "Agriculture Land")
+                    
                     record.flood_depth_m = fallback_value
                     record.flood_class = _classify_flood(fallback_value)
+                    mdr = Decimal(str(get_agriculture_flood_mdr(fallback_value, crop_type)))
+                    record.flood_hazard_mdr = mdr
+                    record.flood_loss = record.total_replacement_cost_inr * mdr
+                    
                     stats_summary['flooded'] += 1
                     stats_summary['no_coverage'] -= 1
                 updated_records.append(record)
