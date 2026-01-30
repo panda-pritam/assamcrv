@@ -24169,3 +24169,222 @@ Traceback (most recent call last):
     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ValueError: invalid literal for int() with base 10: '1.0'
 2026-01-29 16:47:41,212 [ERROR] django.server: "GET /en/api/download_report?village_id=550 HTTP/1.1" 500 144462
+2026-01-29 17:37:58,896 [ERROR] django.request: Internal Server Error: /en/api/get_household_summary_data
+Traceback (most recent call last):
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\views\generic\base.py", line 105, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\views.py", line 515, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\views.py", line 475, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\views.py", line 486, in raise_uncaught_exception
+    raise exc
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\views.py", line 512, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\decorators.py", line 50, in handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\assamcrv\assam_crv\vdmp_dashboard\views.py", line 486, in get_household_summary_data
+    'chronic_illness': int(chronic_illness_count),  # From PRA_main model
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: int() argument must be a string, a bytes-like object or a real number, not 'NoneType'
+2026-01-29 17:37:58,896 [ERROR] django.server: "GET /en/api/get_household_summary_data?district_id=&village_id=&circle_id=&gram_panchayat_id= HTTP/1.1" 500 118521
+2026-01-29 17:38:10,479 [ERROR] django.request: Internal Server Error: /en/api/get_household_summary_data
+Traceback (most recent call last):
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\views\generic\base.py", line 105, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\views.py", line 515, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\views.py", line 475, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\views.py", line 486, in raise_uncaught_exception
+    raise exc
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\views.py", line 512, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\decorators.py", line 50, in handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\assamcrv\assam_crv\vdmp_dashboard\views.py", line 486, in get_household_summary_data
+    'chronic_illness': int(chronic_illness_count),  # From PRA_main model
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: int() argument must be a string, a bytes-like object or a real number, not 'NoneType'
+2026-01-29 17:38:10,479 [ERROR] django.server: "GET /en/api/get_household_summary_data?district_id=&village_id=&circle_id=&gram_panchayat_id= HTTP/1.1" 500 118521
+2026-01-29 17:38:28,080 [ERROR] django.request: Internal Server Error: /en/api/get_household_summary_data
+Traceback (most recent call last):
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\views\generic\base.py", line 105, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\views.py", line 515, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\views.py", line 475, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\views.py", line 486, in raise_uncaught_exception
+    raise exc
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\views.py", line 512, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\decorators.py", line 50, in handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\assamcrv\assam_crv\vdmp_dashboard\views.py", line 486, in get_household_summary_data
+    'chronic_illness': int(chronic_illness_count),  # From PRA_main model
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: int() argument must be a string, a bytes-like object or a real number, not 'NoneType'
+2026-01-29 17:38:28,083 [ERROR] django.server: "GET /en/api/get_household_summary_data?district_id=&village_id=&circle_id=&gram_panchayat_id= HTTP/1.1" 500 118786
+2026-01-29 18:30:06,194 [ERROR] django.request: Internal Server Error: /en/api/download_report
+Traceback (most recent call last):
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\views\generic\base.py", line 105, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\views.py", line 515, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\views.py", line 475, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\views.py", line 486, in raise_uncaught_exception
+    raise exc
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\views.py", line 512, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\decorators.py", line 50, in handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\assamcrv\assam_crv\vdmp_dashboard\views.py", line 673, in download_report
+    buffer = generate_pdf(village_id=village_id, village=village)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\assamcrv\assam_crv\vdmp_dashboard\pdf\main.py", line 204, in generate_pdf
+    draw_hazard_Vulnerability_risk(elements,village_id)
+  File "C:\assamcrv\assam_crv\vdmp_dashboard\pdf\hazard_Vulnerability_risk.py", line 1165, in draw_hazard_Vulnerability_risk
+    data=getHazardPresenceData()
+         ^^^^^^^^^^^^^^^^^^^^^
+NameError: name 'getHazardPresenceData' is not defined
+2026-01-29 18:30:06,210 [ERROR] django.server: "GET /en/api/download_report?village_id=550 HTTP/1.1" 500 123422
+2026-01-30 10:34:36,377 [ERROR] django.request: Internal Server Error: /en/api/update_vdmp_activity_status/6507/
+2026-01-30 10:34:36,377 [ERROR] django.server: "PATCH /en/api/update_vdmp_activity_status/6507/ HTTP/1.1" 500 112
+2026-01-30 10:34:45,952 [ERROR] django.request: Internal Server Error: /en/api/update_vdmp_activity_status/6507/
+2026-01-30 10:34:45,953 [ERROR] django.server: "PATCH /en/api/update_vdmp_activity_status/6507/ HTTP/1.1" 500 112
+2026-01-30 10:59:05,028 [ERROR] django.contrib.gis: GDAL_ERROR 1: b'Cannot invert geotransform'
+2026-01-30 10:59:05,781 [ERROR] django.contrib.gis: GDAL_ERROR 1: b'Ring Self-intersection at or near point 90.992691390000061 26.276109842000039'
+2026-01-30 10:59:05,781 [ERROR] django.contrib.gis: GDAL_ERROR 1: b'Cutline polygon is invalid.'
+2026-01-30 10:59:05,793 [ERROR] django.contrib.gis: GDAL_ERROR 4: b'C:\\Users\\krishna\\AppData\\Local\\Temp\\tmpott108y3\\clipped.tif: No such file or directory'
+2026-01-30 10:59:05,960 [ERROR] django.contrib.gis: GDAL_ERROR 1: b'Cannot invert geotransform'
+2026-01-30 10:59:06,176 [ERROR] django.contrib.gis: GDAL_ERROR 1: b'Cannot invert geotransform'
+2026-01-30 10:59:06,996 [ERROR] django.contrib.gis: GDAL_ERROR 1: b'Cannot invert geotransform'
+2026-01-30 10:59:07,780 [ERROR] django.contrib.gis: GDAL_ERROR 1: b'Cannot invert geotransform'
+2026-01-30 10:59:09,593 [ERROR] django.contrib.gis: GDAL_ERROR 1: b'Cannot invert geotransform'
+2026-01-30 10:59:09,626 [ERROR] django.contrib.gis: GDAL_ERROR 1: b'Cannot invert geotransform'
+2026-01-30 11:04:11,126 [ERROR] django.request: Internal Server Error: /en/api/dashboard_chart_data/
+Traceback (most recent call last):
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\db\backends\utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+psycopg2.errors.InvalidTextRepresentation: invalid input syntax for type double precision: "Null"
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\views\generic\base.py", line 105, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\views.py", line 515, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\views.py", line 475, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\views.py", line 486, in raise_uncaught_exception
+    raise exc
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\views.py", line 512, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\decorators.py", line 50, in handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\assamcrv\assam_crv\dashboard\views.py", line 83, in dashboard_chart_data
+    cf_stats = calculate_flood_percentage(cf_data)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\assamcrv\assam_crv\dashboard\views.py", line 31, in calculate_flood_percentage
+    agg = qs.aggregate(
+          ^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\db\models\query.py", line 590, in aggregate
+    return self.query.chain().get_aggregation(self.db, kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\db\models\sql\query.py", line 626, in get_aggregation
+    result = compiler.execute_sql(SINGLE)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\db\models\sql\compiler.py", line 1623, in execute_sql
+    cursor.execute(sql, params)
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\db\backends\utils.py", line 122, in execute
+    return super().execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\db\backends\utils.py", line 79, in execute
+    return self._execute_with_wrappers(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\db\backends\utils.py", line 92, in _execute_with_wrappers
+    return executor(sql, params, many, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\db\backends\utils.py", line 100, in _execute
+    with self.db.wrap_database_errors:
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\db\utils.py", line 91, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\db\backends\utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+django.db.utils.DataError: invalid input syntax for type double precision: "Null"
+
+2026-01-30 11:04:11,137 [ERROR] django.server: "GET /en/api/dashboard_chart_data/ HTTP/1.1" 500 162020
+2026-01-30 11:17:07,936 [ERROR] django.contrib.gis: GDAL_ERROR 1: b'Cannot invert geotransform'
+2026-01-30 11:17:08,551 [ERROR] django.contrib.gis: GDAL_ERROR 1: b'Ring Self-intersection at or near point 90.992691390000061 26.276109842000039'
+2026-01-30 11:17:08,558 [ERROR] django.contrib.gis: GDAL_ERROR 1: b'Cutline polygon is invalid.'

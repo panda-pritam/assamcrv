@@ -28,6 +28,7 @@ class PRA_assets(models.Model):
      equipment = models.CharField(max_length=200, blank=True, null=True)   
      name_of_the_owner = models.CharField(max_length=500, blank=True, null=True)
      phone_number = models.CharField(max_length=15, blank=True, null=True)
+     asset_count = models.PositiveIntegerField(blank=True, null=True)
      remark = models.TextField(blank=True, null=True)
      created_at = models.DateTimeField(auto_now_add=True, blank=True, null=True)
      updated_at = models.DateTimeField(auto_now=True, blank=True, null=True)
