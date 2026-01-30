@@ -7,7 +7,7 @@ from reportlab.lib.pagesizes import letter
 from village_profile.models import tblVillage
 from datetime import datetime
 
-from vdmp_dashboard.models import HouseholdSurvey, Critical_Facility, Risk_Assesment
+from vdmp_dashboard.models import HouseholdSurvey, Critical_Facility, Risk_Assesment,VillageRoadInfo,VillageRoadInfoErosion, VillageRoadInfoEQ, VillageRoadInfoWind, villageAgricultureLandWindInfo,villageAgricultureLandEQInfo,villageAgricultureLandFloodInfo
 from vdmp_progress.models import Risk_Assessment_Result
 from collections import Counter
 from administrator.models import PRA_main
@@ -17,7 +17,7 @@ from django.db.models import Count,Sum
 
 
 
-from .dummy_data import  getMitigationIntervention,getDistrictLevelOfficialsData,getEmergencyTollFreeContactData,getImportantEmergencyContactData
+from .dummy_data import  getMitigationIntervention,getEmergencyTollFreeContactData,getImportantEmergencyContactData
 
 from .global_styles import blue_heading, underline_heading, notes_style
 
@@ -63,6 +63,15 @@ def getHazardAssessment(village_id):
             ['Strong Wind Hazard', '-'],
             ['Earthquake Hazard', '-']
         ]
+
+def getDistrictLevelOfficialsData():
+    return [
+        ["S. No.", "Name", "Gender", "Phone Number", "Position/Responsibility"],
+        ["-", "-", "-", "-", "-"],
+        ["-", "-", "-", "-", "-"],
+        ["-", "-", "-", "-", "-"]
+    ]
+
 
 # Get village related data from the database
 def generate_general_summary_table(village_id=None):
@@ -265,6 +274,46 @@ def getRiskAssessment(village_id):
     critical_flood = (risk_data.filter(asset_type='critical_facility').aggregate(Sum('flood_loss'))['flood_loss__sum'] or 0) / 10000000
     critical_eq = (risk_data.filter(asset_type='critical_facility').aggregate(Sum('eq_loss'))['eq_loss__sum'] or 0) / 10000000
     critical_wind = (risk_data.filter(asset_type='critical_facility').aggregate(Sum('wind_loss'))['wind_loss__sum'] or 0) / 10000000
+
+    # ---------- ROADS ----------
+    road_risk_flood = (
+        VillageRoadInfo.objects
+        .filter(village_id=village_id)
+        .aggregate(total=Sum('flood_loss'))['total'] or 0
+    ) / 10000000
+
+    road_risk_eq = (
+        VillageRoadInfoEQ.objects
+        .filter(village_id=village_id)
+        .aggregate(total=Sum('eq_loss'))['total'] or 0
+    ) / 10000000
+
+    road_risk_wind = (
+        VillageRoadInfoWind.objects
+        .filter(village_id=village_id)
+        .aggregate(total=Sum('wind_loss'))['total'] or 0
+    ) / 10000000
+
+
+    # ---------- AGRICULTURE ----------
+    agriculture_flood = (
+        villageAgricultureLandFloodInfo.objects
+        .filter(village_id=village_id)
+        .aggregate(total=Sum('flood_loss'))['total'] or 0
+    ) / 10000000
+
+    agriculture_eq = (
+        villageAgricultureLandEQInfo.objects
+        .filter(village_id=village_id)
+        .aggregate(total=Sum('eq_loss'))['total'] or 0
+    ) / 10000000
+
+    agriculture_wind = (
+        villageAgricultureLandWindInfo.objects
+        .filter(village_id=village_id)
+        .aggregate(total=Sum('wind_loss'))['total'] or 0
+    ) / 10000000
+
     
     return [
         ['Risk Assessment (excluding content loss in INR Crore)'],
@@ -272,8 +321,8 @@ def getRiskAssessment(village_id):
         ['Residential', f'{household_flood:.2f}', f'{household_eq:.2f}', f'{household_wind:.2f}'],
         ['Commercial', f'{commercial_flood:.2f}', f'{commercial_eq:.2f}', f'{commercial_wind:.2f}'],
         ['Critical Facilities', f'{critical_flood:.2f}', f'{critical_eq:.2f}', f'{critical_wind:.2f}'],
-        ['Roads', '-', '-', '-'],
-        ['Agriculture', '-', '-', '-'],
+        ['Roads', f'{road_risk_flood:.2f}', f'{road_risk_eq:.2f}', f'{road_risk_wind:.2f}'],
+        ['Agriculture', f'{agriculture_flood:.2f}', f'{agriculture_eq:.2f}', f'{agriculture_wind:.2f}'],
         ['Note', 'Excluding content loss', '', '']
     ]
 
@@ -367,15 +416,64 @@ def getVulnerabilityAssessment(village_id):
                 continue
     
     schools_text = str(schools_vulnerable) if schools_vulnerable > 0 else '0'
-    
+
+    # Flood Vulnerability Roads
+    flood_road_qs = VillageRoadInfo.objects.filter(
+        village_id=village_id,
+        flood_depth_m__gt=0.5
+    )
+
+    flood_road_length_m = flood_road_qs.aggregate(
+        total=Sum('road_length_m')
+    )['total'] or 0
+
+    flood_road_length_km = round(flood_road_length_m / 1000, 2)
+    flood_vulnerability_roads=None
+    if flood_road_length_km > 0:
+        flood_vulnerability_roads = (
+            f"{flood_road_length_km} km of roads under severe & high flood vulnerable area"
+        )
+    else:
+        flood_vulnerability_roads = "No data"
+
+
+    erosion_road_qs = VillageRoadInfoErosion.objects.filter(
+    village_id=village_id
+    ).filter(
+        Q(erosion_class__iexact="Seviere") |
+        Q(erosion_class__iexact="High")
+    )
+
+    erosion_road_length_m = erosion_road_qs.aggregate(
+        total=Sum('road_length_m')
+    )['total'] or 0
+
+    erosion_road_length_km = round(erosion_road_length_m / 1000, 2)
+
+    erosion_vulnerability_roads=None
+    if erosion_road_length_km > 0:
+        erosion_vulnerability_roads = (
+            f"{erosion_road_length_km} km of roads under severe & high erosion vulnerable area"
+        )
+    else:
+        erosion_vulnerability_roads = "No data"
+
+    schools_count = Critical_Facility.objects.filter(
+        village_id=village_id,
+        occupancy_type__iexact="School"
+    ).count()
+
+    schools_text = str(schools_count) if schools_count > 0 else "No data"
+
+
     return [
         ["Vulnerability Assessment"],
         ['Economic Status', economic_status],
         ['Vulnerable Population', vulnerable_population],
         ['Flood Vulnerability Houses', flood_vulnerability_houses],
         ['Erosion Vulnerability Houses', erosion_vulnerability_houses],
-        ['Flood Vulnerability Roads', '-'],
-        ['Erosion Vulnerability Roads', '-'],
+        ['Flood Vulnerability Roads', flood_vulnerability_roads],
+        ['Erosion Vulnerability Roads', erosion_vulnerability_roads],
         ['Schools', schools_text],
         ['Livelihood Vulnerability Index', '-'],
         ['Index Interpretation', '-']
