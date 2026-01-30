@@ -827,7 +827,8 @@ PRA_ASSETS_MAPPING = {
     'Equipment': 'equipment',
     'Name of the owner': 'name_of_the_owner',
     'Phone Number': 'phone_number',
-    'Remark': 'remark'
+    'Remark': 'remark',
+    'Asset Count': 'asset_count'
 }
 
 PRA_SHELTER_MAPPING = {
