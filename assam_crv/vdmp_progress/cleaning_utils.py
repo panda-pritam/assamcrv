@@ -2,8 +2,6 @@ import pandas as pd
 import re
 import logging
 from sklearn.neighbors import NearestNeighbors
-
-from osgeo import gdal, osr
 import numpy as np
 import geopandas as gpd
 from shapely.geometry import Point
@@ -13,6 +11,12 @@ from village_profile.models import tblVillage
 import math
 import psycopg2
 from village_profile.models import tblVillage
+from osgeo import gdal, ogr, osr
+import tempfile
+import os
+import geopandas as gpd
+from sqlalchemy import create_engine
+from django.conf import settings
 
 def extract_flood_depth_from_raster(df, village_id):
     """
@@ -311,30 +315,765 @@ def process_road_data_pipeline(
     )
 
     # # ✅ Erosion (vector only)
-    # print("🌊 Processing erosion hazard...")
-    # _process_road_erosion_data(
-    #     conn,
-    #     village_obj,
-    #     village_code,
-    #     district_code,
-    #     district_name,
-    #     village_name,
-    # )
+    print("🌊 Processing erosion hazard...")
+    _process_road_erosion_data(
+        conn,
+        village_obj,
+        village_code,
+        district_code,
+        district_name,
+        village_name,
+    )
 
     conn.close()
     print("✅ Road processing completed")
 
 
+# ------------------------------- agriculture ----------------
+
+def load_village_agriculture_lulc(village_code):
+    engine = get_sqlalchemy_engine()
+
+    sql = """
+    SELECT
+        id,
+        "Vill_ID",
+        "Class_name",
+        "Area_SqM",
+        geom
+    FROM public.lulc
+    WHERE "Vill_ID" = %s
+      AND "Class_name" IN ('Agriculture Land', 'Fallow Land')
+      AND geom IS NOT NULL;
+    """
+
+    return gpd.read_postgis(
+        sql=sql,
+        con=engine,
+        params=(village_code,),
+        geom_col="geom",
+        crs="EPSG:4326"
+    )
 
 
-def get_road_unit_cost(asset_typology):
-    from vdmp_dashboard.models import RoadUnitCost
-    rec = RoadUnitCost.objects.filter(
-        asset_typology__iexact=asset_typology
+import numpy as np
+from osgeo import gdal, ogr, osr
+import geopandas as gpd
+from decimal import Decimal
+import psycopg2
+from psycopg2.extras import RealDictCursor
+
+# ============================================================================
+# HELPER FUNCTIONS
+# ============================================================================
+
+def get_zonal_stats_gdal(raster_path, polygon_geom):
+    """
+    Get zonal statistics (mean, max, min) for a polygon using GDAL
+    Returns: dict with mean, max, min values and valid pixel count
+    """
+    src_ds = gdal.Open(raster_path)
+    if not src_ds:
+        return {'mean': 0.0, 'max': 0.0, 'min': 0.0, 'valid_pixels': 0}
+    
+    band = src_ds.GetRasterBand(1)
+    nodata = band.GetNoDataValue()
+    gt = src_ds.GetGeoTransform()
+    
+    # Get polygon bounds and convert to pixel coordinates
+    minx, miny, maxx, maxy = polygon_geom.bounds
+    px1 = max(0, int((minx - gt[0]) / gt[1]))
+    py1 = max(0, int((maxy - gt[3]) / gt[5]))
+    px2 = min(src_ds.RasterXSize, int((maxx - gt[0]) / gt[1]))
+    py2 = min(src_ds.RasterYSize, int((miny - gt[3]) / gt[5]))
+    
+    # Read raster subset
+    width = px2 - px1
+    height = py2 - py1
+    
+    if width <= 0 or height <= 0:
+        return {'mean': 0.0, 'max': 0.0, 'min': 0.0, 'valid_pixels': 0}
+    
+    data = band.ReadAsArray(px1, py1, width, height)
+    
+    # Create subset geotransform
+    sub_gt = (
+        gt[0] + px1 * gt[1],
+        gt[1], gt[2],
+        gt[3] + py1 * gt[5],
+        gt[4], gt[5]
+    )
+    
+    # Create memory mask raster
+    mem_drv = gdal.GetDriverByName('MEM')
+    mask_ds = mem_drv.Create('', width, height, 1, gdal.GDT_Byte)
+    mask_ds.SetGeoTransform(sub_gt)
+    mask_ds.SetProjection(src_ds.GetProjection())
+    
+    # Create memory vector layer
+    mem_vector_drv = ogr.GetDriverByName('MEM')
+    mem_vector_ds = mem_vector_drv.CreateDataSource('')
+    srs = osr.SpatialReference()
+    srs.ImportFromWkt(src_ds.GetProjection())
+    mem_layer = mem_vector_ds.CreateLayer('polygon', srs, ogr.wkbPolygon)
+    
+    # Rasterize polygon
+    feature_defn = mem_layer.GetLayerDefn()
+    feature = ogr.Feature(feature_defn)
+    feature.SetGeometry(ogr.CreateGeometryFromWkt(polygon_geom.wkt))
+    mem_layer.CreateFeature(feature)
+    
+    gdal.RasterizeLayer(mask_ds, [1], mem_layer, burn_values=[1])
+    mask = mask_ds.GetRasterBand(1).ReadAsArray()
+    
+    # Clean up
+    feature = None
+    mem_layer = None
+    mem_vector_ds = None
+    
+    # Extract masked data
+    masked_data = data[mask == 1]
+    masked_data = masked_data[~np.isnan(masked_data)]
+    
+    if nodata is not None and not np.isnan(nodata):
+        masked_data = masked_data[masked_data != nodata]
+    
+    if masked_data.size == 0:
+        return {'mean': 0.0, 'max': 0.0, 'min': 0.0, 'valid_pixels': 0}
+    
+    return {
+        'mean': round(float(np.mean(masked_data)), 4),
+        'max': round(float(np.max(masked_data)), 4),
+        'min': round(float(np.min(masked_data)), 4),
+        'valid_pixels': int(masked_data.size)
+    }
+
+
+def get_raster_fallback_stats(raster_path, village_code, stat_type='median',eq=False):
+    """
+    Get fallback statistics from clipped raster when polygon-level data is insufficient
+    Returns median or max value from the entire clipped raster
+    """
+    try:
+        village_gdf = load_village_boundary(village_code)
+        clipped_raster = clip_raster_to_village(raster_path, village_gdf)
+        
+        ds = None
+        if eq:
+            ds = gdal.Open(raster_path)
+        else:
+            ds = gdal.Open(clipped_raster)
+        if not ds:
+            return 0.0
+            
+        # Check geotransform validity
+        gt = ds.GetGeoTransform()
+        if gt is None or gt[1] == 0 or gt[5] == 0:
+            print("⚠️ Invalid geotransform, using original raster")
+            ds = gdal.Open(raster_path)
+            if not ds:
+                return 0.0
+            
+        band = ds.GetRasterBand(1)
+        data = band.ReadAsArray()
+        nodata = band.GetNoDataValue()
+        
+        # Remove nodata values
+        valid_data = data[~np.isnan(data)]
+        if nodata is not None:
+            valid_data = valid_data[valid_data != nodata]
+        
+        if valid_data.size == 0:
+            return 0.0
+            
+        if stat_type == 'median':
+            return round(float(np.median(valid_data)), 4)
+        elif stat_type == 'max':
+            return round(float(np.max(valid_data)), 4)
+        else:
+            return round(float(np.mean(valid_data)), 4)
+            
+    except Exception as e:
+        print(f"⚠️ Fallback stats failed: {e}")
+        return 0.0
+
+
+def get_agriculture_unit_cost(land_type="Agriculture Land"):
+    """
+    Get unit cost per sqm from AgricultureLandCostMaping model
+    """
+    from vdmp_dashboard.models import AgricultureLandCostMaping
+    
+    cost_mapping = AgricultureLandCostMaping.objects.filter(
+        land_type__icontains=land_type
     ).first()
-    return float(rec.unit_cost) if rec and rec.unit_cost else 0.0
+    
+    if cost_mapping:
+        return float(cost_mapping.unit_cost_per_sqm)
+    
+    # Default fallback cost if not found
+    return 0.00
+    """
+    Get minimum erosion buffer distance for a polygon using PostGIS intersection
+    Returns: buffer distance (50, 100, 150) or None
+    """
+    if db_config is None:
+        db_config = {
+            'dbname': 'crv_assam',
+            'user': 'postgres',
+            'password': 'admin',
+            'host': 'localhost',
+            'port': '5434'
+        }
+    
+    try:
+        conn = psycopg2.connect(**db_config)
+        cur = conn.cursor()
+        
+        # PostGIS query to find intersecting buffers
+        sql = f"""
+            SELECT MIN("BUFF_DIST") as min_buffer
+            FROM {buffer_table}
+            WHERE ST_Intersects(
+                ST_GeomFromText(%s, 4326),
+                geom
+            );
+        """
+        
+        cur.execute(sql, (polygon_wkt,))
+        result = cur.fetchone()
+        
+        cur.close()
+        conn.close()
+        
+        if result and result[0] is not None:
+            return int(result[0])
+        return None
+        
+    except Exception as e:
+        print(f"⚠️ Erosion buffer query failed: {e}")
+        return None
 
 
+
+
+
+# ============================================================================
+# WIND HAZARD PROCESSING
+# ============================================================================
+
+def process_agriculture_wind_pipeline(
+    village_obj,
+    village_code,
+    district_name,
+    district_code,
+    village_name,
+):
+    """
+    Process wind hazard for agriculture land
+    """
+    print(f"💨 Processing Agriculture Wind Hazard for {village_name} ({village_code})")
+
+    from vdmp_dashboard.models import villageAgricultureLandWindInfo
+
+    vill_obj = tblVillage.objects.get(id=int(village_obj))
+    
+    # Wind raster path
+    raster_path = "c:\\assamcrv\\assam_crv\\static\\risk_assessment_raster\\Wind_Raster.tif"
+    
+    # Load agriculture polygons
+    lulc_gdf = load_village_agriculture_lulc(village_code)
+    if lulc_gdf.empty:
+        print("⚠️ No agriculture polygons found")
+        return
+
+    print(f"📌 Processing {len(lulc_gdf)} agriculture polygons...")
+
+    records = []
+    stats_summary = {'with_hazard': 0, 'no_coverage': 0}
+    fallback_value = None
+
+    # Process each polygon
+    for idx, row in lulc_gdf.iterrows():
+        stats = get_zonal_stats_gdal(raster_path, row["geom"])
+        
+        wind_hazard = stats['mean']  # Use mean wind hazard
+        area_sqm = float(row["Area_SqM"])
+        
+        # Track statistics
+        if stats['valid_pixels'] > 0:
+            stats_summary['with_hazard'] += 1
+        else:
+            stats_summary['no_coverage'] += 1
+            wind_hazard = 0.0
+
+        # Calculate costs (you can update these values)
+        unit_cost = Decimal(str(get_agriculture_unit_cost("Agriculture Land")))
+        replacement_cost = Decimal(str(area_sqm)) * unit_cost
+        mdr = Decimal(str(wind_hazard)) if wind_hazard > 0 else Decimal("0.00")
+        loss = replacement_cost * mdr
+
+        records.append(
+            villageAgricultureLandWindInfo(
+                village=vill_obj,
+                district_name=district_name,
+                district_code=district_code,
+                village_name=village_name,
+                village_code=village_code,
+                total_area_sqm=area_sqm,
+                wind_hazard=Decimal(str(wind_hazard)),
+                wind_hazard_mdr=mdr,
+                unit_cost_per_sqm=unit_cost,
+                total_replacement_cost_inr=replacement_cost,
+                wind_loss=loss,
+            )
+        )
+
+    # 🔥 FALLBACK: If no coverage, use clipped raster median
+    if stats_summary['with_hazard'] == 0 and stats_summary['no_coverage'] > 0:
+        print("🔄 No wind data coverage, applying fallback using clipped raster...")
+        fallback_value = get_raster_fallback_stats(raster_path, village_code, 'median')
+        
+        if fallback_value > 0:
+            # Update records with fallback value
+            updated_records = []
+            for record in records:
+                if record.wind_hazard == 0:
+                    record.wind_hazard = Decimal(str(fallback_value))
+                    record.wind_hazard_mdr = Decimal(str(fallback_value))
+                    stats_summary['with_hazard'] += 1
+                    stats_summary['no_coverage'] -= 1
+                updated_records.append(record)
+            records = updated_records
+            print(f"✅ Applied fallback value {fallback_value} to {stats_summary['with_hazard']} polygons")
+
+    # Save records
+    if records:
+        villageAgricultureLandWindInfo.objects.bulk_create(records, batch_size=500)
+        
+        print(f"\n📊 Wind Hazard Summary:")
+        print(f"   ✅ Saved {len(records)} records")
+        print(f"   💨 Polygons with wind data: {stats_summary['with_hazard']}")
+        print(f"   ⚠️  No coverage: {stats_summary['no_coverage']}")
+        if fallback_value:
+            print(f"   🔄 Fallback value used: {fallback_value}")
+    else:
+        print("⚠️ No records to save")
+
+
+# ============================================================================
+# EARTHQUAKE HAZARD PROCESSING
+# ============================================================================
+
+def process_agriculture_earthquake_pipeline(
+    village_obj,
+    village_code,
+    district_name,
+    district_code,
+    village_name,
+):
+    """
+    Process earthquake hazard (PGA) for agriculture land
+    """
+    print(f"🌍 Processing Agriculture Earthquake Hazard for {village_name} ({village_code})")
+
+    from vdmp_dashboard.models import villageAgricultureLandEQInfo
+
+    vill_obj = tblVillage.objects.get(id=int(village_obj))
+    
+    # Earthquake raster path
+    raster_path = "c:\\assamcrv\\assam_crv\\static\\risk_assessment_raster\\eq.tif"
+    
+    # Load agriculture polygons
+    lulc_gdf = load_village_agriculture_lulc(village_code)
+    if lulc_gdf.empty:
+        print("⚠️ No agriculture polygons found")
+        return
+
+    print(f"📌 Processing {len(lulc_gdf)} agriculture polygons...")
+
+    records = []
+    stats_summary = {'with_hazard': 0, 'no_coverage': 0}
+    fallback_value = None
+
+    # Process each polygon
+    for idx, row in lulc_gdf.iterrows():
+        stats = get_zonal_stats_gdal(raster_path, row["geom"])
+        
+        eq_hazard = stats['mean']  # Use mean PGA value
+        area_sqm = float(row["Area_SqM"])
+        
+        # Track statistics
+        if stats['valid_pixels'] > 0:
+            stats_summary['with_hazard'] += 1
+        else:
+            stats_summary['no_coverage'] += 1
+            eq_hazard = 0.0
+
+        # Calculate costs (you can update these values)
+        unit_cost = Decimal(str(get_agriculture_unit_cost("Agriculture Land")))
+        replacement_cost = Decimal(str(area_sqm)) * unit_cost
+        mdr = Decimal(str(eq_hazard)) if eq_hazard > 0 else Decimal("0.00")
+        loss = replacement_cost * mdr
+
+        records.append(
+            villageAgricultureLandEQInfo(
+                village=vill_obj,
+                district_name=district_name,
+                district_code=district_code,
+                village_name=village_name,
+                village_code=village_code,
+                total_area_sqm=area_sqm,
+                eq_hazard=Decimal(str(eq_hazard)),
+                eq_hazard_mdr=mdr,
+                unit_cost_per_sqm=unit_cost,
+                total_replacement_cost_inr=replacement_cost,
+                eq_loss=loss,
+            )
+        )
+
+    # 🔥 FALLBACK: If no coverage, use clipped raster max
+    if stats_summary['with_hazard'] == 0 and stats_summary['no_coverage'] > 0:
+        print("🔄 No earthquake data coverage, applying fallback using clipped raster...")
+        fallback_value = get_raster_fallback_stats(raster_path, village_code, 'max', eq=True)
+        
+        if fallback_value > 0:
+            # Update records with fallback value
+            updated_records = []
+            for record in records:
+                if record.eq_hazard == 0:
+                    record.eq_hazard = Decimal(str(fallback_value))
+                    record.eq_hazard_mdr = Decimal(str(fallback_value))
+                    stats_summary['with_hazard'] += 1
+                    stats_summary['no_coverage'] -= 1
+                updated_records.append(record)
+            records = updated_records
+            print(f"✅ Applied fallback value {fallback_value} to {stats_summary['with_hazard']} polygons")
+
+    # Save records
+    if records:
+        villageAgricultureLandEQInfo.objects.bulk_create(records, batch_size=500)
+        
+        print(f"\n📊 Earthquake Hazard Summary:")
+        print(f"   ✅ Saved {len(records)} records")
+        print(f"   🌍 Polygons with EQ data: {stats_summary['with_hazard']}")
+        print(f"   ⚠️  No coverage: {stats_summary['no_coverage']}")
+        if fallback_value:
+            print(f"   🔄 Fallback value used: {fallback_value}")
+    else:
+        print("⚠️ No records to save")
+
+
+def process_arrgicultural_data_pipeline(
+    village_obj,
+    village_code,
+    district_name,
+    district_code,
+    village_name,
+):
+    print(f"🌾 Processing Agriculture Flood Data for {village_name} ({village_code})")
+
+    from layers.models import village_flood_raster_Files
+    from vdmp_dashboard.models import villageAgricultureLandFloodInfo
+    from decimal import Decimal
+
+    vill_obj = tblVillage.objects.get(id=int(village_obj))
+
+    # Load flood raster
+    flood_raster = village_flood_raster_Files.objects.filter(
+        village_id=vill_obj
+    ).first()
+
+    if not flood_raster:
+        print("❌ Flood raster not found")
+        return
+
+    raster_path = f"c:\\assamcrv\\assam_crv\\media\\{flood_raster.raster_file}"
+    
+    # Load agriculture polygons
+    lulc_gdf = load_village_agriculture_lulc(village_code)
+    if lulc_gdf.empty:
+        print("⚠️ No agriculture polygons found")
+        return
+
+    print(f"📌 Processing {len(lulc_gdf)} agriculture polygons...")
+
+    records = []
+    stats_summary = {'flooded': 0, 'no_flood': 0, 'no_coverage': 0}
+    fallback_value = None
+
+    # Process each polygon
+    for idx, row in lulc_gdf.iterrows():
+        stats = get_zonal_stats_gdal(raster_path, row["geom"])
+        
+        flood_depth = stats['max']
+        flood_class = _classify_flood(flood_depth)
+        area_sqm = float(row["Area_SqM"])
+        
+        # Track statistics
+        if stats['valid_pixels'] == 0:
+            stats_summary['no_coverage'] += 1
+        elif flood_depth > 0:
+            stats_summary['flooded'] += 1
+        else:
+            stats_summary['no_flood'] += 1
+
+        # Calculate costs
+        unit_cost = Decimal(str(get_agriculture_unit_cost("Agriculture Land")))
+        replacement_cost = Decimal(str(area_sqm)) * unit_cost
+        mdr = Decimal("0.00")
+        loss = replacement_cost * mdr
+
+        records.append(
+            villageAgricultureLandFloodInfo(
+                village=vill_obj,
+                district_name=district_name,
+                district_code=district_code,
+                village_name=village_name,
+                village_code=village_code,
+                total_area_sqm=area_sqm,
+                flood_depth_m=flood_depth,
+                flood_class=flood_class,
+                unit_cost_per_sqm=unit_cost,
+                total_replacement_cost_inr=replacement_cost,
+                flood_hazard_mdr=mdr,
+                flood_loss=loss,
+            )
+        )
+
+    # 🔥 FALLBACK: If no flooded polygons, use median of whole raster
+    if stats_summary['flooded'] == 0 and stats_summary['no_coverage'] > 0:
+        print("🔄 No flooded polygons found, applying fallback using raster median...")
+        fallback_value = get_raster_fallback_stats(raster_path, village_code, 'median')
+        
+        if fallback_value > 0:
+            # Update records with fallback value for polygons with no coverage
+            updated_records = []
+            for record in records:
+                if record.flood_depth_m == 0.0:  # No coverage polygons
+                    record.flood_depth_m = fallback_value
+                    record.flood_class = _classify_flood(fallback_value)
+                    stats_summary['flooded'] += 1
+                    stats_summary['no_coverage'] -= 1
+                updated_records.append(record)
+            records = updated_records
+            print(f"✅ Applied fallback value {fallback_value}m to {stats_summary['flooded']} polygons")
+
+    # Save records
+    if records:
+        villageAgricultureLandFloodInfo.objects.bulk_create(records, batch_size=500)
+        
+        print(f"\n📊 Summary:")
+        print(f"   ✅ Saved {len(records)} records")
+        print(f"   🌊 Flooded polygons: {stats_summary['flooded']}")
+        print(f"   ✅ No flood (safe): {stats_summary['no_flood']}")
+        print(f"   ⚠️  No coverage: {stats_summary['no_coverage']}")
+        if fallback_value:
+            print(f"   🔄 Fallback value used: {fallback_value}m")
+    else:
+        print("⚠️ No records to save")
+
+# ============================================================================
+# EROSION PROCESSING
+# ============================================================================
+
+def get_erosion_buffer_for_polygon(polygon_wkt, 
+                                   buffer_table="public.new_river_buff",
+                                   db_config=None):
+    """
+    Get minimum erosion buffer distance for a polygon using PostGIS intersection
+    Returns: buffer distance (50, 100, 150) or None
+    """
+    if db_config is None:
+        db_config = {
+            'dbname': 'crv_assam',
+            'user': 'postgres',
+            'password': 'admin',
+            'host': 'localhost',
+            'port': '5434'
+        }
+    
+    try:
+        conn = psycopg2.connect(**db_config)
+        cur = conn.cursor()
+        
+        # PostGIS query to find intersecting buffers
+        sql = f"""
+            SELECT MIN("BUFF_DIST") as min_buffer
+            FROM {buffer_table}
+            WHERE ST_Intersects(
+                ST_GeomFromText(%s, 4326),
+                geom
+            );
+        """
+        
+        cur.execute(sql, (polygon_wkt,))
+        result = cur.fetchone()
+        
+        cur.close()
+        conn.close()
+        
+        if result and result[0] is not None:
+            return int(result[0])
+        return None
+        
+    except Exception as e:
+        print(f"⚠️ Erosion buffer query failed: {e}")
+        return None
+
+
+def process_agriculture_erosion_pipeline(
+    village_obj,
+    village_code,
+    district_name,
+    district_code,
+    village_name,
+    db_config=None
+):
+    """
+    Process erosion risk for agriculture land using river buffer intersection
+    """
+    print(f"🌊 Processing Agriculture Erosion Risk for {village_name} ({village_code})")
+
+    from vdmp_dashboard.models import villageAgricultureLandErosionInfo
+
+    vill_obj = tblVillage.objects.get(id=int(village_obj))
+    
+    # Load agriculture polygons
+    lulc_gdf = load_village_agriculture_lulc(village_code)
+    if lulc_gdf.empty:
+        print("⚠️ No agriculture polygons found")
+        return
+
+    print(f"📌 Processing {len(lulc_gdf)} agriculture polygons...")
+
+    records = []
+    stats_summary = {
+        'high_risk': 0,
+        'medium_risk': 0,
+        'low_risk': 0,
+        'no_risk': 0
+    }
+
+    # Process each polygon
+    for idx, row in lulc_gdf.iterrows():
+        area_sqm = float(row["Area_SqM"])
+        polygon_wkt = row["geom"].wkt
+        
+        # Get erosion buffer distance
+        buffer_distance = get_erosion_buffer_for_polygon(
+            polygon_wkt, 
+            buffer_table="public.new_river_buff",
+            db_config=db_config
+        )
+        
+        # Classify erosion risk
+        erosion_class = _classify_erosion_buffer(buffer_distance)
+        
+        # Track statistics
+        if buffer_distance is None:
+            stats_summary['no_risk'] += 1
+        elif buffer_distance <= 50:
+            stats_summary['high_risk'] += 1
+        elif buffer_distance <= 100:
+            stats_summary['medium_risk'] += 1
+        elif buffer_distance <= 150:
+            stats_summary['low_risk'] += 1
+
+        records.append(
+            villageAgricultureLandErosionInfo(
+                village=vill_obj,
+                district_name=district_name,
+                district_code=district_code,
+                village_name=village_name,
+                village_code=village_code,
+                total_area_sqm=area_sqm,
+                erosion_class=erosion_class,
+                unit_cost_per_sqm=Decimal(str(get_agriculture_unit_cost("Agriculture Land"))),
+                total_replacement_cost_inr=Decimal(str(area_sqm)) * Decimal(str(get_agriculture_unit_cost("Agriculture Land"))),
+            )
+        )
+
+    # Save records
+    if records:
+        villageAgricultureLandErosionInfo.objects.bulk_create(records, batch_size=500)
+        
+        print(f"\n📊 Erosion Risk Summary:")
+        print(f"   ✅ Saved {len(records)} records")
+        print(f"   🔴 High risk (0-50m): {stats_summary['high_risk']}")
+        print(f"   🟡 Medium risk (50-100m): {stats_summary['medium_risk']}")
+        print(f"   🟢 Low risk (100-150m): {stats_summary['low_risk']}")
+        print(f"   ✅ No risk: {stats_summary['no_risk']}")
+    else:
+        print("⚠️ No records to save")
+
+
+# ============================================================================
+# MASTER FUNCTION TO RUN ALL HAZARDS
+# ============================================================================
+
+def process_all_agriculture_hazards(
+    village_obj,
+    village_code,
+    district_name,
+    district_code,
+    village_name,
+    db_config=None
+):
+    """
+    Run all hazard assessments for agriculture land
+    """
+    print(f"\n{'='*60}")
+    print(f"🌾 AGRICULTURE HAZARD ASSESSMENT")
+    print(f"Village: {village_name} ({village_code})")
+    print(f"{'='*60}\n")
+    
+    # 1. Flood
+    print("1️⃣ FLOOD HAZARD")
+    process_arrgicultural_data_pipeline(
+        village_obj, village_code, district_name, district_code, village_name
+    )
+    
+    # 2. Wind
+    print("\n2️⃣ WIND HAZARD")
+    process_agriculture_wind_pipeline(
+        village_obj, village_code, district_name, district_code, village_name
+    )
+    
+    # 3. Earthquake
+    print("\n3️⃣ EARTHQUAKE HAZARD")
+    process_agriculture_earthquake_pipeline(
+        village_obj, village_code, district_name, district_code, village_name
+    )
+    
+    # 4. Erosion
+    print("\n4️⃣ EROSION RISK")
+    process_agriculture_erosion_pipeline(
+        village_obj, village_code, district_name, district_code, village_name, db_config
+    )
+    
+    print(f"\n{'='*60}")
+    print(f"✅ ALL HAZARD ASSESSMENTS COMPLETED!")
+    print(f"{'='*60}\n")
+
+
+# ============================================================================
+# USAGE EXAMPLE
+# ============================================================================
+
+# Run for a single village
+# process_all_agriculture_hazards(
+#     village_obj=550,
+#     village_code="280_6",
+#     district_name="Bongaigaon",
+#     district_code="280",
+#     village_name="Ag Mandia"
+# )
+
+# Or run individually
+# process_agriculture_wind_pipeline(550, "280_6", "Bongaigaon", "280", "Ag Mandia")
+# process_agriculture_earthquake_pipeline(550, "280_6", "Bongaigaon", "280", "Ag Mandia")
+# process_agriculture_erosion_pipeline(550, "280_6", "Bongaigaon", "280", "Ag Mandia")
 
 
 def get_mdr_value(hazard_value, hazard_type, road_type_id):
@@ -373,10 +1112,6 @@ def get_mdr_value(hazard_value, hazard_type, road_type_id):
 
     return float(rec.MDR_value) if rec else 0.0
 
-
-
-
-
 # -------------------------------
 
 from osgeo import gdal
@@ -386,10 +1121,81 @@ import numpy as np
 import os
 
 
+def load_village_boundary(village_code):
+    """
+    Load village boundary geometry from PostGIS.
+    CRS: EPSG:4326
+    """
+    engine = get_sqlalchemy_engine()
+
+    sql = """
+    SELECT geom
+    FROM public.village_boundary  
+    WHERE vill_id = %s;
+    """
+
+    gdf = gpd.read_postgis(
+        sql,
+        engine,
+        params=(village_code,),
+        geom_col="geom",
+        crs="EPSG:4326"
+    )
+
+    if gdf.empty:
+        raise RuntimeError("Village boundary not found")
+
+    return gdf
+
+
+
+def clip_raster_to_village(raster_path, village_gdf):
+    """
+    Clip raster to village boundary.
+    Returns path to clipped raster (temporary file).
+    """
+    tmp_dir = tempfile.mkdtemp()
+    clipped_raster = os.path.join(tmp_dir, "clipped.tif")
+
+    village_geojson = os.path.join(tmp_dir, "village.geojson")
+    village_gdf.to_file(village_geojson, driver="GeoJSON")
+
+    gdal.Warp(
+        clipped_raster,
+        raster_path,
+        cutlineDSName=village_geojson,
+        cropToCutline=True,
+        dstNodata=0,                         # 🔴 IMPORTANT
+        dstSRS="EPSG:4326",
+        resampleAlg=gdal.GRA_NearestNeighbour,  # 🔴 IMPORTANT
+        outputType=gdal.GDT_Float32             # 🔴 IMPORTANT
+    )
+
+    # -------- VALIDATION --------
+    ds = gdal.Open(clipped_raster)
+    if ds is None:
+        raise RuntimeError("Clipped raster not created")
+
+    if ds.RasterXSize == 0 or ds.RasterYSize == 0:
+        raise RuntimeError("Clipped raster is empty (no overlap)")
+
+    gt = ds.GetGeoTransform()
+    if gt is None:
+        raise RuntimeError("Clipped raster has no geotransform")
+
+    if gt[2] != 0 or gt[4] != 0:
+        raise RuntimeError("Clipped raster is rotated (unsupported)")
+
+    return clipped_raster
+
+
+
 def raster_to_grid_gdf(
     raster_path,
-    export_geojson=True,
-    geojson_name="flood_grid_debug.geojson"
+    village_code,
+    export_geojson=False,
+    geojson_name="flood_grid_debug.geojson",
+    eq=False
 ):
     """
     Convert raster pixels into vector grid polygons.
@@ -399,12 +1205,42 @@ def raster_to_grid_gdf(
     to assam_crv/media for visual verification.
     """
 
+    village_gdf = load_village_boundary(village_code)
+
     # --------------------------------------------------
     # 1. Open raster
     # --------------------------------------------------
-    ds = gdal.Open(raster_path)
+
+    ds=None
+    if eq:
+        clipped_raster_path = clip_raster_to_village(
+        raster_path,
+        village_gdf
+        )
+        ds = gdal.Open(clipped_raster_path)
+    else:
+        clipped_raster_path = clip_raster_to_village(
+            raster_path,
+            village_gdf
+        )
+        ds = gdal.Open(clipped_raster_path)
     if not ds:
         raise RuntimeError("Cannot open raster")
+    
+    if ds is None:
+        raise RuntimeError("Cannot open clipped raster")
+
+    # ---- EXTRA SAFETY ----
+    if ds.RasterXSize == 0 or ds.RasterYSize == 0:
+        raise RuntimeError("Clipped raster has zero size")
+
+    gt = ds.GetGeoTransform()
+    if gt is None:
+        raise RuntimeError("Clipped raster has no geotransform")
+
+  
+
+  
 
     band = ds.GetRasterBand(1)
     arr = band.ReadAsArray()
@@ -475,9 +1311,18 @@ def raster_to_grid_gdf(
 
 # -------------------------------
 # Load village roads (PostGIS)
-import geopandas as gpd
-from sqlalchemy import create_engine
-from django.conf import settings
+
+
+def get_district_from_village(village_obj):
+    """
+    Safely derive district info from village object.
+    """
+    try:
+        district = village_obj.gram_panchayat.circle.district
+        return district.name, district.code
+    except Exception:
+        return None, None
+
 def get_sqlalchemy_engine():
     """
     Create SQLAlchemy engine using Django DB settings.
@@ -568,37 +1413,112 @@ def calculate_road_length(intersections):
     Calculate road length inside each grid cell.
     """
     intersections["road_length_m"] = intersections.geometry.length
+
+    intersected_length = intersections["road_length_m"].sum()
+
+    print("✂️ TOTAL INTERSECTED ROAD LENGTH:", intersected_length)
+    # print("📉 MISSING LENGTH:", total_road_length - intersected_length)
     return intersections
 
 # If multiple road pieces fall in the same pixel:
-def aggregate_by_grid(intersections):
+def aggregate_by_grid_and_road(intersections):
     """
-    Aggregate total road length per raster pixel.
+    Aggregate road length per grid cell
+    AND per road attributes.
     """
 
     result = (
         intersections
-        .groupby(["grid_id", "flood_depth_m"])["road_length_m"]
-        .sum()
-        .reset_index()
+        .groupby(
+            [
+                "grid_id",
+                "flood_depth_m",
+                "rd_surface",
+                "rsur_type",
+                "rsurtypeid",
+                "width",
+            ],
+            as_index=False
+        )
+        .agg(
+            road_length_m=("road_length_m", "sum")
+        )
     )
 
     return result
 
 
+
+
 def save_grid_results(result_df, village_obj, village_code):
     from vdmp_dashboard.models import VillageRoadInfo
-
+    district_name, district_code = get_district_from_village(village_obj)
     records = []
 
     for _, row in result_df.iterrows():
+
+        # -----------------------------
+        # Basic values
+        # -----------------------------
+        flood_depth_m = float(row["flood_depth_m"] or 0.0)
+        road_length_m = float(row["road_length_m"] or 0.0)
+
+        # Convert meters → feet for classification
+        flood_depth_ft = flood_depth_m * 3.28084
+
+        # -----------------------------
+        # Road attributes
+        # -----------------------------
+        asset_typology = row["rsur_type"] or "Unknown"
+        road_type_id = row["rsurtypeid"]
+        road_width_m = row["width"]
+
+        # -----------------------------
+        # Classification
+        # -----------------------------
+        flood_class = _classify_flood(flood_depth_m)
+
+        # -----------------------------
+        # Cost & loss calculation
+        # -----------------------------
+        unit_cost = get_road_unit_cost(asset_typology)
+
+        replacement_cost = road_length_m * unit_cost * road_width_m
+
+        flood_mdr = get_mdr_value(
+            hazard_value=flood_depth_m,
+            hazard_type="flood",
+            road_type_id=road_type_id,
+        )
+
+        flood_loss = replacement_cost * flood_mdr
+
+        # -----------------------------
+        # Create DB object
+        # -----------------------------
         records.append(
             VillageRoadInfo(
                 village=village_obj,
                 village_code=village_code,
-                # grid_id=int(row["grid_id"]),
-                flood_depth_m=float(row["flood_depth_m"]),
-                road_length_m=float(row["road_length_m"]),
+                village_name=village_obj.name,
+                district_name=district_name,
+                district_code=district_code,
+
+                # Road info
+                road_surface_type=asset_typology,
+                road_width_m=road_width_m,
+                road_type_id=road_type_id,
+
+                # Exposure
+                road_length_m=road_length_m,
+                flood_depth_m=flood_depth_m,
+                flood_class=flood_class,
+
+                # Economics
+                unit_cost=unit_cost,
+                replacement_cost_inr=replacement_cost,
+                flood_hazard_mdr=flood_mdr,
+                flood_loss=flood_loss,
             )
         )
 
@@ -607,6 +1527,25 @@ def save_grid_results(result_df, village_obj, village_code):
             records,
             batch_size=1000
         )
+
+
+def get_road_unit_cost(asset_typology):
+    from vdmp_dashboard.models import RoadUnitCost
+    rec = RoadUnitCost.objects.filter(
+        asset_typology__iexact=asset_typology
+    ).first()
+    return float(rec.unit_cost) if rec and rec.unit_cost else 0.0
+
+def calculate_replacement_cost_road(
+    road_length_m,
+    road_width_m,
+    unit_cost
+):
+    if not unit_cost or not road_width_m:
+        return 0.0
+
+    return float(road_length_m) * float(road_width_m) * float(unit_cost)
+
 
 
 
@@ -622,10 +1561,15 @@ def process_road_flood_zonal_length(
     """
 
     # 1. Raster → grid
-    grid_gdf = raster_to_grid_gdf(flood_raster_path)
+    grid_gdf = raster_to_grid_gdf(flood_raster_path, village_code)
 
     # 2. Roads
     roads_gdf = load_village_roads(village_code)
+    # Total road length (ground truth)
+    roads_utm_tmp = roads_gdf.to_crs("EPSG:32646")
+    total_road_length = roads_utm_tmp.geometry.length.sum()
+
+    print("🧮 TOTAL ROAD LENGTH (UTM):", total_road_length)
 
     if roads_gdf.empty or grid_gdf.empty:
         return
@@ -647,10 +1591,240 @@ def process_road_flood_zonal_length(
     intersections = calculate_road_length(intersections)
 
     # 6. Aggregate
-    result = aggregate_by_grid(intersections)
+    result = aggregate_by_grid_and_road(intersections)
+
 
     # 7. Save
     save_grid_results(result, village_obj, village_code)
+
+
+def process_road_eq_zonal_length(
+    village_obj,
+    village_code,
+    eq_raster_path
+):
+    """
+    Earthquake zonal road length analysis
+    Raster value = PGA_g
+    """
+    print("🌊 Processing earthquake hazard zonal length...")
+    from vdmp_dashboard.models import VillageRoadInfoEQ
+    district_name, district_code = get_district_from_village(village_obj)
+    # 1. Raster → grid
+    grid_gdf = raster_to_grid_gdf(
+        eq_raster_path,
+        village_code,
+        export_geojson=False,
+        eq=True
+
+    )
+
+    # 2. Roads
+    roads_gdf = load_village_roads(village_code)
+    if roads_gdf.empty or grid_gdf.empty:
+        return
+
+    # 3. Reproject to UTM
+    roads_utm, grid_utm = reproject_for_length(
+        roads_gdf, grid_gdf
+    )
+
+    # 4. Intersection
+    intersections = intersect_roads_with_grid(
+        roads_utm, grid_utm
+    )
+
+    if intersections.empty:
+        return
+
+    # 5. Length calculation
+    intersections["road_length_m"] = intersections.geometry.length
+
+    # 6. Aggregate
+    result = (
+        intersections
+        .groupby(
+            [
+                "grid_id",
+                "flood_depth_m",  # this column stores raster value
+                "rd_surface",
+                "rsur_type",
+                "rsurtypeid",
+                "width",
+            ],
+            as_index=False
+        )
+        .agg(
+            road_length_m=("road_length_m", "sum")
+        )
+    )
+
+    # 7. Save
+    records = []
+
+    for _, row in result.iterrows():
+
+        eq_hazard = float(row["flood_depth_m"] or 0.0)
+        road_length_m = float(row["road_length_m"] or 0.0)
+
+        road_surface = row["rsur_type"]
+        road_type_id = row["rsurtypeid"]
+        road_width_m = row["width"]
+
+        unit_cost = get_road_unit_cost(road_surface)
+
+        replacement_cost = calculate_replacement_cost_road(
+            road_length_m,
+            road_width_m,
+            unit_cost
+        )
+
+        eq_mdr = get_mdr_value(
+            hazard_value=eq_hazard,
+            hazard_type="eq",
+            road_type_id=road_type_id
+        )
+
+        eq_loss = replacement_cost * eq_mdr
+
+        records.append(
+            VillageRoadInfoEQ(
+                village=village_obj,
+                district_name=district_name,
+                district_code=district_code,
+                village_name=village_obj.name,
+                village_code=village_code,
+                road_surface_type=road_surface,
+                road_constructed_by="Unknown",
+                road_length_m=road_length_m,
+                road_width_m=road_width_m,
+                road_type_id=road_type_id,
+                unit_cost=unit_cost,
+                replacement_cost_inr=replacement_cost,
+                eq_hazard=eq_hazard,
+                eq_hazard_mdr=eq_mdr,
+                eq_loss=eq_loss,
+            )
+        )
+
+    if records:
+        VillageRoadInfoEQ.objects.bulk_create(
+            records, batch_size=1000
+        )
+
+
+def process_road_wind_zonal_length(
+    village_obj,
+    village_code,
+    wind_raster_path
+):
+    """
+    Wind zonal road length analysis
+    Raster value = wind_speed_kmph
+    """
+
+    from vdmp_dashboard.models import VillageRoadInfoWind
+    district_name, district_code = get_district_from_village(village_obj)
+    # 1. Raster → grid
+    grid_gdf = raster_to_grid_gdf(
+        wind_raster_path,
+        village_code,
+        export_geojson=False
+    )
+
+    # 2. Roads
+    roads_gdf = load_village_roads(village_code)
+    if roads_gdf.empty or grid_gdf.empty:
+        return
+
+    # 3. Reproject
+    roads_utm, grid_utm = reproject_for_length(
+        roads_gdf, grid_gdf
+    )
+
+    # 4. Intersection
+    intersections = intersect_roads_with_grid(
+        roads_utm, grid_utm
+    )
+
+    if intersections.empty:
+        return
+
+    # 5. Length
+    intersections["road_length_m"] = intersections.geometry.length
+
+    # 6. Aggregate
+    result = (
+        intersections
+        .groupby(
+            [
+                "grid_id",
+                "flood_depth_m",  # raster value
+                "rd_surface",
+                "rsur_type",
+                "rsurtypeid",
+                "width",
+            ],
+            as_index=False
+        )
+        .agg(
+            road_length_m=("road_length_m", "sum")
+        )
+    )
+
+    # 7. Save
+    records = []
+
+    for _, row in result.iterrows():
+
+        wind_hazard = float(row["flood_depth_m"] or 0.0)
+        road_length_m = float(row["road_length_m"] or 0.0)
+
+        road_surface = row["rsur_type"]
+        road_type_id = row["rsurtypeid"]
+        road_width_m = row["width"]
+
+        unit_cost = get_road_unit_cost(road_surface)
+
+        replacement_cost = calculate_replacement_cost_road(
+            road_length_m,
+            road_width_m,
+            unit_cost
+        )
+
+        wind_mdr = get_mdr_value(
+            hazard_value=wind_hazard,
+            hazard_type="wind",
+            road_type_id=road_type_id
+        )
+
+        wind_loss = replacement_cost * wind_mdr
+
+        records.append(
+            VillageRoadInfoWind(
+                village=village_obj,
+                district_name=district_name,
+                district_code=district_code,
+                village_name=village_obj.name,
+                village_code=village_code,
+                road_surface_type=road_surface,
+                road_constructed_by="Unknown",
+                road_length_m=road_length_m,
+                road_width_m=road_width_m,
+                road_type_id=road_type_id,
+                unit_cost=unit_cost,
+                replacement_cost_inr=replacement_cost,
+                wind_hazard=wind_hazard,
+                wind_hazard_mdr=wind_mdr,
+                wind_loss=wind_loss,
+            )
+        )
+
+    if records:
+        VillageRoadInfoWind.objects.bulk_create(
+            records, batch_size=1000
+        )
+
 
 
 
@@ -683,103 +1857,19 @@ def _process_road_flood_data(
        f"c:\\assamcrv\\assam_crv\\media\\{flood_raster.raster_file}"
     )
 
-    # eq_sampler = RasterSampler(
-    #     r"c:\assamcrv\assam_crv\static\risk_assessment_raster\PGA_Raster.img"
-    # )
+    process_road_eq_zonal_length(
+        village_obj,
+        village_code,
+        r"c:\assamcrv\assam_crv\static\risk_assessment_raster\eq.tif",
+        
+    )
+    process_road_wind_zonal_length(
+        village_obj,
+        village_code,
+        r"c:\assamcrv\assam_crv\static\risk_assessment_raster\Wind_Raster.tif"
+    )
 
-    # wind_sampler = RasterSampler(
-    #     r"c:\assamcrv\assam_crv\static\risk_assessment_raster\Wind_Raster.tif"
-    # )
-
-    # # ------------------------------------------------------------------
-    # # SQL: WHOLE ROAD, LENGTH IN UTM, POINT IN WGS84
-    # # ------------------------------------------------------------------
-    # sql = """
-    # SELECT
-    #     gid,
-    #     rd_surface,
-    #     rsur_type,
-    #     rsurtypeid,
-    #     width,
-
-    #     ST_Length(
-    #         ST_Transform(geom, 32646)
-    #     ) AS road_len_m,
-
-    #     ST_AsText(
-    #         ST_Centroid(geom)
-    #     ) AS centroid_wkt
-
-    # FROM public.road_network
-    # WHERE vill_id = %s
-    #   AND geom IS NOT NULL;
-    # """
-
-    # with conn.cursor() as cur:
-    #     cur.execute(sql, (village_code,))
-    #     rows = cur.fetchall()
-
-    # records = []
-
-    # for (
-    #     gid,
-    #     surface,
-    #     rsur,
-    #     rsurtypeid,
-    #     width,
-    #     road_len,
-    #     centroid_wkt,
-    # ) in rows:
-
-    #     if not centroid_wkt or road_len <= 0:
-    #         continue
-
-    #     pt = wkt.loads(centroid_wkt)
-    #     lon, lat = pt.x, pt.y
-
-    #     flood = flood_sampler.sample(lon, lat)
-    #     eq = eq_sampler.sample(lon, lat)
-    #     wind = wind_sampler.sample(lon, lat)
-
-    #     asset_typology = rsur or surface or "Unknown"
-
-    #     unit_cost = get_road_unit_cost(asset_typology)
-    #     replacement_cost = road_len * unit_cost
-
-    #     flood_mdr = get_mdr_value(flood, "flood", rsurtypeid)
-    #     eq_mdr = get_mdr_value(eq, "eq", rsurtypeid)
-    #     wind_mdr = get_mdr_value(wind, "wind", rsurtypeid)
-
-    #     records.append(
-    #         VillageRoadInfo(
-    #             village=village_obj,
-    #             district_name=district_name,
-    #             district_code=district_code,
-    #             village_name=village_name,
-    #             village_code=village_code,
-    #             latitude=str(lat),
-    #             longitude=str(lon),
-    #             road_surface_type=asset_typology,
-    #             road_length_m=road_len,
-    #             flood_depth_m=flood,
-    #             unit_cost=unit_cost,
-    #             replacement_cost_inr=replacement_cost,
-    #             flood_hazard_mdr=flood_mdr,
-    #             eq_hazard_mdr=eq_mdr,
-    #             wind_hazard_mdr=wind_mdr,
-    #             flood_loss=replacement_cost * flood_mdr,
-    #             eq_loss=replacement_cost * eq_mdr,
-    #             wind_loss=replacement_cost * wind_mdr,
-    #         )
-    #     )
-
-    # if records:
-    #     VillageRoadInfo.objects.bulk_create(records, batch_size=1000)
-
-
-
-
-
+ 
 
 
 
@@ -1700,15 +2790,14 @@ def _classify_erosion_buffer(buffer_value):
     """Classify erosion based on buffer distance"""
     if pd.isna(buffer_value) or buffer_value is None:
         return "Low"
-    print("------------ erosion value ---------------- >",buffer_value)
     try:
         buffer_value = int(buffer_value)
         if buffer_value == 50:
-            return "Seviere"
+            return "Severe"
         elif buffer_value == 100:
             return "High"
         elif buffer_value == 150:
-            return "medium"
+            return "Medium"
         else:
             return "Low"
     except (ValueError, TypeError):
@@ -1768,166 +2857,3 @@ def _classify_crops_diversity(num_crops):
 
 
 
-def _process_road_eq_data(
-    conn, village_obj, village_code,
-    district_code, district_name, village_name
-):
-    """Process earthquake hazard for roads with 1500m segmentation"""
-    from vdmp_dashboard.models import VillageRoadInfoEQ
-    from osgeo import gdal
-    from shapely import wkt
-    import math
-
-    # EQ raster pixel size ~1538m, use 1500m segments
-    sql = """
-    WITH road_utm AS (
-        SELECT
-            gid, rd_surface, rsur_type, rsurtypeid, width,
-            ST_Transform(ST_SetSRID(geom, 4326), 32646) AS geom_utm
-        FROM public.road_network
-        WHERE vill_id = %s
-    ),
-    road_segments AS (
-        SELECT
-            gid, rd_surface, rsur_type, rsurtypeid, width,
-            ST_LineSubstring(
-                geom_utm,
-                LEAST(gs / ST_Length(geom_utm), 1),
-                LEAST((gs + 1500) / ST_Length(geom_utm), 1)
-            ) AS segment_geom_utm
-        FROM road_utm
-        CROSS JOIN LATERAL generate_series(0, ST_Length(geom_utm)::int, 1500) AS gs
-    )
-    SELECT
-        gid, rd_surface, rsur_type, rsurtypeid, width,
-        ST_Length(segment_geom_utm) AS seg_len,
-        ST_AsText(ST_Transform(ST_Centroid(segment_geom_utm), 4326)) AS p_center
-    FROM road_segments
-    WHERE ST_Length(segment_geom_utm) > 0;
-    """
-
-    with conn.cursor() as cur:
-        cur.execute(sql, (village_code,))
-        rows = cur.fetchall()
-
-    records = []
-    for gid, surface, rsur, rsurtypeid, width, seg_len, p_center in rows:
-        if not p_center:
-            continue
-            
-        pt = wkt.loads(p_center)
-        lon, lat = pt.x, pt.y
-        
-        eq_hazard = extract_eq_hazard_from_raster(lat, lon)
-        asset_typology = rsur or surface or "Unknown"
-        unit_cost = get_road_unit_cost_by_id(rsurtypeid) if rsurtypeid else get_road_unit_cost(asset_typology)
-        replacement_cost = seg_len * unit_cost
-        eq_mdr = get_mdr_value(eq_hazard, 'eq', rsurtypeid) if rsurtypeid else 0.0
-        eq_loss = replacement_cost * eq_mdr
-
-        records.append(
-            VillageRoadInfoEQ(
-                village=village_obj,
-                district_name=district_name,
-                district_code=district_code,
-                village_name=village_name,
-                village_code=village_code,
-                latitude=str(lat),
-                longitude=str(lon),
-                road_surface_type=asset_typology,
-                road_constructed_by="Unknown",
-                road_length_m=seg_len,
-                road_width_m=width,
-                road_type_id=rsurtypeid,
-                unit_cost=unit_cost,
-                replacement_cost_inr=replacement_cost,
-                eq_hazard=eq_hazard,
-                eq_hazard_mdr=eq_mdr,
-                eq_loss=eq_loss,
-            )
-        )
-
-    if records:
-        VillageRoadInfoEQ.objects.bulk_create(records, batch_size=1000)
-
-def _process_road_wind_data(
-    conn, village_obj, village_code,
-    district_code, district_name, village_name
-):
-    """Process wind hazard for roads with 90m segmentation"""
-    from vdmp_dashboard.models import VillageRoadInfoWind
-    from osgeo import gdal
-    from shapely import wkt
-    import math
-
-    # Wind raster pixel size ~90m, use 90m segments
-    sql = """
-    WITH road_utm AS (
-        SELECT
-            gid, rd_surface, rsur_type, rsurtypeid, width,
-            ST_Transform(ST_SetSRID(geom, 4326), 32646) AS geom_utm
-        FROM public.road_network
-        WHERE vill_id = %s
-    ),
-    road_segments AS (
-        SELECT
-            gid, rd_surface, rsur_type, rsurtypeid, width,
-            ST_LineSubstring(
-                geom_utm,
-                LEAST(gs / ST_Length(geom_utm), 1),
-                LEAST((gs + 90) / ST_Length(geom_utm), 1)
-            ) AS segment_geom_utm
-        FROM road_utm
-        CROSS JOIN LATERAL generate_series(0, ST_Length(geom_utm)::int, 90) AS gs
-    )
-    SELECT
-        gid, rd_surface, rsur_type, rsurtypeid, width,
-        ST_Length(segment_geom_utm) AS seg_len,
-        ST_AsText(ST_Transform(ST_Centroid(segment_geom_utm), 4326)) AS p_center
-    FROM road_segments
-    WHERE ST_Length(segment_geom_utm) > 0;
-    """
-
-    with conn.cursor() as cur:
-        cur.execute(sql, (village_code,))
-        rows = cur.fetchall()
-
-    records = []
-    for gid, surface, rsur, rsurtypeid, width, seg_len, p_center in rows:
-        if not p_center:
-            continue
-            
-        pt = wkt.loads(p_center)
-        lon, lat = pt.x, pt.y
-        
-        wind_hazard = extract_wind_hazard_from_raster(lat, lon)
-        asset_typology = rsur or surface or "Unknown"
-        unit_cost = get_road_unit_cost_by_id(rsurtypeid) if rsurtypeid else get_road_unit_cost(asset_typology)
-        replacement_cost = seg_len * unit_cost
-        wind_mdr = get_mdr_value(wind_hazard, 'wind', rsurtypeid) if rsurtypeid else 0.0
-        wind_loss = replacement_cost * wind_mdr
-
-        records.append(
-            VillageRoadInfoWind(
-                village=village_obj,
-                district_name=district_name,
-                district_code=district_code,
-                village_name=village_name,
-                village_code=village_code,
-                latitude=str(lat),
-                longitude=str(lon),
-                road_surface_type=asset_typology,
-                road_constructed_by="Unknown",
-                road_length_m=seg_len,
-                road_width_m=width,
-                road_type_id=rsurtypeid,
-                unit_cost=unit_cost,
-                replacement_cost_inr=replacement_cost,
-                wind_hazard=wind_hazard,
-                wind_hazard_mdr=wind_mdr,
-                wind_loss=wind_loss,
-            )
-        )
-
-    if records:
-        VillageRoadInfoWind.objects.bulk_create(records, batch_size=1000)

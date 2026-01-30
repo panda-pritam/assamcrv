@@ -24,7 +24,7 @@ import time
 from datetime import datetime
 import requests
 from collections import defaultdict
-from shapefiles.models import PraBoundary,ExposureRiver
+from shapefiles.models import ExposureRiver
 import re
 from django.db import models
 import os
@@ -423,6 +423,8 @@ class CastDecimal(Func):
     function = 'CAST'
     template = "%(expressions)s::decimal"
 
+from administrator.models import PRA_main
+
 @api_view(['GET'])
 def get_household_summary_data(request):
     """
@@ -471,9 +473,9 @@ def get_household_summary_data(request):
     
     # STEP 4: Calculate housing type distribution
     # Count houses by construction type for asset summary
-    kachcha_houses = data.filter(house_type='Kachcha').count()
-    semi_pucca_houses = data.filter(house_type='Semi Pucca').count()
-    pucca_houses = data.filter(house_type='Pucca').count()
+    kachcha_houses = data.filter(house_type__iexact='Kachcha').count()
+    semi_pucca_houses = data.filter(house_type__iexact='Semi Pucca').count()
+    pucca_houses = data.filter(house_type__iexact='Pucca').count()
 
     # STEP 5: Query Critical Facilities data for educational/religious infrastructure
     ca_data = Critical_Facility.objects.select_related(
@@ -487,11 +489,11 @@ def get_household_summary_data(request):
     ca_data = apply_location_filters(ca_data, district_id, circle_id, gram_panchayat_id, village_id)
 
     # STEP 6: Count facilities by type for asset summary
-    school = ca_data.filter(occupancy_type='School').count()
-    religous_places = ca_data.filter(occupancy_type='Religious Place').count()
-    anganwadi = ca_data.filter(occupancy_type='Anganwadi').count()
-    gov_office = ca_data.filter(occupancy_type='Govt Office').count()
-    others = ca_data.filter(occupancy_type='Others').count()
+    school = ca_data.filter(occupancy_type__iexact='School').count()
+    religous_places = ca_data.filter(occupancy_type__iexact='Religious Place').count()
+    anganwadi = ca_data.filter(occupancy_type__iexact='Anganwadi').count()
+    gov_office = ca_data.filter(occupancy_type__iexact='Govt Office').count()
+    others = ca_data.filter(occupancy_type__iexact='Others').count()
 
     # STEP 7: Define safe aggregation function to handle null/empty values
     # Excludes null, empty string, and 'nan' values before summing
@@ -511,13 +513,21 @@ def get_household_summary_data(request):
     pregnant_count = int(safe_sum('pregnant_women'))
     disabled_count = int(safe_sum('persons_with_disability_or_chronic_disease'))
     
+    # Get chronic illness data from PRA_main model
+   
+    pra_data = PRA_main.objects.select_related('village').all()
+    pra_data = apply_location_filters(pra_data, district_id, circle_id, gram_panchayat_id, village_id)
+    pra_record = pra_data.first()
+    print("PRA Record:", pra_record, pra_record.persons_with_chronic_illness )
+    chronic_illness_count = pra_record.persons_with_chronic_illness or 0 if pra_record else 0
+    
     # Calculate total population (male + female, excluding seniors to avoid double counting)
     total_pop = male_pop + female_pop 
     
     # STEP 9: Calculate vulnerable household categories
     # Count households by economic status for priority targeting
-    priority_households = data.filter(economic_status='Phh Priority Household').count()
-    bpl_households = data.filter(economic_status='Bpl Below Poverty Line').count()
+    priority_households = data.filter(economic_status__iexact='PHH- Priority Household').count()
+    bpl_households = data.filter(economic_status__iexact='BPL- Below Poverty Line').count()
     
     # STEP 10: Calculate maternal health statistics
     # Combine pregnant and lactating women counts
@@ -568,7 +578,8 @@ def get_household_summary_data(request):
         # Vulnerable Populations - Special categories for targeting
         'population_bl_six': int(safe_sum('children_below_6_years')),  # Children under 6
         'senior_citizens': senior_pop,
-        'total_disabled': disabled_count,        
+        'total_disabled': disabled_count,
+        'chronic_illness': int(chronic_illness_count),  # From PRA_main model
         'priority_households': priority_households,
         'bpl_households': bpl_households,
         'pregnant_lactating': pregnant_lactating,
@@ -629,12 +640,20 @@ def get_household_summary_data(request):
     # Calculate vulnerability data
     # Flood vulnerable houses (flood_class: 0.5 - 1.0 M, >1.0 M)
     flood_vulnerable_houses = data.filter(
-        flood_class__in=['0.5 - 1.0 M', '>1.0 M']
+        flood_class__in=['0.5 - 1.0 M', '>1.0 M','0.5 - 1.0 m', '>1.0 m',"0.5 – 1.0 m",">1.0 m"]
     ).count()
+    
+    # If no flood vulnerable houses found by class, check flood_depth_m >= 0.5
+    if flood_vulnerable_houses == 0:
+        flood_vulnerable_houses = data.exclude(
+            Q(flood_depth_m__isnull=True) | Q(flood_depth_m__in=['', 'nan'])
+        ).filter(
+            flood_depth_m__gte=0.5
+        ).count()
     
     # Erosion vulnerable houses (erosion_class: 100, 50)
     erosion_vulnerable_houses = data.filter(
-        erosion_class__in=['100', '50']
+        erosion_class__in=['high','severe','Severe', 'High',100,150]
     ).count()
     
     # Get road data for vulnerability calculations
@@ -657,13 +676,13 @@ def get_household_summary_data(request):
     
     # Flood vulnerable roads (sum of road_length_m for flood_class: 0.5 - 1.0 M, >1.0 M)
     flood_vulnerable_roads_m = road_data.filter(
-        flood_class__in=['0.5 - 1.0 m', '>1.0 m']
+        flood_class__in=['0.5 - 1.0 M', '>1.0 M','0.5 - 1.0 m', '>1.0 m',"0.5 – 1.0 m",">1.0 m"]
     ).aggregate(total=Sum('road_length_m'))['total'] or 0
     flood_vulnerable_roads = round(flood_vulnerable_roads_m / 1000, 2)  # Convert to km
     
     # Erosion vulnerable roads (sum of road_length_m for erosion_class: 100, 150)
     erosion_vulnerable_roads_m = road_erosion_data.filter(
-        erosion_class__in=['100', '150']
+        erosion_class__in=['high','severe','Severe', 'High',100,150]
     ).aggregate(total=Sum('road_length_m'))['total'] or 0
     erosion_vulnerable_roads = round(erosion_vulnerable_roads_m / 1000, 2)  # Convert to km
     

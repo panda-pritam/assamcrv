@@ -767,14 +767,7 @@ def getPublicAssetsData(village_id):
 
 
 
-def getHazardAssessment(village_id):
-    return [
-        ['Hazard Assessment'],
-        ['Flood Hazard', '-'],
-        ['Erosion Hazard', '-'],
-        ['Strong Wind Hazard', '-'],
-        ['Earthquake Hazard', '-']
-    ]
+
 
 
 

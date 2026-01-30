@@ -10,13 +10,14 @@ from datetime import datetime
 from vdmp_dashboard.models import HouseholdSurvey, Critical_Facility, Risk_Assesment
 from vdmp_progress.models import Risk_Assessment_Result
 from collections import Counter
+from administrator.models import PRA_main
 
 from .village_profile import getVillageArea, getLULCData
 from django.db.models import Count,Sum
 
 
 
-from .dummy_data import  getHazardAssessment,getMitigationIntervention,getDistrictLevelOfficialsData,getEmergencyTollFreeContactData,getImportantEmergencyContactData
+from .dummy_data import  getMitigationIntervention,getDistrictLevelOfficialsData,getEmergencyTollFreeContactData,getImportantEmergencyContactData
 
 from .global_styles import blue_heading, underline_heading, notes_style
 
@@ -31,6 +32,37 @@ VILLAGE_SUMMARY_DATA = {
     'occupational_category': 'N/A',
     'sanitation_facilities': 'N/A'
 }
+
+def getHazardAssessment(village_id):
+    from administrator.models import PRA_main
+    
+    try:
+        pra_data = PRA_main.objects.filter(village_id=village_id).first()
+        
+        if pra_data:
+            return [
+                ['Hazard Assessment'],
+                ['Flood Hazard', f"{pra_data.flood_frequency or '-'}"],
+                ['Erosion Hazard', f"{pra_data.erosion_hazard_frequency or '-'} "],
+                ['Strong Wind Hazard', f"{pra_data.strong_wind_hazard_frequency or '-'} "],
+                ['Earthquake Hazard', f"{pra_data.earthquake_hazard_frequency or '-'}"]
+            ]
+        else:
+            return [
+                ['Hazard Assessment'],
+                ['Flood Hazard', '-'],
+                ['Erosion Hazard', '-'],
+                ['Strong Wind Hazard', '-'],
+                ['Earthquake Hazard', '-']
+            ]
+    except Exception:
+        return [
+            ['Hazard Assessment'],
+            ['Flood Hazard', '-'],
+            ['Erosion Hazard', '-'],
+            ['Strong Wind Hazard', '-'],
+            ['Earthquake Hazard', '-']
+        ]
 
 # Get village related data from the database
 def generate_general_summary_table(village_id=None):
@@ -79,17 +111,24 @@ def generate_general_summary_table(village_id=None):
     
 from django.db.models.functions import Lower, Trim
 
+def to_int(val):
+    try:
+        return int(float(val))
+    except (TypeError, ValueError):
+        return 0
+
 
 def generate_socio_economic_summary_table(village_id):
 
     households = HouseholdSurvey.objects.filter(village_id=village_id)
 
+   
     # =========================
     # TOTAL POPULATION
     # =========================
     total_population = sum(
-        int(h.number_of_males_including_children or 0) +
-        int(h.number_of_females_including_children or 0)
+        to_int(h.number_of_males_including_children) +
+        to_int(h.number_of_females_including_children)
         for h in households
     )
 
