@@ -190,6 +190,7 @@ class LineDepartment(models.Model):
     section_master = models.ForeignKey(LineDepartmentMaster, on_delete=models.CASCADE)
     contact_name = models.CharField(max_length=200, blank=True, null=True)
     phone_number = models.CharField(max_length=100, blank=True, null=True)
+    official_number=models.CharField(max_length=10, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

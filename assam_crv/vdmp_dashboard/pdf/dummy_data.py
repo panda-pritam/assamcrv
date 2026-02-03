@@ -3,7 +3,7 @@ from reportlab.lib.styles import getSampleStyleSheet
 
 styles = getSampleStyleSheet()
 normal_style = styles['Normal']
-from .global_styles import  blue_heading,table_sub_title,blue_sub_heading,image_title,notes_style,tb_header_bg,Legend_heading,indented_style,bold_style,normal_style,srNoStyle,non_toc_heading,blue_level3_heading,non_indented_style
+from .global_styles import  bold_12,normal_style,bold_12
 
 abbreviations={
   "abbreviations": [
@@ -267,15 +267,7 @@ abbreviations={
 #         ["2", "Mr. Abizur Rahman Khan", "M", "8638984834", "FO"],
 #         ["3", Paragraph("Mr. Abdul Malik, Anchalik Gram Unnayan Parishad, Jania"), "M", "8638199690", Paragraph("Chief Functionary of NGO and IAG Member (District Chapter), Barpeta")]
 #     ]
-def getEmergencyTollFreeContactData():
-    return [
-        ["S. No.", "Important Contact Person", "Contact Number"],
-        ["1", "Police Station", "100"],
-        ["2", "Fire Station", "102"],
-        ["3", "Ambulance", "108"],
-        ["4", Paragraph("District Commissioner (Emergency Toll-Free)"), Paragraph("<para align=center>1077 (District), 1079 (State)</para>")],
-        ["5", Paragraph("District Emergency Operation Centre, Barpeta"), "9864643089"]
-    ]
+
 # def getImportantEmergencyContactData():
 #     return [
 #         ["S. No.", "Important Contact Person", "Contact Number"],
@@ -594,7 +586,7 @@ def getPublicAssetsData(village_id):
 
 # def getDevelopmentIssuesTable():
 #     data = [
-#         [Paragraph("S.No.", bold_style), Paragraph("Development Issues/Needs", bold_style), Paragraph("Explanation", bold_style)],
+#         [Paragraph("S.No.", bold_12), Paragraph("Development Issues/Needs", bold_12), Paragraph("Explanation", bold_12)],
 #         ['1', Paragraph("Housing", normal_style), Paragraph("Majority kachcha houses and are vulnerable to flood, earthquake and wind", normal_style)],
 #         ['2', Paragraph("Road infrastructure", normal_style), Paragraph("Need intervention to improve resilience", normal_style)],
 #         ['3', Paragraph("Public drinking water", normal_style), Paragraph("Need to raise the height of hand pumps", normal_style)],
@@ -610,7 +602,7 @@ def getPublicAssetsData(village_id):
 
 # def getResidentialVulnerabilityTable():
 #     data = [
-#         [Paragraph("S.No.", bold_style),Paragraph("Indicators", bold_style), Paragraph("Quantity", bold_style)],
+#         [Paragraph("S.No.", bold_12),Paragraph("Indicators", bold_12), Paragraph("Quantity", bold_12)],
 #         ['1',Paragraph("Number of structurally poor houses", normal_style), Paragraph("1,001", normal_style)],
 #         ['2',Paragraph("Number of severe and high flood vulnerable houses", normal_style), Paragraph("814", normal_style)],
 #         ['3',Paragraph("Number of houses with plinth height < 2.0 feet", normal_style), Paragraph("758", normal_style)],
@@ -621,8 +613,8 @@ def getPublicAssetsData(village_id):
 
 # def getResilientHousingCostTable():
 #     data = [
-#         [Paragraph("S.No.", bold_style),Paragraph("Housing typology", bold_style), Paragraph("Intervention", bold_style), 
-#          Paragraph("Number", bold_style), Paragraph("Unit cost in INR", bold_style), Paragraph("Total cost in INR", bold_style)],
+#         [Paragraph("S.No.", bold_12),Paragraph("Housing typology", bold_12), Paragraph("Intervention", bold_12), 
+#          Paragraph("Number", bold_12), Paragraph("Unit cost in INR", bold_12), Paragraph("Total cost in INR", bold_12)],
 #         ['1',Paragraph("Kachcha house (R1 (Mud House), R2A (Ikra House), R2B (Ikra House), R4 Bamboo House, R5A Tin House, R5B Tin House", normal_style), 
 #          Paragraph("Reconstruction", normal_style), Paragraph("875", normal_style), Paragraph("5,00,000", normal_style), Paragraph("4,37,500,000", normal_style)],
 #         ['2',Paragraph("Kachcha house (R3A (Chang House), R3B (Chang House)", normal_style), 
@@ -636,8 +628,8 @@ def getPublicAssetsData(village_id):
 
 # def getRoadTypologyTable():
 #     data = [
-#         [Paragraph("S.No.", bold_style),Paragraph("Road type", bold_style), Paragraph("Total length (km)", bold_style), 
-#          Paragraph("Severe+high flood vulnerable length (km)", bold_style), Paragraph("Severe+high erosion vulnerable length (km)", bold_style)],
+#         [Paragraph("S.No.", bold_12),Paragraph("Road type", bold_12), Paragraph("Total length (km)", bold_12), 
+#          Paragraph("Severe+high flood vulnerable length (km)", bold_12), Paragraph("Severe+high erosion vulnerable length (km)", bold_12)],
 #         ['1',Paragraph("PNRD (Cement block road)", normal_style), Paragraph("3.11", normal_style), 
 #          Paragraph("2.99", normal_style), Paragraph("0", normal_style)],
 #         ['2',Paragraph("PNRD (Earthen road)", normal_style), Paragraph("7.40", normal_style), 
@@ -651,8 +643,8 @@ def getPublicAssetsData(village_id):
 
 # def getRoadInterventionTable():
 #     data = [
-#         [Paragraph("S.No.", bold_style),Paragraph("Road type", bold_style), Paragraph("Intervention", bold_style), 
-#          Paragraph("Quantity", bold_style), Paragraph("Unit cost in INR", bold_style), Paragraph("Total cost in INR", bold_style), Paragraph("Department", bold_style)],
+#         [Paragraph("S.No.", bold_12),Paragraph("Road type", bold_12), Paragraph("Intervention", bold_12), 
+#          Paragraph("Quantity", bold_12), Paragraph("Unit cost in INR", bold_12), Paragraph("Total cost in INR", bold_12), Paragraph("Department", bold_12)],
 #         ['1',Paragraph("Embankment road (presently earthen road)", normal_style), Paragraph("Top layering - Bituminous", normal_style), 
 #          Paragraph("3.0 km", normal_style), Paragraph("13,000,000", normal_style), Paragraph("3,90,00,000", normal_style), Paragraph("PNRD", normal_style)],
 #         ['2',Paragraph("Earthen road (Panchayat road)", normal_style), Paragraph("Top layering – Cement block", normal_style), 
@@ -666,8 +658,8 @@ def getPublicAssetsData(village_id):
 
 # def getRiverBankProtectionTable():
 #     data = [
-#         [Paragraph("S.No.", bold_style),Paragraph("River length km needs protection", bold_style), Paragraph("Bank characteristic", bold_style), 
-#          Paragraph("Erosion severity", bold_style), Paragraph("Remarks", bold_style)],
+#         [Paragraph("S.No.", bold_12),Paragraph("River length km needs protection", bold_12), Paragraph("Bank characteristic", bold_12), 
+#          Paragraph("Erosion severity", bold_12), Paragraph("Remarks", bold_12)],
 #         ['1',Paragraph("4.7 km", normal_style), Paragraph("Steep slope", normal_style), 
 #          Paragraph("Moderate", normal_style), Paragraph("Past bank protection efforts using geobag. The bank is slumping and the geobag at many places damaged", normal_style)]
 #     ]
@@ -675,8 +667,8 @@ def getPublicAssetsData(village_id):
 
 # def getRiverBankInterventionTable():
 #     data = [
-#         [Paragraph("S.No.", bold_style),Paragraph("River bank", bold_style), Paragraph("Intervention", bold_style), 
-#          Paragraph("Quantity", bold_style), Paragraph("Unit cost", bold_style), Paragraph("Total cost in INR", bold_style), Paragraph("Department", bold_style)],
+#         [Paragraph("S.No.", bold_12),Paragraph("River bank", bold_12), Paragraph("Intervention", bold_12), 
+#          Paragraph("Quantity", bold_12), Paragraph("Unit cost", bold_12), Paragraph("Total cost in INR", bold_12), Paragraph("Department", bold_12)],
 #         ['1',Paragraph("Chaulkhoa River", normal_style), Paragraph("Geobag and bamboo porcupine and reed grass planting", normal_style), 
 #          Paragraph("3.0 km", normal_style), Paragraph("6,00,00,000", normal_style), Paragraph("1,80,00,000", normal_style), Paragraph("PNRD", normal_style)]
 #     ]
@@ -684,8 +676,8 @@ def getPublicAssetsData(village_id):
 
 # def getEducationalFacilitiesTable():
 #     data = [
-#         [Paragraph("S.No.", bold_style),Paragraph("Name of the facility", bold_style), Paragraph("Flood vulnerability", bold_style), 
-#          Paragraph("Number of students", bold_style), Paragraph("Number of rooms", bold_style), Paragraph("Resilient WASH", bold_style), Paragraph("Resilient power supply", bold_style)],
+#         [Paragraph("S.No.", bold_12),Paragraph("Name of the facility", bold_12), Paragraph("Flood vulnerability", bold_12), 
+#          Paragraph("Number of students", bold_12), Paragraph("Number of rooms", bold_12), Paragraph("Resilient WASH", bold_12), Paragraph("Resilient power supply", bold_12)],
 #         ['1',Paragraph("275 Tapajuli LP School Rupakuchi (Government school)", normal_style), Paragraph("Severe", normal_style), 
 #          Paragraph("120", normal_style), Paragraph("8", normal_style), Paragraph("Nil", normal_style), Paragraph("Nil", normal_style)],
 #         ['2',Paragraph("Anganwadi, Tapajuli", normal_style), Paragraph("Moderate", normal_style), 
@@ -703,8 +695,8 @@ def getPublicAssetsData(village_id):
 
 # def getEducationalInterventionTable():
 #     data = [
-#         [Paragraph("S.No.", bold_style),Paragraph("Name of asset", bold_style), Paragraph("Intervention", bold_style), 
-#          Paragraph("Quantity", bold_style), Paragraph("Unit cost in INR", bold_style), Paragraph("Total cost in INR", bold_style), Paragraph("Remarks", bold_style)],
+#         [Paragraph("S.No.", bold_12),Paragraph("Name of asset", bold_12), Paragraph("Intervention", bold_12), 
+#          Paragraph("Quantity", bold_12), Paragraph("Unit cost in INR", bold_12), Paragraph("Total cost in INR", bold_12), Paragraph("Remarks", bold_12)],
 #         ['1',Paragraph("275 Tapajuli LP School Rupakuchi", normal_style), Paragraph("Culvert to drain water from school across the road", normal_style), 
 #          Paragraph("1", normal_style), Paragraph("2,00,000", normal_style), Paragraph("2,00,000", normal_style), Paragraph("This can address small flood", normal_style)],
 #         ['2',Paragraph("275 Tapajuli LP School Rupakuchi", normal_style), Paragraph("Renovate – increase plinth height by 3 feet", normal_style), 
@@ -718,8 +710,8 @@ def getPublicAssetsData(village_id):
 
 # def getWASHInterventionTable():
 #     data = [
-#         [Paragraph("S.No.", bold_style),Paragraph("Name of asset", bold_style), Paragraph("Intervention", bold_style), 
-#          Paragraph("Quantity", bold_style), Paragraph("Unit cost in INR", bold_style), Paragraph("Total cost in INR", bold_style), Paragraph("Remarks", bold_style)],
+#         [Paragraph("S.No.", bold_12),Paragraph("Name of asset", bold_12), Paragraph("Intervention", bold_12), 
+#          Paragraph("Quantity", bold_12), Paragraph("Unit cost in INR", bold_12), Paragraph("Total cost in INR", bold_12), Paragraph("Remarks", bold_12)],
 #         ['1',Paragraph("Public WASH facilities", normal_style), Paragraph("Resilient public WASH", normal_style), 
 #          Paragraph("5", normal_style), Paragraph("22,000", normal_style), Paragraph("1,10,000", normal_style), Paragraph("Location – school used as shelter or embankment road", normal_style)],
 #         ['2',Paragraph("Household facilities", normal_style), Paragraph("Resilient facilities - double pit sealed septic tank", normal_style), 
@@ -729,8 +721,8 @@ def getPublicAssetsData(village_id):
 
 # def getElectricInterventionTable():
 #     data = [
-#         [Paragraph("S.No.", bold_style),Paragraph("Name of asset", bold_style), Paragraph("Intervention", bold_style), 
-#          Paragraph("Quantity", bold_style), Paragraph("Unit cost in INR", bold_style), Paragraph("Total cost in INR", bold_style), Paragraph("Remarks", bold_style)],
+#         [Paragraph("S.No.", bold_12),Paragraph("Name of asset", bold_12), Paragraph("Intervention", bold_12), 
+#          Paragraph("Quantity", bold_12), Paragraph("Unit cost in INR", bold_12), Paragraph("Total cost in INR", bold_12), Paragraph("Remarks", bold_12)],
 #         ['1',Paragraph("Transformer", normal_style), Paragraph("Fencing", normal_style), 
 #          Paragraph("5", normal_style), Paragraph("30,000", normal_style), Paragraph("1,50,000", normal_style), Paragraph("Mandatory requirement", normal_style)],
 #         ['2',Paragraph("Transformer", normal_style), Paragraph("Elevate 2 feet", normal_style), 
@@ -744,8 +736,8 @@ def getPublicAssetsData(village_id):
 
 # def getLivelihoodInterventionTable():
 #     data = [
-#         [Paragraph("S.No.", bold_style),Paragraph("Name of asset", bold_style), Paragraph("Intervention", bold_style), 
-#          Paragraph("Quantity", bold_style), Paragraph("Unit cost in INR", bold_style), Paragraph("Total cost in INR", bold_style), Paragraph("Remarks", bold_style)],
+#         [Paragraph("S.No.", bold_12),Paragraph("Name of asset", bold_12), Paragraph("Intervention", bold_12), 
+#          Paragraph("Quantity", bold_12), Paragraph("Unit cost in INR", bold_12), Paragraph("Total cost in INR", bold_12), Paragraph("Remarks", bold_12)],
 #         ['1',Paragraph("Sluice gate", normal_style), Paragraph("Drainage development for water to flow. Maintenance of culvert", normal_style), 
 #          Paragraph("1", normal_style), Paragraph("10,000,000", normal_style), Paragraph("10,000,000", normal_style), Paragraph("Canal needs to construct to water to drain out", normal_style)],
 #         ['2',Paragraph("Solar based facilities", normal_style), Paragraph("Irrigation pumps and solar drier", normal_style), 
@@ -793,10 +785,10 @@ def getMitigationIntervention(village_id):
         ['River Bank Protection', '-'],
         ['Sluice Gate', '-'],
         
-        [Paragraph('Resilient essential service (educational facilities)',bold_style), '-'],
-        [Paragraph('Resilient essential service (Public WASH facilities and drinking water)',bold_style), '-'],
-        [Paragraph('Resilient essential services (electric infrastructure)',bold_style), '-'],
-        [Paragraph('Resilient livelihood & economic security ',bold_style), '-'],
+        [Paragraph('Resilient essential service (educational facilities)',bold_12), '-'],
+        [Paragraph('Resilient essential service (Public WASH facilities and drinking water)',bold_12), '-'],
+        [Paragraph('Resilient essential services (electric infrastructure)',bold_12), '-'],
+        [Paragraph('Resilient livelihood & economic security ',bold_12), '-'],
        
     ]
 
@@ -810,14 +802,38 @@ def getDistrictLevelOfficialsData():
     ]
 
 
-def getImportantEmergencyContactData():
-    return [
-        ["S. No.", "Important Contact Person", "Contact Number"],
-        ["-", "-", "-"],
-        ["-", "-", "-"],
-        ["-", "-", "-"],
-        ["-", "-", "-"]
-    ]
+def getImportantEmergencyContactData(village_id):
+    from administrator.models import LineDepartment
+    
+    try:
+        officials = LineDepartment.objects.filter(
+            village_id=village_id,
+            official_number__iexact='no'
+        ).select_related('section_master')
+        
+        data = [["S. No.", "Important Contact Person", "Contact Number"]]
+        
+        for i, official in enumerate(officials, 1):
+            data.append([
+                str(i),
+                official.section_master.section or "-",
+                official.phone_number or "-"
+            ])
+        
+        # Fill remaining rows with dashes if less than 5 officials
+        while len(data) < 6:
+            data.append(["-", "-", "-"])
+            
+        return data
+        
+    except Exception:
+        return [
+            ["S. No.", "Important Contact Person", "Contact Number"],
+            ["-", "-", "-"],
+            ["-", "-", "-"],
+            ["-", "-", "-"],
+            ["-", "-", "-"]
+        ]
 
 
 def getVillageLocationDetails():
@@ -985,7 +1001,7 @@ def getBuildingQualityTableData():
 
 def getDevelopmentIssuesTable():
     data = [
-        [Paragraph("S.No.", bold_style), Paragraph("Development Issues/Needs", bold_style), Paragraph("Explanation", bold_style)],
+        [Paragraph("S.No.", bold_12), Paragraph("Development Issues/Needs", bold_12), Paragraph("Explanation", bold_12)],
         ['-', Paragraph("-", normal_style), Paragraph("-", normal_style)]
     ]
     return data
@@ -993,7 +1009,7 @@ def getDevelopmentIssuesTable():
 
 def getResidentialVulnerabilityTable():
     data = [
-        [Paragraph("S.No.", bold_style), Paragraph("Indicators", bold_style), Paragraph("Quantity", bold_style)],
+        [Paragraph("S.No.", bold_12), Paragraph("Indicators", bold_12), Paragraph("Quantity", bold_12)],
         ['-', Paragraph("-", normal_style), Paragraph("-", normal_style)]
     ]
     return data
@@ -1001,8 +1017,8 @@ def getResidentialVulnerabilityTable():
 
 def getResilientHousingCostTable():
     data = [
-        [Paragraph("S.No.", bold_style), Paragraph("Housing typology", bold_style), Paragraph("Intervention", bold_style),
-         Paragraph("Number", bold_style), Paragraph("Unit cost in INR", bold_style), Paragraph("Total cost in INR", bold_style)],
+        [Paragraph("S.No.", bold_12), Paragraph("Housing typology", bold_12), Paragraph("Intervention", bold_12),
+         Paragraph("Number", bold_12), Paragraph("Unit cost in INR", bold_12), Paragraph("Total cost in INR", bold_12)],
         ['-', Paragraph("-", normal_style), Paragraph("-", normal_style),
          Paragraph("-", normal_style), Paragraph("-", normal_style), Paragraph("-", normal_style)]
     ]
@@ -1011,8 +1027,8 @@ def getResilientHousingCostTable():
 
 def getRoadTypologyTable():
     data = [
-        [Paragraph("S.No.", bold_style), Paragraph("Road type", bold_style), Paragraph("Total length (km)", bold_style),
-         Paragraph("Severe+high flood vulnerable length (km)", bold_style), Paragraph("Severe+high erosion vulnerable length (km)", bold_style)],
+        [Paragraph("S.No.", bold_12), Paragraph("Road type", bold_12), Paragraph("Total length (km)", bold_12),
+         Paragraph("Severe+high flood vulnerable length (km)", bold_12), Paragraph("Severe+high erosion vulnerable length (km)", bold_12)],
         ['-', Paragraph("-", normal_style), Paragraph("-", normal_style),
          Paragraph("-", normal_style), Paragraph("-", normal_style)]
     ]
@@ -1021,8 +1037,8 @@ def getRoadTypologyTable():
 
 def getRoadInterventionTable():
     data = [
-        [Paragraph("S.No.", bold_style), Paragraph("Road type", bold_style), Paragraph("Intervention", bold_style),
-         Paragraph("Quantity", bold_style), Paragraph("Unit cost in INR", bold_style), Paragraph("Total cost in INR", bold_style), Paragraph("Department", bold_style)],
+        [Paragraph("S.No.", bold_12), Paragraph("Road type", bold_12), Paragraph("Intervention", bold_12),
+         Paragraph("Quantity", bold_12), Paragraph("Unit cost in INR", bold_12), Paragraph("Total cost in INR", bold_12), Paragraph("Department", bold_12)],
         ['-', Paragraph("-", normal_style), Paragraph("-", normal_style),
          Paragraph("-", normal_style), Paragraph("-", normal_style), Paragraph("-", normal_style), Paragraph("-", normal_style)]
     ]
@@ -1031,8 +1047,8 @@ def getRoadInterventionTable():
 
 def getRiverBankProtectionTable():
     data = [
-        [Paragraph("S.No.", bold_style), Paragraph("River length km needs protection", bold_style), Paragraph("Bank characteristic", bold_style),
-         Paragraph("Erosion severity", bold_style), Paragraph("Remarks", bold_style)],
+        [Paragraph("S.No.", bold_12), Paragraph("River length km needs protection", bold_12), Paragraph("Bank characteristic", bold_12),
+         Paragraph("Erosion severity", bold_12), Paragraph("Remarks", bold_12)],
         ['-', Paragraph("-", normal_style), Paragraph("-", normal_style),
          Paragraph("-", normal_style), Paragraph("-", normal_style)]
     ]
@@ -1041,8 +1057,8 @@ def getRiverBankProtectionTable():
 
 def getRiverBankInterventionTable():
     data = [
-        [Paragraph("S.No.", bold_style), Paragraph("River bank", bold_style), Paragraph("Intervention", bold_style),
-         Paragraph("Quantity", bold_style), Paragraph("Unit cost", bold_style), Paragraph("Total cost in INR", bold_style), Paragraph("Department", bold_style)],
+        [Paragraph("S.No.", bold_12), Paragraph("River bank", bold_12), Paragraph("Intervention", bold_12),
+         Paragraph("Quantity", bold_12), Paragraph("Unit cost", bold_12), Paragraph("Total cost in INR", bold_12), Paragraph("Department", bold_12)],
         ['-', Paragraph("-", normal_style), Paragraph("-", normal_style),
          Paragraph("-", normal_style), Paragraph("-", normal_style), Paragraph("-", normal_style), Paragraph("-", normal_style)]
     ]
@@ -1051,8 +1067,8 @@ def getRiverBankInterventionTable():
 
 def getEducationalFacilitiesTable():
     data = [
-        [Paragraph("S.No.", bold_style), Paragraph("Name of the facility", bold_style), Paragraph("Flood vulnerability", bold_style),
-         Paragraph("Number of students", bold_style), Paragraph("Number of rooms", bold_style), Paragraph("Resilient WASH", bold_style), Paragraph("Resilient power supply", bold_style)],
+        [Paragraph("S.No.", bold_12), Paragraph("Name of the facility", bold_12), Paragraph("Flood vulnerability", bold_12),
+         Paragraph("Number of students", bold_12), Paragraph("Number of rooms", bold_12), Paragraph("Resilient WASH", bold_12), Paragraph("Resilient power supply", bold_12)],
         ['-', Paragraph("-", normal_style), Paragraph("-", normal_style),
          Paragraph("-", normal_style), Paragraph("-", normal_style), Paragraph("-", normal_style), Paragraph("-", normal_style)]
     ]
@@ -1061,8 +1077,8 @@ def getEducationalFacilitiesTable():
 
 def getEducationalInterventionTable():
     data = [
-        [Paragraph("S.No.", bold_style), Paragraph("Name of asset", bold_style), Paragraph("Intervention", bold_style),
-         Paragraph("Quantity", bold_style), Paragraph("Unit cost in INR", bold_style), Paragraph("Total cost in INR", bold_style), Paragraph("Remarks", bold_style)],
+        [Paragraph("S.No.", bold_12), Paragraph("Name of asset", bold_12), Paragraph("Intervention", bold_12),
+         Paragraph("Quantity", bold_12), Paragraph("Unit cost in INR", bold_12), Paragraph("Total cost in INR", bold_12), Paragraph("Remarks", bold_12)],
         ['-', Paragraph("-", normal_style), Paragraph("-", normal_style),
          Paragraph("-", normal_style), Paragraph("-", normal_style), Paragraph("-", normal_style), Paragraph("-", normal_style)]
     ]
@@ -1071,8 +1087,8 @@ def getEducationalInterventionTable():
 
 def getWASHInterventionTable():
     data = [
-        [Paragraph("S.No.", bold_style), Paragraph("Name of asset", bold_style), Paragraph("Intervention", bold_style),
-         Paragraph("Quantity", bold_style), Paragraph("Unit cost in INR", bold_style), Paragraph("Total cost in INR", bold_style), Paragraph("Remarks", bold_style)],
+        [Paragraph("S.No.", bold_12), Paragraph("Name of asset", bold_12), Paragraph("Intervention", bold_12),
+         Paragraph("Quantity", bold_12), Paragraph("Unit cost in INR", bold_12), Paragraph("Total cost in INR", bold_12), Paragraph("Remarks", bold_12)],
         ['-', Paragraph("-", normal_style), Paragraph("-", normal_style),
          Paragraph("-", normal_style), Paragraph("-", normal_style), Paragraph("-", normal_style), Paragraph("-", normal_style)]
     ]
@@ -1081,8 +1097,8 @@ def getWASHInterventionTable():
 
 def getElectricInterventionTable():
     data = [
-        [Paragraph("S.No.", bold_style), Paragraph("Name of asset", bold_style), Paragraph("Intervention", bold_style),
-         Paragraph("Quantity", bold_style), Paragraph("Unit cost in INR", bold_style), Paragraph("Total cost in INR", bold_style), Paragraph("Remarks", bold_style)],
+        [Paragraph("S.No.", bold_12), Paragraph("Name of asset", bold_12), Paragraph("Intervention", bold_12),
+         Paragraph("Quantity", bold_12), Paragraph("Unit cost in INR", bold_12), Paragraph("Total cost in INR", bold_12), Paragraph("Remarks", bold_12)],
         ['-', Paragraph("-", normal_style), Paragraph("-", normal_style),
          Paragraph("-", normal_style), Paragraph("-", normal_style), Paragraph("-", normal_style), Paragraph("-", normal_style)]
     ]
@@ -1091,8 +1107,8 @@ def getElectricInterventionTable():
 
 def getLivelihoodInterventionTable():
     data = [
-        [Paragraph("S.No.", bold_style), Paragraph("Name of asset", bold_style), Paragraph("Intervention", bold_style),
-         Paragraph("Quantity", bold_style), Paragraph("Unit cost in INR", bold_style), Paragraph("Total cost in INR", bold_style), Paragraph("Remarks", bold_style)],
+        [Paragraph("S.No.", bold_12), Paragraph("Name of asset", bold_12), Paragraph("Intervention", bold_12),
+         Paragraph("Quantity", bold_12), Paragraph("Unit cost in INR", bold_12), Paragraph("Total cost in INR", bold_12), Paragraph("Remarks", bold_12)],
         ['-', Paragraph("-", normal_style), Paragraph("-", normal_style),
          Paragraph("-", normal_style), Paragraph("-", normal_style), Paragraph("-", normal_style), Paragraph("-", normal_style)]
     ]

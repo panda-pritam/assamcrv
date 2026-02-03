@@ -848,7 +848,8 @@ LINE_DEPARTMENT_MAPPING = {
     'Vill_Id': 'vill_id',
     'Section': 'section',
     'Contact Name': 'contact_name',
-    'Phone Number': 'phone_number'
+    'Phone Number': 'phone_number',
+    'Official':'official_number'
 }
 
 FGD_WASH_SUMMARY_MAPPING = {

@@ -495,6 +495,7 @@ def upload_line_department_data(request):
                 section = str(row.get('Section', '')).strip()
                 contact_name = str(row.get('Contact Name', '')).strip()
                 phone_number = str(row.get('Phone Number', '')).strip()
+                official_number = str(row.get('Official', '')).strip()
                 
                 if not vill_id or vill_id.lower() == 'nan':
                     failed.append(f"Row {index+2}: Missing village ID")
@@ -529,9 +530,11 @@ def upload_line_department_data(request):
                 ).first()
                 
                 if existing_record:
-                    existing_record.contact_name = contact_name if contact_name != 'nan' else None
-                    existing_record.phone_number = phone_number if phone_number != 'nan' else None
+                    existing_record.contact_name = contact_name if contact_name.lower() != 'nan' else None
+                    existing_record.phone_number = phone_number if phone_number.lower() != 'nan' else None
+                    existing_record.official_number = official_number
                     existing_record.save()
+
                     updated += 1
                 else:
                     LineDepartment.objects.create(
@@ -539,7 +542,10 @@ def upload_line_department_data(request):
                         vill_id=vill_id,
                         section_master=section_master,
                         contact_name=contact_name if contact_name != 'nan' else None,
-                        phone_number=phone_number if phone_number != 'nan' else None
+                        phone_number=phone_number if phone_number != 'nan' else None,
+                        official_number = None if official_number.lower() == 'nan' or not official_number else official_number
+
+                        
                     )
                     created += 1
                     
