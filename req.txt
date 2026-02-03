@@ -1,8 +1,15 @@
+<<<<<<< HEAD
 affine @ file:///home/conda/feedstock_root/build_artifacts/affine_1733762038348/work
 anyio==4.12.0
 asgiref==3.11.0
 attrs @ file:///home/conda/feedstock_root/build_artifacts/bld/rattler-build_attrs_1764875182/work
 certifi @ file:///home/conda/feedstock_root/build_artifacts/certifi_1762976168352/work/certifi
+=======
+#Requirements.txt - to set-up the libraries
+anyio==4.10.0
+asgiref
+certifi==2025.8.3
+>>>>>>> 9344223ec1c1d6b99aeffd5ed584c0b4f9aa5296
 chardet==5.2.0
 charset-normalizer==3.4.3
 click 
