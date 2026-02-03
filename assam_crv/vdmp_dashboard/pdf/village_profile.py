@@ -28,6 +28,9 @@ from reportlab.platypus import Table as ReportLabTable
 # from .village_summary import VILLAGE_SUMMARY_DATA
 from django.db.models.functions import Lower, Trim  
 from vdmp_dashboard.models import VDMP_Maps_Data
+
+from django.db.models import Sum, IntegerField, FloatField
+from django.db.models.functions import Cast, Coalesce
 from assam_crv.settings import MEDIA_ROOT
 
 styles = getSampleStyleSheet()
@@ -98,9 +101,34 @@ def getVillageDemographic(village_id):
                 return int(value) if value and value.strip() else 0
             except (ValueError, AttributeError):
                 return 0
+
+        totals = households.aggregate(
+            total_males=Coalesce(
+                Sum(
+                    Cast(
+                        Cast('number_of_males_including_children', FloatField()),
+                        IntegerField()
+                    )
+                ),
+                0
+            ),
+            total_females=Coalesce(
+                Sum(
+                    Cast(
+                        Cast('number_of_females_including_children', FloatField()),
+                        IntegerField()
+                    )
+                ),
+                0
+            ),
+        )
+
+
+        total_males = totals['total_males'] or 0
+        total_females = totals['total_females'] or 0
         
-        total_males = sum(safe_int(h.number_of_males_including_children) for h in households)
-        total_females = sum(safe_int(h.number_of_females_including_children) for h in households)
+        # total_males = sum(safe_int(h.number_of_males_including_children) for h in households)
+        # total_females = sum(safe_int(h.number_of_females_including_children) for h in households)
         total_population = total_males + total_females
         total_households = households.count()
         
@@ -1822,7 +1850,7 @@ def draw_village_profile(elements,village_id):
         # Merge header cells
         ('SPAN', (2, 0), (3, 0)),  # Merge 'HH with big cattle' and '%'
         ('SPAN', (4, 0), (5, 0)),  # Merge 'HH with small cattle' and '%'
-        ('SPAN', (0, 0), (0, 1)),  # Merge Sr. No. cells
+        ('SPAN', (0, 0), (0, 1)),  # Merge S. No.cells
         ('SPAN', (1, 0), (1, 1)),  # Merge Count cells
 
         # Center align all text

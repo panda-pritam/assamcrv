@@ -32,26 +32,26 @@ def draw_client_info_table(elements):
         [Paragraph('<b>Client Information</b>', bold), ''],  # Row 0 (merged header)
         ['Client Address', 'Assam State Disaster Management Authority, Assam'],
         ['Contact details', 'CEO, ASDMA, Assam'],
-        ['RMSI Contact', Paragraph('Dr. Muralikrishna M (Team Leader)<br/>Muralikrishna.M@rmsi.com<br/>info@rmsi.com', normal)],
-        [Paragraph('<b>Company Information</b>', bold), ''],  # Row 4 (merged header)
-        ['Name', 'RMSI Private Limited'],
-        ['CIN', 'U74899DL1992PTC047149'],
-        ['Registered Office Address', Paragraph('RMSI Private Limited - 50/9, 1st Floor, Tolstoy Lane, Janpath, New Delhi, India – 110001', normal)],
-        ['Corporate Office Address', Paragraph(
-            'A-8, Sector-16<br/>NOIDA, 201 301, India<br/>Tel: +91 120 251 1102, 251 2101<br/>Fax: +91 120 251 1109, 251 0963<br/>E-mail: info@rmsi.com',
-            normal
-        )],
+        ['Email id', Paragraph('airbmpasdmapiu@gmail.com', normal)],
+        # [Paragraph('<b>Company Information</b>', bold), ''],  # Row 4 (merged header)
+        # ['Name', 'RMSI Private Limited'],
+        # ['CIN', 'U74899DL1992PTC047149'],
+        # ['Registered Office Address', Paragraph('RMSI Private Limited - 50/9, 1st Floor, Tolstoy Lane, Janpath, New Delhi, India – 110001', normal)],
+        # ['Corporate Office Address', Paragraph(
+        #     'A-8, Sector-16<br/>NOIDA, 201 301, India<br/>Tel: +91 120 251 1102, 251 2101<br/>Fax: +91 120 251 1109, 251 0963<br/>E-mail: info@rmsi.com',
+        #     normal
+        # )],
     ]
 
     table = Table(data, colWidths=[2.5 * inch, 4.5 * inch])
     table.setStyle(TableStyle([
         # === Merged header rows ===
         ('SPAN', (0, 0), (1, 0)),  # Merge first row (Client Info)
-        ('SPAN', (0, 4), (1, 4)),  # Merge fifth row (Company Info)
+        # ('SPAN', (0, 4), (1, 4)),  # Merge fifth row (Company Info)
 
         # === Background color for section headers ===
         ('BACKGROUND', (0, 0), (-1, 0), tb_header_bg),  # Client Info
-        ('BACKGROUND', (0, 4), (-1, 4), tb_header_bg),  # Company Info
+        # ('BACKGROUND', (0, 4), (-1, 4), tb_header_bg),  # Company Info
         # ✅ Center align text for both section headers
     ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
     ('VALIGN', (0, 0), (-1, 0), 'MIDDLE'),

@@ -179,3 +179,10 @@ center_style = ParagraphStyle('Bold', parent=normal_style,alignment=1,)
 bold_center_style = ParagraphStyle('Bold', parent=normal_style,alignment=1,fontName='Helvetica-Bold')
 # table header bg #e1edff
 # table border bg #96b9e7
+
+bold_12 = ParagraphStyle(
+    'Bold12',
+    parent=styles['Normal'],
+    fontName='Helvetica-Bold',
+    fontSize=10
+)

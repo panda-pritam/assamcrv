@@ -125,7 +125,7 @@ def draw_abbreviations(elements):
     elements.append(Spacer(1, 12))
 
     # Table header
-    table_data = [["Sr. No.","Abbreviation", "Full Form"]]
+    table_data = [["S. No.","Abbreviation", "Full Form"]]
 
     # Convert JSON list to table format
     for i, entry in enumerate(abbreviations["abbreviations"], 1):

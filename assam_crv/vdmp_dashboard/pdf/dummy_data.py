@@ -73,7 +73,7 @@ abbreviations={
     },
     {
       "abbreviation": "IMD",
-      "expanded_form": "Indian Meteorological Depart"
+      "expanded_form": "Indian Meteorological Department"
     },
     {
       "abbreviation": "INR",
@@ -177,7 +177,7 @@ abbreviations={
     },
     {
       "abbreviation": "VDMP",
-      "expanded_form": "Village Disaster Management Plan"
+      "expanded_form": "Village Disaster Mitigation Plan"
     },
     {
       "abbreviation": "VLCDMC",
@@ -786,18 +786,18 @@ def getPublicAssetsData(village_id):
 
 def getMitigationIntervention(village_id):
     return [
-        ['Mitigation intervention'],
+        ['Multi hazard mitigation intervention (estimated budget in INR)'],
         ['Resilient Housing', '-'],
         ['Resilient Roads', '-'],
+        ['Resilient Bridge','-'],
         ['River Bank Protection', '-'],
-        ['Resilient Essential Services', '-'],
-        ['Educational Facilities', '-'],
-        ['Health Facilities', '-'],
-        ['Public WASH Facilities and Drinking Water', '-'],
-        ['Electric Facilities', '-'],
-        ['Resilient Livelihood & Economic Security', '-'],
-        ['Amount', '-'],
-        ['Additional Support', '-']
+        ['Sluice Gate', '-'],
+        
+        [Paragraph('Resilient essential service (educational facilities)',bold_style), '-'],
+        [Paragraph('Resilient essential service (Public WASH facilities and drinking water)',bold_style), '-'],
+        [Paragraph('Resilient essential services (electric infrastructure)',bold_style), '-'],
+        [Paragraph('Resilient livelihood & economic security ',bold_style), '-'],
+       
     ]
 
 

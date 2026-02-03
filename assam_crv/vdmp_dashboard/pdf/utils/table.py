@@ -13,7 +13,7 @@ def create_styled_table(table_data, col_width, merg=False, heading=True, custom_
         fontSize=9,
         leading=11,
         wordWrap='CJK',
-        alignment=1
+        # alignment=1
     )
 
     # Wrap strings inside Paragraphs for text wrapping

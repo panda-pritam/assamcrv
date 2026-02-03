@@ -13,13 +13,16 @@ from collections import Counter
 from administrator.models import PRA_main
 
 from .village_profile import getVillageArea, getLULCData
-from django.db.models import Count,Sum
+from django.db.models import Count,Sum,  IntegerField, FloatField
+
+from django.db.models.functions import Cast, Coalesce
+
 
 
 
 from .dummy_data import  getMitigationIntervention,getEmergencyTollFreeContactData,getImportantEmergencyContactData
 
-from .global_styles import blue_heading, underline_heading, notes_style
+from .global_styles import blue_heading, underline_heading, notes_style, bold_center_style,normal_style,bold_12,bold_12
 
 from .utils.table import create_styled_table
 
@@ -42,10 +45,11 @@ def getHazardAssessment(village_id):
         if pra_data:
             return [
                 ['Hazard Assessment'],
-                ['Flood Hazard', f"{pra_data.flood_frequency or '-'}"],
-                ['Erosion Hazard', f"{pra_data.erosion_hazard_frequency or '-'} "],
-                ['Strong Wind Hazard', f"{pra_data.strong_wind_hazard_frequency or '-'} "],
-                ['Earthquake Hazard', f"{pra_data.earthquake_hazard_frequency or '-'}"]
+                ["", Paragraph("Frequency", bold_center_style), Paragraph("Severity", bold_center_style)],
+                ['Flood Hazard', f"{pra_data.flood_frequency or '-'}", f"{pra_data.flood_severity or '-'}"],
+                ['Erosion Hazard', f"{pra_data.erosion_hazard_frequency or '-'} ", f"{pra_data.erosion_hazard_severity or '-'}"],
+                ['Strong Wind Hazard', f"{pra_data.strong_wind_hazard_frequency or '-'} ", f"{pra_data.strong_wind_hazard_severity or '-'}"],
+                ['Earthquake Hazard', f"{pra_data.earthquake_hazard_frequency or '-'}", f"{pra_data.earthquake_hazard_severity or '-'}"]
             ]
         else:
             return [
@@ -73,6 +77,30 @@ def getDistrictLevelOfficialsData():
     ]
 
 
+def get_village_area(village_id):
+    """Get village area from village_boundary table"""
+    try:
+        village = tblVillage.objects.get(id=village_id)
+        village_code = village.code
+    except tblVillage.DoesNotExist:
+        return 0
+    
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                SELECT area_sqkm
+                FROM public.village_boundary
+                WHERE vill_id = %s
+            """, [village_code])
+            
+            row = cursor.fetchone()
+            if row and row[0]:
+                return float(row[0])
+            else:
+                return 0
+    except Exception:
+        return 0
+
 # Get village related data from the database
 def generate_general_summary_table(village_id=None):
    
@@ -84,8 +112,8 @@ def generate_general_summary_table(village_id=None):
             'gram_panchayat__circle__district'
         ).get(id=village_id)
         
-        # Get village area
-        village_area = getVillageArea(village_id)
+        # Get village area from database
+        village_area = get_village_area(village_id)
         area_text = f"{village_area:.2f} sq km" if village_area > 0 else "N/A"
         
         # Get major land use
@@ -95,25 +123,25 @@ def generate_general_summary_table(village_id=None):
         VILLAGE_SUMMARY_DATA['major_land_use'] = major_land_use
         
         return [
-            ['General Summary Table'],
-            ['Date of Preparation', datetime.now().strftime('%B %Y')],
-            ['Village Name', village.name],
+            ['General Summary'],
+            ['Date of Baseline data collection', datetime.now().strftime('%B %Y')],
+            ['Name of Village', village.name],
+            ['Geographic area of the village', area_text],
             ['Block', village.gram_panchayat.name],
-            ['Village area', area_text],
             ['Revenue Circle', village.gram_panchayat.circle.name],
             ['District', village.gram_panchayat.circle.district.name]
             
         ]
     else:
         return [
-            ['General Summary Table'],
-            ['Date of Preparation', datetime.now().strftime('%B %Y')],
-            ['Village Name', 'N/A'],
+            ['General Summary'],
+            ['Date of Baseline data collection', datetime.now().strftime('%B %Y')],
+            ['Name of Village', 'N/A'],
+            ['Geographic area of the village', 'N/A'],
             ['Block', 'N/A'],
-            ['Village area', 'N/A'],
             ['Revenue Circle', 'N/A'],
             ['District', 'N/A'],
-            ['Major Land Use', 'N/A']
+            # ['Major Land Use', 'N/A']
         ] 
         
     
@@ -127,11 +155,52 @@ def to_int(val):
         return 0
 
 
+def get_major_land_use(village_id):
+    """Get major land use from lulc table"""
+    try:
+        village = tblVillage.objects.get(id=village_id)
+        village_code = village.code
+    except tblVillage.DoesNotExist:
+        return "Information not available"
+    
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                SELECT "Class_name", SUM("Area_SqM") as total_area
+                FROM public.lulc
+                WHERE "Vill_ID" = %s
+                GROUP BY "Class_name"
+                ORDER BY total_area DESC
+                LIMIT 1
+            """, [village_code])
+            
+            row = cursor.fetchone()
+            if row:
+                class_name = row[0]
+                max_area = row[1]
+                
+                # Get total area for percentage calculation
+                cursor.execute("""
+                    SELECT SUM("Area_SqM") as total
+                    FROM public.lulc
+                    WHERE "Vill_ID" = %s
+                """, [village_code])
+                
+                total_area = cursor.fetchone()[0]
+                if total_area and total_area > 0:
+                    percentage = round((max_area / total_area) * 100, 2)
+                    return f"{class_name} {percentage}% of the total area"
+                else:
+                    return class_name
+            else:
+                return "Information not available"
+    except Exception:
+        return "Information not available"
+
 def generate_socio_economic_summary_table(village_id):
 
     households = HouseholdSurvey.objects.filter(village_id=village_id)
 
-   
     # =========================
     # TOTAL POPULATION
     # =========================
@@ -142,6 +211,9 @@ def generate_socio_economic_summary_table(village_id):
     )
 
     total_households_count = households.count()
+    
+    # Get major land use from database
+    major_land_use = get_major_land_use(village_id)
 
     # =========================
     # NORMALIZE TEXT FIELDS
@@ -149,7 +221,7 @@ def generate_socio_economic_summary_table(village_id):
     households_n = households.annotate(
         house_type_n=Lower(Trim('house_type')),
         toilet_class_n=Lower(Trim('toilet_class')),
-        sanitation_type_n=Lower(Trim('Sanitation_Type')),
+        sanitation_type_n=Lower(Trim('sanitation_facility')),
         livelihood_n=Lower(Trim('livelihood_primary')),
     )
 
@@ -173,9 +245,14 @@ def generate_socio_economic_summary_table(village_id):
         max_toilet_type = max(toilet_counts, key=toilet_counts.get)
         max_percentage = round((toilet_counts[max_toilet_type] / own_total) * 100)
 
-        sanitation_text = f"{max_toilet_type} - {max_percentage}%"
+        sanitation_text = (
+            f"Predominantly {max_toilet_type.lower()} toilets "
+            f"({max_percentage}% of households with own sanitation facilities)"
+        )
     else:
-        sanitation_text = 'No own toilets'
+        sanitation_text = (
+            "Households reported limited access to individual sanitation facilities"
+        )
 
     # =========================
     # HOUSE TYPE
@@ -195,9 +272,13 @@ def generate_socio_economic_summary_table(village_id):
         max_percentage = round(
             (house_counts[max_house_type] / total_households_count) * 100, 1
         )
-        dominant_house_type = f"{max_house_type} - {max_percentage}%"
+
+        dominant_house_type = (
+            f"Majority of households reside in {max_house_type.lower()} houses "
+            f"({max_percentage}%)"
+        )
     else:
-        dominant_house_type = 'N/A'
+        dominant_house_type = "Housing information not available"
 
     # =========================
     # OCCUPATION
@@ -216,9 +297,13 @@ def generate_socio_economic_summary_table(village_id):
         top_count = livelihood_qs[0]['count']
         percentage = round((top_count / total_households_count) * 100)
 
-        occupational_category = f"{top_livelihood} - {percentage}%"
+        occupational_category = (
+            f"{percentage}% of households primarily depend on {top_livelihood.lower()}"
+        )
     else:
-        occupational_category = 'No data available'
+        occupational_category = (
+            "Occupational details were not sufficiently reported"
+        )
 
     # =========================
     # UPDATE GLOBAL SUMMARY
@@ -228,18 +313,20 @@ def generate_socio_economic_summary_table(village_id):
     VILLAGE_SUMMARY_DATA['dominant_house_type'] = dominant_house_type
     VILLAGE_SUMMARY_DATA['sanitation_facilities'] = sanitation_text
     VILLAGE_SUMMARY_DATA['occupational_category'] = occupational_category
+    VILLAGE_SUMMARY_DATA['major_land_use'] = major_land_use
 
     # =========================
     # FINAL TABLE (REPORTLAB SAFE)
     # =========================
     return [
         ['Socio-Economic Summary'],
-        ['Total Population', total_population],
-        ['Total Households', total_households_count],
+        ['Total Population', f"{total_population} persons (as reported)"],
+        ['Total Households', f"{total_households_count} households surveyed"],
         ['Dominant House Type', dominant_house_type],
-        ['Major Land Use', VILLAGE_SUMMARY_DATA.get('major_land_use', 'N/A')],
+        ['Major Landuse', major_land_use],
         ['Occupational Category', occupational_category],
-        ['Sanitation Facilities', sanitation_text],
+        ['Sanitation Facilities', Paragraph(sanitation_text,normal_style)],
+    
     ]
 
 
@@ -252,14 +339,14 @@ def getRiskAssessment(village_id):
     
     if not risk_data.exists():
         return [
-            ['Risk Assessment (excluding content loss in INR Crore)'],
-            ['Sector', Paragraph('Flood 2022 Scenario (INR Crore)'), 'Earthquake 475 RP', 'Strong wind 100 RP'],
-            ['Residential', 'No data', 'No data', 'No data'],
-            ['Commercial', 'No data', 'No data', 'No data'],
-            ['Critical Facilities', 'No data', 'No data', 'No data'],
-            ['Roads', '-', '-', '-'],
-            ['Agriculture', '-', '-', '-'],
-            ['Note', 'Excluding content loss', '', '']
+            ['Risk Assessment (excluding content loss)'],
+            ['Sector', Paragraph('Flood'), 'Earthquake 475 RP', 'Strong wind 100 RP'],
+            [Paragraph('Potential average loss (residential)', bold_12), 'No data', 'No data', 'No data'],
+            [Paragraph('Potential average loss (commercial)', bold_12), 'No data', 'No data', 'No data'],
+            [Paragraph('Potential average loss (critical facilities – Health facilities, educational facilities, flood shelter)', bold_12), 'No data', 'No data', 'No data'],
+            [Paragraph('Potential average loss (roads)',bold_12 ), '-', '-', '-'],
+            [Paragraph('Potential average loss (agriculture) '  ,bold_12), '-', '-', '-'],
+            
         ]
     
     # Calculate losses by asset type (convert to crores)
@@ -316,15 +403,75 @@ def getRiskAssessment(village_id):
 
     
     return [
-        ['Risk Assessment (excluding content loss in INR Crore)'],
-        ['Sector', Paragraph('Flood 2022 Scenario (INR Crore)'), 'Earthquake 475 RP', 'Strong wind 100 RP'],
-        ['Residential', f'{household_flood:.2f}', f'{household_eq:.2f}', f'{household_wind:.2f}'],
-        ['Commercial', f'{commercial_flood:.2f}', f'{commercial_eq:.2f}', f'{commercial_wind:.2f}'],
-        ['Critical Facilities', f'{critical_flood:.2f}', f'{critical_eq:.2f}', f'{critical_wind:.2f}'],
-        ['Roads', f'{road_risk_flood:.2f}', f'{road_risk_eq:.2f}', f'{road_risk_wind:.2f}'],
-        ['Agriculture', f'{agriculture_flood:.2f}', f'{agriculture_eq:.2f}', f'{agriculture_wind:.2f}'],
-        ['Note', 'Excluding content loss', '', '']
+        ['Risk Assessment (excluding content loss)'],
+        ['Sector', Paragraph('Flood'), 'Earthquake 475 RP', 'Strong wind 100 RP'],
+        [Paragraph('Potential average loss (residential)', bold_12), f'INR {household_flood:.2f} Crore', f'INR {household_eq:.2f} Crore', f'INR {household_wind:.2f} Crore'],
+        [Paragraph('Potential average loss (commercial)',bold_12), f'INR {commercial_flood:.2f} Crore', f'INR {commercial_eq:.2f} Crore', f'INR {commercial_wind:.2f} Crore'],
+        [Paragraph('Potential average loss (critical facilities – Health facilities, educational facilities, flood shelter)', bold_12), f'INR {critical_flood:.2f} Crore', f'INR {critical_eq:.2f} Crore', f'INR {critical_wind:.2f} Crore'],
+        [Paragraph('Potential average loss (roads)', bold_12), f'INR {road_risk_flood:.2f} Crore', f'INR {road_risk_eq:.2f} Crore', f'INR {road_risk_wind:.2f} Crore'],
+        [Paragraph('Potential average loss (agriculture)',bold_12), f'INR {agriculture_flood:.2f} Crore', f'INR {agriculture_eq:.2f} Crore', f'INR {agriculture_wind:.2f} Crore'],
+      
     ]
+
+
+import requests
+from django.db import connection
+
+def get_eroding_river_bank(village_id):
+    """
+    Fetch eroding river bank length AND total river bank length (km)
+    from database only
+    Return: X km out of Y km
+    """
+    try:
+        village = tblVillage.objects.get(id=village_id)
+        village_code = village.code
+    except tblVillage.DoesNotExist:
+        return "No data"
+
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                SELECT "Length_km", "Class" 
+                FROM public.erosion_accretion
+                WHERE "Vill_ID" = %s
+            """, [village_code])
+            
+            rows = cursor.fetchall()
+            
+            if rows:
+                total_km = 0.0
+                erosion_km = 0.0
+                
+                for row in rows:
+                    length_km = row[0] or 0
+                    cls = (row[1] or "").lower()
+                    
+                    try:
+                        length_km = float(length_km)
+                    except (TypeError, ValueError):
+                        continue
+                    
+                    total_km += length_km
+                    
+                    if cls in ("erosion", "errosion"):
+                        erosion_km += length_km
+                
+                total_km = round(total_km, 2)
+                erosion_km = round(erosion_km, 2)
+                
+                if total_km == 0:
+                    return "No river bank data"
+                else:
+                    return f"{erosion_km} km out of {total_km} km"
+                    
+    except Exception:
+        return "No data"
+    
+    return "No data"
+            
+            
+
 
 
 def getVulnerabilityAssessment(village_id):
@@ -337,14 +484,15 @@ def getVulnerabilityAssessment(village_id):
         return [
             ["Vulnerability Assessment"],
             ['Economic Status', 'No data'],
-            ['Vulnerable Population', 'No data'],
+            [Paragraph('Vulnerable population (age < 6, >60, pregnant women, lactating mother, permanently disabled or chronic disease)  ',bold_12), 'No data'],
+            ['Eroding river bank','No data'],
             ['Flood Vulnerability Houses', 'No data'],
             ['Erosion Vulnerability Houses', 'No data'],
             ['Flood Vulnerability Roads', 'No data'],
             ['Erosion Vulnerability Roads', 'No data'],
             ['Schools', 'No data'],
             ['Livelihood Vulnerability Index', 'No data'],
-            ['Index Interpretation', 'No data']
+            # ['Index Interpretation', 'No data']
         ]
     
     # Economic Status - show BPL and PHH percentages only
@@ -366,33 +514,67 @@ def getVulnerabilityAssessment(village_id):
     # Vulnerable Population (age < 6, >60, pregnant women, lactating mother, permanently disabled or chronic disease)
     vulnerable_count = 0
     total_population = 0
+
+    total_population = sum(
+        to_int(h.number_of_males_including_children) +
+        to_int(h.number_of_females_including_children)
+        for h in households
+    )
     
-    for household in households:
-        try:
-            vulnerable_count += int(household.persons_with_disability_or_chronic_disease or 0)
-            vulnerable_count += int(household.lactating_women or 0)
-            vulnerable_count += int(household.pregnant_women or 0)
-            vulnerable_count += int(household.senior_citizens or 0)
-            vulnerable_count += int(household.children_below_6_years or 0)
-            total_population += int(household.number_of_males_including_children or 0) + int(household.number_of_females_including_children or 0)
-        except (ValueError, TypeError):
-            continue
+    vulnerable_totals = households.aggregate(
+        disabled=Coalesce(
+            Sum(Cast(Cast('persons_with_disability_or_chronic_disease', FloatField()), IntegerField())),
+            0
+        ),
+        lactating=Coalesce(
+            Sum(Cast(Cast('lactating_women', FloatField()), IntegerField())),
+            0
+        ),
+        pregnant=Coalesce(
+            Sum(Cast(Cast('pregnant_women', FloatField()), IntegerField())),
+            0
+        ),
+        seniors=Coalesce(
+            Sum(Cast(Cast('senior_citizens', FloatField()), IntegerField())),
+            0
+        ),
+        children=Coalesce(
+            Sum(Cast(Cast('children_below_6_years', FloatField()), IntegerField())),
+            0
+        ),
+    )
+
+    print( vulnerable_totals)
+    print(total_population)
+
+    vulnerable_count = (
+        vulnerable_totals['disabled']
+        + vulnerable_totals['lactating']
+        + vulnerable_totals['pregnant']
+        + vulnerable_totals['seniors']
+        + vulnerable_totals['children']
+    )
+
     
     if total_population > 0:
         vulnerable_percent = round((vulnerable_count / total_population) * 100)
         vulnerable_population = f"{vulnerable_count} ({vulnerable_percent}%)"
     else:
-        vulnerable_population = 'No data'
+        vulnerable_population = "No data"
+
     
     # Houses vulnerable to flood (flood_depth_m >= 0.5)
-    flood_vulnerable_houses = 0
-    for household in households:
-        try:
-            flood_depth = float(household.flood_depth_m or 0)
-            if flood_depth >= 0.5:
-                flood_vulnerable_houses += 1
-        except (ValueError, TypeError):
-            continue
+    flood_vulnerable_houses = households.filter(
+        flood_depth_m__gte=0.5
+    ).count()
+
+    flood_vulnerable_percent = round(
+        (flood_vulnerable_houses / total_households) * 100
+    ) if total_households > 0 else 0
+
+    flood_vulnerability_houses = (
+        f"{flood_vulnerable_houses} ({flood_vulnerable_percent}%)"
+    )
     
     flood_vulnerable_percent = round((flood_vulnerable_houses / total_households) * 100) if flood_vulnerable_houses > 0 else 0
     flood_vulnerability_houses = f"{flood_vulnerable_houses} ({flood_vulnerable_percent}%)"
@@ -458,25 +640,39 @@ def getVulnerabilityAssessment(village_id):
     else:
         erosion_vulnerability_roads = "No data"
 
-    schools_count = Critical_Facility.objects.filter(
-        village_id=village_id,
-        occupancy_type__iexact="School"
+    schools_qs = Critical_Facility.objects.filter(
+    village_id=village_id,
+    occupancy_type__icontains='school'
+)
+
+    total_schools = schools_qs.count()
+
+    vulnerable_schools = schools_qs.filter(
+        flood_depth_m__gt=0.5
     ).count()
 
-    schools_text = str(schools_count) if schools_count > 0 else "No data"
+    if total_schools > 0:
+        schools_text = (
+            f"{vulnerable_schools} out of {total_schools} "
+            f"educational facilities are under high flood vulnerable area"
+        )
+    else:
+        schools_text = "No educational facilities available"
+
 
 
     return [
         ["Vulnerability Assessment"],
         ['Economic Status', economic_status],
-        ['Vulnerable Population', vulnerable_population],
-        ['Flood Vulnerability Houses', flood_vulnerability_houses],
-        ['Erosion Vulnerability Houses', erosion_vulnerability_houses],
-        ['Flood Vulnerability Roads', flood_vulnerability_roads],
-        ['Erosion Vulnerability Roads', erosion_vulnerability_roads],
+        [Paragraph('Vulnerable population (age < 6, >60, pregnant women, lactating mother, permanently disabled or chronic disease)',bold_12), vulnerable_population],
+        ['Eroding river bank', get_eroding_river_bank(village_id)],
+        ['Flood Vulnerable Houses', flood_vulnerability_houses],
+        ['Erosion Vulnerable Houses', erosion_vulnerability_houses],
+        ['Flood Vulnerable Roads', flood_vulnerability_roads],
+        ['Erosion Vulnerable Roads', erosion_vulnerability_roads],
         ['Schools', schools_text],
         ['Livelihood Vulnerability Index', '-'],
-        ['Index Interpretation', '-']
+        # ['Index Interpretation', '-']
     ]
 
 
@@ -489,7 +685,7 @@ def village_summary(elements,village_id):
     
 
     table_sections = [
-        {"heading": "General Summary Table",
+        {"heading": "General Summary",
           "getter_function": generate_general_summary_table,
           "col_width":[200, 300]
          },
@@ -500,7 +696,7 @@ def village_summary(elements,village_id):
        {
             "heading": "Hazard Assessment",
             "getter_function": getHazardAssessment,
-             "col_width":[200, 300]
+             "col_width":[200, 150,150]
        },
        {
            'heading': "Vulnerability Assessment",
@@ -574,8 +770,11 @@ def draw_Village_summery_tables(elements,table_sections,village_id):
         # elements.append(Spacer(1, 6))
 
         table_data = section["getter_function"](village_id)
+        
         table = create_styled_table(table_data, section['col_width'], False, True, custom_style, section['heading'])
         elements.append(table)
+        if(section["heading"] == 'Vulnerability Assessment'):
+            elements.append(PageBreak())
         # elements.append(Spacer(1, 12))
     
     # Notes section  

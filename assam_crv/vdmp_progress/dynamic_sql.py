@@ -123,7 +123,7 @@ def get_dynamic_sql_script(village_id, model_name='HouseholdSurvey'):
         SPLIT_PART(s.geometry, ' ', 1) AS latitude,
         SPLIT_PART(s.geometry, ' ', 2) AS longitude,
         s.polygon_id AS point_id,
-       
+        s.date AS "Date",
         s.unique_id,
         MIN(f.form_id) AS form_id,
         {dynamic_selects}
@@ -144,7 +144,7 @@ def get_dynamic_sql_script(village_id, model_name='HouseholdSurvey'):
       AND u.id != 1
     GROUP BY
         s.survey_id, s.spatial_id, v.district_name, v.village_name,
-        s.geometry, s.polygon_id, s.unique_id
+        s.geometry, s.polygon_id, s.unique_id, s.date
     ORDER BY s.survey_id
     """
     
@@ -357,6 +357,7 @@ def get_others_sql_script(village_id, model_name):
         SPLIT_PART(s.geometry, ' ', 2) AS longitude,
         s.polygon_id AS point_id,
         s.unique_id,
+        s.date AS "Date",
         MIN(rv.form_id) AS form_id,
         {dynamic_selects}
     FROM raw_values rv
@@ -373,7 +374,7 @@ def get_others_sql_script(village_id, model_name):
     GROUP BY
         s.survey_id, s.spatial_id,
         v.district_name, v.village_name,
-        s.geometry, s.polygon_id, s.unique_id
+        s.geometry, s.polygon_id, s.unique_id, s.date
     ORDER BY s.survey_id
     """
 

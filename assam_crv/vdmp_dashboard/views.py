@@ -672,7 +672,7 @@ def download_report(request):
     village = get_object_or_404(tblVillage, id=village_id)
     buffer = generate_pdf(village_id=village_id, village=village)
     filename = f"{village.name}_vdmp_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
-    return FileResponse(buffer, content_type='application/pdf', as_attachment=True, filename=filename)
+    return FileResponse(buffer, content_type='application/pdf', as_attachment=False, filename=filename)
 
 # from django.http import StreamingHttpResponse
 

@@ -24540,3 +24540,1087 @@ Traceback (most recent call last):
            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 django.db.utils.DataError: invalid input syntax for type double precision: "Null"
 
+2026-01-30 18:11:46,129 [ERROR] django.server: "GET /en/api/dashboard_chart_data/ HTTP/1.1" 500 162020
+2026-01-30 18:13:03,980 [ERROR] django.request: Internal Server Error: /en/api/download_report
+Traceback (most recent call last):
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\views\generic\base.py", line 105, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\views.py", line 515, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\views.py", line 475, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\views.py", line 486, in raise_uncaught_exception
+    raise exc
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\views.py", line 512, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\decorators.py", line 50, in handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\assamcrv\assam_crv\vdmp_dashboard\views.py", line 673, in download_report
+    buffer = generate_pdf(village_id=village_id, village=village)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\assamcrv\assam_crv\vdmp_dashboard\pdf\main.py", line 200, in generate_pdf
+    village_summary(elements,village_id)
+  File "C:\assamcrv\assam_crv\vdmp_dashboard\pdf\village_summary.py", line 515, in village_summary
+    },
+  File "C:\assamcrv\assam_crv\vdmp_dashboard\pdf\village_summary.py", line 581, in draw_Village_summery_tables
+    # Notes section
+                    
+NameError: name 'getDistrictLevelOfficialsData' is not defined
+2026-01-30 18:13:03,988 [ERROR] django.server: "GET /en/api/download_report?village_id=550 HTTP/1.1" 500 138198
+2026-02-02 10:28:29,267 [ERROR] django.request: Internal Server Error: /en/api/dashboard_chart_data/
+Traceback (most recent call last):
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\db\backends\utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+psycopg2.errors.InvalidTextRepresentation: invalid input syntax for type double precision: "Null"
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\views\generic\base.py", line 105, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\views.py", line 515, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\views.py", line 475, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\views.py", line 486, in raise_uncaught_exception
+    raise exc
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\views.py", line 512, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\decorators.py", line 50, in handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\assamcrv\assam_crv\dashboard\views.py", line 83, in dashboard_chart_data
+    cf_stats = calculate_flood_percentage(cf_data)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\assamcrv\assam_crv\dashboard\views.py", line 31, in calculate_flood_percentage
+    agg = qs.aggregate(
+          ^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\db\models\query.py", line 590, in aggregate
+    return self.query.chain().get_aggregation(self.db, kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\db\models\sql\query.py", line 626, in get_aggregation
+    result = compiler.execute_sql(SINGLE)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\db\models\sql\compiler.py", line 1623, in execute_sql
+    cursor.execute(sql, params)
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\db\backends\utils.py", line 122, in execute
+    return super().execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\db\backends\utils.py", line 79, in execute
+    return self._execute_with_wrappers(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\db\backends\utils.py", line 92, in _execute_with_wrappers
+    return executor(sql, params, many, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\db\backends\utils.py", line 100, in _execute
+    with self.db.wrap_database_errors:
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\db\utils.py", line 91, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\db\backends\utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+django.db.utils.DataError: invalid input syntax for type double precision: "Null"
+
+2026-02-02 10:28:29,321 [ERROR] django.server: "GET /en/api/dashboard_chart_data/ HTTP/1.1" 500 162188
+2026-02-02 12:32:38,258 [ERROR] django.request: Internal Server Error: /en/api/dashboard_chart_data/
+Traceback (most recent call last):
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\db\backends\utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+psycopg2.errors.InvalidTextRepresentation: invalid input syntax for type double precision: "Null"
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\views\generic\base.py", line 105, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\views.py", line 515, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\views.py", line 475, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\views.py", line 486, in raise_uncaught_exception
+    raise exc
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\views.py", line 512, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\decorators.py", line 50, in handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\assamcrv\assam_crv\dashboard\views.py", line 83, in dashboard_chart_data
+    cf_stats = calculate_flood_percentage(cf_data)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\assamcrv\assam_crv\dashboard\views.py", line 31, in calculate_flood_percentage
+    agg = qs.aggregate(
+          ^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\db\models\query.py", line 590, in aggregate
+    return self.query.chain().get_aggregation(self.db, kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\db\models\sql\query.py", line 626, in get_aggregation
+    result = compiler.execute_sql(SINGLE)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\db\models\sql\compiler.py", line 1623, in execute_sql
+    cursor.execute(sql, params)
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\db\backends\utils.py", line 122, in execute
+    return super().execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\db\backends\utils.py", line 79, in execute
+    return self._execute_with_wrappers(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\db\backends\utils.py", line 92, in _execute_with_wrappers
+    return executor(sql, params, many, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\db\backends\utils.py", line 100, in _execute
+    with self.db.wrap_database_errors:
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\db\utils.py", line 91, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\db\backends\utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+django.db.utils.DataError: invalid input syntax for type double precision: "Null"
+
+2026-02-02 12:32:38,303 [ERROR] django.server: "GET /en/api/dashboard_chart_data/ HTTP/1.1" 500 162325
+2026-02-02 13:54:33,604 [ERROR] django.request: Internal Server Error: /en/api/dashboard_chart_data/
+Traceback (most recent call last):
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\db\backends\utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+psycopg2.errors.InvalidTextRepresentation: invalid input syntax for type double precision: "Null"
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\views\generic\base.py", line 105, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\views.py", line 515, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\views.py", line 475, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\views.py", line 486, in raise_uncaught_exception
+    raise exc
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\views.py", line 512, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\decorators.py", line 50, in handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\assamcrv\assam_crv\dashboard\views.py", line 83, in dashboard_chart_data
+    cf_stats = calculate_flood_percentage(cf_data)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\assamcrv\assam_crv\dashboard\views.py", line 31, in calculate_flood_percentage
+    agg = qs.aggregate(
+          ^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\db\models\query.py", line 590, in aggregate
+    return self.query.chain().get_aggregation(self.db, kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\db\models\sql\query.py", line 626, in get_aggregation
+    result = compiler.execute_sql(SINGLE)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\db\models\sql\compiler.py", line 1623, in execute_sql
+    cursor.execute(sql, params)
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\db\backends\utils.py", line 122, in execute
+    return super().execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\db\backends\utils.py", line 79, in execute
+    return self._execute_with_wrappers(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\db\backends\utils.py", line 92, in _execute_with_wrappers
+    return executor(sql, params, many, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\db\backends\utils.py", line 100, in _execute
+    with self.db.wrap_database_errors:
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\db\utils.py", line 91, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\db\backends\utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+django.db.utils.DataError: invalid input syntax for type double precision: "Null"
+
+2026-02-02 13:54:33,617 [ERROR] django.server: "GET /en/api/dashboard_chart_data/ HTTP/1.1" 500 162325
+2026-02-03 10:31:05,334 [ERROR] django.request: Internal Server Error: /en/api/dashboard_chart_data/
+Traceback (most recent call last):
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\db\backends\utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+psycopg2.errors.InvalidTextRepresentation: invalid input syntax for type double precision: "Null"
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\views\generic\base.py", line 105, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\views.py", line 515, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\views.py", line 475, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\views.py", line 486, in raise_uncaught_exception
+    raise exc
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\views.py", line 512, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\decorators.py", line 50, in handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\assamcrv\assam_crv\dashboard\views.py", line 83, in dashboard_chart_data
+    cf_stats = calculate_flood_percentage(cf_data)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\assamcrv\assam_crv\dashboard\views.py", line 31, in calculate_flood_percentage
+    agg = qs.aggregate(
+          ^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\db\models\query.py", line 590, in aggregate
+    return self.query.chain().get_aggregation(self.db, kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\db\models\sql\query.py", line 626, in get_aggregation
+    result = compiler.execute_sql(SINGLE)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\db\models\sql\compiler.py", line 1623, in execute_sql
+    cursor.execute(sql, params)
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\db\backends\utils.py", line 122, in execute
+    return super().execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\db\backends\utils.py", line 79, in execute
+    return self._execute_with_wrappers(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\db\backends\utils.py", line 92, in _execute_with_wrappers
+    return executor(sql, params, many, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\db\backends\utils.py", line 100, in _execute
+    with self.db.wrap_database_errors:
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\db\utils.py", line 91, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\db\backends\utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+django.db.utils.DataError: invalid input syntax for type double precision: "Null"
+
+2026-02-03 10:31:05,367 [ERROR] django.server: "GET /en/api/dashboard_chart_data/ HTTP/1.1" 500 161883
+2026-02-03 10:37:56,945 [ERROR] django.request: Internal Server Error: /en/api/dashboard_chart_data/
+Traceback (most recent call last):
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\db\backends\utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+psycopg2.errors.InvalidTextRepresentation: invalid input syntax for type double precision: "Null"
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\views\generic\base.py", line 105, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\views.py", line 515, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\views.py", line 475, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\views.py", line 486, in raise_uncaught_exception
+    raise exc
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\views.py", line 512, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\decorators.py", line 50, in handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\assamcrv\assam_crv\dashboard\views.py", line 83, in dashboard_chart_data
+    cf_stats = calculate_flood_percentage(cf_data)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\assamcrv\assam_crv\dashboard\views.py", line 31, in calculate_flood_percentage
+    agg = qs.aggregate(
+          ^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\db\models\query.py", line 590, in aggregate
+    return self.query.chain().get_aggregation(self.db, kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\db\models\sql\query.py", line 626, in get_aggregation
+    result = compiler.execute_sql(SINGLE)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\db\models\sql\compiler.py", line 1623, in execute_sql
+    cursor.execute(sql, params)
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\db\backends\utils.py", line 122, in execute
+    return super().execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\db\backends\utils.py", line 79, in execute
+    return self._execute_with_wrappers(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\db\backends\utils.py", line 92, in _execute_with_wrappers
+    return executor(sql, params, many, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\db\backends\utils.py", line 100, in _execute
+    with self.db.wrap_database_errors:
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\db\utils.py", line 91, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\db\backends\utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+django.db.utils.DataError: invalid input syntax for type double precision: "Null"
+
+2026-02-03 10:37:57,012 [ERROR] django.server: "GET /en/api/dashboard_chart_data/ HTTP/1.1" 500 162020
+2026-02-03 10:52:58,700 [ERROR] vdmp_progress.data_pipeline: Database connection/query failed: Execution failed on sql '
+    WITH media_urls AS (
+        SELECT
+            fd.spatial_id,
+            fd.attribute_id,
+            STRING_AGG(fd.media_id::text, ',' ORDER BY fd.media_id) AS media_ids_str
+        FROM public.formdata fd
+        JOIN public.attributes att
+            ON fd.attribute_id = att.id
+        WHERE att.widget_id = 10
+          AND att.tab_id = 1
+          AND fd.media_id IS NOT NULL
+        GROUP BY fd.spatial_id, fd.attribute_id
+    ),
+    attribute_values AS (
+        SELECT
+            fd.form_id,
+            fd.spatial_id,
+            fd.attribute_id,
+            CASE
+                WHEN att.widget_id IN (2,4) THEN
+                    STRING_AGG(DISTINCT ao.option_text, ', ' ORDER BY ao.option_text)
+                WHEN att.widget_id = 10 THEN
+                    'https://jkiofs.in/fastapi/PincerApps/images/test'
+                    || COALESCE(mu.media_ids_str,'')
+                    || '/' || fd.spatial_id
+                ELSE MAX(fd.attribute_value)
+            END AS value
+        FROM public.formdata fd
+        JOIN public.attributes att
+            ON att.id = fd.attribute_id
+        LEFT JOIN public.attributes_option ao
+            ON ao.attribute_id = fd.attribute_id
+           AND att.widget_id IN (2,4)
+           AND ao.option_id = ANY (
+                string_to_array(
+                    regexp_replace(fd.attribute_value, '[^0-9,]', '', 'g'),
+                    ','
+                )::INT[]
+           )
+        LEFT JOIN media_urls mu
+            ON mu.spatial_id = fd.spatial_id
+           AND mu.attribute_id = fd.attribute_id
+        WHERE att.tab_id = 1
+          AND fd.spatial_id IN (
+              SELECT id FROM public.spatialdata WHERE village_id = %s AND user_id != 1
+          )
+        GROUP BY
+            fd.form_id,
+            fd.spatial_id,
+            fd.attribute_id,
+            att.widget_id,
+            mu.media_ids_str
+    )
+    SELECT
+        s.survey_id,
+        s.spatial_id,
+        v.district_name,
+        v.village_name,
+        SPLIT_PART(s.geometry, ' ', 1) AS latitude,
+        SPLIT_PART(s.geometry, ' ', 2) AS longitude,
+        s.polygon_id AS point_id,
+        s.date AS "Date",
+        s.unique_id,
+        MIN(f.form_id) AS form_id,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%Do you have JJM or other taped water connection%%' THEN av.value END) AS JJM_or_other_taped_water_connection,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%Type of toilet?%%' THEN av.value END) AS type_of_toilet,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%14. Plinth above ground or Stilt%%' THEN av.value END) AS plinth_or_stilt,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%Plinth above ground or Stilt height (in feet)%%' THEN av.value END) AS plinth_or_stilt_height_ft,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%While de-sludging where the sludge be disposed%%' THEN av.value END) AS sludge_be_disposed_type,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%Approximate length (feet) of the house (main building)%%' THEN av.value END) AS building_length_feet,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%You get adequate water from this source throughout the year to meet your daily needs?%%' THEN av.value END) AS adequate_water_supply,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%20. Property ownership%%' THEN av.value END) AS property_owner,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%1. Name of the head of household%%' THEN av.value END) AS name_of_hohh,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%3. Photo with coordinates of the house%%' THEN av.value END) AS photo,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%4. House owner phone number%%' THEN av.value END) AS mobile_number,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%5. Whether anyone in the house have data access in phone%%' THEN av.value END) AS data_access,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%6. Community%%' THEN av.value END) AS community,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%7. Social status of HoHH%%' THEN av.value END) AS social_status,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%8.  Economic status%%' THEN av.value END) AS economic_status,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%9.Wall type%%' THEN av.value END) AS wall_type,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%10. Roof type%%' THEN av.value END) AS roof_type,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%11.Floor type%%' THEN av.value END) AS floor_type,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%21. Number of storeys of the house%%' THEN av.value END) AS number_of_storeys,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%22. Number of males living in the house (including children)%%' THEN av.value END) AS number_of_males_including_children,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%23. Number of females living in the house (including children)%%' THEN av.value END) AS number_of_females_including_children,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%24. Number of children age < 6 years living in the house%%' THEN av.value END) AS children_below_6_years,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%25. Number of people age > 60 years living in the house%%' THEN av.value END) AS senior_citizens,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%27. Number of pregnant women living in the house%%' THEN av.value END) AS pregnant_women,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%28. Number of lactating women living in the house%%' THEN av.value END) AS lactating_women,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%26. Number of persons with permanently disabled or chronic disease living in the house%%' THEN av.value END) AS persons_with_disability_or_chronic_disease,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%32. Drinking water source%%' THEN av.value END) AS drinking_water_source,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%38. Sanitation facility%%' THEN av.value END) AS sanitation_facility,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%39. Toilet wall material%%' THEN av.value END) AS toilet_wall_material,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%40. Toilet roof material%%' THEN av.value END) AS toilet_roof_material,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%29. Digital media owned%%' THEN av.value END) AS digital_media_owned,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%30. House has electric connection%%' THEN av.value END) AS house_has_electric_connection,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%31. Source of electricity%%' THEN av.value END) AS source_of_electricity,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%61. Own agriculture land%%' THEN av.value END) AS own_agriculture_land,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%62. Area of agriculture land owned (bigha)%%' THEN av.value END) AS area_of_agriculture_land_owned_bigha,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%63. Land (area) annually cultivated (Bigha)%%' THEN av.value END) AS land_area_annually_cultivated_bigha,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%64. Crops cultivated%%' THEN av.value END) AS crops_cultivated,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%64.1. Specify other%%' THEN av.value END) AS specify_other,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%65. Number of crops normally raised every year%%' THEN av.value END) AS number_of_crops_normally_raised_every_year,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%60. Livelihood primary%%' THEN av.value END) AS livelihood_primary,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%66. Livelihood secondary%%' THEN av.value END) AS livelihood_secondary,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%67. Do you have Big cattle (cattle buffalo)%%' THEN av.value END) AS do_you_have_big_cattle_cattle_buffalo,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%68. Number of big cattle animals%%' THEN av.value END) AS number_of_big_cattle_animals,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%72. Number of small cattle animals%%' THEN av.value END) AS do_you_have_small_cattle_goat_sheep_pig,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%72. Number of small cattle animals%%' THEN av.value END) AS number_of_small_cattle_animals,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%75. Do you have Poultry (chicken and duck)%%' THEN av.value END) AS do_you_have_poultry_chicken_and_duck,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%76. Number of poultry animals%%' THEN av.value END) AS number_of_poultry_animals,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%47. Approximate income earned every year (INR)%%' THEN av.value END) AS approximate_income_earned_every_year_inr,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%48. Education of children including tuition fee, books etc (approximate amount per annum)%%' THEN av.value END) AS expense_on_education,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%49. Health related including buying medicine, hospital charges etc of all members of family per annum%%' THEN av.value END) AS expense_on_health,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%50. Food including approximate amount spending for buying provision per annum%%' THEN av.value END) AS expense_on_food,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%51. Amount spend for tobacco, liquor etc per annum%%' THEN av.value END) AS expense_on_tobacco_liquor,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%52. Repair of house (approximate cost) every year:%%' THEN av.value END) AS expense_on_house_repair,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%53. Amount (approximate) spent for festival, marriage and other social functions per year%%' THEN av.value END) AS expense_on_festival_marriage_and_other_social_occassions,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%54. Amount spent for agriculture/livestock every year%%' THEN av.value END) AS amount_spent_for_agriculture_livestock,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%55. Approximate economic loss (INR) incurred to your house due to flood every year%%' THEN av.value END) AS loss_due_to_flood,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%57. Did you avail loan (or borrowed money from local lender) in last 5 year for your family%%' THEN av.value END) AS loan_availed,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%58. If so, how much was the loan amount%%' THEN av.value END) AS loan_amount,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%59. For what purpose you took loan%%' THEN av.value END) AS loan_purpose,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%79. Your house affected by flood%%' THEN av.value END) AS house_affected_by_flood,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%55. Approximate economic loss (INR) incurred to your house due to flood every year%%' THEN av.value END) AS economic_loss_to_your_house_due_to_flood,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%56. How much money you spend annually towards flood recovery expenditure%%' THEN av.value END) AS amount_towards_flood_recovery_expenditure,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%19. Maximum flood height experience in your house(feet)%%' THEN av.value END) AS maximum_flood_height_in_house_ft,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%20. Year in which maximum flood experience in your house%%' THEN av.value END) AS year_in_which_maximum_flood_experience_in_your_house,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%81. Your agriculture affected by flood%%' THEN av.value END) AS your_agriculture_affected_by_flood,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%82. Maximum flood height experience in your agriculture(feet)%%' THEN av.value END) AS maximum_flood_height_experience_in_your_agriculture_ft,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%83. Year in which max flood experience in your agriculture land (feet)%%' THEN av.value END) AS year_in_which_max_flood_experience_in_your_agriculture_land,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%84. Duration of flood stay in your agriculture field%%' THEN av.value END) AS duration_of_flood_stay_in_your_agriculture_field,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%80. Other natural hazards directly impacting you and family%%' THEN av.value END) AS other_natural_hazards_directly_impacting_you_and_family,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%86. House vulnerable to erosion%%' THEN av.value END) AS house_vulnerable_to_erosion,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%87. Your agriculture field vulnerable to erosion%%' THEN av.value END) AS your_agriculture_field_vulnerable_to_erosion,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%16. Building quality%%' THEN av.value END) AS building_quality,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%17. Foundation quality (if visible)%%' THEN av.value END) AS foundation_quality,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%88. Number of small buildings of the household%%' THEN av.value END) AS number_of_small_buildings_of_the_household,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%89. Occupancy type of small building%%' THEN av.value END) AS occupa_ncy_type_of_small_building,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%90. Presence of grain bank%%' THEN av.value END) AS presence_of_grain_bank,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%91. Stilt plinth height of grain bank%%' THEN av.value END) AS plinth_height_of_grain_bank_ft,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%92. Wall material of grain bank%%' THEN av.value END) AS wall_material_of_grain_bank,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%93. Roof material of grain bank%%' THEN av.value END) AS roof_material_of_grain_bank,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%85. Approximate loss incurred to your livelihood due to flood every year%%' THEN av.value END) AS loss_agricultire_livlihood,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%67. Do you have Big cattle (cattle buffalo)%%' THEN av.value END) AS big_cattle,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%72. Number of small cattle animals%%' THEN av.value END) AS small_cattle,
+        MAX(CASE WHEN a.attribute_name ILIKE '%%Approximate width (feet) of the house (main building)%%' THEN av.value END) AS building_width_feet
+    FROM public.formdata f
+    JOIN attribute_values av
+        ON av.spatial_id = f.spatial_id
+       AND av.attribute_id = f.attribute_id
+    JOIN public.attributes a
+        ON a.id = f.attribute_id
+    JOIN public.spatialdata s
+        ON s.id = f.spatial_id
+    JOIN public.users u
+        ON u.id = s.user_id
+    JOIN public.villages v
+        ON v.id = s.village_id
+    WHERE a.tab_id = 1
+      AND v.id = %s
+      AND u.id != 1
+    GROUP BY
+        s.survey_id, s.spatial_id, v.district_name, v.village_name,
+        s.geometry, s.polygon_id, s.unique_id
+    ORDER BY s.survey_id
+    ': column "s.date" must appear in the GROUP BY clause or be used in an aggregate function
+LINE 63:         s.date AS "Date",
+                 ^
+
+2026-02-03 10:52:58,700 [ERROR] django.request: Internal Server Error: /en/api/update_vdmp_activity_status/5955/
+2026-02-03 10:52:58,700 [ERROR] django.server: "PATCH /en/api/update_vdmp_activity_status/5955/ HTTP/1.1" 500 15218
+2026-02-03 11:17:38,417 [ERROR] django.request: Internal Server Error: /en/api/dashboard_chart_data/
+Traceback (most recent call last):
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\db\backends\utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+psycopg2.errors.InvalidTextRepresentation: invalid input syntax for type double precision: "Null"
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\views\generic\base.py", line 105, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\views.py", line 515, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\views.py", line 475, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\views.py", line 486, in raise_uncaught_exception
+    raise exc
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\views.py", line 512, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\decorators.py", line 50, in handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\assamcrv\assam_crv\dashboard\views.py", line 83, in dashboard_chart_data
+    cf_stats = calculate_flood_percentage(cf_data)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\assamcrv\assam_crv\dashboard\views.py", line 31, in calculate_flood_percentage
+    agg = qs.aggregate(
+          ^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\db\models\query.py", line 590, in aggregate
+    return self.query.chain().get_aggregation(self.db, kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\db\models\sql\query.py", line 626, in get_aggregation
+    result = compiler.execute_sql(SINGLE)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\db\models\sql\compiler.py", line 1623, in execute_sql
+    cursor.execute(sql, params)
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\db\backends\utils.py", line 122, in execute
+    return super().execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\db\backends\utils.py", line 79, in execute
+    return self._execute_with_wrappers(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\db\backends\utils.py", line 92, in _execute_with_wrappers
+    return executor(sql, params, many, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\db\backends\utils.py", line 100, in _execute
+    with self.db.wrap_database_errors:
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\db\utils.py", line 91, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\db\backends\utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+django.db.utils.DataError: invalid input syntax for type double precision: "Null"
+
+2026-02-03 11:17:38,438 [ERROR] django.server: "GET /en/api/dashboard_chart_data/ HTTP/1.1" 500 162022
+2026-02-03 11:40:24,846 [ERROR] django.request: Internal Server Error: /en/api/download_report
+Traceback (most recent call last):
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\views\generic\base.py", line 105, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\views.py", line 515, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\views.py", line 475, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\views.py", line 486, in raise_uncaught_exception
+    raise exc
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\views.py", line 512, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\decorators.py", line 50, in handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\assamcrv\assam_crv\vdmp_dashboard\views.py", line 673, in download_report
+    buffer = generate_pdf(village_id=village_id, village=village)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\assamcrv\assam_crv\vdmp_dashboard\pdf\main.py", line 200, in generate_pdf
+    village_summary(elements,village_id)
+  File "C:\assamcrv\assam_crv\vdmp_dashboard\pdf\village_summary.py", line 660, in village_summary
+    draw_Village_summery_tables(elements,table_sections,village_id)
+  File "C:\assamcrv\assam_crv\vdmp_dashboard\pdf\village_summary.py", line 712, in draw_Village_summery_tables
+    table_data = section["getter_function"](village_id)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\assamcrv\assam_crv\vdmp_dashboard\pdf\village_summary.py", line 608, in getVulnerabilityAssessment
+    ['Eroding river bank', get_eroding_river_bank(village_id)]
+TypeError: list indices must be integers or slices, not tuple
+2026-02-03 11:40:24,856 [ERROR] django.server: "GET /en/api/download_report?village_id=550 HTTP/1.1" 500 153778
+2026-02-03 12:00:40,501 [ERROR] django.request: Internal Server Error: /en/api/download_report
+Traceback (most recent call last):
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\views\generic\base.py", line 105, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\views.py", line 515, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\views.py", line 475, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\views.py", line 486, in raise_uncaught_exception
+    raise exc
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\views.py", line 512, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\decorators.py", line 50, in handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\assamcrv\assam_crv\vdmp_dashboard\views.py", line 673, in download_report
+    buffer = generate_pdf(village_id=village_id, village=village)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\assamcrv\assam_crv\vdmp_dashboard\pdf\main.py", line 213, in generate_pdf
+    doc.multiBuild(elements)
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\reportlab\platypus\doctemplate.py", line 1170, in multiBuild
+    self.build(tempStory, **buildKwds)
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\reportlab\platypus\doctemplate.py", line 1083, in build
+    self.handle_flowable(flowables)
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\reportlab\platypus\doctemplate.py", line 932, in handle_flowable
+    if frame.add(f, canv, trySplit=self.allowSplitting):
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\reportlab\platypus\frames.py", line 201, in _add
+    flowable.drawOn(canv, self._x + self._leftExtraIndent, y, _sW=aW-w)
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\reportlab\platypus\flowables.py", line 112, in drawOn
+    self._drawOn(canvas)
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\reportlab\platypus\flowables.py", line 93, in _drawOn
+    self.draw()#this is the bit you overload
+    ^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\reportlab\platypus\tables.py", line 2309, in draw
+    self._drawCell(cellval, cellstyle, (colpos, rowpos), (colwidth, rowheight))
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\reportlab\platypus\tables.py", line 2522, in _drawCell
+    v.drawOn(self.canv,x,y)
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\reportlab\platypus\flowables.py", line 112, in drawOn
+    self._drawOn(canvas)
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\reportlab\platypus\flowables.py", line 93, in _drawOn
+    self.draw()#this is the bit you overload
+    ^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\reportlab\platypus\flowables.py", line 528, in draw
+    self.canv.drawImage(    self._img or self.filename,
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\reportlab\pdfgen\canvas.py", line 1005, in drawImage
+    imgObj = pdfdoc.PDFImageXObject(name, image, mask=mask)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\reportlab\pdfbase\pdfdoc.py", line 2111, in __init__
+    if not(ext in ('.jpg', '.jpeg') and self.loadImageFromJPEG(src)):
+                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\reportlab\pdfbase\pdfdoc.py", line 2153, in loadImageFromJPEG
+    self.streamContent = asciiBase85Encode(self.streamContent)
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\reportlab\lib\rl_accel.py", line 199, in _py_asciiBase85Encode
+    out(chr(c5+33))
+MemoryError
+2026-02-03 12:00:40,555 [ERROR] django.server: "GET /en/api/download_report?village_id=550 HTTP/1.1" 500 228303
+2026-02-03 12:14:15,086 [ERROR] django.request: Internal Server Error: /en/api/download_report
+Traceback (most recent call last):
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\views\generic\base.py", line 105, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\views.py", line 515, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\views.py", line 475, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\views.py", line 486, in raise_uncaught_exception
+    raise exc
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\views.py", line 512, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\decorators.py", line 50, in handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\assamcrv\assam_crv\vdmp_dashboard\views.py", line 673, in download_report
+    buffer = generate_pdf(village_id=village_id, village=village)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\assamcrv\assam_crv\vdmp_dashboard\pdf\main.py", line 213, in generate_pdf
+    doc.multiBuild(elements)
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\reportlab\platypus\doctemplate.py", line 1170, in multiBuild
+    self.build(tempStory, **buildKwds)
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\reportlab\platypus\doctemplate.py", line 1083, in build
+    self.handle_flowable(flowables)
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\reportlab\platypus\doctemplate.py", line 932, in handle_flowable
+    if frame.add(f, canv, trySplit=self.allowSplitting):
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\reportlab\platypus\frames.py", line 201, in _add
+    flowable.drawOn(canv, self._x + self._leftExtraIndent, y, _sW=aW-w)
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\reportlab\platypus\flowables.py", line 112, in drawOn
+    self._drawOn(canvas)
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\reportlab\platypus\flowables.py", line 93, in _drawOn
+    self.draw()#this is the bit you overload
+    ^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\reportlab\platypus\tables.py", line 2309, in draw
+    self._drawCell(cellval, cellstyle, (colpos, rowpos), (colwidth, rowheight))
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\reportlab\platypus\tables.py", line 2522, in _drawCell
+    v.drawOn(self.canv,x,y)
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\reportlab\platypus\flowables.py", line 112, in drawOn
+    self._drawOn(canvas)
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\reportlab\platypus\flowables.py", line 93, in _drawOn
+    self.draw()#this is the bit you overload
+    ^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\reportlab\platypus\flowables.py", line 528, in draw
+    self.canv.drawImage(    self._img or self.filename,
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\reportlab\pdfgen\canvas.py", line 1005, in drawImage
+    imgObj = pdfdoc.PDFImageXObject(name, image, mask=mask)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\reportlab\pdfbase\pdfdoc.py", line 2111, in __init__
+    if not(ext in ('.jpg', '.jpeg') and self.loadImageFromJPEG(src)):
+                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\reportlab\pdfbase\pdfdoc.py", line 2153, in loadImageFromJPEG
+    self.streamContent = asciiBase85Encode(self.streamContent)
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\reportlab\lib\rl_accel.py", line 195, in _py_asciiBase85Encode
+    out(chr(c1+33))
+MemoryError
+2026-02-03 12:14:15,124 [ERROR] django.server: "GET /en/api/download_report?village_id=550 HTTP/1.1" 500 228723
+2026-02-03 12:14:40,061 [ERROR] django.request: Internal Server Error: /en/api/download_report
+Traceback (most recent call last):
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\views\generic\base.py", line 105, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\views.py", line 515, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\views.py", line 475, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\views.py", line 486, in raise_uncaught_exception
+    raise exc
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\views.py", line 512, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\decorators.py", line 50, in handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\assamcrv\assam_crv\vdmp_dashboard\views.py", line 673, in download_report
+    buffer = generate_pdf(village_id=village_id, village=village)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\assamcrv\assam_crv\vdmp_dashboard\pdf\main.py", line 213, in generate_pdf
+    doc.multiBuild(elements)
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\reportlab\platypus\doctemplate.py", line 1170, in multiBuild
+    self.build(tempStory, **buildKwds)
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\reportlab\platypus\doctemplate.py", line 1083, in build
+    self.handle_flowable(flowables)
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\reportlab\platypus\doctemplate.py", line 932, in handle_flowable
+    if frame.add(f, canv, trySplit=self.allowSplitting):
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\reportlab\platypus\frames.py", line 201, in _add
+    flowable.drawOn(canv, self._x + self._leftExtraIndent, y, _sW=aW-w)
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\reportlab\platypus\flowables.py", line 112, in drawOn
+    self._drawOn(canvas)
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\reportlab\platypus\flowables.py", line 93, in _drawOn
+    self.draw()#this is the bit you overload
+    ^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\reportlab\platypus\tables.py", line 2309, in draw
+    self._drawCell(cellval, cellstyle, (colpos, rowpos), (colwidth, rowheight))
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\reportlab\platypus\tables.py", line 2522, in _drawCell
+    v.drawOn(self.canv,x,y)
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\reportlab\platypus\flowables.py", line 112, in drawOn
+    self._drawOn(canvas)
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\reportlab\platypus\flowables.py", line 93, in _drawOn
+    self.draw()#this is the bit you overload
+    ^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\reportlab\platypus\flowables.py", line 528, in draw
+    self.canv.drawImage(    self._img or self.filename,
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\reportlab\pdfgen\canvas.py", line 1005, in drawImage
+    imgObj = pdfdoc.PDFImageXObject(name, image, mask=mask)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\reportlab\pdfbase\pdfdoc.py", line 2111, in __init__
+    if not(ext in ('.jpg', '.jpeg') and self.loadImageFromJPEG(src)):
+                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\reportlab\pdfbase\pdfdoc.py", line 2153, in loadImageFromJPEG
+    self.streamContent = asciiBase85Encode(self.streamContent)
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\reportlab\lib\rl_accel.py", line 197, in _py_asciiBase85Encode
+    out(chr(c3+33))
+MemoryError
+2026-02-03 12:14:40,070 [ERROR] django.server: "GET /en/api/download_report?village_id=550 HTTP/1.1" 500 217893
+2026-02-03 12:40:14,939 [ERROR] django.request: Internal Server Error: /en/api/download_report
+Traceback (most recent call last):
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\views\generic\base.py", line 105, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\views.py", line 515, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\views.py", line 475, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\views.py", line 486, in raise_uncaught_exception
+    raise exc
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\views.py", line 512, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\decorators.py", line 50, in handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\assamcrv\assam_crv\vdmp_dashboard\views.py", line 673, in download_report
+    buffer = generate_pdf(village_id=village_id, village=village)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\assamcrv\assam_crv\vdmp_dashboard\pdf\main.py", line 200, in generate_pdf
+    village_summary(elements,village_id)
+  File "C:\assamcrv\assam_crv\vdmp_dashboard\pdf\village_summary.py", line 649, in village_summary
+    draw_Village_summery_tables(elements,table_sections,village_id)
+  File "C:\assamcrv\assam_crv\vdmp_dashboard\pdf\village_summary.py", line 701, in draw_Village_summery_tables
+    table_data = section["getter_function"](village_id)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\assamcrv\assam_crv\vdmp_dashboard\pdf\dummy_data.py", line 796, in getMitigationIntervention
+    [Paragraph('Resilient essential service (educational facilities)',bold_style), '-'],
+     ^^
+NameError: name 'Pr' is not defined
+2026-02-03 12:40:21,487 [ERROR] django.request: Internal Server Error: /en/api/download_report
+Traceback (most recent call last):
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\views\generic\base.py", line 105, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\views.py", line 515, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\views.py", line 475, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\views.py", line 486, in raise_uncaught_exception
+    raise exc
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\views.py", line 512, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\decorators.py", line 50, in handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\assamcrv\assam_crv\vdmp_dashboard\views.py", line 673, in download_report
+    buffer = generate_pdf(village_id=village_id, village=village)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\assamcrv\assam_crv\vdmp_dashboard\pdf\main.py", line 200, in generate_pdf
+    village_summary(elements,village_id)
+  File "C:\assamcrv\assam_crv\vdmp_dashboard\pdf\village_summary.py", line 649, in village_summary
+    draw_Village_summery_tables(elements,table_sections,village_id)
+  File "C:\assamcrv\assam_crv\vdmp_dashboard\pdf\village_summary.py", line 701, in draw_Village_summery_tables
+    table_data = section["getter_function"](village_id)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\assamcrv\assam_crv\vdmp_dashboard\pdf\dummy_data.py", line 796, in getMitigationIntervention
+    [Paragraph('Resilient essential service (educational facilities)',bold_style), '-'],
+     ^^
+NameError: name 'Pr' is not defined
+2026-02-03 12:40:21,791 [ERROR] django.request: Internal Server Error: /en/api/download_report
+Traceback (most recent call last):
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\views\generic\base.py", line 105, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\views.py", line 515, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\views.py", line 475, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\views.py", line 486, in raise_uncaught_exception
+    raise exc
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\views.py", line 512, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\decorators.py", line 50, in handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\assamcrv\assam_crv\vdmp_dashboard\views.py", line 673, in download_report
+    buffer = generate_pdf(village_id=village_id, village=village)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\assamcrv\assam_crv\vdmp_dashboard\pdf\main.py", line 200, in generate_pdf
+    village_summary(elements,village_id)
+  File "C:\assamcrv\assam_crv\vdmp_dashboard\pdf\village_summary.py", line 649, in village_summary
+    draw_Village_summery_tables(elements,table_sections,village_id)
+  File "C:\assamcrv\assam_crv\vdmp_dashboard\pdf\village_summary.py", line 701, in draw_Village_summery_tables
+    table_data = section["getter_function"](village_id)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\assamcrv\assam_crv\vdmp_dashboard\pdf\dummy_data.py", line 796, in getMitigationIntervention
+    [Paragraph('Resilient essential service (educational facilities)',bold_style), '-'],
+     ^^
+NameError: name 'Pr' is not defined
+2026-02-03 12:40:22,013 [ERROR] django.request: Internal Server Error: /en/api/download_report
+Traceback (most recent call last):
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\views\generic\base.py", line 105, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\views.py", line 515, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\views.py", line 475, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\views.py", line 486, in raise_uncaught_exception
+    raise exc
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\views.py", line 512, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\decorators.py", line 50, in handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\assamcrv\assam_crv\vdmp_dashboard\views.py", line 673, in download_report
+    buffer = generate_pdf(village_id=village_id, village=village)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\assamcrv\assam_crv\vdmp_dashboard\pdf\main.py", line 200, in generate_pdf
+    village_summary(elements,village_id)
+  File "C:\assamcrv\assam_crv\vdmp_dashboard\pdf\village_summary.py", line 649, in village_summary
+    draw_Village_summery_tables(elements,table_sections,village_id)
+  File "C:\assamcrv\assam_crv\vdmp_dashboard\pdf\village_summary.py", line 701, in draw_Village_summery_tables
+    table_data = section["getter_function"](village_id)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\assamcrv\assam_crv\vdmp_dashboard\pdf\dummy_data.py", line 796, in getMitigationIntervention
+    [Paragraph('Resilient essential service (educational facilities)',bold_style), '-'],
+     ^^
+NameError: name 'Pr' is not defined
+2026-02-03 12:40:26,511 [ERROR] django.request: Internal Server Error: /en/api/download_report
+Traceback (most recent call last):
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\django\views\generic\base.py", line 105, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\views.py", line 515, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\views.py", line 475, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\views.py", line 486, in raise_uncaught_exception
+    raise exc
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\views.py", line 512, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\krishna\miniconda3\envs\risk311\Lib\site-packages\rest_framework\decorators.py", line 50, in handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\assamcrv\assam_crv\vdmp_dashboard\views.py", line 673, in download_report
+    buffer = generate_pdf(village_id=village_id, village=village)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\assamcrv\assam_crv\vdmp_dashboard\pdf\main.py", line 200, in generate_pdf
+    village_summary(elements,village_id)
+  File "C:\assamcrv\assam_crv\vdmp_dashboard\pdf\village_summary.py", line 649, in village_summary
+    draw_Village_summery_tables(elements,table_sections,village_id)
+  File "C:\assamcrv\assam_crv\vdmp_dashboard\pdf\village_summary.py", line 701, in draw_Village_summery_tables
+    table_data = section["getter_function"](village_id)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\assamcrv\assam_crv\vdmp_dashboard\pdf\dummy_data.py", line 796, in getMitigationIntervention
+    [Paragraph('Resilient essential service (educational facilities)',bold_style), '-'],
+     ^^
+NameError: name 'Pr' is not defined
+2026-02-03 12:40:26,520 [ERROR] django.server: "GET /en/api/download_report?village_id=550 HTTP/1.1" 500 147886
