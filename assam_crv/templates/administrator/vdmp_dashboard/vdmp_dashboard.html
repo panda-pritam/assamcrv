@@ -56,32 +56,57 @@
                         <div class="card-body">
 
                             <div class="mb-3">
-                                <label for="dataType" class="form-label fw-semibold">{% trans "Type of Data" %}</label>
-                                <select class="form-select" id="dataType" name="data_type" required>
-                                    <option value="" selected disabled>{% trans "Choose Data Type" %}</option>
-                                    <option value="household">{% trans "Household" %}</option>
-                                    <option value="transformer">{% trans "Transformer" %}</option>
-                                    <option value="critical_facility">{% trans "Critical Facility" %}</option>
-                                    <option value="commercial">{% trans "Commercial" %}</option>
-                                    <option value="electric_poles">{% trans "Electric Poles" %}</option>
-                                    <option value="villagesOfAllTheDistricts">{% trans "Villages of all the Districts" %}</option>
-                                    <option value="VillageRoadInfo">{% trans "Villages road info" %}</option>
-                                    <option value="VillageRoadInfoErosion">{% trans "Village Road Erosion Info." %}</option>
-                                    <option value="bridge_survey">{% trans "Bridge Survey" %}</option>
-                                    <option value="risk_assesment">{% trans "Risk Assesment" %}</option>
-                                    <option value="pra_main">{% trans "PRA Main" %}</option>
-                                    <option value="pra_assets">{% trans "PRA Assets" %}</option>
-                                    <option value="pra_shelter">{% trans "PRA Shelter" %}</option>
-                                    <option value="fgd_wash_summary">{% trans "FGD WASH Summary" %}</option>
-                                    <option value="fgd_livelihood_summary">{% trans "FGD Livelihood Summary" %}</option>
-                                    <option value="line_department">{% trans "Line Department" %}</option>
+                                <label for="uploadCategory" class="form-label fw-semibold">{% trans "Category" %}</label>
+                                <select class="form-select" id="uploadCategory" name="upload_category"
+                                    data-catalog-url="{% url 'get_upload_data_catalog' %}" required>
+                                    <option value="" selected disabled>{% trans "Choose Category" %}</option>
                                 </select>
                             </div>
 
                             <div class="mb-3">
-                                <label for="fileInput" class="form-label fw-semibold">{% trans "Select File" %}</label>
-                                <input type="file" class="form-control" id="fileInput" accept=".csv,.xlsx,.xls"
-                                    required>
+                                <label for="dataType" class="form-label fw-semibold">{% trans "Type of Data" %}</label>
+                                <select class="form-select" id="dataType" name="data_type" required>
+                                    <option value="" selected disabled>{% trans "Choose Data Type" %}</option>
+                                </select>
+                            </div>
+                            <div id="uploadLocationFilters" class="row d-none">
+                                <div class="col-md-6 mb-3">
+                                    <label for="upload_district" class="form-label fw-bold">{% trans "District" %}</label>
+                                    <select id="upload_district" class="form-select drpdwn_slct">
+                                        <option value="" selected disabled>{% trans "Select District" %}</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="upload_circle" class="form-label fw-bold">{% trans "Circle" %}</label>
+                                    <select id="upload_circle" class="form-select drpdwn_slct">
+                                        <option value="" selected disabled>{% trans "Select Circle" %}</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="upload_gram_panchayat" class="form-label fw-bold">{% trans "Gram Panchayat" %}</label>
+                                    <select id="upload_gram_panchayat" class="form-select drpdwn_slct">
+                                        <option value="" selected disabled>{% trans "Select Gram Panchayat" %}</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="upload_village" class="form-label fw-bold">{% trans "Village" %}</label>
+                                    <select id="upload_village" class="form-select drpdwn_slct">
+                                        <option value="" selected disabled>{% trans "Select Village" %}</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="fileInput1" class="form-label fw-semibold">{% trans "Select File" %}</label>
+                                <div id="fileInputs">
+                                    <label for="fileInput1" class="form-label fw-semibold">{% trans "File 1" %}</label>
+                                    <input type="file" class="form-control mb-2" id="fileInput1" accept=".csv,.xlsx,.xls"
+                                        required>
+                                    <label for="fileInput2" class="form-label fw-semibold d-none">{% trans "File 2" %}</label>
+                                    <input type="file" class="form-control mb-2 d-none" id="fileInput2" accept=".csv,.xlsx,.xls">
+                                    <label for="fileInput3" class="form-label fw-semibold d-none">{% trans "File 3" %}</label>
+                                    <input type="file" class="form-control d-none" id="fileInput3" accept=".csv,.xlsx,.xls">
+                                </div>
                                 <div class="form-text">{% trans "Please upload only CSV or Excel files." %}</div>
                                 <div class="form-text text-muted">{% trans "Do not add records that already exist in the database." %}</div>
 
