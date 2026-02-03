@@ -448,3 +448,5 @@ LINE 1: ... "pra_boundary"."affarea_ha" AS "affarea_ha" FROM "pra_bound...
                                                              ^
 
 2026-02-03 11:26:52,674 [ERROR] django.server: "GET /en/api/dashboard_chart_data/ HTTP/1.1" 500 176285
+2026-02-03 14:22:22,933 [ERROR] django.request: Internal Server Error: /en/api/upload_data_vdmp
+2026-02-03 14:22:22,939 [ERROR] django.server: "POST /en/api/upload_data_vdmp HTTP/1.1" 500 110

@@ -32,6 +32,7 @@ import pandas as pd
 import posixpath
 from django.core.files.storage import default_storage
 from django.utils.text import slugify
+from field_images.models import FieldImage
 
 def vdmp_dashboard(request):
     """Render the VDMP dashboard page.
@@ -129,6 +130,27 @@ def save_upload_file(file_obj, data_type, type_name):
     base_dir = posixpath.join(*folder_parts)
     return default_storage.save(posixpath.join(base_dir, file_obj.name), file_obj)
 
+def resolve_photo_category(type_name):
+    choice_map = {}
+    field_choices = FieldImage._meta.get_field("category").choices
+    for value, label in field_choices:
+        choice_map[str(value).strip().lower()] = value
+        choice_map[str(label).strip().lower()] = value
+
+    candidates = []
+    if type_name:
+        candidates.append(type_name)
+        if "-" in type_name:
+            candidates.append(type_name.split("-")[-1])
+        if ":" in type_name:
+            candidates.append(type_name.split(":")[-1])
+
+    for candidate in candidates:
+        key = str(candidate).strip().lower()
+        if key in choice_map:
+            return choice_map[key]
+    return None
+
 def get_upload_rules(type_name):
     rows = Upload_data_vdmp.objects.filter(type_of_data=type_name).values("format", "number_of_files")
     if not rows:
@@ -205,12 +227,50 @@ def upload_data_vdmp(request):
                     "status": "error",
                     "error": "Image uploads are only supported for photo data types"
                 }, status=400)
-            saved_path = save_upload_file(file, data_type, type_name)
+            village_id = request.POST.get("village_id")
+            if not village_id:
+                return JsonResponse({
+                    "status": "error",
+                    "error": "Village is required for photo uploads"
+                }, status=400)
+            try:
+                village = tblVillage.objects.get(pk=village_id)
+            except tblVillage.DoesNotExist:
+                return JsonResponse({
+                    "status": "error",
+                    "error": "Invalid village for photo upload"
+                }, status=400)
+
+            photo_category = resolve_photo_category(type_name)
+            if not photo_category:
+                categories = [label for _, label in FieldImage._meta.get_field("category").choices]
+                return JsonResponse({
+                    "status": "error",
+                    "error": "Unsupported photo category for this type",
+                    "allowed_categories": categories
+                }, status=400)
+
+            uploaded_by = request.user if getattr(request.user, "is_authenticated", False) else None
+            try:
+                image = FieldImage.objects.create(
+                    village=village,
+                    category=photo_category,
+                    image=file,
+                    name=type_name,
+                    uploaded_by=uploaded_by
+                )
+            except ValueError as exc:
+                return JsonResponse({
+                    "status": "error",
+                    "error": str(exc)
+                }, status=400)
+
             return JsonResponse({
                 "status": "success",
                 "records_created": 1,
                 "records_updated": 0,
-                "file_path": saved_path
+                "file_path": image.image.name,
+                "field_image_id": image.id
             })
 
         try:

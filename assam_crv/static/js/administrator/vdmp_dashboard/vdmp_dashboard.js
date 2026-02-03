@@ -328,6 +328,12 @@ document.addEventListener('DOMContentLoaded', function () {
                 formData.append("type_name", rawType);
                 formData.append("total_files", expectedCount);
                 formData.append("file_index", fileIndex);
+                const uploadCategory = document.getElementById("uploadCategory")?.value || "";
+                formData.append("upload_category", uploadCategory);
+                const villageId = document.getElementById("upload_village")?.value || "";
+                if (villageId) {
+                    formData.append("village_id", villageId);
+                }
 
                 const response = await fetch(apiEndpoint, {
                     method: "POST",
