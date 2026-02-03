@@ -184,5 +184,5 @@ bold_12 = ParagraphStyle(
     'Bold12',
     parent=styles['Normal'],
     fontName='Helvetica-Bold',
-    fontSize=10
+    fontSize=9
 )
