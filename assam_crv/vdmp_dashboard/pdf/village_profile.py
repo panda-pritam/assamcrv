@@ -1621,7 +1621,7 @@ def draw_village_profile(elements,village_id):
         'earthquake_hazard',
         'essential_facilities',
         'electrical_infrastructure'
-    ).first()
+    ).first() or {}
 
 
     styles = getSampleStyleSheet()
@@ -1960,7 +1960,7 @@ def draw_village_profile(elements,village_id):
     #     # os.unlink(image_path)
 
     #img from the model
-    img_field = map_file_fields['distribution_of_building']
+    img_field = map_file_fields.get('distribution_of_building')
     if img_field:
         # Get the full file path (works for local storage)
         img_path = f"{MEDIA_ROOT}/{img_field}"
@@ -2160,7 +2160,7 @@ def draw_village_profile(elements,village_id):
    
     image_height = page_height * 0.75
     
-    img_field = map_file_fields['essential_facilities']
+    img_field = map_file_fields.get('essential_facilities')
     if img_field:
         # Get the full file path (works for local storage)
         img_path = f"{MEDIA_ROOT}/{img_field}"
@@ -2199,7 +2199,7 @@ def draw_village_profile(elements,village_id):
     
 
     #img from the model
-    img_field = map_file_fields['road_infrastructure']
+    img_field = map_file_fields.get('road_infrastructure')
     if img_field:
         # Get the full file path (works for local storage)
         img_path = f"{MEDIA_ROOT}/{img_field}"
@@ -2278,7 +2278,7 @@ def draw_village_profile(elements,village_id):
     image_height = page_height * 0.64
 
     #img from model if not available get from geoserver
-    img_field = map_file_fields['electrical_infrastructure'] if map_file_fields else None
+    img_field = map_file_fields.get('electrical_infrastructure')
     if img_field:
         # Get the full file path (works for local storage)
         img_path = f"{MEDIA_ROOT}/{img_field}"
@@ -2336,7 +2336,7 @@ def draw_village_profile(elements,village_id):
     #img from the model
     image_height = page_height * 0.75
 
-    img_field = map_file_fields['landuse']
+    img_field = map_file_fields.get('landuse')
     if img_field:
         # Get the full file path (works for local storage)
         img_path = f"{MEDIA_ROOT}/{img_field}"
