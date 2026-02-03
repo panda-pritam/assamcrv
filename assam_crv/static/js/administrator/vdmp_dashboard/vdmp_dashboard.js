@@ -21,7 +21,8 @@ const allowedUploadTypes = new Set([
     "pra_shelter",
     "fgd_wash_summary",
     "fgd_livelihood_summary",
-    "line_department"
+    "line_department",
+    "photos"
 ]);
 
 const uploadTypeMap = {
@@ -61,10 +62,17 @@ function resolveUploadDataType(value) {
     if (allowedUploadTypes.has(value)) {
         return value;
     }
+    const selectedCategory = (document.getElementById("uploadCategory")?.value || "").toLowerCase();
+    if (selectedCategory === "photos") {
+        return "photos";
+    }
     const normalized = normalizeTypeValue(value);
     const mapped = uploadTypeMap[normalized];
     if (mapped && allowedUploadTypes.has(mapped)) {
         return mapped;
+    }
+    if ((uploadTypeToCategory[value] || "").toLowerCase() === "photos") {
+        return "photos";
     }
     return null;
 }
@@ -96,11 +104,17 @@ function updateUploadTypesForCategory() {
     const category = document.getElementById("uploadCategory")?.value;
     if (!category) {
         populateTypeSelect(uploadCatalog.types);
+        setFileInputAccepts(".csv,.xlsx,.xls");
         setFileInputCount(1);
         updateUploadLocationFilters();
         return;
     }
     populateTypeSelect(uploadCatalog.mapping[category] || []);
+    if ((category || "").toLowerCase() === "photos") {
+        setFileInputAccepts("image/*");
+    } else {
+        setFileInputAccepts(".csv,.xlsx,.xls");
+    }
     setFileInputCount(1);
     updateUploadLocationFilters();
 }
@@ -123,6 +137,13 @@ function getExpectedFileCount(typeName) {
         return 1;
     }
     return Math.max(1, Math.min(3, parsed));
+}
+
+function setFileInputAccepts(acceptValue) {
+    const inputs = getFileInputElements();
+    inputs.forEach((input) => {
+        input.setAttribute("accept", acceptValue);
+    });
 }
 
 function setFileInputCount(count) {
@@ -151,6 +172,8 @@ function setFileInputCount(count) {
 function updateFileInputsForType() {
     const typeSelect = document.getElementById("dataType");
     if (!typeSelect) return;
+    const isPhotoType = (uploadTypeToCategory[typeSelect.value] || "").toLowerCase() === "photos";
+    setFileInputAccepts(isPhotoType ? "image/*" : ".csv,.xlsx,.xls");
     const count = getExpectedFileCount(typeSelect.value);
     setFileInputCount(count);
 }

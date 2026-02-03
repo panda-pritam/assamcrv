@@ -29,6 +29,9 @@ import re
 from django.db import models
 import os
 import pandas as pd
+import posixpath
+from django.core.files.storage import default_storage
+from django.utils.text import slugify
 
 def vdmp_dashboard(request):
     """Render the VDMP dashboard page.
@@ -102,8 +105,11 @@ def parse_allowed_extensions(format_value):
         return set()
     value = str(format_value).lower()
     allowed = set()
+    image_exts = {".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp", ".tif", ".tiff"}
     if "csv" in value or "excel" in value:
         allowed.update({".csv", ".xls", ".xlsx"})
+    if "image" in value or "photo" in value or "jpg" in value or "jpeg" in value or "png" in value or "gif" in value or "bmp" in value or "webp" in value or "tif" in value:
+        allowed.update(image_exts)
     for token in re.split(r"[\\s,;/]+", value):
         token = token.strip()
         if not token:
@@ -113,6 +119,15 @@ def parse_allowed_extensions(format_value):
     for token in re.findall(r"\\.[a-z0-9]+", value):
         allowed.add(token)
     return allowed
+
+def save_upload_file(file_obj, data_type, type_name):
+    folder_parts = ["vdmp_uploads"]
+    if data_type:
+        folder_parts.append(slugify(data_type))
+    if type_name:
+        folder_parts.append(slugify(type_name))
+    base_dir = posixpath.join(*folder_parts)
+    return default_storage.save(posixpath.join(base_dir, file_obj.name), file_obj)
 
 def get_upload_rules(type_name):
     rows = Upload_data_vdmp.objects.filter(type_of_data=type_name).values("format", "number_of_files")
@@ -145,15 +160,25 @@ def upload_data_vdmp(request):
             print("No file uploaded")
             return JsonResponse({"status": "error", "error": "No file uploaded"}, status=400)
         if data_type not in ["household", "transformer", "critical_facility", "commercial", "electric_poles", "villagesOfAllTheDistricts", 
-                             "VillageRoadInfo","VillageRoadInfoErosion", "bridge_survey", "risk_assesment", "pra_main", "pra_assets", "pra_shelter", "fgd_wash_summary", "fgd_livelihood_summary"]:
+                             "VillageRoadInfo","VillageRoadInfoErosion", "bridge_survey", "risk_assesment", "pra_main", "pra_assets", "pra_shelter", "fgd_wash_summary", "fgd_livelihood_summary", "photos"]:
             print("Invalid data type")
             return JsonResponse({"status": "error", "error": "Invalid data_type"}, status=400)
 
         if type_name:
             rules = get_upload_rules(type_name)
-            if not rules:
+            if not rules and data_type == "photos":
+                if total_files:
+                    try:
+                        expected_files = int(total_files)
+                    except ValueError:
+                        return JsonResponse({"status": "error", "error": "Invalid total_files"}, status=400)
+                else:
+                    expected_files = 1
+                allowed_exts = {".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp", ".tif", ".tiff"}
+            elif not rules:
                 return JsonResponse({"status": "error", "error": "Invalid type_name"}, status=400)
-            expected_files, allowed_exts = rules
+            else:
+                expected_files, allowed_exts = rules
             if total_files:
                 try:
                     total_files_int = int(total_files)
@@ -164,13 +189,29 @@ def upload_data_vdmp(request):
                         "status": "error",
                         "error": f"Expected {expected_files} file(s) for this type"
                     }, status=400)
-            if allowed_exts:
-                ext = os.path.splitext(file.name)[1].lower()
-                if ext not in allowed_exts:
-                    return JsonResponse({
-                        "status": "error",
-                        "error": f"Unsupported file format. Allowed: {', '.join(sorted(allowed_exts))}"
-                    }, status=400)
+            ext = os.path.splitext(file.name)[1].lower()
+            if allowed_exts and ext not in allowed_exts:
+                return JsonResponse({
+                    "status": "error",
+                    "error": f"Unsupported file format. Allowed: {', '.join(sorted(allowed_exts))}"
+                }, status=400)
+        else:
+            ext = os.path.splitext(file.name)[1].lower()
+
+        image_exts = {".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp", ".tif", ".tiff"}
+        if ext in image_exts:
+            if data_type != "photos":
+                return JsonResponse({
+                    "status": "error",
+                    "error": "Image uploads are only supported for photo data types"
+                }, status=400)
+            saved_path = save_upload_file(file, data_type, type_name)
+            return JsonResponse({
+                "status": "success",
+                "records_created": 1,
+                "records_updated": 0,
+                "file_path": saved_path
+            })
 
         try:
             read_start = time.time()
