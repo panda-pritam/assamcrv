@@ -366,9 +366,13 @@ document.addEventListener('DOMContentLoaded', function () {
                         cancelButtonText: "Cancel"
                     });
                     if (duplicateResult.isConfirmed) {
-                        await deleteAndReupload(dataType, data.existing_villages, selectedFiles, apiEndpoint, rawType, expectedCount);
+                        await deleteAndReupload(dataType, data.existing_villages, selectedFiles, apiEndpoint, rawType, expectedCount, button, originalText);
+                        return;
+                    } else {
+                        button.innerHTML = originalText;
+                        button.disabled = false;
+                        return;
                     }
-                    return;
                 }
 
                 const errorCount = data.errors ? data.errors.length : 0;
@@ -383,19 +387,18 @@ document.addEventListener('DOMContentLoaded', function () {
                 return;
             }
 
-            const totalProcessed = totalCreated + totalUpdated + totalRejected;
+            // Show success message after all files processed
             Swal.fire({
-                title: "Upload Summary",
+                title: "Upload Successful",
                 html: `<div style="text-align: left;">
-                        <p><strong>Total Processed:</strong> ${totalProcessed}</p>
                         <p><strong>Records Created:</strong> ${totalCreated}</p>
                         <p><strong>Records Updated:</strong> ${totalUpdated}</p>
                         <p><strong>Records Rejected:</strong> ${totalRejected}</p>
-                        ${totalRejected > 0 ? '<p><small>Rejected records have invalid village codes or errors</small></p>' : ''}
                        </div>`,
                 icon: totalRejected > 0 ? "warning" : "success"
             });
-
+            
+            // Clear form inputs
             getFileInputElements().forEach((input) => {
                 input.value = '';
             });
@@ -511,19 +514,35 @@ document.getElementById("deletedata").addEventListener("click", function (e) {
             })
             .finally(() => {
                 // Restore button
-                button.innerHTML = originalText;
-                button.disabled = false;
+                // button.innerHTML = originalText;
+                // button.disabled = false;
+
+                // button.innerHTML = 'Upload';
+                //  button.disabled = false;
             });
         }
     });
 });
 
 // Function to delete existing data and re-upload
-function deleteAndReupload(dataType, villagesCodes, files, apiEndpoint, typeName, totalFiles) {
-    const button = document.getElementById("uploadnewdata");
-    const originalText = button.innerHTML;
-    button.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Deleting & Re-uploading...';
+async function deleteAndReupload(
+    dataType,
+    villagesCodes,
+    files,
+    apiEndpoint,
+    typeName,
+    totalFiles,
+    button,
+    originalText
+) {
+    console.log("-------> ", button);
+
+    button.innerHTML =
+        '<span class="spinner-border spinner-border-sm me-2"></span>Deleting & Re-uploading...';
     button.disabled = true;
+
+    // ✅ FORCE DOM REPAINT
+    await new Promise(resolve => setTimeout(resolve, 0));
 
     const handleError = (error) => {
         Swal.fire({
@@ -531,26 +550,23 @@ function deleteAndReupload(dataType, villagesCodes, files, apiEndpoint, typeName
             text: error.message || "An error occurred during delete and re-upload",
             icon: "error"
         });
-    };
-
-    const finish = () => {
         button.innerHTML = originalText;
         button.disabled = false;
     };
 
-    fetch("/en/api/delete_village_data", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            "X-CSRFToken": getCSRFToken(),
-        },
-        body: JSON.stringify({
-            data_type: dataType,
-            village_codes: villagesCodes
-        })
-    })
-    .then((response) => response.json())
-    .then(async (deleteResponse) => {
+    try {
+        const deleteResponse = await fetch("/en/api/delete_village_data", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": getCSRFToken(),
+            },
+            body: JSON.stringify({
+                data_type: dataType,
+                village_codes: villagesCodes
+            })
+        }).then(res => res.json());
+
         if (deleteResponse.status !== "success") {
             throw new Error(deleteResponse.error || "Delete failed");
         }
@@ -561,13 +577,13 @@ function deleteAndReupload(dataType, villagesCodes, files, apiEndpoint, typeName
 
         for (let index = 0; index < files.length; index++) {
             const file = files[index];
-            const fileIndex = index + 1;
             const formData = new FormData();
+
             formData.append("file", file);
             formData.append("data_type", dataType);
             formData.append("type_name", typeName);
             formData.append("total_files", totalFiles);
-            formData.append("file_index", fileIndex);
+            formData.append("file_index", index + 1);
 
             const uploadResponse = await fetch(apiEndpoint, {
                 method: "POST",
@@ -575,7 +591,7 @@ function deleteAndReupload(dataType, villagesCodes, files, apiEndpoint, typeName
                     "X-CSRFToken": getCSRFToken(),
                 },
                 body: formData
-            }).then((response) => response.json());
+            }).then(res => res.json());
 
             if (uploadResponse.status !== "success") {
                 throw new Error(uploadResponse.error || "Re-upload failed");
@@ -583,29 +599,26 @@ function deleteAndReupload(dataType, villagesCodes, files, apiEndpoint, typeName
 
             totalCreated += uploadResponse.records_created || 0;
             totalUpdated += uploadResponse.records_updated || 0;
-            totalRejected += uploadResponse.errors ? uploadResponse.errors.length : 0;
+            totalRejected += uploadResponse.errors?.length || 0;
         }
 
         Swal.fire({
             title: "Re-upload Successful",
-            html: `<div style="text-align: left;">
+            html: `
+                <div style="text-align:left">
                     <p><strong>Records Created:</strong> ${totalCreated}</p>
                     <p><strong>Records Updated:</strong> ${totalUpdated}</p>
                     <p><strong>Records Rejected:</strong> ${totalRejected}</p>
-                   </div>`,
+                </div>
+            `,
             icon: totalRejected > 0 ? "warning" : "success"
         });
-        getFileInputElements().forEach((input) => {
-            input.value = '';
-        });
-        document.getElementById("dataType").value = '';
-        if (document.getElementById("uploadCategory")) {
-            document.getElementById("uploadCategory").value = '';
-            updateUploadTypesForCategory();
-        }
-    })
-    .catch(handleError)
-    .finally(finish);
+
+    } catch (error) {
+        handleError(error);
+        return;
+    }
+
+    button.innerHTML = originalText;
+    button.disabled = false;
 }
-
-
