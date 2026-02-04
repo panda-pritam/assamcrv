@@ -3,7 +3,6 @@ env
 /env
 /.env
 venv/
-media/
 
 *.pyc
 
@@ -28,4 +27,7 @@ __pycache__/
 **/*.pyc
 **/*.pyo
 **/*.pyd
+media/
+assam_crv/media/
+
 
