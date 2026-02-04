@@ -19,6 +19,7 @@ from .dummy_data import getFacilityAccessData
 from vdmp_dashboard.models import HouseholdSurvey,Critical_Facility,ElectricPole,Transformer
 
 from django.db.models import Sum, Count
+from django.db.models import Q
 
 import requests
 from collections import defaultdict
@@ -30,7 +31,7 @@ from django.db.models.functions import Lower, Trim
 from vdmp_dashboard.models import VDMP_Maps_Data
 
 from django.db.models import Sum, IntegerField, FloatField
-from django.db.models.functions import Cast, Coalesce
+from django.db.models.functions import Cast, Coalesce, Replace
 from assam_crv.settings import MEDIA_ROOT
 
 styles = getSampleStyleSheet()
@@ -64,31 +65,75 @@ def getPowerInfrastructureData_Total(village_id):
 
 
 def getVillageLocationDetails(village_id):
+    from django.db import connection
+    
     try:
-        village_data = VillageListOfAllTheDistricts.objects.select_related('village__gram_panchayat__circle__district').get(village=village_id)
+        # Get basic village data from tblVillage
+        village = tblVillage.objects.select_related(
+            'gram_panchayat__circle__district'
+        ).get(id=village_id)
+        
+        village_name = village.name or "N/A"
+        circle_name = village.gram_panchayat.circle.name if village.gram_panchayat and village.gram_panchayat.circle else "N/A"
+        district_name = village.gram_panchayat.circle.district.name if village.gram_panchayat and village.gram_panchayat.circle and village.gram_panchayat.circle.district else "N/A"
+        village_code = village.code
+        
+        # Try to get additional data from village_boundary table
+        block_name = "N/A"
+        distance_hq = "N/A"
+        total_area = "N/A"
+        avg_elevation = "N/A"
+        topography = "N/A"
+        
+        try:
+            with connection.cursor() as cursor:
+                # Check if table exists
+                cursor.execute("""
+                    SELECT EXISTS (
+                        SELECT FROM information_schema.tables 
+                        WHERE table_schema = 'public' 
+                        AND table_name = 'village_boundary'
+                    )
+                """)
+                
+                if cursor.fetchone()[0]:
+                    cursor.execute("""
+                        SELECT block_name, hq_distckm, area_sqkm, avg_elev_m, topography
+                        FROM public.village_boundary
+                        WHERE vill_id = %s
+                    """, [village_code])
+                    
+                    row = cursor.fetchone()
+                    if row:
+                        block_name = row[0] or "N/A"
+                        distance_hq = str(row[1]) if row[1] else "N/A"
+                        total_area = str(row[2]) if row[2] else "N/A"
+                        avg_elevation = str(row[3]) if row[3] else "N/A"
+                        topography = row[4] or "N/A"
+        except Exception:
+            pass  # Keep default N/A values
+        
         return [
-          
-            [Paragraph("Village", bold_style), Paragraph(village_data.village.name or "N/A", normal_style)],
-            [Paragraph("Block", bold_style), Paragraph(village_data.block_name or "N/A", normal_style)],
-            # [Paragraph("Revenue Circle", bold_style), Paragraph(village_data.revenue_circle or "N/A", normal_style)],
-            [Paragraph("Circle", bold_style), Paragraph(village_data.village.gram_panchayat.circle.name or "N/A", normal_style)],
-            [Paragraph("District", bold_style), Paragraph(village_data.village.gram_panchayat.circle.district.name or "N/A", normal_style)],
-            # [Paragraph("District Code", bold_style), Paragraph(village_data.district_code or "N/A", normal_style)],
-            # [Paragraph("Village Code", bold_style), Paragraph(village_data.village_code or "N/A", normal_style)],
-            [Paragraph("Distance from Headquarter (km)", bold_style), Paragraph(str(village_data.distance_from_headquarter) if village_data.distance_from_headquarter else "N/A", normal_style)],
-            [Paragraph("Total Area (sq km)", bold_style), Paragraph(str(village_data.total_area) if village_data.total_area else "N/A", normal_style)],
-            [Paragraph("Average Elevation (m)", bold_style), Paragraph(str(village_data.average_elevation) if village_data.average_elevation else "N/A", normal_style)],
-            [Paragraph("Topography", bold_style), Paragraph(village_data.topography or "N/A", normal_style)],
-            [Paragraph("State", bold_style), Paragraph("Assam", normal_style)]
+            [Paragraph("Village", bold_style), Paragraph(village_name, normal_style)],
+            [Paragraph("Block", bold_style), Paragraph(block_name, normal_style)],
+            [Paragraph("Circle", bold_style), Paragraph(circle_name, normal_style)],
+            [Paragraph("District", bold_style), Paragraph(district_name, normal_style)],
+            [Paragraph("Distance from Headquarter (km)", bold_style), Paragraph(distance_hq, normal_style)],
+            [Paragraph("Total Area (sq km)", bold_style), Paragraph(total_area, normal_style)],
+            [Paragraph("Average Elevation (m)", bold_style), Paragraph(avg_elevation, normal_style)],
+            [Paragraph("Topography", bold_style), Paragraph(topography, normal_style)],
         ]
-    except VillageListOfAllTheDistricts.DoesNotExist:
+        
+    except tblVillage.DoesNotExist:
         return [
-          
-            [Paragraph("Village Name", bold_style), Paragraph("N/A", normal_style)],
+            [Paragraph("Village", bold_style), Paragraph("N/A", normal_style)],
             [Paragraph("Block", bold_style), Paragraph("N/A", normal_style)],
-            [Paragraph("Revenue Circle", bold_style), Paragraph("N/A", normal_style)],
+            [Paragraph("Circle", bold_style), Paragraph("N/A", normal_style)],
             [Paragraph("District", bold_style), Paragraph("N/A", normal_style)],
-            [Paragraph("State", bold_style), Paragraph("Assam", normal_style)]
+            [Paragraph("Distance from Headquarter (km)", bold_style), Paragraph("N/A", normal_style)],
+            [Paragraph("Total Area (sq km)", bold_style), Paragraph("N/A", normal_style)],
+            [Paragraph("Average Elevation (m)", bold_style), Paragraph("N/A", normal_style)],
+            [Paragraph("Topography", bold_style), Paragraph("N/A", normal_style)],
         ]
 
 
@@ -161,6 +206,27 @@ def getVillageDemographic(village_id):
             ["6","Average Family Size", "N/A"],
             ["7","Male-Female Ratio", "N/A"]
         ]
+    
+def map_economic_status(economic):
+    if not economic:
+        return None
+
+    eco = str(economic).strip().lower()
+
+    ECONOMIC_MAP = {
+        'aay': ['aay', 'antyodaya'],
+        'apl': ['apl', 'above poverty'],
+        'ay':  ['ay', 'annapurna'],
+        'bpl': ['bpl', 'below poverty'],
+        'phh': ['phh', 'priority'],
+    }
+
+    for key, keywords in ECONOMIC_MAP.items():
+        if any(word in eco for word in keywords):
+            return key.upper()
+
+    return None
+
 
 def getSocialEconomicStatusData(village_id):
     try:
@@ -171,7 +237,7 @@ def getSocialEconomicStatusData(village_id):
             'Differently Abled': {'AAY': 0, 'APL': 0, 'AY': 0, 'BPL': 0, 'PHH': 0},
             'Married Male': {'AAY': 0, 'APL': 0, 'AY': 0, 'BPL': 0, 'PHH': 0},
             'Single Man': {'AAY': 0, 'APL': 0, 'AY': 0, 'BPL': 0, 'PHH': 0},
-            'Single Women': {'AAY': 0, 'APL': 0, 'AY': 0, 'BPL': 0, 'PHH': 0},
+            'Single Woman': {'AAY': 0, 'APL': 0, 'AY': 0, 'BPL': 0, 'PHH': 0},
             'Widow': {'AAY': 0, 'APL': 0, 'AY': 0, 'BPL': 0, 'PHH': 0}
         }
         
@@ -202,17 +268,10 @@ def getSocialEconomicStatusData(village_id):
 
             
             # Map economic status - check for both abbreviations and full forms
-            economic_key = None
-            if economic.upper() == 'AAY' or 'antyodaya' in economic.lower():
-                economic_key = 'AAY'
-            elif economic.upper() == 'APL' or 'above poverty line' in economic.lower():
-                economic_key = 'APL'
-            elif economic.upper() == 'AY' or 'annapurna yojna' in economic.lower():
-                economic_key = 'AY'
-            elif economic.upper() == 'BPL' or 'below poverty line' in economic.lower():
-                economic_key = 'BPL'
-            elif economic.upper() == 'PHH' or 'priority household' in economic.lower():
-                economic_key = 'PHH'
+            economic_key = map_economic_status(economic)
+
+            if economic_key:
+                data[social_key][economic_key] += 1
             
             if economic_key:
                 data[social_key][economic_key] += 1
@@ -291,40 +350,50 @@ def getSocialEconomicStatusData(village_id):
 
 def getIncomeGroupData(village_id):
     try:
-        households = HouseholdSurvey.objects.select_related('village').filter(village_id=village_id)
-        
-        # Count households by income class
-        upto_50k = households.filter(income_class='Upto 50K').count()
-        upto_150k = households.filter(income_class='Upto 100K').count()
-        upto_250k = households.filter(income_class='Upto 250K').count()
-        above_250k = households.filter(income_class='>250K').count()
-        
+        households = HouseholdSurvey.objects.filter(village_id=village_id)
+
+        # 🔹 Clean & convert income string → integer
+        households = households.annotate(
+            income_clean=Replace(
+                Replace('approximate_income_earned_every_year_inr', ',', ''),
+                ' ', ''
+            )
+        ).annotate(
+            income_amt=Cast('income_clean', IntegerField())
+        )
+
+        # 🔹 Classification
+        upto_50k = households.filter(income_amt__lte=50000).count()
+        upto_150k = households.filter(income_amt__gt=50000, income_amt__lte=150000).count()
+        upto_250k = households.filter(income_amt__gt=150000, income_amt__lte=250000).count()
+        above_250k = households.filter(income_amt__gt=250000).count()
+
         total = upto_50k + upto_150k + upto_250k + above_250k
-        
-        # Calculate percentages
-        upto_50k_pct = round(upto_50k/total*100, 1) if total > 0 else 0
-        upto_150k_pct = round(upto_150k/total*100, 1) if total > 0 else 0
-        upto_250k_pct = round(upto_250k/total*100, 1) if total > 0 else 0
-        above_250k_pct = round(above_250k/total*100, 1) if total > 0 else 0
-        
-        # Calculate low income dominance (first 2 rows)
-        low_income_percent = (upto_50k_pct + upto_150k_pct)
-        
+
+        def pct(val):
+            return f"{round(val / total * 100, 1)}%" if total > 0 else "0%"
+
+        low_income_percent = (
+            (upto_50k + upto_150k) / total * 100
+        ) if total > 0 else 0
+
         stats = {
-            'low_income_percent': low_income_percent
+            "low_income_percent": round(low_income_percent, 1)
         }
-        
+
         table_data = [
             ["Sr. No.", "Income Group", "No. of Household", "Percentage"],
-            ["1", "Upto 50,000", str(upto_50k), f"{upto_50k_pct}%"],
-            ["2", "Upto 1,50,000", str(upto_150k), f"{upto_150k_pct}%"],
-            ["3", "Upto 2,50,000", str(upto_250k), f"{upto_250k_pct}%"],
-            ["4", "> 2,50,000", str(above_250k), f"{above_250k_pct}%"],
+            ["1", "Upto 50,000", str(upto_50k), pct(upto_50k)],
+            ["2", "Upto 1,50,000", str(upto_150k), pct(upto_150k)],
+            ["3", "Upto 2,50,000", str(upto_250k), pct(upto_250k)],
+            ["4", "> 2,50,000", str(above_250k), pct(above_250k)],
             ["5", "Total", str(total), "100%"]
         ]
-        
+
         return table_data, stats
-    except Exception:
+
+    except Exception as e:
+        print("Income classification error:", e)
         return [
             ["Sr. No.", "Income Group", "No. of Household", "Percentage"],
             ["1", "Upto 50,000", "N/A", "N/A"],
@@ -332,99 +401,113 @@ def getIncomeGroupData(village_id):
             ["3", "Upto 2,50,000", "N/A", "N/A"],
             ["4", "> 2,50,000", "N/A", "N/A"],
             ["5", "Total", "N/A", "N/A"]
-        ], {'low_income_percent': 0}
+        ], {"low_income_percent": 0}
+
 
 def getAgricultureLandHoldingData(village_id):
     try:
-        households = HouseholdSurvey.objects.select_related('village').filter(village_id=village_id)
-        
-        # Count leased land by agriculture land class
-        leased_under_05 = households.filter(
-            own_agriculture_land__iexact='leased',
-            agrculture_land_class__iexact='lessthan 0.5 bigha'
-        ).count()
+        households = HouseholdSurvey.objects.filter(village_id=village_id)
 
-        leased_05_15 = households.filter(
-            own_agriculture_land__iexact='leased',
-            agrculture_land_class__iexact='upto 1.5 bigha'
-        ).count()
+        # Buckets
+        leased = {'u05': 0, '0515': 0, '1525': 0, 'a25': 0}
+        owned  = {'u05': 0, '0515': 0, '1525': 0, 'a25': 0}
+        no_land = 0
 
-        leased_15_25 = households.filter(
-            own_agriculture_land__iexact='leased',
-            agrculture_land_class__iexact='upto 2.5 bigha'
-        ).count()
+        # ---------------------------
+        # Helper: classify area
+        # ---------------------------
+        def get_bucket(area):
+            if area < 0.5:
+                return 'u05'
+            elif 0.5 <= area <= 1.5:
+                return '0515'
+            elif 1.5 < area <= 2.5:
+                return '1525'
+            else:
+                return 'a25'
 
-        leased_above_25 = households.filter(
-            own_agriculture_land__iexact='leased',
-            agrculture_land_class__iexact='morethan 2.5 bigha'
-        ).count()
+        # ---------------------------
+        # Main loop
+        # ---------------------------
+        for hh in households:
+            ownership = (hh.own_agriculture_land or '').strip().lower()
+            area_raw = hh.area_of_agriculture_land_owned_bigha
 
-        
-        # Count owned land by agriculture land class
-        owned_under_05 = households.filter(
-            own_agriculture_land__iexact='yes',
-            agrculture_land_class__iexact='lessthan 0.5 bigha'
-        ).count()
+            # NO LAND / UNKNOWN
+            if ownership in ('no', 'unknown', ''):
+                no_land += 1
+                continue
 
-        owned_05_15 = households.filter(
-            own_agriculture_land__iexact='yes',
-            agrculture_land_class__iexact='upto 1.5 bigha'
-        ).count()
+            # Convert area safely
+            try:
+                area = float(area_raw)
+            except (TypeError, ValueError):
+                no_land += 1
+                continue
 
-        owned_15_25 = households.filter(
-            own_agriculture_land__iexact='yes',
-            agrculture_land_class__iexact='upto 2.5 bigha'
-        ).count()
+            bucket = get_bucket(area)
 
-        owned_above_25 = households.filter(
-            own_agriculture_land__iexact='yes',
-            agrculture_land_class__iexact='morethan 2.5 bigha'
-        ).count()
+            if ownership == 'leased':
+                leased[bucket] += 1
+            elif ownership in ('own', 'yes'):
+                owned[bucket] += 1
+            else:
+                no_land += 1
 
-        
-        # Count no land households
-        no_land = households.filter(agrculture_land_class__isnull=True).count() + households.filter(agrculture_land_class='').count() + households.filter(own_agriculture_land__iexact='no').count()
-        
-        # Calculate totals
-        total_leased = leased_under_05 + leased_05_15 + leased_15_25 + leased_above_25
-        total_owned = owned_under_05 + owned_05_15 + owned_15_25 + owned_above_25
+        # ---------------------------
+        # Totals
+        # ---------------------------
+        total_leased = sum(leased.values())
+        total_owned = sum(owned.values())
         total_all = total_leased + total_owned + no_land
-        
-        # Calculate percentages for leased
-        leased_under_05_pct = f"{round(leased_under_05/total_leased*100)}%" if total_leased > 0 else "0%"
-        leased_05_15_pct = f"{round(leased_05_15/total_leased*100)}%" if total_leased > 0 else "0%"
-        leased_15_25_pct = f"{round(leased_15_25/total_leased*100)}%" if total_leased > 0 else "0%"
-        leased_above_25_pct = f"{round(leased_above_25/total_leased*100)}%" if total_leased > 0 else "0%"
-        leased_total_pct = "100%" if total_leased > 0 else "0%"
-        
-        # Calculate percentages for owned
-        owned_under_05_pct = f"{round(owned_under_05/total_owned*100)}%" if total_owned > 0 else "0%"
-        owned_05_15_pct = f"{round(owned_05_15/total_owned*100)}%" if total_owned > 0 else "0%"
-        owned_15_25_pct = f"{round(owned_15_25/total_owned*100)}%" if total_owned > 0 else "0%"
-        owned_above_25_pct = f"{round(owned_above_25/total_owned*100)}%" if total_owned > 0 else "0%"
-        owned_total_pct = "100%" if total_owned > 0 else "0%"
-        
-        # Calculate statistics for bullet points
-        owned_land_percent = round(total_owned/total_all*100) if total_all > 0 else 0
-        
-        stats = {
-            'owned_land_percent': owned_land_percent
-        }
-        
+
+        pct = lambda x, y: f"{round(x/y*100)}%" if y > 0 else "0%"
+
+        # ---------------------------
+        # Table
+        # ---------------------------
         table_data = [
-            ["Sr. No.", "Agricultural land ownership (in bigha)", "< 0.5", "0.5-1.5", "1.5-2.5", ">2.5", "Total"],
-            ["1", "Leased", str(leased_under_05), str(leased_05_15), str(leased_15_25), str(leased_above_25), str(total_leased)],
-            ["2", "% leased to total leased", leased_under_05_pct, leased_05_15_pct, leased_15_25_pct, leased_above_25_pct, leased_total_pct],
-            ["3", "Owned", str(owned_under_05), str(owned_05_15), str(owned_15_25), str(owned_above_25), str(total_owned)],
-            ["4", "% owned to total HH with own agriculture land", owned_under_05_pct, owned_05_15_pct, owned_15_25_pct, owned_above_25_pct, owned_total_pct],
-            ["5", "No land (basically manual labour)", "", "", "", "", str(no_land)],
-            ["6", "Total", "", "", "", "", str(total_all)]
+            ["Sr. No.", "Agricultural land ownership (in bigha)",
+             "< 0.5", "0.5-1.5", "1.5-2.5", ">2.5", "Total"],
+
+            ["1", "Leased",
+             leased['u05'], leased['0515'],
+             leased['1525'], leased['a25'],
+             total_leased],
+
+            ["2", "% leased to total leased",
+             pct(leased['u05'], total_leased),
+             pct(leased['0515'], total_leased),
+             pct(leased['1525'], total_leased),
+             pct(leased['a25'], total_leased),
+             "100%" if total_leased else "0%"],
+
+            ["3", "Owned",
+             owned['u05'], owned['0515'],
+             owned['1525'], owned['a25'],
+             total_owned],
+
+            ["4", "% owned to total HH with own agriculture land",
+             pct(owned['u05'], total_owned),
+             pct(owned['0515'], total_owned),
+             pct(owned['1525'], total_owned),
+             pct(owned['a25'], total_owned),
+             "100%" if total_owned else "0%"],
+
+            ["5", "No land (basically manual labour)", "", "", "", "", no_land],
+            ["6", "Total", "", "", "", "", total_all]
         ]
-        
+
+        stats = {
+            'owned_land_percent': round(total_owned / total_all * 100) if total_all > 0 else 0
+        }
+
         return table_data, stats
-    except Exception:
+
+    except Exception as e:
         return [
-            ["Sr. No.", "Agricultural land ownership (in bigha)", "< 0.5", "0.5-1.5", "1.5-2.5", ">2.5", "Total"],
+            ["Sr. No.", "Agricultural land ownership (in bigha)",
+             "< 0.5", "0.5-1.5", "1.5-2.5", ">2.5", "Total"],
             ["1", "Leased", "N/A", "N/A", "N/A", "N/A", "N/A"],
             ["2", "% leased to total leased", "N/A", "N/A", "N/A", "N/A", "N/A"],
             ["3", "Owned", "N/A", "N/A", "N/A", "N/A", "N/A"],
@@ -432,6 +515,7 @@ def getAgricultureLandHoldingData(village_id):
             ["5", "No land (basically manual labour)", "", "", "", "", "N/A"],
             ["6", "Total", "", "", "", "", "N/A"]
         ], {'owned_land_percent': 0}
+
 
 def getAverageExpenditureBreakdownData(village_id):
     try:
@@ -515,44 +599,52 @@ def getHouseholdDebtLiabilityData(village_id):
                 ["2", "Upto 10K", "-", "-"],
                 ["3", "Upto 50K", "-", "-"],
                 ["4", "Upto 100K", "-", "-"],
-                ["5", "Morethan 100K", "-", "-"],
+                ["5", "More than 100K", "-", "-"],
                 ["6", "Total", "-", "-"]
             ]
 
-        # ✅ Corrected loan class matching (case-insensitive)
-        no_loan = households.filter(loan_class__iexact='no loan').count()
-        upto_10k = households.filter(loan_class__iexact='upto 10k').count()
-        upto_50k = households.filter(loan_class__iexact='upto 50k').count()
-        upto_100k = households.filter(loan_class__iexact='upto 100k').count()
-        more_than_100k = households.filter(loan_class__iexact='morethan 100k').count()
+        # annotate numeric loan amount safely
+        households = households.annotate(
+            loan_amt=Cast('loan_amount', IntegerField())
+        )
 
-        # Percentages
-        no_loan_pct = f"{round(no_loan / total_households * 100)}%"
-        upto_10k_pct = f"{round(upto_10k / total_households * 100)}%"
-        upto_50k_pct = f"{round(upto_50k / total_households * 100)}%"
-        upto_100k_pct = f"{round(upto_100k / total_households * 100)}%"
-        more_than_100k_pct = f"{round(more_than_100k / total_households * 100)}%"
+        no_loan = households.filter(
+            Q(loan_availed__iexact='no') |
+            Q(loan_availed__isnull=True) |
+            Q(loan_amt__isnull=True) |
+            Q(loan_amt=0)
+        ).count()
+
+        upto_10k = households.filter(loan_amt__gt=0, loan_amt__lte=10000).count()
+        upto_50k = households.filter(loan_amt__gt=10000, loan_amt__lte=50000).count()
+        upto_100k = households.filter(loan_amt__gt=50000, loan_amt__lte=100000).count()
+        more_than_100k = households.filter(loan_amt__gt=100000).count()
+
+        def pct(val):
+            return f"{round(val / total_households * 100)}%"
 
         return [
             ["Sr. No.", "Loan Amount (INR)", "Number of HH", "Percentage"],
-            ["1", "No Loan", str(no_loan), no_loan_pct],
-            ["2", "Upto 10K", str(upto_10k), upto_10k_pct],
-            ["3", "Upto 50K", str(upto_50k), upto_50k_pct],
-            ["4", "Upto 100K", str(upto_100k), upto_100k_pct],
-            ["5", "Morethan 100K", str(more_than_100k), more_than_100k_pct],
+            ["1", "No Loan", str(no_loan), pct(no_loan)],
+            ["2", "Upto 10K", str(upto_10k), pct(upto_10k)],
+            ["3", "Upto 50K", str(upto_50k), pct(upto_50k)],
+            ["4", "Upto 100K", str(upto_100k), pct(upto_100k)],
+            ["5", "More than 100K", str(more_than_100k), pct(more_than_100k)],
             ["6", "Total", str(total_households), "100%"]
         ]
 
-    except Exception:
+    except Exception as e:
+        print("Debt Liability Error:", e)
         return [
             ["Sr. No.", "Loan Amount (INR)", "Number of HH", "Percentage"],
             ["1", "No Loan", "N/A", "N/A"],
             ["2", "Upto 10K", "N/A", "N/A"],
             ["3", "Upto 50K", "N/A", "N/A"],
             ["4", "Upto 100K", "N/A", "N/A"],
-            ["5", "Morethan 100K", "N/A", "N/A"],
+            ["5", "More than 100K", "N/A", "N/A"],
             ["6", "Total", "N/A", "N/A"]
         ]
+
 
 
 def getPrimaryLivelihoodDistributionData(village_id, type='primary'):
@@ -568,14 +660,19 @@ def getPrimaryLivelihoodDistributionData(village_id, type='primary'):
             return [['Livelihood', activity_type], ["", "No. of Household", "Percentage"], ["Agriculture", "0", "0%"], ["Fishing", "0", "0%"], ["Livestock", "0", "0%"], ["Manual labour", "0", "0%"], ["No job", "0", "0%"], ["Service", "0", "0%"], ["Shop", "0", "0%"], ["Total", "0", "0%"]]
         
         # Count households by livelihood
-        agriculture = households.filter(**{field_name: 'Agriculture'}).count()
-        fishing = households.filter(**{field_name: 'Fishing'}).count()
-        livestock = households.filter(**{field_name: 'Livestock'}).count()
-        manual_labour = households.filter(**{field_name: 'Manual Labour'}).count()
-        no_job = households.filter(**{field_name: 'No Job'}).count()
-        service = households.filter(**{field_name: 'Service'}).count()
-        shop = households.filter(**{field_name: 'Shop'}).count()
-        
+        agriculture = households.filter(**{f"{field_name}__iexact": "Agriculture"}).count()
+        fishing = households.filter(**{f"{field_name}__iexact": "Fishing"}).count()
+        livestock = households.filter(**{f"{field_name}__iexact": "Livestock"}).count()
+        manual_labour = households.filter(**{f"{field_name}__iexact": "Manual Labour"}).count()
+        no_job = households.filter(
+            Q(**{f"{field_name}__icontains": "no"}) |
+            Q(**{f"{field_name}__icontains": "none"}) |
+            Q(**{f"{field_name}__icontains": "No Job"})
+
+        ).count()
+        service = households.filter(**{f"{field_name}__iexact": "Service"}).count()
+        shop = households.filter(**{f"{field_name}__iexact": "Shop"}).count()
+                
         # Find max occupation for primary livelihood only
         if type == 'primary':
             counts = {'Agriculture': agriculture, 'Fishing': fishing, 'Livestock': livestock, 'Manual Labour': manual_labour, 'No Job': no_job, 'Service': service, 'Shop': shop}
@@ -689,13 +786,19 @@ def getLivestockOwnershipData(village_id):
         big_0 = households.filter(big_cattle__iexact='no big cattle').count()
         big_3 = households.filter(big_cattle__iexact='upto 3 big cattle').count()
         big_3_6 = households.filter(big_cattle__iexact='3 to 6 big cattle').count()
-        big_6_plus = households.filter(big_cattle__iexact='morethan 6 big cattle').count()
+        big_6_plus = households.filter(
+            Q(big_cattle__iexact='>6 big cattle') |
+            Q(big_cattle__iexact='more than 6 big cattle')
+        ).count()
         
         # ✅ Small cattle (case-insensitive, lowercase text)
         small_0 = households.filter(small_cattle__iexact='no small cattle').count()
         small_3 = households.filter(small_cattle__iexact='upto 3 small cattle').count()
         small_3_6 = households.filter(small_cattle__iexact='3 to 6 small cattle').count()
-        small_6_plus = households.filter(small_cattle__iexact='morethan 6 small cattle').count()
+        small_6_plus = households.filter(
+            Q(small_cattle__iexact='>6 small cattle') |
+            Q(small_cattle__iexact='more than 6 small cattle')
+        ).count()
         
         # Percentages
         big_0_pct = f"{round(big_0/total_households*100)}%"
@@ -920,6 +1023,8 @@ def getPublicAssetsData(village_id):
 
 
 def getRoadLengthByTypologyData(village_id, workspace, layer): 
+    from django.db import connection
+    
     try:
         # Get village code
         village = tblVillage.objects.get(id=village_id)
@@ -930,6 +1035,60 @@ def getRoadLengthByTypologyData(village_id, workspace, layer):
             ["", "Village not found", "0", "0%"]
         ]
 
+    # Try database first
+    try:
+        with connection.cursor() as cursor:
+            # Check if table exists
+            cursor.execute("""
+                SELECT EXISTS (
+                    SELECT FROM information_schema.tables 
+                    WHERE table_schema = 'public' 
+                    AND table_name = 'road_network'
+                )
+            """)
+            
+            if cursor.fetchone()[0]:
+                cursor.execute("""
+                    SELECT "RSur_Type", SUM("Length") as total_length
+                    FROM public.road_network
+                    WHERE "Vill_ID" = %s
+                    GROUP BY "RSur_Type"
+                    ORDER BY total_length DESC
+                """, [village_code])
+                
+                rows = cursor.fetchall()
+                
+                if rows:
+                    # Calculate total length in km
+                    total_length_m = sum(row[1] for row in rows if row[1])
+                    total_length_km = total_length_m / 1000
+                    
+                    result = [["Sr. No.", "Surface Type", "Length (km)", "% to Total Road Length"]]
+                    
+                    for idx, (surface_type, length_m) in enumerate(rows, 1):
+                        if length_m:
+                            length_km = length_m / 1000
+                            percentage = f"{round(length_km / total_length_km * 100, 2)}%" if total_length_km > 0 else "0%"
+                            result.append([
+                                str(idx),
+                                surface_type or "Unknown",
+                                f"{length_km:.2f}",
+                                percentage
+                            ])
+                    
+                    # Add total row
+                    result.append([
+                        str(len(rows) + 1),
+                        "Total",
+                        f"{total_length_km:.2f}",
+                        "100.00%" if total_length_km > 0 else "0%"
+                    ])
+                    
+                    return result
+    except Exception:
+        pass  # Fall back to GeoServer
+
+    # Fallback to GeoServer
     try:
         # Build WFS request
         wfs_url = f"http://localhost:8080/geoserver/{workspace}/ows"
@@ -2063,7 +2222,7 @@ def draw_village_profile(elements,village_id):
     elements.append(Spacer(1, 6))
     data=getDrinkingWaterSourceData(village_id)
 
-    table = create_styled_table(data, [50,90,180, 180], False, True, custom_styles, "Digital Access")
+    table = create_styled_table(data, [50,130,160, 160], False, True, custom_styles, "Digital Access")
     elements.append(table)
     elements.append(Spacer(1, 12))
 

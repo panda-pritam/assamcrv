@@ -16,11 +16,12 @@ from .village_profile import getVillageArea, getLULCData
 from django.db.models import Count,Sum,  IntegerField, FloatField
 
 from django.db.models.functions import Cast, Coalesce
+from administrator.models import LineDepartment
 
 
 
 
-from .dummy_data import  getMitigationIntervention,getEmergencyTollFreeContactData,getImportantEmergencyContactData
+from .dummy_data import  getMitigationIntervention
 
 from .global_styles import blue_heading, underline_heading, notes_style, bold_center_style,normal_style,bold_12,bold_12
 
@@ -35,6 +36,36 @@ VILLAGE_SUMMARY_DATA = {
     'occupational_category': 'N/A',
     'sanitation_facilities': 'N/A'
 }
+
+def getEmergencyTollFreeContactData(village_id):
+    try:
+        emergency_officials = LineDepartment.objects.filter(
+            village_id=village_id,
+            official_number__iexact='no'
+        ).select_related('section_master')
+        
+        data = [["S. No.", "Important Contact", "Contact Number"]]
+        
+        for i, official in enumerate(emergency_officials, 1):
+            data.append([
+                str(i),
+                official.section_master.section or "-",
+                official.phone_number or "-"
+            ])
+        
+    
+            
+        return data
+        
+    except Exception as e:
+        return [
+            ["S. No.", "Important Contact", "Contact Number"],
+            ["1", "Police Station", "100"],
+            ["2", "Fire Station", "102"],
+            ["3", "Ambulance", "108"],
+            ["4", Paragraph("District Commissioner (Emergency Toll-Free)"), Paragraph("<para align=center>1077 (District), 1079 (State)</para>")],
+            ["5", Paragraph("District Emergency Operation Centre, Barpeta"), "9864643089"]
+        ]
 
 def getHazardAssessment(village_id):
     from administrator.models import PRA_main
@@ -68,13 +99,34 @@ def getHazardAssessment(village_id):
             ['Earthquake Hazard', '-']
         ]
 
-def getDistrictLevelOfficialsData():
-    return [
-        ["S. No.", "Name", "Gender", "Phone Number", "Position/Responsibility"],
-        ["-", "-", "-", "-", "-"],
-        ["-", "-", "-", "-", "-"],
-        ["-", "-", "-", "-", "-"]
-    ]
+def getDistrictLevelOfficialsData(village_id):
+    try:
+        officials = LineDepartment.objects.filter(
+            village_id=village_id,
+            official_number__iexact='yes'
+        ).select_related('section_master')
+        
+        data = [["S. No.", "Name", "Phone Number", "Position/Responsibility"]]
+        
+        for i, official in enumerate(officials, 1):
+            data.append([
+                str(i),
+                official.contact_name or "-",
+                official.phone_number or "-",
+                official.section_master.section or "-"
+            ])
+        
+        
+            
+        return data
+        
+    except Exception:
+        return [
+            ["S. No.", "Name", "Phone Number", "Position/Responsibility"],
+            ["-", "-", "-", "-"],
+            ["-", "-", "-", "-"],
+            ["-", "-", "-", "-"]
+        ]
 
 
 def get_village_area(village_id):
@@ -778,16 +830,16 @@ def draw_Village_summery_tables(elements,table_sections,village_id):
         # elements.append(Spacer(1, 12))
     
     # Notes section  
-    elements.append(Spacer(1, 12))
-    para=Paragraph("Note: While the investment amount mentioned above for mitigation represents the maximum, the Chapter 6 also presents various cost-effective alternatives. There are other possible cost effective solutions as well which can be explored while developing Detailed Project Report.", notes_style)
-    elements.append(para)
+    # elements.append(Spacer(1, 12))
+    # para=Paragraph("Note: While the investment amount mentioned above for mitigation represents the maximum, the Chapter 6 also presents various cost-effective alternatives. There are other possible cost effective solutions as well which can be explored while developing Detailed Project Report.", notes_style)
+    # elements.append(para)
     
     # Village contacts 
     elements.append(Spacer(1, 12))
     elements.append(Paragraph("<b>Important contact details</b>", blue_heading))
     elements.append(Spacer(1, 6))
-    imp_contact_details=getDistrictLevelOfficialsData()
-    table=create_styled_table(imp_contact_details, [40,150,60,100,150], False, True, [('ALIGN', (0, 1), (0, -1), 'RIGHT'),('ALIGN', (3, 1), (3, -1), 'RIGHT'),('FONTNAME', (0, 1), (0, -1), 'Helvetica-Bold')], "Village Contacts")
+    imp_contact_details=getDistrictLevelOfficialsData(village_id)
+    table=create_styled_table(imp_contact_details, [40,150,160,150], False, True, [('ALIGN', (0, 1), (0, -1), 'RIGHT'),('ALIGN', (3, 1), (3, -1), 'RIGHT'),('FONTNAME', (0, 1), (0, -1), 'Helvetica-Bold')], "Village Contacts")
     elements.append(table)
     elements.append(Spacer(1, 12))
     
@@ -798,18 +850,18 @@ def draw_Village_summery_tables(elements,table_sections,village_id):
     custom_style=[   ('ALIGN', (0, 1), (0, -1), 'RIGHT'),('ALIGN', (2, 1), (2, -1), 'RIGHT'),('FONTNAME', (0, 1), (0, -1), 'Helvetica-Bold')]
     
     elements.append(Spacer(1, 6))
-    emergency_contact_details=getEmergencyTollFreeContactData()
+    emergency_contact_details=getEmergencyTollFreeContactData(village_id)
     table=create_styled_table(emergency_contact_details, [40, 250,210], False, True, custom_style, "Emergency Toll Free Contact")
     elements.append(table)
     elements.append(Spacer(1, 12))
     
-    # Important Emergency contact information
-    elements.append(Paragraph("<u><b>Important Emergency Contact Information</b></u>", underline_heading))
-    elements.append(Spacer(1, 6))
-    imp_contact_details=getImportantEmergencyContactData()
-    table=create_styled_table(imp_contact_details, [40, 250, 210], False, True, custom_style, "Important Emergency Contact")
-    elements.append(table)
-    elements.append(Spacer(1, 12))
+    # # Important Emergency contact information
+    # elements.append(Paragraph("<u><b>Important Emergency Contact Information</b></u>", underline_heading))
+    # elements.append(Spacer(1, 6))
+    # imp_contact_details=getImportantEmergencyContactData(village_id)
+    # table=create_styled_table(imp_contact_details, [40, 250, 210], False, True, custom_style, "Important Emergency Contact")
+    # elements.append(table)
+    # elements.append(Spacer(1, 12))
     
    
     
