@@ -58,7 +58,7 @@ class PRA_main(models.Model):
      nearest_hospital_km = models.FloatField(blank=True, null=True)
      nearest_veterinary_clinic_km = models.FloatField(blank=True, null=True)
      nearest_post_office_km = models.FloatField(blank=True, null=True)
-#     nearest_police_station_km = models.FloatField()
+     nearest_police_station_km = models.FloatField(blank=True, null=True)
      nearest_bank_atm_km = models.FloatField(blank=True, null=True)
      nearest_ambulance_km = models.FloatField(blank=True, null=True)
      nearest_bus_service_km = models.FloatField(blank=True, null=True)
