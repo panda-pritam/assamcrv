@@ -16,6 +16,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from .models import (HouseholdSurvey, tblVillage, Transformer, Commercial,Critical_Facility,ElectricPole,VillageListOfAllTheDistricts,
                      VillageRoadInfo,VillageRoadInfoErosion, BridgeSurvey, Risk_Assesment, Upload_data_vdmp)
 from administrator.models import PRA_main, PRA_assets, PRA_shelter, FGD_wash_summary, FGD_livelihood_summary
+from layers.models import village_flood_raster_Files
 from django.db.models.functions import Cast
 from django.db.models import Sum, Count, Q, FloatField, Avg, Max
 from django.db import models as django_models
@@ -136,6 +137,11 @@ def resolve_photo_category(type_name):
     for value, label in field_choices:
         choice_map[str(value).strip().lower()] = value
         choice_map[str(label).strip().lower()] = value
+    choice_map["pra consultation"] = "PRA and field consultations"
+    choice_map["pra consultations"] = "PRA and field consultations"
+    choice_map["river bank protection"] = "River bank protection/erosion"
+    choice_map["river bank protection erosion"] = "River bank protection/erosion"
+    choice_map["river bank protection/erosion"] = "River bank protection/erosion"
 
     candidates = []
     if type_name:
@@ -144,6 +150,8 @@ def resolve_photo_category(type_name):
             candidates.append(type_name.split("-")[-1])
         if ":" in type_name:
             candidates.append(type_name.split(":")[-1])
+        if "/" in type_name:
+            candidates.append(type_name.split("/")[-1])
 
     for candidate in candidates:
         key = str(candidate).strip().lower()
@@ -175,6 +183,7 @@ def upload_data_vdmp(request):
         data_type = request.POST.get("data_type")
         type_name = request.POST.get("type_name")
         total_files = request.POST.get("total_files")
+        image_exts = {".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp", ".tif", ".tiff"}
         # print(f"File name: {file.name if file else 'None'}")
         # print(f"Data type: {data_type}")
 
@@ -182,7 +191,7 @@ def upload_data_vdmp(request):
             print("No file uploaded")
             return JsonResponse({"status": "error", "error": "No file uploaded"}, status=400)
         if data_type not in ["household", "transformer", "critical_facility", "commercial", "electric_poles", "villagesOfAllTheDistricts", 
-                             "VillageRoadInfo","VillageRoadInfoErosion", "bridge_survey", "risk_assesment", "pra_main", "pra_assets", "pra_shelter", "fgd_wash_summary", "fgd_livelihood_summary", "photos"]:
+                             "VillageRoadInfo","VillageRoadInfoErosion", "bridge_survey", "risk_assesment", "pra_main", "pra_assets", "pra_shelter", "fgd_wash_summary", "fgd_livelihood_summary", "photos", "hazard"]:
             print("Invalid data type")
             return JsonResponse({"status": "error", "error": "Invalid data_type"}, status=400)
 
@@ -212,7 +221,7 @@ def upload_data_vdmp(request):
                         "error": f"Expected {expected_files} file(s) for this type"
                     }, status=400)
             ext = os.path.splitext(file.name)[1].lower()
-            if allowed_exts and ext not in allowed_exts:
+            if allowed_exts and ext not in allowed_exts and ext not in image_exts:
                 return JsonResponse({
                     "status": "error",
                     "error": f"Unsupported file format. Allowed: {', '.join(sorted(allowed_exts))}"
@@ -220,8 +229,53 @@ def upload_data_vdmp(request):
         else:
             ext = os.path.splitext(file.name)[1].lower()
 
-        image_exts = {".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp", ".tif", ".tiff"}
         if ext in image_exts:
+            if data_type == "hazard":
+                type_name_normalized = (type_name or "").strip().lower()
+                if type_name_normalized == "flood":
+                    if ext in {".tif", ".tiff"}:
+                        return JsonResponse({
+                            "status": "error",
+                            "error": "Flood image uploads only support JPG/PNG formats"
+                        }, status=400)
+                elif type_name_normalized.endswith("raster"):
+                    if ext not in {".tif", ".tiff"}:
+                        return JsonResponse({
+                            "status": "error",
+                            "error": "Raster uploads only support TIF formats"
+                        }, status=400)
+                else:
+                    return JsonResponse({
+                        "status": "error",
+                        "error": "Only flood hazard image uploads are supported at the village level"
+                    }, status=400)
+
+                village_id = request.POST.get("village_id")
+                if not village_id:
+                    return JsonResponse({
+                        "status": "error",
+                        "error": "Village is required for flood hazard uploads"
+                    }, status=400)
+                try:
+                    village = tblVillage.objects.get(pk=village_id)
+                except tblVillage.DoesNotExist:
+                    return JsonResponse({
+                        "status": "error",
+                        "error": "Invalid village for flood hazard upload"
+                    }, status=400)
+
+                record, _ = village_flood_raster_Files.objects.get_or_create(village=village)
+                if type_name_normalized.endswith("raster"):
+                    record.raster_file = file
+                else:
+                    record.flood_map_image = file
+                record.save()
+                return JsonResponse({
+                    "status": "success",
+                    "records_created": 1,
+                    "records_updated": 0,
+                    "file_path": record.flood_map_image.name if record.flood_map_image else record.raster_file.name
+                })
             if data_type != "photos":
                 return JsonResponse({
                     "status": "error",

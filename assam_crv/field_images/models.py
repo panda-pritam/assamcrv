@@ -20,7 +20,7 @@ def field_image_upload_to(instance, filename):
     village_id = instance.village_id or "unknown"
     category = (instance.category or "uncategorized").strip().lower()
     category = category.replace(" ", "_").replace("/", "_")
-    return f"field_images/village_id_{village_id}/{category}/{filename}"
+    return f"field_images/{category}/village_id_{village_id}/{filename}"
 
 class FieldImage(models.Model):
     """

@@ -14,6 +14,7 @@ class GeoserverLayers(models.Model):
 class village_flood_raster_Files(models.Model):
     village = models.ForeignKey(tblVillage, on_delete=models.CASCADE)
     raster_file = models.FileField(upload_to='pipeline_data/flood_raster/')
+    flood_map_image = models.FileField(upload_to='maps/', blank=True, null=True)
     layer_name = models.CharField(max_length=255, blank=True, null=True)
     workspace = models.CharField(max_length=255, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True, blank=True, null=True)
