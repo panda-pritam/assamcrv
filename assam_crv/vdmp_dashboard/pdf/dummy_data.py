@@ -515,7 +515,7 @@ def getPublicAssetsData(village_id):
 
 # def getFacilityAccessData():
 #     return [
-#         ["Sr. No.","Asset Type", "Distance from Village", "Remarks"],
+#         ["S. No.","Asset Type", "Distance from Village", "Remarks"],
 #         ["1","Higher education/College", "13 km", "Barpeta"],
 #         ["2","Post Office", "3 km", "Jania Market"],
 #         ["3","Police Station", "13 km", "Barpeta"],
@@ -952,7 +952,7 @@ def getRoadLengthByTypologyData():
 
 def getFacilityAccessData():
     return [
-        ["Sr. No.","Asset Type", "Distance from Village", "Remarks"],
+        ["S. No.","Asset Type", "Distance from Village", "Remarks"],
         ["-","-", "-", "-"],
 
     ]

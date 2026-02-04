@@ -23,7 +23,7 @@ from administrator.models import LineDepartment
 
 from .dummy_data import  getMitigationIntervention
 
-from .global_styles import blue_heading, underline_heading, notes_style, bold_center_style,normal_style,bold_12,bold_12
+from .global_styles import blue_heading, underline_heading, notes_style, bold_center_style,normal_style,bold_12,bold_12,blue_sub_heading
 
 from .utils.table import create_styled_table
 
@@ -85,10 +85,11 @@ def getHazardAssessment(village_id):
         else:
             return [
                 ['Hazard Assessment'],
-                ['Flood Hazard', '-'],
-                ['Erosion Hazard', '-'],
-                ['Strong Wind Hazard', '-'],
-                ['Earthquake Hazard', '-']
+                 ["", Paragraph("Frequency", bold_center_style), Paragraph("Severity", bold_center_style)],
+                ['Flood Hazard', '-','-'],
+                ['Erosion Hazard', '-','-'],
+                ['Strong Wind Hazard', '-','-'],
+                ['Earthquake Hazard', '-','-']
             ]
     except Exception:
         return [
@@ -123,9 +124,9 @@ def getDistrictLevelOfficialsData(village_id):
     except Exception:
         return [
             ["S. No.", "Name", "Phone Number", "Position/Responsibility"],
-            ["-", "-", "-", "-"],
-            ["-", "-", "-", "-"],
-            ["-", "-", "-", "-"]
+            ["1", "-", "-", "-"],
+            ["2", "-", "-", "-"],
+            ["3", "-", "-", "-"]
         ]
 
 
@@ -833,10 +834,10 @@ def draw_Village_summery_tables(elements,table_sections,village_id):
     # elements.append(Spacer(1, 12))
     # para=Paragraph("Note: While the investment amount mentioned above for mitigation represents the maximum, the Chapter 6 also presents various cost-effective alternatives. There are other possible cost effective solutions as well which can be explored while developing Detailed Project Report.", notes_style)
     # elements.append(para)
-    
+
     # Village contacts 
     elements.append(Spacer(1, 12))
-    elements.append(Paragraph("<b>Important contact details</b>", blue_heading))
+    elements.append(Paragraph("<b>2.1 Important contact details</b>", blue_sub_heading))
     elements.append(Spacer(1, 6))
     imp_contact_details=getDistrictLevelOfficialsData(village_id)
     table=create_styled_table(imp_contact_details, [40,150,160,150], False, True, [('ALIGN', (0, 1), (0, -1), 'RIGHT'),('ALIGN', (3, 1), (3, -1), 'RIGHT'),('FONTNAME', (0, 1), (0, -1), 'Helvetica-Bold')], "Village Contacts")
@@ -845,7 +846,7 @@ def draw_Village_summery_tables(elements,table_sections,village_id):
     
     # Emergency toll free contact information
     
-    elements.append(Paragraph('<u><b>Emergency Toll Free Contact Information</b></u>', underline_heading))
+    elements.append(Paragraph('<b>2.2 Emergency Toll Free Contact Information</b>', blue_sub_heading))
 
     custom_style=[   ('ALIGN', (0, 1), (0, -1), 'RIGHT'),('ALIGN', (2, 1), (2, -1), 'RIGHT'),('FONTNAME', (0, 1), (0, -1), 'Helvetica-Bold')]
     

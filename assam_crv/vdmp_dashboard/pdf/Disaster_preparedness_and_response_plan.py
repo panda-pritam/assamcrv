@@ -134,7 +134,7 @@ def draw_disaster_preparedness_and_response_plan(elements, village_id):
     
     # Early warning table
     early_warning_data = [
-        [Paragraph("Sr. No.", bold_style), Paragraph("Nature of early warning", bold_style), Paragraph("Source", bold_style), Paragraph("Lead time", bold_style)],
+        [Paragraph("S. No.", bold_style), Paragraph("Nature of early warning", bold_style), Paragraph("Source", bold_style), Paragraph("Lead time", bold_style)],
         [Paragraph("1", normal_style), Paragraph("Location based service of IMD on heavy rainfall/cloud burst/strong wind forecast", normal_style), Paragraph("IMD to all cell phones in the potential impact location", normal_style), Paragraph("3 hours", normal_style)],
         [Paragraph("2", normal_style), Paragraph("Flood forecast", normal_style), Paragraph("DDMA to Circle Officers, Field Officers and Village head", normal_style), Paragraph("48 hours", normal_style)]
     ]
@@ -169,7 +169,7 @@ def draw_disaster_preparedness_and_response_plan(elements, village_id):
     
     # Mitigation plan table
     mitigation_data = [
-        [Paragraph("Sr. No.", bold_style), Paragraph("Work needs to done before the onset of the rainy season", bold_style), Paragraph("Responsibility", bold_style)],
+        [Paragraph("S. No.", bold_style), Paragraph("Work needs to done before the onset of the rainy season", bold_style), Paragraph("Responsibility", bold_style)],
         [Paragraph("1", normal_style), Paragraph("Repair village roads and arrange boats in case of emergency", normal_style), Paragraph("Village Office", normal_style)],
         [Paragraph("2", normal_style), Paragraph("Prune tree branches that are growing across electric lines", normal_style), Paragraph("Assam Power Generation Corporation Ltd(APGCL)", normal_style)],
         [Paragraph("3", normal_style), Paragraph("Inspect river banks and vulnerable locations and coordinate with DDMA to take protection measures", normal_style), Paragraph("Disaster Management Committee (DMC)", normal_style)],
