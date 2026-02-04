@@ -56,7 +56,7 @@ function initializeDataTable(tableId, columns, options = {}, includeActions = fa
             });
        
 
-            // Center align first column (Sr. No.)
+            // Center align first column (S. No.)
             $('#' + tableId + ' tbody td:first-child').css({
                 'text-align': 'right'
             });

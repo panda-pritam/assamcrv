@@ -50,13 +50,13 @@ def getPowerInfrastructureData_Total(village_id):
         electric_data_total = ShapefileElectricPole.objects.filter(vill_id=village_code).count()
         transformer_data_total = ShapefileTransformer.objects.filter(vill_id=village_code).count()
         return [
-            [Paragraph("Sr. No.", bold_center_style), Paragraph("Type", bold_center_style), Paragraph("Number")],
+            [Paragraph("S. No.", bold_center_style), Paragraph("Type", bold_center_style), Paragraph("Number")],
             ["1", Paragraph("Electric post and network", normal_style), str(electric_data_total)],
             ["2", Paragraph("Transformer", normal_style), str(transformer_data_total)],
         ]
     except Exception:
         return [
-            [Paragraph("Sr. No.", bold_center_style), Paragraph("Type", bold_center_style), Paragraph("Number")],
+            [Paragraph("S. No.", bold_center_style), Paragraph("Type", bold_center_style), Paragraph("Number")],
              ["1", Paragraph("Electric post and network", normal_style), "N/A"],
             ["2", Paragraph("Transformer", normal_style), "N/A"],
         ]
@@ -186,7 +186,7 @@ def getVillageDemographic(village_id):
         # VILLAGE_SUMMARY_DATA['total_households']=total_households
         
         return [
-            ['Sr. No.',"Household Characteristic", "Total"],
+            ['S. No.',"Household Characteristic", "Total"],
             ['1',"No of Males", f"{total_males:,}"],
             ['2',"No of Females", f"{total_females:,}"],
             ['3',"Total Population", f"{total_population:,}"],
@@ -197,7 +197,7 @@ def getVillageDemographic(village_id):
         ]
     except Exception:
         return [
-            ['Sr. No.',"Household Characteristic", "Total"],
+            ['S. No.',"Household Characteristic", "Total"],
             ["1","No of Males", "N/A"],
             ["2","No of Females", "N/A"],
             ["3","Total Population", "N/A"],
@@ -228,124 +228,110 @@ def map_economic_status(economic):
     return None
 
 
+def normalize_social_status(value):
+    if not value:
+        return "Others"
+
+    v = value.lower()
+
+    if 'differently' in v or 'disabled' in v:
+        return 'Differently Abled'
+
+    if 'widow' in v:
+        return 'Widow'
+
+    if 'single' in v and ('woman' in v or 'female' in v):
+        return 'Single Woman'
+
+    if 'single' in v and ('man' in v or 'male' in v):
+        return 'Single Man'
+
+    if 'married' in v and ('male' in v or 'man' in v):
+        return 'Married Male'
+
+   
+
+    return 'Others'
+
+
 def getSocialEconomicStatusData(village_id):
     try:
-        households = HouseholdSurvey.objects.select_related('village').filter(village_id=village_id)
-        
-        # Initialize counters
+        households = HouseholdSurvey.objects.filter(village_id=village_id)
+        total_households = households.count()
+
+        # Social × Economic matrix
         data = {
             'Differently Abled': {'AAY': 0, 'APL': 0, 'AY': 0, 'BPL': 0, 'PHH': 0},
             'Married Male': {'AAY': 0, 'APL': 0, 'AY': 0, 'BPL': 0, 'PHH': 0},
             'Single Man': {'AAY': 0, 'APL': 0, 'AY': 0, 'BPL': 0, 'PHH': 0},
             'Single Woman': {'AAY': 0, 'APL': 0, 'AY': 0, 'BPL': 0, 'PHH': 0},
-            'Widow': {'AAY': 0, 'APL': 0, 'AY': 0, 'BPL': 0, 'PHH': 0}
+            'Widow': {'AAY': 0, 'APL': 0, 'AY': 0, 'BPL': 0, 'PHH': 0},
+            
         }
-        
-        # Count households by social_status and economic_status
+
         for hh in households:
-            social = hh.social_status or ''
-            economic = hh.economic_status or ''
-            
-            social_lower = social.lower()
-
-            if 'differently' in social_lower or 'disabled' in social_lower:
-                social_key = 'Differently Abled'
-
-            elif 'widow' in social_lower:
-                social_key = 'Widow'
-
-            elif 'single' in social_lower and ('woman' in social_lower or 'female' in social_lower):
-                social_key = 'Single Women'
-
-            elif 'single' in social_lower and ('man' in social_lower or 'male' in social_lower):
-                social_key = 'Single Man'
-
-            elif 'married' in social_lower and 'male' in social_lower:
-                social_key = 'Married Male'
-
-            else:
-                social_key = 'Married Male'  # safe fallback
-
-            
-            # Map economic status - check for both abbreviations and full forms
-            economic_key = map_economic_status(economic)
+            social_key = normalize_social_status(hh.social_status)
+            economic_key = map_economic_status(hh.economic_status)
 
             if economic_key:
-                data[social_key][economic_key] += 1
-            
-            if economic_key:
-                data[social_key][economic_key] += 1
-        
-        # Calculate totals and percentages
-        result = [["Sr. No.", "Social/Economic Status Household", "AAY", "APL", "AY", "BPL", "PHH", "Total", "%"]]
-    
-        total_households = households.count()
+                data[social_key][economic_key] += 1   # ✅ counted ONCE
+
+        # Build table
+        result = [["S. No.", "Social/Economic Status Household", "AAY", "APL", "AY", "BPL", "PHH", "Total", "%"]]
+
         col_totals = {'AAY': 0, 'APL': 0, 'AY': 0, 'BPL': 0, 'PHH': 0}
-        
         sr_no = 1
-        for social_status, counts in data.items():
+
+        for social, counts in data.items():
             row_total = sum(counts.values())
-            row_percent = f"{round(row_total/total_households*100)}%" if total_households > 0 else "0%"
-            
+            row_percent = (
+                f"{round(row_total / total_households * 100)}%"
+                if total_households else "0%"
+            )
+
             result.append([
-                str(sr_no),
-                social_status,
-                str(counts['AAY']),
-                str(counts['APL']),
-                str(counts['AY']),
-                str(counts['BPL']),
-                str(counts['PHH']),
-                str(row_total),
+                sr_no,
+                social,
+                counts['AAY'],
+                counts['APL'],
+                counts['AY'],
+                counts['BPL'],
+                counts['PHH'],
+                row_total,
                 row_percent
             ])
+
+            for k in col_totals:
+                col_totals[k] += counts[k]
+
             sr_no += 1
-            
-            # Add to column totals
-            for key in col_totals:
-                col_totals[key] += counts[key]
-        
-        # Add total row
+
+        # Total row
         result.append([
-            str(sr_no),
+            sr_no,
             "Total",
-            str(col_totals['AAY']),
-            str(col_totals['APL']),
-            str(col_totals['AY']),
-            str(col_totals['BPL']),
-            str(col_totals['PHH']),
-            str(total_households),
-            ""
+            col_totals['AAY'],
+            col_totals['APL'],
+            col_totals['AY'],
+            col_totals['BPL'],
+            col_totals['PHH'],
+            total_households,
+            "100%"
         ])
-        
-        # Add percentage row
-        result.append([
-            str(sr_no + 1),
-            "%",
-            f"{round(col_totals['AAY']/total_households*100)}%" if total_households > 0 else "0%",
-            f"{round(col_totals['APL']/total_households*100)}%" if total_households > 0 else "0%",
-            f"{round(col_totals['AY']/total_households*100)}%" if total_households > 0 else "0%",
-            f"{round(col_totals['BPL']/total_households*100)}%" if total_households > 0 else "0%",
-            f"{round(col_totals['PHH']/total_households*100)}%" if total_households > 0 else "0%",
-            "",
-            ""
-        ])
-        
-        # Calculate summary stats
+
         summary = {
-            'bpl_percent': round(col_totals['BPL']/total_households*100) if total_households > 0 else 0,
-            'phh_percent': round(col_totals['PHH']/total_households*100) if total_households > 0 else 0,
-            'aay_percent': round(col_totals['AAY']/total_households*100) if total_households > 0 else 0,
-            'widow_percent': round(sum(data['Widow'].values())/total_households*100) if total_households > 0 else 0,
-            'married_male_percent': round(sum(data['Married Male'].values())/total_households*100) if total_households > 0 else 0
+            'bpl_percent': round(col_totals['BPL'] / total_households * 100) if total_households else 0,
+            'phh_percent': round(col_totals['PHH'] / total_households * 100) if total_households else 0,
+            'aay_percent': round(col_totals['AAY'] / total_households * 100) if total_households else 0,
+            'widow_percent': round(sum(data['Widow'].values()) / total_households * 100) if total_households else 0,
+            'married_male_percent': round(sum(data['Married Male'].values()) / total_households * 100) if total_households else 0
         }
-        
+
         return result, summary
-        
-    except Exception:
-        return [
-            ["Sr. No.", Paragraph("Social/Economic Status Household"), "AAY", "APL", "AY", "BPL", "PHH", "Total", "%"],
-            ["1", "Married Male", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A"]
-        ], {'bpl_percent': 0, 'phh_percent': 0, 'aay_percent': 0, 'widow_percent': 0, 'married_male_percent': 0}
+
+    except Exception as e:
+        print("Social-economic table error:", e)
+        return [], {}
 
 
 def getIncomeGroupData(village_id):
@@ -353,13 +339,14 @@ def getIncomeGroupData(village_id):
         households = HouseholdSurvey.objects.filter(village_id=village_id)
 
         # 🔹 Clean & convert income string → integer
+        from django.db.models import Value
         households = households.annotate(
             income_clean=Replace(
-                Replace('approximate_income_earned_every_year_inr', ',', ''),
-                ' ', ''
+                Replace('approximate_income_earned_every_year_inr', Value(','), Value('')),
+                Value(' '), Value('')
             )
         ).annotate(
-            income_amt=Cast('income_clean', IntegerField())
+            income_amt=Cast(Cast('income_clean', FloatField()), IntegerField())
         )
 
         # 🔹 Classification
@@ -402,7 +389,6 @@ def getIncomeGroupData(village_id):
             ["4", "> 2,50,000", "N/A", "N/A"],
             ["5", "Total", "N/A", "N/A"]
         ], {"low_income_percent": 0}
-
 
 def getAgricultureLandHoldingData(village_id):
     try:
@@ -467,7 +453,7 @@ def getAgricultureLandHoldingData(village_id):
         # Table
         # ---------------------------
         table_data = [
-            ["Sr. No.", "Agricultural land ownership (in bigha)",
+            ["S. No.", "Agricultural land ownership (in bigha)",
              "< 0.5", "0.5-1.5", "1.5-2.5", ">2.5", "Total"],
 
             ["1", "Leased",
@@ -506,7 +492,7 @@ def getAgricultureLandHoldingData(village_id):
 
     except Exception as e:
         return [
-            ["Sr. No.", "Agricultural land ownership (in bigha)",
+            ["S. No.", "Agricultural land ownership (in bigha)",
              "< 0.5", "0.5-1.5", "1.5-2.5", ">2.5", "Total"],
             ["1", "Leased", "N/A", "N/A", "N/A", "N/A", "N/A"],
             ["2", "% leased to total leased", "N/A", "N/A", "N/A", "N/A", "N/A"],
@@ -523,7 +509,7 @@ def getAverageExpenditureBreakdownData(village_id):
         
         if not households.exists():
             return [
-                ["Sr. No.", "Expenditure Category", "Percentage"],
+                ["S. No.", "Expenditure Category", "Percentage"],
                 ["1", "Agriculture", "-"],
                 ["2", "Festival and marriage", "-"],
                 ["3", "House repair", "-"],
@@ -562,7 +548,7 @@ def getAverageExpenditureBreakdownData(village_id):
             return str(pct) if pct == 0 else f"{pct}%"
 
         return [
-            ["Sr. No.", Paragraph("Expenditure Category", normal_style), "Percentage"],
+            ["S. No.", Paragraph("Expenditure Category", normal_style), "Percentage"],
             ["1", Paragraph("Agriculture", normal_style), percentage(agri_sum)],
             ["2", Paragraph("Festival and marriage", normal_style), percentage(festival_sum)],
             ["3", Paragraph("House repair", normal_style), percentage(repair_sum)],
@@ -576,7 +562,7 @@ def getAverageExpenditureBreakdownData(village_id):
     except Exception as e:
         print(f"Error in getAverageExpenditureBreakdownData: {e}")
         return [
-            ["Sr. No.", Paragraph("Expenditure Category", normal_style), "Percentage"],
+            ["S. No.", Paragraph("Expenditure Category", normal_style), "Percentage"],
             ["1", Paragraph("Agriculture", normal_style), "N/A"],
             ["2", Paragraph("Festival and marriage", normal_style), "N/A"],
             ["3", Paragraph("House repair", normal_style), "N/A"],
@@ -594,7 +580,7 @@ def getHouseholdDebtLiabilityData(village_id):
 
         if total_households == 0:
             return [
-                ["Sr. No.", "Loan Amount (INR)", "Number of HH", "Percentage"],
+                ["S. No.", "Loan Amount (INR)", "Number of HH", "Percentage"],
                 ["1", "No Loan", "-", "-"],
                 ["2", "Upto 10K", "-", "-"],
                 ["3", "Upto 50K", "-", "-"],
@@ -605,7 +591,7 @@ def getHouseholdDebtLiabilityData(village_id):
 
         # annotate numeric loan amount safely
         households = households.annotate(
-            loan_amt=Cast('loan_amount', IntegerField())
+            loan_amt=Cast(Cast('loan_amount', FloatField()), IntegerField())
         )
 
         no_loan = households.filter(
@@ -624,7 +610,7 @@ def getHouseholdDebtLiabilityData(village_id):
             return f"{round(val / total_households * 100)}%"
 
         return [
-            ["Sr. No.", "Loan Amount (INR)", "Number of HH", "Percentage"],
+            ["S. No.", "Loan Amount (INR)", "Number of HH", "Percentage"],
             ["1", "No Loan", str(no_loan), pct(no_loan)],
             ["2", "Upto 10K", str(upto_10k), pct(upto_10k)],
             ["3", "Upto 50K", str(upto_50k), pct(upto_50k)],
@@ -636,7 +622,7 @@ def getHouseholdDebtLiabilityData(village_id):
     except Exception as e:
         print("Debt Liability Error:", e)
         return [
-            ["Sr. No.", "Loan Amount (INR)", "Number of HH", "Percentage"],
+            ["S. No.", "Loan Amount (INR)", "Number of HH", "Percentage"],
             ["1", "No Loan", "N/A", "N/A"],
             ["2", "Upto 10K", "N/A", "N/A"],
             ["3", "Upto 50K", "N/A", "N/A"],
@@ -657,7 +643,7 @@ def getPrimaryLivelihoodDistributionData(village_id, type='primary'):
         activity_type = 'Primary economic activity' if type == 'primary' else 'Secondary economic activity'
         
         if total_households == 0:
-            return [['Livelihood', activity_type], ["", "No. of Household", "Percentage"], ["Agriculture", "0", "0%"], ["Fishing", "0", "0%"], ["Livestock", "0", "0%"], ["Manual labour", "0", "0%"], ["No job", "0", "0%"], ["Service", "0", "0%"], ["Shop", "0", "0%"], ["Total", "0", "0%"]]
+            return [['S. No.', 'Livelihood', activity_type], ["", "No. of Household", "Percentage"], ["1", "Agriculture", "0%"], ["2", "Fishing", "0%"], ["3", "Livestock", "0%"], ["4", "Manual labour", "0%"], ["5", "No job", "0%"], ["6", "Service", "0%"], ["7", "Shop", "0%"], ["8", "Total", str(total_households), "100%"]]
         
         # Count households by livelihood
         agriculture = households.filter(**{f"{field_name}__iexact": "Agriculture"}).count()
@@ -689,7 +675,7 @@ def getPrimaryLivelihoodDistributionData(village_id, type='primary'):
         shop_pct = f"{round(shop/total_households*100)}%"
         
         return [
-            ['Sr. No.', 'Livelihood', activity_type],
+            ['S. No.', 'Livelihood', activity_type],
             ["", "", "No. of Household", "Percentage"],
             ["1", "Agriculture", str(agriculture), agriculture_pct],
             ["2", "Fishing", str(fishing), fishing_pct],
@@ -703,7 +689,7 @@ def getPrimaryLivelihoodDistributionData(village_id, type='primary'):
     except Exception:
         activity_type = 'Primary economic activity' if type == 'primary' else 'Secondary economic activity'
         return [
-            ['Sr. No.', 'Livelihood', activity_type],
+            ['S. No.', 'Livelihood', activity_type],
             ["", "", "No. of Household", "Percentage"],
             ["1", "Agriculture", "N/A", "N/A"],
             ["2", "Fishing", "N/A", "N/A"],
@@ -721,7 +707,7 @@ def getCropCultivationData(village_id):
         total_households = households.count()
         
         if total_households == 0:
-            return [["Number of crops", "No. of Household", "Percentage"], ["One crop", "0", "0%"], ["Two crops", "0", "0%"], ["More than 2 crops", "0", "0%"], ["No agriculture", "0", "0%"], ["Total", "0", "0%"]]
+            return [['S. No.',"Number of crops", "No. of Household", "Percentage"], ["1", "One crop", "0", "0%"], ["2", "Two crops", "0", "0%"], ["3", "More than 2 crops", "0", "0%"], ["4", "No agriculture", "0", "0%"], ["5", "Total", "0", "0%"]]
         
         one_crop = 0
         two_crops = 0
@@ -750,7 +736,7 @@ def getCropCultivationData(village_id):
         no_agriculture_pct = f"{round(no_agriculture/total_households*100)}%"
         
         return [
-            ["Sr. No.", "Number of crops", "No. of Household", "Percentage"],
+            ["S. No.", "Number of crops", "No. of Household", "Percentage"],
             ["1", "One crop", str(one_crop), one_crop_pct],
             ["2", "Two crops", str(two_crops), two_crops_pct],
             ["3", "More than 2 crops", str(more_than_two), more_than_two_pct],
@@ -759,7 +745,7 @@ def getCropCultivationData(village_id):
         ]
     except Exception:
         return [
-            ["Sr. No.", "Number of crops", "No. of Household", "Percentage"],
+            ["S. No.", "Number of crops", "No. of Household", "Percentage"],
             ["1", "One crop", "N/A", "N/A"],
             ["2", "Two crops", "N/A", "N/A"],
             ["3", "More than 2 crops", "N/A", "N/A"],
@@ -774,12 +760,12 @@ def getLivestockOwnershipData(village_id):
         
         if total_households == 0:
             return [
-                ["Count", "Livestock","","Small cattle"],
-                ["", "HH with Big Cattle", "Percentage", "HH with Small Cattle", "Percentage"],
-                ["0", "-", "-", "-", "-"],
-                ["< 3", "-", "-", "-", "-"],
-                ["3–6", "-", "-", "-", "-"],
-                [">6", "-", "-", "-", "-"]
+                ['S. No.', "Count", "Livestock","","Small cattle"],
+                ["", "", "HH with Big Cattle", "Percentage", "HH with Small Cattle", "Percentage"],
+                ["1", "0", "-", "-", "-", "-"],
+                ["2", "< 3", "-", "-", "-", "-"],
+                ["3", "3–6", "-", "-", "-", "-"],
+                ["4", ">6", "-", "-", "-", "-"]
             ]
         
         # ✅ Big cattle (case-insensitive, lowercase text)
@@ -816,7 +802,7 @@ def getLivestockOwnershipData(village_id):
         total_small = small_0 + small_3 + small_3_6 + small_6_plus
         
         return [
-            ["Sr. No.", "Count", "Livestock","","Small cattle"],
+            ["S. No.", "Count", "Livestock","","Small cattle"],
             ["", "", "HH with Big Cattle", "%", "HH with Small Cattle", "%"],
             ["1", "0", str(big_0), big_0_pct, str(small_0), small_0_pct],
             ["2", "< 3", str(big_3), big_3_pct, str(small_3), small_3_pct],
@@ -826,7 +812,7 @@ def getLivestockOwnershipData(village_id):
         ]
     except Exception:
         return [
-            ["Sr. No.", "Count", "Livestock","","Small cattle"],
+            ["S. No.", "Count", "Livestock","","Small cattle"],
             ["", "", "HH with Big Cattle", "%", "HH with Small Cattle", "%"],
             ["1", "0", "N/A", "N/A", "N/A", "N/A"],
             ["2", "< 3", "N/A", "N/A", "N/A", "N/A"],
@@ -869,14 +855,14 @@ def getHousingTypologyData(village_id):
         total_pct = f"{total_pct_val}%"
 
         return [
-            ["Sr. No.", "Typology", "Kachcha", "Semi Pucca", "Pucca", "Total"],
+            ["S. No.", "Typology", "Kachcha", "Semi Pucca", "Pucca", "Total"],
             ["1", "No. of Household", str(kachcha), str(semi_pucca), str(pucca), str(total_households)],
             ["2", "Percentage %", kachcha_pct, semi_pucca_pct, pucca_pct, total_pct]
         ]
 
     except Exception:
         return [
-            ["Sr. No.", "Typology", "Kachcha", "Semi Pucca", "Pucca", "Total"],
+            ["S. No.", "Typology", "Kachcha", "Semi Pucca", "Pucca", "Total"],
             ["1", "No. of Household", "N/A", "N/A", "N/A", "N/A"],
             ["2", "Percentage %", "N/A", "N/A", "N/A", ""]
         ]
@@ -887,7 +873,7 @@ def getDigitalAccessData(village_id):
         total_households = households.count()
         
         if total_households == 0:
-            return [["Digital Media Owned", "Number of HH", "Percentage"], ["Mobile Phone", "-", "-"], ["TV", "-", "-"], ["Radio", "-", "-"], ["Radio and Mobile Phone", "-", "-"], ["TV and Mobile Phone", "-", "-"], ["None", "-", "-"], ["Total", "-", "-"]]
+            return [['S. No.',"Digital Media Owned", "Number of HH", "Percentage"], ["1", "Mobile Phone", "-", "-"], ["2", "TV", "-", "-"], ["3", "Radio", "-", "-"], ["4", "Radio and Mobile Phone", "-", "-"], ["5", "TV and Mobile Phone", "-", "-"], ["6", "None", "-", "-"], ["7", "Total", "-", "-"]]
         
         mobile_only = 0
         tv_only = 0
@@ -928,7 +914,7 @@ def getDigitalAccessData(village_id):
         none_pct = f"{round(none_count/total_households*100)}%"
         
         return [
-            ["Sr. No.", "Digital Media Owned", "Number of HH", "Percentage"],
+            ["S. No.", "Digital Media Owned", "Number of HH", "Percentage"],
             ["1", "Mobile Phone", str(mobile_only), mobile_pct],
             ["2", "TV", str(tv_only), tv_pct],
             ["3", "Radio", str(radio_only), radio_pct],
@@ -939,7 +925,7 @@ def getDigitalAccessData(village_id):
         ]
     except Exception:
         return [
-            ["Sr. No.", "Digital Media Owned", "Number of HH", "Percentage"],
+            ["S. No.", "Digital Media Owned", "Number of HH", "Percentage"],
             ["1", "Mobile Phone", "N/A", "N/A"],
             ["2", "TV", "N/A", "N/A"],
             ["3", "Radio", "N/A", "N/A"],
@@ -955,10 +941,10 @@ def getPublicAssetsData(village_id):
         facilities = Critical_Facility.objects.select_related('village').filter(village_id=village_id)
         
         if facilities.count() == 0:
-            return [["Presence of facilities"], ["Sr. No.", "Type", "Number", "Electricity", "Drinking Water", "Sanitation", "Good Road Access", "Building Condition (Good)"], ["1", "Anganwadi", "-", "-", "-", "-", "-", "-"], ["2", "LP School", "-", "-", "-", "-", "-", "-"], ["3", "Middle School", "-", "-", "-", "-", "-", "-"], ["4", "Religious Place", "-", "-", "-", "-", "-", "-"], ["5", "Total", "-", "-", "-", "-", "-", "-"]]
+            return [["Presence of facilities"], ["S. No.", "Type", "Number", "Electricity", "Drinking Water", "Sanitation", "Good Road Access", "Building Condition (Good)"], ["1", "Anganwadi", "-", "-", "-", "-", "-", "-"], ["2", "LP School", "-", "-", "-", "-", "-", "-"], ["3", "Middle School", "-", "-", "-", "-", "-", "-"], ["4", "Religious Place", "-", "-", "-", "-", "-", "-"], ["5", "Total", "-", "-", "-", "-", "-", "-"]]
         
         facility_types = ['Anganwadi', 'School', 'Govt Office', 'Religious Place']
-        result = [["Presence of facilities"], ["Sr. No.", "Type", "Number", "Electricity", "Drinking Water", "Sanitation", "Good Road Access", "Building Condition (Good)"]]
+        result = [["Presence of facilities"], ["S. No.", "Type", "Number", "Electricity", "Drinking Water", "Sanitation", "Good Road Access", "Building Condition (Good)"]]
         
         # Initialize totals
         total_facilities = 0
@@ -1013,7 +999,7 @@ def getPublicAssetsData(village_id):
     except Exception:
         return [
             ["Presence of facilities"],
-            ["Sr. No.", "Type", "Number", "Electricity", "Drinking Water", "Sanitation", "Good Road Access", "Building Condition (Good)"],
+            ["S. No.", "Type", "Number", "Electricity", "Drinking Water", "Sanitation", "Good Road Access", "Building Condition (Good)"],
             ["1", "Anganwadi", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A"],
             ["2", "LP School", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A"],
             ["3", "Middle School", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A"],
@@ -1031,7 +1017,7 @@ def getRoadLengthByTypologyData(village_id, workspace, layer):
         village_code = village.code
     except tblVillage.DoesNotExist:
         return [
-            ["Sr. No.", "Surface Type", "Length (km)", "% to Total Road Length"],
+            ["S. No.", "Surface Type", "Length (km)", "% to Total Road Length"],
             ["", "Village not found", "0", "0%"]
         ]
 
@@ -1063,7 +1049,7 @@ def getRoadLengthByTypologyData(village_id, workspace, layer):
                     total_length_m = sum(row[1] for row in rows if row[1])
                     total_length_km = total_length_m / 1000
                     
-                    result = [["Sr. No.", "Surface Type", "Length (km)", "% to Total Road Length"]]
+                    result = [["S. No.", "Surface Type", "Length (km)", "% to Total Road Length"]]
                     
                     for idx, (surface_type, length_m) in enumerate(rows, 1):
                         if length_m:
@@ -1103,14 +1089,14 @@ def getRoadLengthByTypologyData(village_id, workspace, layer):
 
         response = requests.get(wfs_url, params=params, timeout=10)
         if response.status_code != 200:
-            return [["Sr. No.", "Surface Type", "Length (km)", "% to Total Road Length"],
+            return [["S. No.", "Surface Type", "Length (km)", "% to Total Road Length"],
                     ["", "Geoserver unavailable", "N/A", "N/A"]]
 
         geojson = response.json()
         features = geojson.get("features", [])
         if not features:
             return [
-                ["Sr. No.", "Surface Type", "Length (km)", "% to Total Road Length"],
+                ["S. No.", "Surface Type", "Length (km)", "% to Total Road Length"],
                 ["1", "PNRD (Earthen road)", "0", "0%"],
                 ["2", "PWD (Bituminous road)", "0", "0%"],
                 ["3", "PWD (Cement block road)", "0", "0%"],
@@ -1132,7 +1118,7 @@ def getRoadLengthByTypologyData(village_id, workspace, layer):
         total_length = sum(surface_lengths.values()) / 1000
         
         # Build result dynamically
-        result = [["Sr. No.", "Surface Type", "Length (km)", "% to Total Road Length"]]
+        result = [["S. No.", "Surface Type", "Length (km)", "% to Total Road Length"]]
         
         for idx, (surface_type, length_m) in enumerate(surface_lengths.items(), 1):
             length_km = length_m / 1000
@@ -1156,12 +1142,12 @@ def getRoadLengthByTypologyData(village_id, workspace, layer):
 
     except (requests.exceptions.ConnectionError, requests.exceptions.Timeout, requests.exceptions.RequestException):
         return [
-            ["Sr. No.", "Surface Type", "Length (km)", "% to Total Road Length"],
+            ["S. No.", "Surface Type", "Length (km)", "% to Total Road Length"],
             ["", "Geoserver offline", "N/A", "N/A"]
         ]
     except Exception:
         return [
-            ["Sr. No.", "Surface Type", "Length (km)", "% to Total Road Length"],
+            ["S. No.", "Surface Type", "Length (km)", "% to Total Road Length"],
             ["", "Data unavailable", "N/A", "N/A"]
         ]
 
@@ -1212,7 +1198,7 @@ def getLULCData(village_id, workspace, layer, onlymax=False):
     except tblVillage.DoesNotExist:
         if onlymax:
             return "N/A"
-        return [["Sr. No.", "Landuse", "Area (sqm)", "Percentage"], ["", "Village not found", "0", "0%"]]
+        return [["S. No.", "Landuse", "Area (sqm)", "Percentage"], ["", "Village not found", "0", "0%"]]
 
     wfs_url = f"http://localhost:8080/geoserver/{workspace}/ows"
     params = {
@@ -1229,7 +1215,7 @@ def getLULCData(village_id, workspace, layer, onlymax=False):
         if response.status_code != 200:
             if onlymax:
                 return "N/A"
-            return [["Sr. No.", "Landuse", "Area (sqm)", "Percentage"], ["", "Geoserver unavailable", "N/A", "N/A"]]
+            return [["S. No.", "Landuse", "Area (sqm)", "Percentage"], ["", "Geoserver unavailable", "N/A", "N/A"]]
 
         geojson = response.json()
         features = geojson.get("features", [])
@@ -1237,7 +1223,7 @@ def getLULCData(village_id, workspace, layer, onlymax=False):
         if not features:
             if onlymax:
                 return "N/A"
-            return [["Sr. No.", "Landuse", "Area (sqm)", "Percentage"], ["", "No data available for this village", "0", "0%"]]
+            return [["S. No.", "Landuse", "Area (sqm)", "Percentage"], ["", "No data available for this village", "0", "0%"]]
 
         from collections import defaultdict
         from decimal import Decimal, ROUND_HALF_UP
@@ -1270,7 +1256,7 @@ def getLULCData(village_id, workspace, layer, onlymax=False):
         def format_number(n):
             return f"{int(n):,}"
 
-        result = [["Sr. No.", "Landuse", "Area (sqm)", "Percentage"]]
+        result = [["S. No.", "Landuse", "Area (sqm)", "Percentage"]]
         
         total_percent = Decimal("0")
         for idx, (class_name, area) in enumerate(class_area.items(), start=1):
@@ -1289,11 +1275,11 @@ def getLULCData(village_id, workspace, layer, onlymax=False):
     except (requests.exceptions.ConnectionError, requests.exceptions.Timeout, requests.exceptions.RequestException):
         if onlymax:
             return "N/A"
-        return [["Sr. No.", "Landuse", "Area (sqm)", "Percentage"], ["", "Geoserver offline", "N/A", "N/A"]]
+        return [["S. No.", "Landuse", "Area (sqm)", "Percentage"], ["", "Geoserver offline", "N/A", "N/A"]]
     except Exception:
         if onlymax:
             return "N/A"
-        return [["Sr. No.", "Landuse", "Area (sqm)", "Percentage"], ["", "Data unavailable", "N/A", "N/A"]]
+        return [["S. No.", "Landuse", "Area (sqm)", "Percentage"], ["", "Data unavailable", "N/A", "N/A"]]
 
 
 def getDrinkingWaterSourceData(village_id):
@@ -1305,9 +1291,9 @@ def getDrinkingWaterSourceData(village_id):
         households = HouseholdSurvey.objects.filter(village_id=village_id)
         total_households = households.count()
 
-        # Header (added Sr. No.)
+        # Header (added S. No.)
         table_data = [
-            ["Sr. No.", "Drinking Water Source", "No of HHs", "%"]
+            ["S. No.", "Drinking Water Source", "No of HHs", "%"]
         ]
 
         if total_households == 0:
@@ -1340,7 +1326,7 @@ def getDrinkingWaterSourceData(village_id):
             ])
             sr_no += 1
 
-        # Total row (no Sr. No.)
+        # Total row (no S. No.)
         table_data.append([
             "",
             "Total",
@@ -1352,7 +1338,7 @@ def getDrinkingWaterSourceData(village_id):
 
     except Exception:
         return [
-            ["Sr. No.", "Drinking Water Source", "No of HHs", "%"],
+            ["S. No.", "Drinking Water Source", "No of HHs", "%"],
             ["", "No data available", "N/A", "N/A"],
             ["", "Total", "N/A", "N/A"]
         ]
@@ -1365,7 +1351,7 @@ def getJJMHouseConnect(village_id):
         total_households = households.count()
 
         if total_households == 0:
-            return [["Sr. No.", "JJM House Connection", "No of HHs", "%"],
+            return [["S. No.", "JJM House Connection", "No of HHs", "%"],
                     ["", "No data available", "0", "0%"],
                     ["", "Total", "0", "100%"]]
 
@@ -1378,7 +1364,7 @@ def getJJMHouseConnect(village_id):
             .annotate(count=Count("jjm_n"))
         )
 
-        table_data = [["Sr. No.", "JJM House Connection", "No of HHs", "%"]]
+        table_data = [["S. No.", "JJM House Connection", "No of HHs", "%"]]
         sr_no = 1
 
         for row in jjm_qs:
@@ -1405,7 +1391,7 @@ def getJJMHouseConnect(village_id):
 
     except Exception:
         return [
-            ["Sr. No.", "JJM House Connection", "No of HHs", "%"],
+            ["S. No.", "JJM House Connection", "No of HHs", "%"],
             ["", "No data available", "N/A", "N/A"],
             ["", "Total", "N/A", "N/A"]
         ]
@@ -1420,9 +1406,9 @@ def getAdequacyOfDrinkingWaterData(village_id):
         households = HouseholdSurvey.objects.filter(village_id=village_id)
         total_households = households.count()
 
-        # Header (added Sr. No.)
+        # Header (added S. No.)
         table_data = [
-            ["Sr. No.", "Adequacy of drinking water", "No of HHs", "%"]
+            ["S. No.", "Adequacy of drinking water", "No of HHs", "%"]
         ]
 
         if total_households == 0:
@@ -1454,7 +1440,7 @@ def getAdequacyOfDrinkingWaterData(village_id):
         yes_percentage = round((yes_count / total_households) * 100)
         no_percentage = round((no_count / total_households) * 100)
 
-        # Rows with Sr. No.
+        # Rows with S. No.
         table_data.append([
             "1",
             "Yes",
@@ -1480,7 +1466,7 @@ def getAdequacyOfDrinkingWaterData(village_id):
 
     except Exception:
         return [
-            ["Sr. No.", "Adequacy of drinking water", "No of HHs", "%"],
+            ["S. No.", "Adequacy of drinking water", "No of HHs", "%"],
             ["", "No data available", "N/A", "N/A"],
             ["", "Total", "N/A", "N/A"]
         ]
@@ -1491,9 +1477,9 @@ def getSanitationFacilities(village_id):
         households = HouseholdSurvey.objects.filter(village_id=village_id)
         total_households = households.count()
 
-        # Header (added Sr. No.)
+        # Header (added S. No.)
         table_data = [
-            ["Sr. No.", "Sanitation Facility", "No of HHs", "%"]
+            ["S. No.", "Sanitation Facility", "No of HHs", "%"]
         ]
 
         if total_households == 0:
@@ -1525,7 +1511,7 @@ def getSanitationFacilities(village_id):
             ])
             sr_no += 1
 
-        # Total row (no Sr. No.)
+        # Total row (no S. No.)
         table_data.append([
             "",
             "Total",
@@ -1537,7 +1523,7 @@ def getSanitationFacilities(village_id):
 
     except Exception:
         return [
-            ["Sr. No.", "Sanitation Facility", "No of HHs", "%"],
+            ["S. No.", "Sanitation Facility", "No of HHs", "%"],
             ["", "No data available", "N/A", "N/A"],
             ["", "Total", "N/A", "N/A"]
         ]
@@ -1548,9 +1534,9 @@ def getHouseholdToiletsType(village_id):
         households = HouseholdSurvey.objects.filter(village_id=village_id)
         total_households = households.count()
 
-        # Header (added Sr. No.)
+        # Header (added S. No.)
         table_data = [
-            ["Sr. No.", "Type of Household Toilet", "No of HHs", "%"]
+            ["S. No.", "Type of Household Toilet", "No of HHs", "%"]
         ]
 
         if total_households == 0:
@@ -1582,7 +1568,7 @@ def getHouseholdToiletsType(village_id):
             ])
             sr_no += 1
 
-        # Total row (no Sr. No.)
+        # Total row (no S. No.)
         table_data.append([
             "",
             "Total",
@@ -1594,7 +1580,7 @@ def getHouseholdToiletsType(village_id):
 
     except Exception:
         return [
-            ["Sr. No.", "Type of Household Toilet", "No of HHs", "%"],
+            ["S. No.", "Type of Household Toilet", "No of HHs", "%"],
             ["", "No data available", "N/A", "N/A"],
             ["", "Total", "N/A", "N/A"]
         ]
@@ -1604,9 +1590,9 @@ def getDe_sludgeMaterial(village):
         households = HouseholdSurvey.objects.filter(village_id=village)
         total_households = households.count()
 
-        # Header (added Sr. No.)
+        # Header (added S. No.)
         table_data = [
-            ["Sr. No.", "De-sludge Material Disposal Method", "No of HHs", "%"]
+            ["S. No.", "De-sludge Material Disposal Method", "No of HHs", "%"]
         ]
 
         if total_households == 0:
@@ -1638,7 +1624,7 @@ def getDe_sludgeMaterial(village):
             ])
             sr_no += 1
 
-        # Total row (no Sr. No.)
+        # Total row (no S. No.)
         table_data.append([
             "",
             "Total",
@@ -1650,7 +1636,7 @@ def getDe_sludgeMaterial(village):
 
     except Exception:
         return [
-            ["Sr. No.", "De-sludge Material Disposal Method", "No of HHs", "%"],
+            ["S. No.", "De-sludge Material Disposal Method", "No of HHs", "%"],
             ["", "No data available", "N/A", "N/A"],
             ["", "Total", "N/A", "N/A"]
         ]
@@ -1660,9 +1646,9 @@ def getElectricityconnection(vilage_id):
         households = HouseholdSurvey.objects.filter(village_id=vilage_id)
         total_households = households.count()
 
-        # Header (added Sr. No.)
+        # Header (added S. No.)
         table_data = [
-            ["Sr. No.", "Electricity Connection", "No of HHs", "%"]
+            ["S. No.", "Electricity Connection", "No of HHs", "%"]
         ]
 
         if total_households == 0:
@@ -1694,7 +1680,7 @@ def getElectricityconnection(vilage_id):
             ])
             sr_no += 1
 
-        # Total row (no Sr. No.)
+        # Total row (no S. No.)
         table_data.append([
             "",
             "Total",
@@ -1706,7 +1692,7 @@ def getElectricityconnection(vilage_id):
 
     except Exception:
         return [
-            ["Sr. No.", "Electricity Connection", "No of HHs", "%"],
+            ["S. No.", "Electricity Connection", "No of HHs", "%"],
             ["", "No data available", "N/A", "N/A"],
             ["", "Total", "N/A", "N/A"]
         ]
@@ -1716,9 +1702,9 @@ def getElectricitySource(vilage_id):
         households = HouseholdSurvey.objects.filter(village_id=vilage_id)
         total_households = households.count()
 
-        # Header (added Sr. No.)
+        # Header (added S. No.)
         table_data = [
-            ["Sr. No.", "Source of Electricity", "No of HHs", "%"]
+            ["S. No.", "Source of Electricity", "No of HHs", "%"]
         ]
 
         if total_households == 0:
@@ -1750,7 +1736,7 @@ def getElectricitySource(vilage_id):
             ])
             sr_no += 1
 
-        # Total row (no Sr. No.)
+        # Total row (no S. No.)
         table_data.append([
             "",
             "Total",
@@ -1762,7 +1748,7 @@ def getElectricitySource(vilage_id):
 
     except Exception:
         return [
-            ["Sr. No.", "Source of Electricity", "No of HHs", "%"],
+            ["S. No.", "Source of Electricity", "No of HHs", "%"],
             ["", "No data available", "N/A", "N/A"],
             ["", "Total", "N/A", "N/A"]
         ]
@@ -1809,7 +1795,7 @@ def draw_village_profile(elements,village_id):
     # add_heading_with_toc("Socio economic profile", blue_sub_heading, level=2, elements=elements)
     elements.append(heading)
     elements.append(Spacer(1, 6))
-    sub_title=Paragraph("Table 3 1: Demographic profile", table_sub_title) 
+    sub_title=Paragraph("Table 3-1: Demographic profile", table_sub_title) 
     elements.append(sub_title)
     elements.append(Spacer(1, 6))
     data=getVillageDemographic(village_id)
@@ -1821,10 +1807,10 @@ def draw_village_profile(elements,village_id):
          ('ALIGN', (0, 1), (0, -1), 'RIGHT'),
         ('FONTNAME', (0, 1), (0, -1), 'Helvetica-Bold'),
         ('ALIGN', (2, 1), (-1, -1), 'RIGHT'),
-        ('FONTNAME', (1, -2), (-1, -1), 'Helvetica-Bold'),
+        ('FONTNAME', (1, -1), (-1, -1), 'Helvetica-Bold'),
     ]
     elements.append(Spacer(1, 6))
-    sub_title=Paragraph("Table 3 2: Socio economic status", table_sub_title) 
+    sub_title=Paragraph("Table 3-2: Socio economic status of Head of Household", table_sub_title) 
     elements.append(sub_title)
     elements.append(Spacer(1, 6))
     data, summary = getSocialEconomicStatusData(village_id)
@@ -1833,48 +1819,34 @@ def draw_village_profile(elements,village_id):
     elements.append(table)
     para=Paragraph("Note: Antyodaya (AAY), Above Poverty Line (APL), Annapurna Yojna (AY), Below Poverty Line (BPL), Priority Household (PHH).", notes_style)
     elements.append(para)
-    
-    p = Paragraph(
-    f'<bullet>&bull;</bullet> Majority ({summary["bpl_percent"]}%) are Below Poverty Line (BPL) followed by Priority Household (PHH-{summary["phh_percent"]}%), and {summary["aay_percent"]}% under Antyodaya Anna Yojana (AAY).',
-    styles["Normal"]
-    )
-    elements.append(p)
-    
-    p2 = Paragraph(
-    f'<bullet>&bull;</bullet> {summary["widow_percent"]}% of households are headed by widows.',
-    styles["Normal"]
-    )
-    elements.append(p2)
-    
-    p3 = Paragraph(
-    f'<bullet>&bull;</bullet> {summary["married_male_percent"]}% of households are headed by married males.',
-    styles["Normal"]
-    )
-    elements.append(p3)
-    elements.append(Spacer(1, 12))
-    # -------------------------- 3 3 ---------------
-    custom_styles=[
-         ('ALIGN', (0, 1), (0, -1), 'RIGHT'),
-        ('FONTNAME', (0, 1), (0, -1), 'Helvetica-Bold'),
-        ('ALIGN', (2, 1), (-1, -1), 'RIGHT'),
-        ('FONTNAME', (1, -1), (-1, -1), 'Helvetica-Bold'),
-    ]
-    sub_title=Paragraph("Table 3 3: Annual household income", table_sub_title) 
-    elements.append(sub_title)
     elements.append(Spacer(1, 6))
-    data, income_stats = getIncomeGroupData(village_id)
-    table = create_styled_table(data, [40,155,150,155], False, True, custom_styles, "Annual Household Income")
-    elements.append(table)
+    points = [
+        f"Majority ({summary['bpl_percent']}%) are Below Poverty Line (BPL) followed by Priority Household (PHH-{summary['phh_percent']}%), and {summary['aay_percent']}% under Antyodaya Anna Yojana (AAY).",
+        f"{summary['widow_percent']}% of households are headed by widows.",
+        f"{summary['married_male_percent']}% of households are headed by married males."
+    ]
+
+    bullet_items = ListFlowable(
+        [ListItem(Paragraph(text, styles["Normal"])) for text in points],
+        bulletType='bullet',
+        start='•',
+        leftIndent=20,
+        bulletFontName='Helvetica',
+        bulletFontSize=10
+    )
+
+    elements.append(bullet_items)
     elements.append(Spacer(1, 12))
+
     
-    # -------------------- 3.4 ----------------
+    # -------------------- 3.3 ----------------
     custom_styles=[
          ('ALIGN', (0, 1), (0, -1), 'RIGHT'),
         ('FONTNAME', (0, 1), (0, -1), 'Helvetica-Bold'),
         ('ALIGN', (2, 1), (-1, -1), 'RIGHT'),
         ('FONTNAME', (1, -1), (-1, -1), 'Helvetica-Bold'),
     ]
-    sub_title=Paragraph("Table 3 4: Household level agriculture land holding", table_sub_title)
+    sub_title=Paragraph("Table 3-3: Household level agriculture land holding", table_sub_title)
     elements.append(sub_title)
     elements.append(Spacer(1, 6))
     data, land_stats = getAgricultureLandHoldingData(village_id)
@@ -1882,11 +1854,11 @@ def draw_village_profile(elements,village_id):
     elements.append(table)
     para=Paragraph("Note: 1 Bigha = 0.68 Hectare", notes_style)
     elements.append(para)
-    elements.append(Spacer(1, 12))
+    
     
     # Define bullet point content
     points = [
-        f"Low income dominance - {income_stats['low_income_percent']}% of the household has annual income of about INR 1.5 lakhs.",
+     
         f"Only {land_stats['owned_land_percent']}% of the community owns agricultural land. This reflects a low overall economic status, limited asset ownership, and consequently reduced access to formal credit and financial services. Farmers using leased land get informal credit and financial support from small aggregators.",
         # f"Though the community in general doesn’t keep track of exact expenditure, the major expenditure (43%) goes for daily expenditure and about 10% each for agriculture, festival and house repair."
     ]
@@ -1904,6 +1876,41 @@ def draw_village_profile(elements,village_id):
     # Append to your PDF elements
     elements.append(Spacer(1, 12))  # Add spacing before the list
     elements.append(bullet_items)
+
+    # -------------------------- 3 4 ---------------
+    custom_styles=[
+         ('ALIGN', (0, 1), (0, -1), 'RIGHT'),
+        ('FONTNAME', (0, 1), (0, -1), 'Helvetica-Bold'),
+        ('ALIGN', (2, 1), (-1, -1), 'RIGHT'),
+        ('FONTNAME', (1, -1), (-1, -1), 'Helvetica-Bold'),
+    ]
+    elements.append(Spacer(1, 12))
+    sub_title=Paragraph("Table 3-4: Annual household income", table_sub_title) 
+    elements.append(sub_title)
+    elements.append(Spacer(1, 6))
+    data, income_stats = getIncomeGroupData(village_id)
+    table = create_styled_table(data, [40,155,150,155], False, True, custom_styles, "Annual Household Income")
+    elements.append(table)
+    elements.append(Spacer(1, 12))
+
+      # Define bullet point content
+    points = [
+        f"Low income dominance - {income_stats['low_income_percent']}% of the household has annual income of about INR 1.5 lakhs.",
+    ]
+    
+     #Create bullet items
+    bullet_items = ListFlowable(
+        [ListItem(Paragraph(text, styles["Normal"])) for text in points],
+        bulletType='bullet',
+        start='•',
+        leftIndent=20,
+        bulletFontName='Helvetica',
+        bulletFontSize=10
+    )
+
+    # Append to your PDF elements
+   
+    elements.append(bullet_items)
     
     #-------------------- 3 5-----------------
     custom_styles=[
@@ -1913,7 +1920,7 @@ def draw_village_profile(elements,village_id):
          ('FONTNAME', (1, -1), (-1, -1), 'Helvetica-Bold'),
     ]
     elements.append(Spacer(1, 6))
-    sub_title=Paragraph("Table 3 5: Average expenditure break down for household", table_sub_title)
+    sub_title=Paragraph("Table 3-5: Average expenditure break down for household", table_sub_title)
     elements.append(sub_title)
     elements.append(Spacer(1, 6))
     data=getAverageExpenditureBreakdownData(village_id)
@@ -1922,7 +1929,7 @@ def draw_village_profile(elements,village_id):
     elements.append(Spacer(1, 12))
     
     # ------------------- 3 6 ----------
-    sub_title=Paragraph("Table 3 6: Household debit liability in the last 5 years", table_sub_title)
+    sub_title=Paragraph("Table 3-6: Household debit liability in the last 5 years", table_sub_title)
     elements.append(sub_title)
     elements.append(Spacer(1, 6))
     data=getHouseholdDebtLiabilityData(village_id)
@@ -1950,7 +1957,7 @@ def draw_village_profile(elements,village_id):
     
     heading = Paragraph("<b>3.3	Livelihood profile </b>", blue_sub_heading)
     elements.append(heading)
-    sub_title=Paragraph("Table 3 7: Primary livelihood distribution (primary economic activity)", table_sub_title)
+    sub_title=Paragraph("Table 3-7: Primary livelihood distribution (primary economic activity)", table_sub_title)
     elements.append(sub_title)
     elements.append(Spacer(1, 12))
     data=getPrimaryLivelihoodDistributionData(village_id)
@@ -1960,7 +1967,7 @@ def draw_village_profile(elements,village_id):
     elements.append(Spacer(1, 6))
     
     #------------------------
-    sub_title=Paragraph("Table 3 8: Livelihood distribution (secondary economic activity)", table_sub_title)
+    sub_title=Paragraph("Table 3-8: Livelihood distribution (secondary economic activity)", table_sub_title)
     elements.append(sub_title)
     elements.append(Spacer(1, 6))
     data=getPrimaryLivelihoodDistributionData(village_id, 'secondary')
@@ -1975,7 +1982,7 @@ def draw_village_profile(elements,village_id):
          ('FONTNAME', (1, -1), (-1, -1), 'Helvetica-Bold'),
          ('ALIGN', (2, 1), (-1, -1), 'RIGHT'),
     ]
-    sub_title=Paragraph("Table 3 9: Number of crops cultivated", table_sub_title)
+    sub_title=Paragraph("Table 3-9: Number of crops cultivated", table_sub_title)
     elements.append(sub_title)
     elements.append(Spacer(1, 6))
     data=getCropCultivationData(village_id)
@@ -2156,12 +2163,14 @@ def draw_village_profile(elements,village_id):
         sub_title=Paragraph("Figure 3 1: Distribution of residential building", image_title)
         elements.append(sub_title)
         elements.append(Spacer(1, 12))
+
+        elements.append(Paragraph("Image is not available for this village", notes_style))
         
         # Add legends horizontally with text labels
-        elements.append(Spacer(1, 6))
-        elements.append(Paragraph('Residential building Legends', Legend_heading))
-        elements.append(Spacer(1, 6))
-        elements.append(Paragraph('<font color="#a83800">■</font> -- buildings', normal_style))
+        # elements.append(Spacer(1, 6))
+        # elements.append(Paragraph('Residential building Legends', Legend_heading))
+        # elements.append(Spacer(1, 6))
+        # elements.append(Paragraph('<font color="#a83800">■</font> -- buildings', normal_style))
 
 
     # legend_layers = ['assam:household']
@@ -2337,6 +2346,11 @@ def draw_village_profile(elements,village_id):
         sub_title=Paragraph("Figure 3 2: Critical Facilities", image_title)
         elements.append(sub_title)
 
+    else:
+        sub_title=Paragraph("Figure 3 2: Critical Facilities", image_title)
+        elements.append(sub_title)
+        elements.append(Paragraph("Image is not available for this village", notes_style))
+
     # --------------------
     elements.append(Spacer(1, 12))
     heading = Paragraph("<b>3.5	Infrastructure</b>", blue_sub_heading)
@@ -2391,17 +2405,15 @@ def draw_village_profile(elements,village_id):
             sub_title=Paragraph("Figure 3 3: Road infrastructure map", image_title)
             elements.append(sub_title)
             
-            elements.append(Spacer(1, 6))
-            elements.append(Paragraph('Road Network Legends', Legend_heading))
-            elements.append(Spacer(1, 6))
+            elements.append(Paragraph("Image is not available for this village", notes_style))
     
 
 
-            # Road network legends with colored lines (ReportLab doesn't support text rotation in Paragraph)
-            elements.append(Paragraph('<font color="#db1e2a">━━━━━━━━━━</font> Bituminous', normal_style))
-            elements.append(Paragraph('<font color="#f67872">━━━━━━━━━━</font> Cement Block', normal_style))
-            elements.append(Paragraph('<font color="#796868">━━━━━━━━━━</font> Earthen', normal_style))
-            elements.append(Paragraph('<font color="#000000">━━━━━━━━━━</font> Village Boundary', normal_style))
+            # # Road network legends with colored lines (ReportLab doesn't support text rotation in Paragraph)
+            # elements.append(Paragraph('<font color="#db1e2a">━━━━━━━━━━</font> Bituminous', normal_style))
+            # elements.append(Paragraph('<font color="#f67872">━━━━━━━━━━</font> Cement Block', normal_style))
+            # elements.append(Paragraph('<font color="#796868">━━━━━━━━━━</font> Earthen', normal_style))
+            # elements.append(Paragraph('<font color="#000000">━━━━━━━━━━</font> Village Boundary', normal_style))
             
     # Add legends horizontally with text labels
     
@@ -2453,6 +2465,11 @@ def draw_village_profile(elements,village_id):
         elements.append(Spacer(1, 12))
         sub_title=Paragraph("Figure 3 4: Power infrastructure", image_title)
         elements.append(sub_title)
+
+    else:
+        sub_title=Paragraph("Figure 3 4: Power infrastructure", image_title)
+        elements.append(sub_title)
+        elements.append(Paragraph("Image is not available for this village", notes_style))
 
     #  ------------------------- 
     
@@ -2510,15 +2527,8 @@ def draw_village_profile(elements,village_id):
         elements.append(img_table)
     else:
         #img from geoserver
-        layers = ['assam:lulc']
-        img, actual_width, actual_height = get_geoserver_image_as_rl_image(
-            layers, village_id=village_id, max_width=500
-        )
-        if img:
-            # img is already a ReportLab Image object - use directly
-            img_table = ReportLabTable([[img]])
-            img_table.setStyle(TableStyle([('BOX', (0, 0), (-1, -1), 1, colors.black)]))
-            elements.append(img_table)
+
+        elements.append(Paragraph("Image is not available for this village", notes_style))
 
     elements.append(Spacer(1, 12))
     sub_title=Paragraph("Figure 3 5: Landuse map", image_title)

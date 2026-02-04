@@ -24,7 +24,7 @@ def draw_list_of_figures(elements, doc):
     elements.append(Spacer(1, 12))
 
     # Create table data - header + rows
-    data = [["Sr. No.", "Figure Number and Title", "Page"]]
+    data = [["S. No.", "Figure Number and Title", "Page"]]
     
     # Sort figures by page number
     sorted_figures = sorted(doc.figure_list, key=lambda x: x['page'])
@@ -84,7 +84,7 @@ def draw_list_of_tables(elements, doc):
     # ]))
 
     # Create table data - header + rows
-    data = [["Sr. No.", "Table Number and Title", "Page"]]
+    data = [["S. No.", "Table Number and Title", "Page"]]
     
     # Sort tables by page number
     sorted_tables = sorted(doc.table_list, key=lambda x: x['page'])

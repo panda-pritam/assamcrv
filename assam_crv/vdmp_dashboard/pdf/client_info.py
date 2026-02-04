@@ -73,6 +73,7 @@ def draw_client_info_table(elements):
     ]))
 
     # === Add elements ===
+    elements.append(Spacer(1, 6 * inch))
     elements.append(Paragraph("For the kind attention of:", heading_style))  # Clean heading
     elements.append(Spacer(1, 0.2 * inch))
     elements.append(table)
