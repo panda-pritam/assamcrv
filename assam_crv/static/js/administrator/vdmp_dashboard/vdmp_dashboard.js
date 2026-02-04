@@ -343,6 +343,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 formData.append("file_index", fileIndex);
                 const uploadCategory = document.getElementById("uploadCategory")?.value || "";
                 formData.append("upload_category", uploadCategory);
+                const districtId = document.getElementById("upload_district")?.value || "";
+                if (districtId) {
+                    formData.append("district_id", districtId);
+                }
                 const villageId = document.getElementById("upload_village")?.value || "";
                 if (villageId) {
                     formData.append("village_id", villageId);

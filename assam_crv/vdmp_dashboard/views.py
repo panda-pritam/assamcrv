@@ -16,7 +16,8 @@ from django.core.exceptions import ObjectDoesNotExist
 from .models import (HouseholdSurvey, tblVillage, Transformer, Commercial,Critical_Facility,ElectricPole,VillageListOfAllTheDistricts,
                      VillageRoadInfo,VillageRoadInfoErosion, BridgeSurvey, Risk_Assesment, Upload_data_vdmp)
 from administrator.models import PRA_main, PRA_assets, PRA_shelter, FGD_wash_summary, FGD_livelihood_summary
-from layers.models import village_flood_raster_Files
+from layers.models import village_flood_raster_Files, district_wind_raster_file, district_eq_raster_file
+from village_profile.models import tblDistrict
 from django.db.models.functions import Cast
 from django.db.models import Sum, Count, Q, FloatField, Avg, Max
 from django.db import models as django_models
@@ -232,50 +233,80 @@ def upload_data_vdmp(request):
         if ext in image_exts:
             if data_type == "hazard":
                 type_name_normalized = (type_name or "").strip().lower()
-                if type_name_normalized == "flood":
+                if type_name_normalized == "flood" or type_name_normalized.startswith("flood "):
+                    village_id = request.POST.get("village_id")
+                    if not village_id:
+                        return JsonResponse({
+                            "status": "error",
+                            "error": "Village is required for flood hazard uploads"
+                        }, status=400)
+                    try:
+                        village = tblVillage.objects.get(pk=village_id)
+                    except tblVillage.DoesNotExist:
+                        return JsonResponse({
+                            "status": "error",
+                            "error": "Invalid village for flood hazard upload"
+                        }, status=400)
+
+                    record, _ = village_flood_raster_Files.objects.get_or_create(village=village)
                     if ext in {".tif", ".tiff"}:
+                        record.raster_file = file
+                    else:
+                        record.flood_map_image = file
+                    record.save()
+                    return JsonResponse({
+                        "status": "success",
+                        "records_created": 1,
+                        "records_updated": 0,
+                        "file_path": record.flood_map_image.name if record.flood_map_image else record.raster_file.name
+                    })
+
+                if type_name_normalized.startswith("wind") or type_name_normalized.startswith("eq"):
+                    district_id = request.POST.get("district_id")
+                    if not district_id:
                         return JsonResponse({
                             "status": "error",
-                            "error": "Flood image uploads only support JPG/PNG formats"
+                            "error": "District is required for wind/eq hazard uploads"
                         }, status=400)
-                elif type_name_normalized.endswith("raster"):
-                    if ext not in {".tif", ".tiff"}:
+                    try:
+                        district = tblDistrict.objects.get(pk=district_id)
+                    except tblDistrict.DoesNotExist:
                         return JsonResponse({
                             "status": "error",
-                            "error": "Raster uploads only support TIF formats"
+                            "error": "Invalid district for wind/eq hazard upload"
                         }, status=400)
-                else:
-                    return JsonResponse({
-                        "status": "error",
-                        "error": "Only flood hazard image uploads are supported at the village level"
-                    }, status=400)
 
-                village_id = request.POST.get("village_id")
-                if not village_id:
-                    return JsonResponse({
-                        "status": "error",
-                        "error": "Village is required for flood hazard uploads"
-                    }, status=400)
-                try:
-                    village = tblVillage.objects.get(pk=village_id)
-                except tblVillage.DoesNotExist:
-                    return JsonResponse({
-                        "status": "error",
-                        "error": "Invalid village for flood hazard upload"
-                    }, status=400)
+                    if type_name_normalized.startswith("wind"):
+                        record, _ = district_wind_raster_file.objects.get_or_create(district=district)
+                        if ext in {".tif", ".tiff"}:
+                            record.raster_file = file
+                        else:
+                            record.wind_map_image = file
+                        record.save()
+                        return JsonResponse({
+                            "status": "success",
+                            "records_created": 1,
+                            "records_updated": 0,
+                            "file_path": record.wind_map_image.name if record.wind_map_image else record.raster_file.name
+                        })
 
-                record, _ = village_flood_raster_Files.objects.get_or_create(village=village)
-                if type_name_normalized.endswith("raster"):
-                    record.raster_file = file
-                else:
-                    record.flood_map_image = file
-                record.save()
+                    record, _ = district_eq_raster_file.objects.get_or_create(district=district)
+                    if ext in {".tif", ".tiff"}:
+                        record.raster_file = file
+                    else:
+                        record.eq_map_image = file
+                    record.save()
+                    return JsonResponse({
+                        "status": "success",
+                        "records_created": 1,
+                        "records_updated": 0,
+                        "file_path": record.eq_map_image.name if record.eq_map_image else record.raster_file.name
+                    })
+
                 return JsonResponse({
-                    "status": "success",
-                    "records_created": 1,
-                    "records_updated": 0,
-                    "file_path": record.flood_map_image.name if record.flood_map_image else record.raster_file.name
-                })
+                    "status": "error",
+                    "error": "Unsupported hazard type for upload"
+                }, status=400)
             if data_type != "photos":
                 return JsonResponse({
                     "status": "error",
