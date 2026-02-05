@@ -1438,7 +1438,7 @@ def calculate_road_length(intersections):
     intersected_length = intersections["road_length_m"].sum()
 
     print("✂️ TOTAL INTERSECTED ROAD LENGTH:", intersected_length)
-    # print("📉 MISSING LENGTH:", total_road_length - intersected_length)
+    print("📉 MISSING LENGTH:", total_road_length - intersected_length)
     return intersections
 
 # If multiple road pieces fall in the same pixel:
@@ -1481,7 +1481,7 @@ def save_grid_results(result_df, village_obj, village_code):
         # -----------------------------
         # Basic values
         # -----------------------------
-        flood_depth_m = float(row["flood_depth_m"] or 0.0)
+        flood_depth_m = float(row["flood_depth_m"]) if row["flood_depth_m"] is not None else None
         road_length_m = float(row["road_length_m"] or 0.0)
 
         # Convert meters → feet for classification
