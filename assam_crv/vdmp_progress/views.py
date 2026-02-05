@@ -406,7 +406,8 @@ def update_vdmp_activity_status(request, status_id):
                         village_code=village_code,
                         district_code=district_code,
                         district_name=district_name,
-                        village_name=village_name
+                        village_name=village_name,
+                        district_id=mapping.district.id,
                     )
                     
                     serializer.save()
@@ -461,15 +462,56 @@ def update_vdmp_activity_status(request, status_id):
                         'error': 'Agriculture activity processing failed',
                         'pipeline_error': str(e)
                     }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)  
+            elif "gis maps" in activity_name:
+            # GIS Maps processing pipeline
+                try:
+                    village_obj = activity_status.village
+                    village_code = village_obj.code
+                    
+                    print(f"🗺️ Starting GIS Maps processing for village: {village_obj.name} (ID: {village_obj.id}, Code: {village_code})")
+                    
+                    # Validate GIS data availability first
+                    from .cleaning_utils import validate_gis_data_availability, run_gis_risk_assessment_pipeline
+                    
+                    print("🔍 Validating GIS data availability...")
+                    validation_errors = validate_gis_data_availability(village_obj)
+                    if validation_errors:
+                        print(f"❌ GIS data validation failed: {validation_errors}")
+                        return Response({
+                            'error': 'Missing required GIS data: ' + '; '.join(validation_errors)
+                        }, status=status.HTTP_400_BAD_REQUEST)
+                    
+                    print("✅ GIS data validation passed")
+                    print("🚀 Starting GIS risk assessment pipeline...")
+                    
+                    # Run GIS risk assessment pipeline
+                    run_gis_risk_assessment_pipeline(village_obj, village_code)
+                    
+                    print("✅ GIS Maps pipeline completed successfully")
+                    
+                    serializer.save()
+                    return Response({
+                        **serializer.data,
+                        'pipeline_status': 'success',
+                        'message': 'GIS Maps risk assessment completed successfully'
+                    })
+                    
+                except Exception as e:
+                    print(f"❌ GIS Maps pipeline failed: {str(e)}")
+                    import traceback
+                    print(f"📋 Full traceback: {traceback.format_exc()}")
+                    return Response({
+                        'error': 'GIS Maps pipeline processing failed',
+                        'pipeline_error': str(e)
+                    }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
                 
             else:
                 # For other activities, just save without pipeline
                 serializer.save()
                 return Response(serializer.data)
-        else:
-            # Save status for non-Completed statuses
-            serializer.save()
-            return Response(serializer.data)
+            
+        
+        
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -511,6 +553,22 @@ def delete_and_rerun_pipeline(request, status_id):
             villageAgricultureLandErosionInfo.objects.filter(village=village).delete()
             villageAgricultureLandWindInfo.objects.filter(village=village).delete()
             villageAgricultureLandEQInfo.objects.filter(village=village).delete()
+            
+        elif "GIS Maps" in activity_name:
+            from vdmp_dashboard.models import VillageRoadInfo, VillageRoadInfoEQ, HouseholdSurvey
+            print(f"🗺️ Deleting existing GIS Maps data for village: {village.name}")
+            
+            road_count = VillageRoadInfo.objects.filter(village=village).count()
+            eq_count = VillageRoadInfoEQ.objects.filter(village=village).count() 
+            household_count = HouseholdSurvey.objects.filter(village=village).count()
+            
+            print(f"📋 Records to delete - Roads: {road_count}, EQ: {eq_count}, Households: {household_count}")
+            
+            VillageRoadInfo.objects.filter(village=village).delete()
+            VillageRoadInfoEQ.objects.filter(village=village).delete()
+            HouseholdSurvey.objects.filter(village=village).delete()
+            
+            print("✅ GIS Maps data deletion completed")
 
         return Response({
             "status": "success",

@@ -7,6 +7,9 @@ from vdmp_progress.models import (house_type_combination_mapping, house_type, Ri
                                  flood_MDR_table, EQ_MDR_table, wind_MDR_table)
 from village_profile.models import tblVillage
 
+
+from layers.models import district_eq_raster_file, district_wind_raster_file
+
 # Import GDAL instead of rasterio
 try:
     import sys
@@ -23,14 +26,22 @@ except ImportError as e:
     print(f"DEBUG: sys.path: {sys.path}")
     raise ImportError(f"CRITICAL: GDAL required for raster value extraction: {e}")
 
-# Raster file paths
-EQ_RASTER = os.path.join(settings.BASE_DIR, 'static', 'risk_assessment_raster', 'PGA_Raster.img')
-WIND_RASTER = os.path.join(settings.BASE_DIR, 'static', 'risk_assessment_raster', 'Wind_Raster.tif')
-
-print(f"DEBUG: EQ_RASTER path: {EQ_RASTER}")
-print(f"DEBUG: WIND_RASTER path: {WIND_RASTER}")
-print(f"DEBUG: EQ_RASTER exists: {os.path.exists(EQ_RASTER)}")
-print(f"DEBUG: WIND_RASTER exists: {os.path.exists(WIND_RASTER)}")
+def get_raster_paths(district_id):
+    """
+    Get raster file paths from database based on district_id
+    """
+    dist_wind_raster = district_wind_raster_file.objects.filter(
+        district_id=district_id
+    ).first()
+    
+    dist_eq_raster = district_eq_raster_file.objects.filter(
+        district_id=district_id
+    ).first()
+    
+    eq_path = f"c:\\assamcrv\\assam_crv\\media\\{dist_eq_raster.raster_file}" if dist_eq_raster else None
+    wind_path = f"c:\\assamcrv\\assam_crv\\media\\{dist_wind_raster.raster_file}" if dist_wind_raster else None
+    
+    return eq_path, wind_path
 
 def sample_raster_values_gdal(path, lats, lons, default_value=0.1):
     """
@@ -257,7 +268,7 @@ def map_mdr_from_db(df, hazard_col, mdr_model, hazard_field):
         df[f"{hazard_col}_mdr"] = np.nan
         return df
 
-def process_hazards_and_losses(df):
+def process_hazards_and_losses(df, district_id):
     """
     Process hazard extraction, MDR mapping, and loss calculations
     
@@ -266,6 +277,9 @@ def process_hazards_and_losses(df):
     2. Maps hazards to damage ratios using interpolation
     3. Calculates expected losses (MDR × Replacement Cost)
     """
+    # Get raster paths from database
+    eq_raster_path, wind_raster_path = get_raster_paths(district_id)
+    
     # Convert coordinates to numeric for raster sampling
     df['latitude'] = pd.to_numeric(df['latitude'], errors='coerce')
     df['longitude'] = pd.to_numeric(df['longitude'], errors='coerce')
@@ -279,12 +293,12 @@ def process_hazards_and_losses(df):
     # STEP 1: EXTRACT HAZARD VALUES USING GDAL
     # EQ Hazard: Peak Ground Acceleration (PGA) in 'g' units from raster (expected: 0.27-0.49)
     df['eq_hazard'] = np.round(
-        sample_raster_values_gdal(EQ_RASTER, df['latitude'], df['longitude'], 0.35), 4
+        sample_raster_values_gdal(eq_raster_path, df['latitude'], df['longitude'], 0.35), 4
     )
     
     # Wind Hazard: Wind speed in km/h from raster (expected: 19-50)
     df['wind_hazard'] = np.round(
-        sample_raster_values_gdal(WIND_RASTER, df['latitude'], df['longitude'], 35), 4
+        sample_raster_values_gdal(wind_raster_path, df['latitude'], df['longitude'], 35), 4
     )
     
     # Flood Hazard: Flood depth in meters from survey data
@@ -411,6 +425,9 @@ def process_household_data(village_id):
         return None, "No household survey data found"
     
     village = tblVillage.objects.get(id=village_id)
+    district = village.gram_panchayat.circle.district
+
+    district_id = district.id
     households = HouseholdSurvey.objects.filter(village_id=village_id).values(
         'id', 'wall_type', 'roof_type', 'floor_type', 'building_area_sqft', 
         'flood_class', 'flood_depth_m', 'point_id', 'latitude', 'longitude'
@@ -438,7 +455,7 @@ def process_household_data(village_id):
     df['replacement_cost_inr'] = df['building_area_sqft'] * df['unit_rate_inr']
     
     # Process hazards and losses
-    df = process_hazards_and_losses(df)
+    df = process_hazards_and_losses(df, district_id)
     
     # Save to database
     save_risk_results(df, village_id, 'household')
@@ -451,6 +468,8 @@ def process_commercial_data(village_id):
         return None, "No commercial data found"
     
     village = tblVillage.objects.get(id=village_id)
+    district = village.gram_panchayat.circle.district
+    district_id = district.id
     commercial = Commercial.objects.filter(village_id=village_id).values(
         'id', 'wall_type', 'roof_type', 'floor_type', 'flood_depth_m', 
         'point_id', 'latitude', 'longitude', 'average_room_length_ft', 'average_room_width_ft'
@@ -483,7 +502,7 @@ def process_commercial_data(village_id):
     df['replacement_cost_inr'] = df['building_area_sqft'] * df['unit_rate_inr']
     
     # Process hazards and losses
-    df = process_hazards_and_losses(df)
+    df = process_hazards_and_losses(df, district_id=district_id)
     
     # Save to database
     save_risk_results(df, village_id, 'commercial')
@@ -496,6 +515,8 @@ def process_critical_facility_data(village_id):
         return None, "No critical facility data found"
     
     village = tblVillage.objects.get(id=village_id)
+    district = village.gram_panchayat.circle.district
+    district_id = district.id
     facilities = Critical_Facility.objects.filter(village_id=village_id).values(
         'id', 'wall_type', 'roof_type', 'floor_type', 'flood_depth_m', 'flood_class',
         'point_id', 'latitude', 'longitude', 'average_room_length_ft', 'average_room_width_ft'
@@ -523,7 +544,7 @@ def process_critical_facility_data(village_id):
     df['replacement_cost_inr'] = df['building_area_sqft'] * df['unit_rate_inr']
     
     # Process hazards and losses
-    df = process_hazards_and_losses(df)
+    df = process_hazards_and_losses(df,district_id=district_id)
     
     # Save to database
     save_risk_results(df, village_id, 'critical_facility')
