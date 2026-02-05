@@ -6,7 +6,7 @@ import numpy as np
 import geopandas as gpd
 from shapely.geometry import Point
 from vdmp_dashboard.models import HouseholdSurvey
-from layers.models import village_flood_raster_Files
+from layers.models import village_flood_raster_Files, district_wind_raster_file, district_eq_raster_file
 from village_profile.models import tblVillage
 import math
 import psycopg2
@@ -280,6 +280,7 @@ def process_road_data_pipeline(
     district_code,
     district_name,
     village_name,
+    district_id,
     db_name="crv_assam",
     db_user="postgres",
     db_password="admin",
@@ -312,6 +313,7 @@ def process_road_data_pipeline(
         district_code,
         district_name,
         village_name,
+        district_id
     )
 
     # # ✅ Erosion (vector only)
@@ -899,7 +901,7 @@ def process_arrgicultural_data_pipeline(
 # ============================================================================
 
 def get_erosion_buffer_for_polygon(polygon_wkt, 
-                                   buffer_table="public.new_river_buff",
+                                   buffer_table="public.riverbuffer",
                                    db_config=None):
     """
     Get minimum erosion buffer distance for a polygon using PostGIS intersection
@@ -984,7 +986,7 @@ def process_agriculture_erosion_pipeline(
         # Get erosion buffer distance
         buffer_distance = get_erosion_buffer_for_polygon(
             polygon_wkt, 
-            buffer_table="public.new_river_buff",
+            buffer_table="public.riverbuffer",
             db_config=db_config
         )
         
@@ -1055,17 +1057,17 @@ def process_all_agriculture_hazards(
         village_obj, village_code, district_name, district_code, village_name
     )
     
-    # 2. Wind
-    print("\n2️⃣ WIND HAZARD")
-    process_agriculture_wind_pipeline(
-        village_obj, village_code, district_name, district_code, village_name
-    )
+    # # 2. Wind
+    # print("\n2️⃣ WIND HAZARD")
+    # process_agriculture_wind_pipeline(
+    #     village_obj, village_code, district_name, district_code, village_name
+    # )
     
-    # 3. Earthquake
-    print("\n3️⃣ EARTHQUAKE HAZARD")
-    process_agriculture_earthquake_pipeline(
-        village_obj, village_code, district_name, district_code, village_name
-    )
+    # # 3. Earthquake
+    # print("\n3️⃣ EARTHQUAKE HAZARD")
+    # process_agriculture_earthquake_pipeline(
+    #     village_obj, village_code, district_name, district_code, village_name
+    # )
     
     # 4. Erosion
     print("\n4️⃣ EROSION RISK")
@@ -1375,15 +1377,15 @@ def load_village_roads(village_code):
 
     sql = """
     SELECT
-        gid,
+        id,
         geom,
-        rd_surface,
-        rsur_type,
-        rsurtypeid,
-        width,
-        length
+        "Rd_Surface" AS rd_surface,
+        "RSur_Type" AS rsur_type,
+        "RSurTypeId" AS rsurtypeid,
+        "Width" AS width,
+        "Length"    AS length
     FROM public.road_network
-    WHERE vill_id = %s
+    WHERE "Vill_ID" = %s
       AND geom IS NOT NULL;
     """
 
@@ -1481,7 +1483,7 @@ def save_grid_results(result_df, village_obj, village_code):
         # -----------------------------
         # Basic values
         # -----------------------------
-        flood_depth_m = float(row["flood_depth_m"] or 0.0)
+        flood_depth_m = float(row["flood_depth_m"]) if row["flood_depth_m"] is not None else None
         road_length_m = float(row["road_length_m"] or 0.0)
 
         # Convert meters → feet for classification
@@ -1856,10 +1858,9 @@ def _process_road_flood_data(
     district_code,
     district_name,
     village_name,
+    district_id
 ):
-    from vdmp_dashboard.models import VillageRoadInfo
-    from layers.models import village_flood_raster_Files
-    from shapely import wkt
+   
 
     # ------------------------------------------------------------------
     # Load rasters ONCE
@@ -1868,7 +1869,21 @@ def _process_road_flood_data(
         village_id=village_obj.id
     ).first()
 
+    dist_wind_raster = district_wind_raster_file.objects.filter(
+        district_id=district_id
+    ).first()
+
+    dist_eq_raster = district_eq_raster_file.objects.filter(
+        district_id=district_id
+    ).first()
+
     if not flood_raster:
+        return
+    
+    if not dist_wind_raster:
+        return
+    
+    if not dist_eq_raster:
         return
 
     print("🌊 Processing flood hazard zonal length...")
@@ -1878,17 +1893,17 @@ def _process_road_flood_data(
        f"c:\\assamcrv\\assam_crv\\media\\{flood_raster.raster_file}"
     )
 
-    process_road_eq_zonal_length(
-        village_obj,
-        village_code,
-        r"c:\assamcrv\assam_crv\static\risk_assessment_raster\eq.tif",
+    # process_road_eq_zonal_length(
+    #     village_obj,
+    #     village_code,
+    #     f"c:\\assamcrv\\assam_crv\\media\\{flood_raster.raster_file}"
         
-    )
-    process_road_wind_zonal_length(
-        village_obj,
-        village_code,
-        r"c:\assamcrv\assam_crv\static\risk_assessment_raster\Wind_Raster.tif"
-    )
+    # )
+    # process_road_wind_zonal_length(
+    #     village_obj,
+    #     village_code,
+    #     f"c:\\assamcrv\\assam_crv\\media\\{dist_wind_raster.raster_file}"
+    # )
 
  
 
@@ -1914,12 +1929,12 @@ def _process_road_erosion_data(
     sql = """
     WITH road_utm AS (
         SELECT
-            gid,
-            rd_surface,
-            rsur_type,
+            id,
+            "Rd_Surface" AS rd_surface,
+            "RSur_Type" AS rsur_type,
             ST_Transform(ST_SetSRID(geom, 4326), 32646) AS geom_utm
         FROM public.road_network
-        WHERE vill_id = %s
+        WHERE "Vill_ID" = %s
     ),
 
     buffer_utm AS (
@@ -1931,7 +1946,7 @@ def _process_road_erosion_data(
 
     road_buffer_intersections AS (
         SELECT
-            r.gid,
+            r.id,
             r.rd_surface,
             r.rsur_type,
             b.buffer_distance,
@@ -1943,7 +1958,7 @@ def _process_road_erosion_data(
 
     erosion_summary AS (
         SELECT
-            gid,
+            id,
             rd_surface,
             rsur_type,
             MIN(buffer_distance) AS min_buffer_distance,
@@ -1952,11 +1967,11 @@ def _process_road_erosion_data(
         FROM road_buffer_intersections
         WHERE intersection_geom IS NOT NULL
           AND NOT ST_IsEmpty(intersection_geom)
-        GROUP BY gid, rd_surface, rsur_type
+        GROUP BY id, rd_surface, rsur_type
     )
 
     SELECT
-        gid,
+        id,
         rd_surface,
         rsur_type,
         min_buffer_distance,
@@ -1972,7 +1987,7 @@ def _process_road_erosion_data(
 
     records = []
 
-    for gid, surf, rsur, buff_dist, length, lat, lon in rows:
+    for id, surf, rsur, buff_dist, length, lat, lon in rows:
         records.append(
             VillageRoadInfoErosion(
                 village=village_obj,
@@ -2823,6 +2838,364 @@ def _classify_erosion_buffer(buffer_value):
             return "Low"
     except (ValueError, TypeError):
         return "Low"
+
+
+def validate_gis_data_availability(village_obj):
+    """Validate if all required GIS data is available for the village"""
+    from layers.models import village_flood_raster_Files, district_wind_raster_file, district_eq_raster_file
+    from django.db import connection
+    
+    errors = []
+    
+    # Check flood raster for village
+    flood_raster = village_flood_raster_Files.objects.filter(village=village_obj).first()
+    if not flood_raster or not flood_raster.raster_file:
+        errors.append(f"Flood raster not available for village {village_obj.name}")
+    
+    # Get district from village
+    try:
+        district = village_obj.gram_panchayat.circle.district
+    except Exception:
+        errors.append("Unable to determine district for village")
+        return errors
+    
+    # Check wind raster for district
+    wind_raster = district_wind_raster_file.objects.filter(district=district).first()
+    if not wind_raster or not wind_raster.raster_file:
+        errors.append(f"Wind raster not available for district {district.name}")
+    
+    # Check earthquake raster for district
+    eq_raster = district_eq_raster_file.objects.filter(district=district).first()
+    if not eq_raster or not eq_raster.raster_file:
+        errors.append(f"Earthquake raster not available for district {district.name}")
+    
+    # Check riverbuffer table exists and has data for village
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'riverbuffer')")
+            table_exists = cursor.fetchone()[0]
+            
+            if not table_exists:
+                errors.append("River buffer table does not exist in database")
+            else:
+                cursor.execute("SELECT COUNT(*) FROM public.riverbuffer WHERE \"Vill_ID\" = %s", [village_obj.code])
+                buffer_count = cursor.fetchone()[0]
+                if buffer_count == 0:
+                    errors.append(f"No river buffer data found for village {village_obj.name}")
+    except Exception as e:
+        errors.append(f"Error checking river buffer data: {str(e)}")
+    
+    return errors
+
+
+def process_household_risk_assessment(village_obj, village_code, flood_raster_path):
+    """Process household risk assessment with flood and erosion classification"""
+    from vdmp_dashboard.models import HouseholdSurvey
+    
+    # Get household data
+    household_df = get_household_data_for_village(village_code)
+    if household_df.empty:
+        return
+    
+    # Extract flood depth and erosion buffer values
+    household_df = extract_flood_depth_from_raster(household_df, village_code)
+    household_df = extract_erosion_buffer_values_postgis(household_df)
+    
+    # Apply classifications
+    household_df['flood_class'] = household_df['flood_depth_m'].apply(_classify_flood)
+    household_df['erosion_class'] = household_df['erosion_buffer_m'].apply(_classify_erosion_buffer)
+    
+    # Save to database
+    save_household_results(household_df, village_obj, village_code)
+
+
+def map_flood_depth_from_household_db(child_df, village_id):
+    """Map flood depth, flood class, and erosion class from household database records to child activities"""
+    from vdmp_dashboard.models import HouseholdSurvey
+    
+    if "flood_depth_m" not in child_df.columns:
+        child_df["flood_depth_m"] = None
+    if "flood_class" not in child_df.columns:
+        child_df["flood_class"] = None
+    if "erosion_class" not in child_df.columns:
+        child_df["erosion_class"] = None
+
+    flood_mask = (
+        child_df["flood_depth_m"].isna() |
+        (child_df["flood_depth_m"] <= 0)
+    )
+    flood_class_mask = child_df["flood_class"].isna()
+    erosion_mask = child_df["erosion_class"].isna()
+    
+    # Get household data for mapping
+    household_records = HouseholdSurvey.objects.filter(
+        village_code=village_id
+    ).values('flood_depth_m', 'flood_class', 'erosion_class')
+    
+    if household_records:
+        # Use first available record for mapping (you may want to implement more sophisticated logic)
+        sample_record = household_records[0]
+        
+        # Map flood data
+        if flood_mask.any():
+            child_df.loc[flood_mask, "flood_depth_m"] = sample_record.get('flood_depth_m')
+        
+        if flood_class_mask.any():
+            child_df.loc[flood_class_mask, "flood_class"] = sample_record.get('flood_class')
+        
+        if erosion_mask.any():
+            child_df.loc[erosion_mask, "erosion_class"] = sample_record.get('erosion_class')
+    
+    return child_df
+
+
+def _process_model_flood_erosion(queryset, village_id, model_type):
+    """Process flood depth and erosion values for a model queryset"""
+    import pandas as pd
+    
+    # Get appropriate fields based on model type
+    if model_type == 'household':
+        fields = ['id', 'latitude', 'longitude', 'flood_depth_m', 'erosion_value', 'flood_depth_from_survey_meter']
+    else:
+        fields = ['id', 'latitude', 'longitude', 'flood_depth_m', 'erosion_value']
+    
+    # Convert queryset to DataFrame
+    records = list(queryset.values(*fields))
+    if not records:
+        return
+    
+    df = pd.DataFrame(records)
+    
+    # For household model, map flood_depth_from_survey_meter to flood_depth_m if needed
+    if model_type == 'household' and 'flood_depth_from_survey_meter' in df.columns:
+        survey_mask = df['flood_depth_m'].isna() & df['flood_depth_from_survey_meter'].notna()
+        if survey_mask.any():
+            df.loc[survey_mask, 'flood_depth_m'] = df.loc[survey_mask, 'flood_depth_from_survey_meter']
+    
+    # Extract flood depth from raster for records without flood_depth_m
+    flood_mask = df['flood_depth_m'].isna() | (df['flood_depth_m'] == '') | (df['flood_depth_m'] == '0')
+    if flood_mask.any():
+        print(f"Extracting flood depth for {flood_mask.sum()} {model_type} records...")
+        df = extract_flood_depth_from_raster(df, village_id)
+    
+    # Extract erosion values for records without erosion_value
+    erosion_mask = df['erosion_value'].isna() | (df['erosion_value'] == '')
+    if erosion_mask.any():
+        print(f"Extracting erosion values for {erosion_mask.sum()} {model_type} records...")
+        df = extract_erosion_buffer_values_postgis(df)
+        # Map erosion_buffer_m to erosion_value if it was extracted
+        if 'erosion_buffer_m' in df.columns:
+            df.loc[erosion_mask, 'erosion_value'] = df.loc[erosion_mask, 'erosion_buffer_m']
+    
+    # Apply classifications
+    df['flood_class'] = df['flood_depth_m'].apply(_classify_flood)
+    df['erosion_class'] = df['erosion_value'].apply(_classify_erosion_buffer)
+    
+    # Update records in database
+    for _, row in df.iterrows():
+        try:
+            record = queryset.get(id=row['id'])
+            
+            # Update flood_depth_m if it was extracted
+            if pd.notna(row.get('flood_depth_m')):
+                record.flood_depth_m = str(row['flood_depth_m'])
+                # For household model, also update flood_depth_from_survey_meter
+                if model_type == 'household' and hasattr(record, 'flood_depth_from_survey_meter'):
+                    record.flood_depth_from_survey_meter = str(row['flood_depth_m'])
+            
+            # Update flood_class if model has this field
+            if hasattr(record, 'flood_class') and pd.notna(row.get('flood_class')):
+                record.flood_class = row['flood_class']
+            
+            # Update erosion_value if it was extracted
+            if pd.notna(row.get('erosion_value')):
+                record.erosion_value = str(row['erosion_value'])
+            
+            # Update erosion_class if model has this field
+            if hasattr(record, 'erosion_class') and pd.notna(row.get('erosion_class')):
+                record.erosion_class = row['erosion_class']
+            
+            record.save()
+            
+        except Exception as e:
+            print(f"Error updating {model_type} record {row['id']}: {e}")
+            continue
+    
+    print(f"✅ Updated {len(df)} {model_type} records with flood depth and erosion data")
+
+
+def run_gis_risk_assessment_pipeline(village_obj, village_code):
+    """Run complete GIS risk assessment pipeline for all activities"""
+    from layers.models import village_flood_raster_Files, district_wind_raster_file, district_eq_raster_file
+    from vdmp_progress.risk_assessment_pipeline import run_risk_assessment_pipeline
+    from vdmp_dashboard.models import HouseholdSurvey, Commercial, Critical_Facility, Transformer
+    
+    # Validate data availability first
+    validation_errors = validate_gis_data_availability(village_obj)
+    if validation_errors:
+        raise ValueError("Missing required data: " + "; ".join(validation_errors))
+    
+    # Get raster file paths
+    flood_raster = village_flood_raster_Files.objects.filter(village=village_obj).first()
+    district = village_obj.gram_panchayat.circle.district
+    wind_raster = district_wind_raster_file.objects.filter(district=district).first()
+    eq_raster = district_eq_raster_file.objects.filter(district=district).first()
+    
+    flood_raster_path = f"c:\\assamcrv\\assam_crv\\media\\{flood_raster.raster_file}"
+    wind_raster_path = f"c:\\assamcrv\\assam_crv\\media\\{wind_raster.raster_file}"
+    eq_raster_path = f"c:\\assamcrv\\assam_crv\\media\\{eq_raster.raster_file}"
+    
+    village_id = village_obj.id
+    
+    # Step 1: Process all models to extract flood depth and erosion values
+    print("🌊 Step 1: Extracting flood depth and erosion values for all models...")
+    
+    # Process HouseholdSurvey
+    household_records = HouseholdSurvey.objects.filter(village=village_obj)
+    if household_records.exists():
+        print(f"Processing {household_records.count()} household records...")
+        _process_model_flood_erosion(household_records, village_id, 'household')
+    
+    # Process Commercial
+    commercial_records = Commercial.objects.filter(village=village_obj)
+    if commercial_records.exists():
+        print(f"Processing {commercial_records.count()} commercial records...")
+        _process_model_flood_erosion(commercial_records, village_id, 'commercial')
+    
+    # Process Critical_Facility
+    critical_records = Critical_Facility.objects.filter(village=village_obj)
+    if critical_records.exists():
+        print(f"Processing {critical_records.count()} critical facility records...")
+        _process_model_flood_erosion(critical_records, village_id, 'critical')
+    
+    # Process Transformer
+    transformer_records = Transformer.objects.filter(village=village_obj)
+    if transformer_records.exists():
+        print(f"Processing {transformer_records.count()} transformer records...")
+        _process_model_flood_erosion(transformer_records, village_id, 'transformer')
+    
+    # Step 2: Run risk assessment pipelines
+    print("🏠 Step 2: Running household risk assessment pipeline...")
+    try:
+        run_risk_assessment_pipeline(village_id, 'household')
+    except Exception as e:
+        print(f"Household processing failed: {e}")
+    
+    print("🏢 Step 3: Running commercial risk assessment pipeline...")
+    try:
+        run_risk_assessment_pipeline(village_id, 'commercial')
+    except Exception as e:
+        print(f"Commercial processing failed: {e}")
+    
+    print("🏥 Step 4: Running critical facilities risk assessment pipeline...")
+    try:
+        run_risk_assessment_pipeline(village_id, 'critical')
+    except Exception as e:
+        print(f"Critical facilities processing failed: {e}")
+    
+    # Step 3: Process road assessments
+    print("🛣️ Step 5: Processing road risk assessments...")
+    # Process road flood analysis
+    process_road_flood_zonal_length(village_obj, village_code, flood_raster_path)
+    
+    # Process road earthquake analysis  
+    process_road_eq_zonal_length(village_obj, village_code, eq_raster_path)
+    
+    # Process road erosion analysis
+    try:
+        import psycopg2
+        db_config = {
+            'dbname': 'crv_assam',
+            'user': 'postgres', 
+            'password': 'admin',
+            'host': 'localhost',
+            'port': '5434'
+        }
+        conn = psycopg2.connect(**db_config)
+        
+        district_name, district_code = get_district_from_village(village_obj)
+        _process_road_erosion_data(
+            conn, village_obj, village_code, district_code,
+            district_name, village_obj.name
+        )
+        conn.close()
+    except Exception as e:
+        print(f"Road erosion processing failed: {e}")
+    
+    # Step 4: Process agriculture assessments
+    print("🌾 Step 6: Processing agriculture risk assessments...")
+    try:
+        district_name, district_code = get_district_from_village(village_obj)
+        process_all_agriculture_hazards(
+            village_obj.id, village_code, district_name, 
+            district_code, village_obj.name
+        )
+    except Exception as e:
+        print(f"Agriculture processing failed: {e}")
+    
+    print(f"✅ GIS risk assessment pipeline completed for village {village_obj.name}")
+
+
+def get_household_data_for_village(village_code):
+    """Get household data for a specific village - Updated for new pipeline"""
+    from vdmp_dashboard.models import HouseholdSurvey
+    import pandas as pd
+    
+    try:
+        village = tblVillage.objects.get(code=village_code)
+        household_data = HouseholdSurvey.objects.filter(village=village).values(
+            'id', 'latitude', 'longitude', 'wall_type', 'roof_type', 'floor_type',
+            'building_area_sqft', 'point_id', 'flood_depth_m', 'flood_class', 
+            'erosion_value', 'erosion_class'
+        )
+        return pd.DataFrame(household_data)
+    except Exception as e:
+        print(f"Error getting household data: {e}")
+        return pd.DataFrame()
+
+
+
+
+
+def extract_erosion_buffer_values_postgis(df):
+    """Extract erosion buffer values from PostGIS riverbuffer table"""
+    from django.db import connection
+    import pandas as pd
+    
+    if df.empty:
+        return df
+    
+    if 'erosion_buffer_m' not in df.columns:
+        df['erosion_buffer_m'] = None
+    
+    try:
+        with connection.cursor() as cursor:
+            if 'longitude' in df.columns and 'latitude' in df.columns:
+                for idx, row in df.iterrows():
+                    if pd.notna(row['longitude']) and pd.notna(row['latitude']):
+                        cursor.execute("""
+                            SELECT buffer_m FROM public.riverbuffer 
+                            WHERE ST_Contains(geom, ST_SetSRID(ST_MakePoint(%s, %s), 4326))
+                            LIMIT 1
+                        """, [row['longitude'], row['latitude']])
+                        
+                        result = cursor.fetchone()
+                        if result:
+                            df.at[idx, 'erosion_buffer_m'] = result[0]
+    except Exception as e:
+        print(f"Error extracting erosion buffer values: {e}")
+    
+    return df
+
+
+def save_household_results(household_df, village_obj, village_code):
+    """Save household risk assessment results to database - DEPRECATED
+    
+    This function is now deprecated as we update records directly in _process_model_flood_erosion.
+    Keeping for backward compatibility.
+    """
+    print("⚠️ save_household_results is deprecated - records are now updated directly")
+    pass
 
 def _classify_erosion(vulnerable):
     """Classify erosion vulnerability"""

@@ -11,7 +11,7 @@ from .utils.table import create_styled_table
 # from .utils.geoserverLayerImage import get_geoserver_image_path, get_geoserver_legend_path
 from task_force.models import *
 from village_profile.models import tblVillage
-from .dummy_data import getFacilityAccessData
+
 from django.db.models import Sum, Count
 import requests
 from collections import defaultdict

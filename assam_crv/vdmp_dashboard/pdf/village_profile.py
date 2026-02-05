@@ -15,7 +15,8 @@ from .utils.geoserverLayerImage import  get_geoserver_legend_path,get_geoserver_
 
 from ..models import VillageListOfAllTheDistricts,HouseholdSurvey,Commercial,Critical_Facility,VillageRoadInfo
 from village_profile.models import tblVillage
-from .dummy_data import getFacilityAccessData
+from administrator.models import FGD_livelihood_summary, PRA_main
+
 from vdmp_dashboard.models import HouseholdSurvey,Critical_Facility,ElectricPole,Transformer
 
 from django.db.models import Sum, Count
@@ -42,13 +43,111 @@ page_width, page_height = A4
 
 from shapefiles.models import ShapefileElectricPole ,ShapefileTransformer
 
+def getFacilityAccessData(village_id):
+    try:
+        pra_data = PRA_main.objects.filter(village_id=village_id).first()
+        if not pra_data:
+            return [
+                ["S. No.", "Asset Type", "Distance from Village"],
+                ["1", "Higher education/College", "N/A"],
+                ["2", "Post Office", "N/A"],
+                ["3", "Police Station", "N/A"],
+                ["4", "Banks", "N/A"],
+                ["5", "Cooperative society", "N/A"],
+                ["6", "PHC/CHC", "N/A"],
+                ["7", "Private clinic/ hospital", "N/A"],
+                ["8", "Major Government offices", "N/A"],
+                ["9", "Ambulance", "N/A"],
+                ["10", "Bus service", "N/A"],
+                ["11", "Main markets", "N/A"],
+                ["12", "Veterinary Hospitals", "N/A"]
+            ]
+        
+        def format_distance(distance):
+            if distance is None:
+                return "N/A"
+            return f"{distance:.0f} km" if distance == int(distance) else f"{distance:.1f} km"
+        
+        return [
+            ["S. No.", "Asset Type", "Distance from Village"],
+            ["1", "Higher education/College", format_distance(pra_data.nearest_college_km)],
+            ["2", "Post Office", format_distance(pra_data.nearest_post_office_km)],
+            ["3", "Police Station", format_distance(pra_data.nearest_police_station_km)],
+            ["4", "Banks", format_distance(pra_data.nearest_bank_atm_km)],
+            
+            ["6", "PHC/CHC", format_distance(pra_data.nearest_phc_km or pra_data.nearest_chc_km)],
+            ["7", "Private clinic/ hospital", format_distance(pra_data.nearest_hospital_km)],
+           
+            ["9", "Ambulance", format_distance(pra_data.nearest_ambulance_km)],
+            ["10", "Bus service", format_distance(pra_data.nearest_bus_service_km)],
+            ["11", "Main markets", format_distance(pra_data.main_market_km)],
+            ["12", "Veterinary Hospitals", format_distance(pra_data.nearest_veterinary_clinic_km)]
+        ]
+    except Exception:
+        return [
+            ["S. No.", "Asset Type", "Distance from Village"],
+            ["1", "Higher education/College", "N/A"],
+            ["2", "Post Office", "N/A"],
+            ["3", "Police Station", "N/A"],
+            ["4", "Banks", "N/A"],
+            ["5", "Cooperative society", "N/A"],
+            ["6", "PHC/CHC", "N/A"],
+            ["7", "Private clinic/ hospital", "N/A"],
+            ["8", "Major Government offices", "N/A"],
+            ["9", "Ambulance", "N/A"],
+            ["10", "Bus service", "N/A"],
+            ["11", "Main markets", "N/A"],
+            ["12", "Veterinary Hospitals", "N/A"]
+        ]
+
 def getPowerInfrastructureData_Total(village_id):
+    from django.db import connection
+    
     try:
         # Get village object
         village = tblVillage.objects.get(id=village_id)
         village_code = village.code
-        electric_data_total = ShapefileElectricPole.objects.filter(vill_id=village_code).count()
-        transformer_data_total = ShapefileTransformer.objects.filter(vill_id=village_code).count()
+        
+        electric_data_total = 0
+        transformer_data_total = 0
+        
+        # Try database tables first
+        try:
+            with connection.cursor() as cursor:
+                # Check if electricpoles table exists
+                cursor.execute("""
+                    SELECT EXISTS (
+                        SELECT FROM information_schema.tables 
+                        WHERE table_schema = 'public' 
+                        AND table_name = 'electricpoles'
+                    )
+                """)
+                
+                if cursor.fetchone()[0]:
+                    cursor.execute("""
+                        SELECT COUNT(*) FROM public.electricpoles WHERE "Vill_ID" = %s
+                    """, [village_code])
+                    electric_data_total = cursor.fetchone()[0] or 0
+                
+                # Check if transformer table exists
+                cursor.execute("""
+                    SELECT EXISTS (
+                        SELECT FROM information_schema.tables 
+                        WHERE table_schema = 'public' 
+                        AND table_name = 'transformer'
+                    )
+                """)
+                
+                if cursor.fetchone()[0]:
+                    cursor.execute("""
+                        SELECT COUNT(*) FROM public.transformer WHERE "Vill_ID" = %s
+                    """, [village_code])
+                    transformer_data_total = cursor.fetchone()[0] or 0
+        except Exception:
+            # Fallback to Django models
+            electric_data_total = ElectricPole.objects.filter(village_id=village_id).count()
+            transformer_data_total = Transformer.objects.filter(village_id=village_id).count()
+        
         return [
             [Paragraph("S. No.", bold_center_style), Paragraph("Type", bold_center_style), Paragraph("Number")],
             ["1", Paragraph("Electric post and network", normal_style), str(electric_data_total)],
@@ -1154,6 +1253,42 @@ def getRoadLengthByTypologyData(village_id, workspace, layer):
 
 
 
+def getFGDLivelihoodData(village_id):
+    try:
+        fgd_data = FGD_livelihood_summary.objects.filter(village_id=village_id).first()
+        if not fgd_data:
+            return {
+                'cropping_pattern': [],
+                'cropping_calendar': [],
+                'challenges_in_agriculture': [],
+                'livestock_and_allied_activities': [],
+                'challenges_in_livestock': [],
+                'departmental_support': []
+            }
+        
+        def split_to_points(text):
+            if not text:
+                return []
+            return [point.strip() for point in text.split(';') if point.strip()]
+        
+        return {
+            'cropping_pattern': split_to_points(fgd_data.cropping_pattern),
+            'cropping_calendar': split_to_points(fgd_data.cropping_calendar),
+            'challenges_in_agriculture': split_to_points(fgd_data.challenges_in_agriculture),
+            'livestock_and_allied_activities': split_to_points(fgd_data.livestock_and_allied_activities),
+            'challenges_in_livestock': split_to_points(fgd_data.challenges_in_livestock),
+            'departmental_support': split_to_points(fgd_data.departmental_support)
+        }
+    except Exception:
+        return {
+            'cropping_pattern': [],
+            'cropping_calendar': [],
+            'challenges_in_agriculture': [],
+            'livestock_and_allied_activities': [],
+            'challenges_in_livestock': [],
+            'departmental_support': []
+        }
+
 def getVillageArea(village_id):
     try:
         village = tblVillage.objects.get(id=village_id)
@@ -1192,6 +1327,8 @@ def getVillageArea(village_id):
 
 
 def getLULCData(village_id, workspace, layer, onlymax=False):
+    from django.db import connection
+    
     try:
         village = tblVillage.objects.get(id=village_id)
         village_code = village.code
@@ -1200,6 +1337,71 @@ def getLULCData(village_id, workspace, layer, onlymax=False):
             return "N/A"
         return [["S. No.", "Landuse", "Area (sqm)", "Percentage"], ["", "Village not found", "0", "0%"]]
 
+    # Try database first
+    try:
+        with connection.cursor() as cursor:
+            # Check if lulc table exists
+            cursor.execute("""
+                SELECT EXISTS (
+                    SELECT FROM information_schema.tables 
+                    WHERE table_schema = 'public' 
+                    AND table_name = 'lulc'
+                )
+            """)
+            
+            if cursor.fetchone()[0]:
+                cursor.execute("""
+                    SELECT "Class_name", SUM("Area_SqM") as total_area
+                    FROM public.lulc
+                    WHERE "Vill_ID" = %s
+                    GROUP BY "Class_name"
+                    ORDER BY total_area DESC
+                """, [village_code])
+                
+                rows = cursor.fetchall()
+                
+                if rows:
+                    from collections import defaultdict
+                    from decimal import Decimal, ROUND_HALF_UP
+                    
+                    class_area = defaultdict(float)
+                    for class_name, area_sqm in rows:
+                        if class_name and area_sqm:
+                            class_area[class_name] = float(area_sqm)
+                    
+                    total_area = sum(class_area.values())
+                    
+                    if onlymax and class_area:
+                        max_land_use = max(class_area, key=class_area.get)
+                        max_area = class_area[max_land_use]
+                        percentage = round((max_area / total_area) * 100) if total_area > 0 else 0
+                        return f"{max_land_use} - {percentage}%"
+                    elif onlymax:
+                        return "N/A"
+                    
+                    def format_number(n):
+                        return f"{int(n):,}"
+                    
+                    result = [["S. No.", "Landuse", "Area (sqm)", "Percentage"]]
+                    
+                    total_percent = Decimal("0")
+                    for idx, (class_name, area) in enumerate(class_area.items(), start=1):
+                        percent = (Decimal(area) / Decimal(total_area) * 100).quantize(Decimal('1'), rounding=ROUND_HALF_UP)
+                        total_percent += percent
+                        result.append([
+                            str(idx),
+                            class_name,
+                            format_number(area),
+                            f"{percent}%"
+                        ])
+                    
+                    total_percent = min(Decimal("100"), total_percent)
+                    result.append(["", "Total Area", format_number(total_area), f"{total_percent}%"])
+                    return result
+    except Exception:
+        pass  # Fall back to GeoServer
+
+    # Fallback to GeoServer
     wfs_url = f"http://localhost:8080/geoserver/{workspace}/ows"
     params = {
         "service": "WFS",
@@ -1237,15 +1439,7 @@ def getLULCData(village_id, workspace, layer, onlymax=False):
 
         total_area = sum(class_area.values())
         
-        # Find max land use and update global dictionary
-        if class_area:
-            max_land_use = max(class_area, key=class_area.get)
-            max_area = class_area[max_land_use]
-            percentage = round((max_area / total_area) * 100) if total_area > 0 else 0
-            # VILLAGE_SUMMARY_DATA['major_land_use'] = f"{max_land_use} - {percentage}%"
-        print("LULC Data Debug:", village_id, workspace, layer ,onlymax)
-        print("Class Area:", class_area, "Total Area:", total_area, "Max Land Use:", max_land_use if class_area else "N/A", "Max Area:", max_area if class_area else "N/A", "Percentage:", percentage if class_area else "N/A")
-        if onlymax:
+        if onlymax and class_area:
             max_land_use = max(class_area, key=class_area.get)
             max_area = class_area[max_land_use]
             percentage = round((max_area / total_area) * 100) if total_area > 0 else 0
@@ -1957,7 +2151,7 @@ def draw_village_profile(elements,village_id):
     
     heading = Paragraph("<b>3.3	Livelihood profile </b>", blue_sub_heading)
     elements.append(heading)
-    sub_title=Paragraph("Table 3-7: Primary livelihood distribution (primary economic activity)", table_sub_title)
+    sub_title=Paragraph("Table 3-7: Livelihood distribution (primary economic activity)", table_sub_title)
     elements.append(sub_title)
     elements.append(Spacer(1, 12))
     data=getPrimaryLivelihoodDistributionData(village_id)
@@ -1974,6 +2168,7 @@ def draw_village_profile(elements,village_id):
     table = create_styled_table(data, [40,240, 100, 120], True, True, custom_styles, "Secondary Livelihood Distribution (secondary economic activity)")
     elements.append(table)
     elements.append(Spacer(1, 12))
+    elements.append(PageBreak())
     
     # ------------------------
     custom_styles=[
@@ -2029,14 +2224,89 @@ def draw_village_profile(elements,village_id):
          ('ALIGN', (2, 1), (-1, -1), 'RIGHT'),
          ('FONTNAME', (1, -1), (-1, -1), 'Helvetica-Bold'),
     ]
-    sub_title=Paragraph("Table 3 10: Household with Livestock", table_sub_title)
+    sub_title=Paragraph("Table 3-10: Household with Livestock", table_sub_title)
     elements.append(sub_title)
     elements.append(Spacer(1, 6))
     data=getLivestockOwnershipData(village_id)
     table = create_styled_table(data, [40,90, 110, 50, 110, 100], True, True, custom_styles2, "Livestock Ownership")
     elements.append(table)
     elements.append(Spacer(1, 12))
+
+    # Cropping Pattern and Cropping calendar
+    fgd_data = getFGDLivelihoodData(village_id)
     
+    sub_title = Paragraph("Cropping Pattern", bold_style)
+    elements.append(sub_title)
+    elements.append(Spacer(1, 6))
+    if fgd_data['cropping_pattern']:
+        bullet_items = ListFlowable(
+            [ListItem(Paragraph(text, styles["Normal"])) for text in fgd_data['cropping_pattern']],
+            bulletType='bullet',
+            start='•',
+           leftIndent=20,
+            bulletFontName='Helvetica',
+            bulletFontSize=10
+        )
+        elements.append(bullet_items)
+    else:
+        elements.append(Paragraph("No data available", styles["Normal"]))
+    elements.append(Spacer(1, 12))
+
+    sub_title = Paragraph("Cropping Calendar", bold_style)
+    elements.append(sub_title)
+    elements.append(Spacer(1, 6))
+    if fgd_data['cropping_calendar']:
+        bullet_items = ListFlowable(
+            [ListItem(Paragraph(text, styles["Normal"])) for text in fgd_data['cropping_calendar']],
+            bulletType='bullet',
+            start='•',
+           leftIndent=20,
+            bulletFontName='Helvetica',
+            bulletFontSize=10
+        )
+        elements.append(bullet_items)
+    else:
+        elements.append(Paragraph("No data available", styles["Normal"]))
+    elements.append(Spacer(1, 12))
+
+    
+    
+
+    sub_title = Paragraph("Livestock and Allied Activities", bold_style)
+    elements.append(sub_title)
+    elements.append(Spacer(1, 6))
+    if fgd_data['livestock_and_allied_activities']:
+        bullet_items = ListFlowable(
+            [ListItem(Paragraph(text, styles["Normal"])) for text in fgd_data['livestock_and_allied_activities']],
+            bulletType='bullet',
+            start='•',
+           leftIndent=20,
+            bulletFontName='Helvetica',
+            bulletFontSize=10
+        )
+        elements.append(bullet_items)
+    else:
+        elements.append(Paragraph("No data available", styles["Normal"]))
+    elements.append(Spacer(1, 12))
+
+
+
+    sub_title = Paragraph("Departmental support", bold_style)
+    elements.append(sub_title)
+    elements.append(Spacer(1, 6))
+    if fgd_data['departmental_support']:
+        bullet_items = ListFlowable(
+            [ListItem(Paragraph(text, styles["Normal"])) for text in fgd_data['departmental_support']],
+            bulletType='bullet',
+            start='•',
+           leftIndent=20,
+            bulletFontName='Helvetica',
+            bulletFontSize=10
+        )
+        elements.append(bullet_items)
+    else:
+        elements.append(Paragraph("No data available", styles["Normal"]))
+    elements.append(Spacer(1, 12))
     #--------------------------------
     heading = Paragraph("<b>3.4	Asset profile </b>", blue_sub_heading)
     elements.append(heading)
@@ -2047,7 +2317,7 @@ def draw_village_profile(elements,village_id):
         ('ALIGN', (2, 1), (-1, -1), 'RIGHT'),
         ('FONTNAME', (1, -1), (-1, -1), 'Helvetica-Bold'),
     ]
-    sub_title=Paragraph("Table 3 11: Distribution of house by typology", table_sub_title)
+    sub_title=Paragraph("Table 3-11: Distribution of house by typology", table_sub_title)
     elements.append(sub_title)
     elements.append(Spacer(1, 6))
     data=getHousingTypologyData(village_id)
@@ -2141,7 +2411,7 @@ def draw_village_profile(elements,village_id):
         elements.append(img_table)
 
         elements.append(Spacer(1, 12))
-        sub_title=Paragraph("Figure 3 1: Distribution of residential building", image_title)
+        sub_title=Paragraph("Figure 3-1: Distribution of residential building", image_title)
         elements.append(sub_title)
     else:
         #img from geoserver
@@ -2160,7 +2430,7 @@ def draw_village_profile(elements,village_id):
    
     
         elements.append(Spacer(1, 12))
-        sub_title=Paragraph("Figure 3 1: Distribution of residential building", image_title)
+        sub_title=Paragraph("Figure 3-1: Distribution of residential building", image_title)
         elements.append(sub_title)
         elements.append(Spacer(1, 12))
 
@@ -2192,7 +2462,7 @@ def draw_village_profile(elements,village_id):
     
     # ------------------------
     elements.append(Spacer(1, 12))
-    sub_title=Paragraph("Table 3 12: Access to social media and information", table_sub_title)
+    sub_title=Paragraph("Table 3-12: Access to social media and information", table_sub_title)
     elements.append(sub_title)
     elements.append(Spacer(1, 6))
     data=getDigitalAccessData(village_id)
@@ -2205,28 +2475,28 @@ def draw_village_profile(elements,village_id):
     mobile_pct = digital_data[1][2] if len(digital_data) > 1 else "0%"
     tv_mobile_pct = digital_data[3][2] if len(digital_data) > 3 else "0%"
     
-    asset_points = [
-        f"About {mobile_pct} household has mobile connectivity and access to internet. But use for entertainment. Doesn't have the knowledge to access information useful for farming or relief entitlement",
-        f"Only three household responded they have solar as alternate electricity source.",
-        f"All household has toilet and access to drinking water. However, 76% of the household has Kachcha structure as toilet (made of tin, leaves/cloth) and just a pit to dispose the waste. Rest of the house has toilet with double pit septic tank but majority of these tanks are poorly maintained.",
-        f"Household assets include very basic furniture like wooden coat, wooden table, plastic chairs and kitchen utensils. Community store food grains at home."
-    ]
+    # asset_points = [
+    #     f"About {mobile_pct} household has mobile connectivity and access to internet. But use for entertainment. Doesn't have the knowledge to access information useful for farming or relief entitlement",
+    #     f"Only three household responded they have solar as alternate electricity source.",
+    #     f"All household has toilet and access to drinking water. However, 76% of the household has Kachcha structure as toilet (made of tin, leaves/cloth) and just a pit to dispose the waste. Rest of the house has toilet with double pit septic tank but majority of these tanks are poorly maintained.",
+    #     f"Household assets include very basic furniture like wooden coat, wooden table, plastic chairs and kitchen utensils. Community store food grains at home."
+    # ]
     
-    asset_bullet_items = ListFlowable(
-        [ListItem(Paragraph(text, styles["Normal"])) for text in asset_points],
-        bulletType='bullet',
-        start='•',
-        leftIndent=20,
-        bulletFontName='Helvetica',
-        bulletFontSize=10
-    )
+    # asset_bullet_items = ListFlowable(
+    #     [ListItem(Paragraph(text, styles["Normal"])) for text in asset_points],
+    #     bulletType='bullet',
+    #     start='•',
+    #     leftIndent=20,
+    #     bulletFontName='Helvetica',
+    #     bulletFontSize=10
+    # )
     
-    elements.append(asset_bullet_items)
+    # elements.append(asset_bullet_items)
     
     
     #------------------------ New table ----------------
     elements.append(Spacer(1, 12))
-    sub_title=Paragraph("Table 3 12: Source of drinking water for Household", table_sub_title)
+    sub_title=Paragraph("Table 3-13: Source of drinking water for Household", table_sub_title)
     elements.append(sub_title)
     elements.append(Spacer(1, 6))
     data=getDrinkingWaterSourceData(village_id)
@@ -2235,7 +2505,7 @@ def draw_village_profile(elements,village_id):
     elements.append(table)
     elements.append(Spacer(1, 12))
 
-    sub_title=Paragraph("Table 3 13: Adequacy of drinking water", table_sub_title)
+    sub_title=Paragraph("Table 3-14: Adequacy of drinking water", table_sub_title)
     elements.append(sub_title)
     elements.append(Spacer(1, 6))
     data=getAdequacyOfDrinkingWaterData(village_id)
@@ -2244,7 +2514,7 @@ def draw_village_profile(elements,village_id):
     elements.append(table)
     elements.append(Spacer(1, 12))
 
-    sub_title=Paragraph("Table 3 14: No of houses connected with JJM", table_sub_title)
+    sub_title=Paragraph("Table 3-15: No of houses connected with JJM", table_sub_title)
     elements.append(sub_title)
     elements.append(Spacer(1, 6))
     data=getJJMHouseConnect(village_id)
@@ -2253,7 +2523,7 @@ def draw_village_profile(elements,village_id):
     elements.append(table)
     elements.append(Spacer(1, 12))
 
-    sub_title=Paragraph("Table 3 15: Number of houses with sanitation facilities", table_sub_title)
+    sub_title=Paragraph("Table 3-16: Number of houses with sanitation facilities", table_sub_title)
     elements.append(sub_title)
     elements.append(Spacer(1, 6))
     data=getSanitationFacilities(village_id)
@@ -2262,7 +2532,7 @@ def draw_village_profile(elements,village_id):
     elements.append(table)
     elements.append(Spacer(1, 12))
 
-    sub_title=Paragraph("Table 3 16: Type of household toilets", table_sub_title)
+    sub_title=Paragraph("Table 3-17: Type of household toilets", table_sub_title)
     elements.append(sub_title)
     elements.append(Spacer(1, 6))
     data=getHouseholdToiletsType(village_id)
@@ -2271,7 +2541,7 @@ def draw_village_profile(elements,village_id):
     elements.append(table)
     elements.append(Spacer(1, 12))
 
-    sub_title=Paragraph("Table 3 17: Disposal of de-sludge material", table_sub_title)
+    sub_title=Paragraph("Table 3-18: Disposal of de-sludge material", table_sub_title)
     elements.append(sub_title)
     elements.append(Spacer(1, 6))
     data=getDe_sludgeMaterial(village_id)
@@ -2280,7 +2550,7 @@ def draw_village_profile(elements,village_id):
     elements.append(table)
     elements.append(Spacer(1, 12))
 
-    sub_title=Paragraph("Table 3 18: Electricity connection", table_sub_title)
+    sub_title=Paragraph("Table 3-19: Electricity connection", table_sub_title)
     elements.append(sub_title)
     elements.append(Spacer(1, 6))
     data=getElectricityconnection(village_id)
@@ -2289,7 +2559,7 @@ def draw_village_profile(elements,village_id):
     elements.append(table)
     elements.append(Spacer(1, 12))
 
-    sub_title=Paragraph("Table 3 19: Source of electricity", table_sub_title)
+    sub_title=Paragraph("Table 3-20: Source of electricity", table_sub_title)
     elements.append(sub_title)
     elements.append(Spacer(1, 6))
     data=getElectricitySource(village_id)
@@ -2301,7 +2571,7 @@ def draw_village_profile(elements,village_id):
     
     # ---------------------
     elements.append(Spacer(1, 12))
-    sub_title=Paragraph("Table 3 20: Public assets in the village", table_sub_title)
+    sub_title=Paragraph("Table 3-21: Public assets in the village", table_sub_title)
     elements.append(sub_title)
     elements.append(Spacer(1, 6))
     data=getPublicAssetsData(village_id)
@@ -2343,11 +2613,11 @@ def draw_village_profile(elements,village_id):
         elements.append(img_table)
 
         elements.append(Spacer(1, 12))
-        sub_title=Paragraph("Figure 3 2: Critical Facilities", image_title)
+        sub_title=Paragraph("Figure 3-2: Critical Facilities", image_title)
         elements.append(sub_title)
 
     else:
-        sub_title=Paragraph("Figure 3 2: Critical Facilities", image_title)
+        sub_title=Paragraph("Figure 3-2: Critical Facilities", image_title)
         elements.append(sub_title)
         elements.append(Paragraph("Image is not available for this village", notes_style))
 
@@ -2359,7 +2629,7 @@ def draw_village_profile(elements,village_id):
     heading = Paragraph("<b>3.5.1 Road Infrastructure</b>", blue_level3_heading)
     elements.append(heading)
     elements.append(Spacer(1, 6))
-    sub_title=Paragraph("Table 3 21: Road length by typology ", table_sub_title)
+    sub_title=Paragraph("Table 3-22: Road length by typology ", table_sub_title)
     elements.append(sub_title)
     elements.append(Spacer(1, 6))
     data=getRoadLengthByTypologyData(village_id,'assam','road_network')
@@ -2387,7 +2657,7 @@ def draw_village_profile(elements,village_id):
         elements.append(img_table)
 
         elements.append(Spacer(1, 12))
-        sub_title=Paragraph("Figure 3 3: Road infrastructure map", image_title)
+        sub_title=Paragraph("Figure 3-3: Road infrastructure map", image_title)
         elements.append(sub_title)
     else:
         #img from geoserver
@@ -2402,7 +2672,7 @@ def draw_village_profile(elements,village_id):
             elements.append(img_table)    
 
             elements.append(Spacer(1, 12))
-            sub_title=Paragraph("Figure 3 3: Road infrastructure map", image_title)
+            sub_title=Paragraph("Figure 3-3: Road infrastructure map", image_title)
             elements.append(sub_title)
             
             elements.append(Paragraph("Image is not available for this village", notes_style))
@@ -2438,7 +2708,8 @@ def draw_village_profile(elements,village_id):
     elements.append(Spacer(1, 6))
     heading = Paragraph("<b>3.5.2 Power Infrastructure</b>", blue_level3_heading)
     elements.append(heading)
-    sub_title=Paragraph("Table 3 22: Power infrastructure ", table_sub_title)
+    # ----------------------------------
+    sub_title=Paragraph("Table 3-23: Power infrastructure ", table_sub_title)
     elements.append(sub_title)
     elements.append(Spacer(1, 6))
     data=getPowerInfrastructureData_Total(village_id)
@@ -2463,11 +2734,11 @@ def draw_village_profile(elements,village_id):
 
         elements.append(img_table)
         elements.append(Spacer(1, 12))
-        sub_title=Paragraph("Figure 3 4: Power infrastructure", image_title)
+        sub_title=Paragraph("Figure 3-4: Power infrastructure", image_title)
         elements.append(sub_title)
 
     else:
-        sub_title=Paragraph("Figure 3 4: Power infrastructure", image_title)
+        sub_title=Paragraph("Figure 3-4: Power infrastructure", image_title)
         elements.append(sub_title)
         elements.append(Paragraph("Image is not available for this village", notes_style))
 
@@ -2477,11 +2748,11 @@ def draw_village_profile(elements,village_id):
     heading = Paragraph("<b>3.6	Access to other facilities</b>", blue_sub_heading)
     elements.append(heading)
     elements.append(Spacer(1, 6))
-    sub_title=Paragraph("Table 3 23: Access to other facilities", table_sub_title)
+    sub_title=Paragraph("Table 3-24: Access to other facilities", table_sub_title)
     elements.append(sub_title)
     elements.append(Spacer(1, 6))
-    data=getFacilityAccessData()
-    table = create_styled_table(data, [40,200, 120, 100], False, True, [('ALIGN', (0, 1), (0, -1), 'RIGHT')], "Facility Access")
+    data=getFacilityAccessData(village_id)
+    table = create_styled_table(data, [40,230, 230], False, True, [('ALIGN', (0, 1), (0, -1), 'RIGHT')], "Facility Access")
     elements.append(table)
 
     # ------------------------
@@ -2489,11 +2760,11 @@ def draw_village_profile(elements,village_id):
     heading = Paragraph("<b>3.7	Landuse</b>", blue_sub_heading)
     elements.append(heading)
     elements.append(Spacer(1, 6))
-    sub_title=Paragraph("Table 3 24: Landuse", table_sub_title)
+    sub_title=Paragraph("Table 3-25: Landuse", table_sub_title)
     elements.append(sub_title)
     elements.append(Spacer(1, 6))
     data=getLULCData(village_id,'assam','lulc')
-    table = create_styled_table(data, [40,180, 120, 120], False, True, custom_styles, "Land Use Classification")
+    table = create_styled_table(data, [40,180, 140, 140], False, True, custom_styles, "Land Use Classification")
     elements.append(table)
     elements.append(Spacer(1, 12))
     # Add geoserver image with border
@@ -2531,7 +2802,7 @@ def draw_village_profile(elements,village_id):
         elements.append(Paragraph("Image is not available for this village", notes_style))
 
     elements.append(Spacer(1, 12))
-    sub_title=Paragraph("Figure 3 5: Landuse map", image_title)
+    sub_title=Paragraph("Figure 3-5: Landuse map", image_title)
     elements.append(sub_title)
     
     # Add legends horizontally with text labels

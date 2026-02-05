@@ -239,6 +239,10 @@ async function updateVDMPProgress() {
 
     if (!result.isConfirmed) return;
 
+    // Check if this is GIS Maps activity
+    const item = vdmpProgressData.find(item => item.id === parseInt(id));
+    const isGISMaps = item && item.activity_name && item.activity_name.toLowerCase().includes('gis maps');
+
     // Show loader with processing message
     Swal.fire({
         title: gettext('Processing...'),
@@ -296,6 +300,17 @@ async function updateVDMPProgress() {
                 if (result.isConfirmed) {
                     deleteAndRerunPipeline(id);
                 }
+            });
+        } else if (response.status === 400) {
+            // Handle validation errors (missing GIS data)
+            const errorData = await response.json();
+            Swal.fire({
+                icon: 'error',
+                title: gettext('Missing Required Data'),
+                html: `<div style="text-align: left;">
+                        <p><strong>⚠️ Cannot process GIS Maps:</strong></p>
+                        <p>${errorData.error}</p>
+                       </div>`
             });
         } else {
             const errorData = await response.json();

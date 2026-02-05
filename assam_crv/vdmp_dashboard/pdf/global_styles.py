@@ -186,3 +186,15 @@ bold_12 = ParagraphStyle(
     fontName='Helvetica-Bold',
     fontSize=9
 )
+
+left_indent_paragraph_sec = ParagraphStyle(
+    'LeftIndent',
+    parent=styles['Normal'],
+    leftIndent=-28,
+)
+
+left_indent_paragraph = ParagraphStyle(
+    'LeftIndent',
+    parent=styles['Normal'],
+    leftIndent=heading_left_indent,
+)
