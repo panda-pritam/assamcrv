@@ -749,9 +749,14 @@ def get_household_summary_data(request):
 
     village_codes = get_village_codes(district_id, circle_id, gram_panchayat_id, village_id)
 
-    bank_erosion_data = ExposureRiver.objects.filter(vill_id__in=village_codes).values('length_m', 'erosion_m')
-    total_erosion_m = sum([x['erosion_m'] for x in bank_erosion_data if x['erosion_m'] is not None])
-    total_erosion_m = round(total_erosion_m/1000, 2) if total_erosion_m else None
+    try:
+        bank_erosion_data = ExposureRiver.objects.filter(vill_id__in=village_codes).values('length_m', 'erosion_m')
+        print("-------------------------------",bank_erosion_data)
+        total_erosion_m = sum([x['erosion_m'] for x in bank_erosion_data if x['erosion_m'] is not None])
+        total_erosion_m = round(total_erosion_m/1000, 2) if total_erosion_m else None
+    except Exception as e:
+        bank_erosion_data = None
+        
     # STEP 12: Build initial summary data structure
     # Organize all calculated statistics into response format
     summary = {
@@ -792,7 +797,9 @@ def get_household_summary_data(request):
         'transformer_count':transformer_count,
         # 'bridge_length_km': f"{bridge_length_km/1000} km" if bridge_length_km else '-',
         'bridge_count': bridges_count,
-        'river_erosion_length_km': f"{total_erosion_m} km" if total_erosion_m else '-',
+        # 'river_erosion_length_km': f"{total_erosion_m} km" if total_erosion_m else '-',
+        'river_erosion_length_km': None,
+
     }
 
     # STEP 13: Get road infrastructure data from GeoServer spatial database
