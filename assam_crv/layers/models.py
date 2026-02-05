@@ -13,17 +13,17 @@ class GeoserverLayers(models.Model):
 
 def flood_map_upload_to(instance, filename):
     village_id = instance.village_id or "unknown"
-    return f"maps/flood/{village_id}/{filename}"
+    return f"maps/flood/village_{village_id}/{filename}"
 
 
 def wind_map_upload_to(instance, filename):
     district_id = instance.district_id or "unknown"
-    return f"maps/wind/{district_id}/{filename}"
+    return f"maps/wind/district_{district_id}/{filename}"
 
 
 def eq_map_upload_to(instance, filename):
     district_id = instance.district_id or "unknown"
-    return f"maps/eq/{district_id}/{filename}"
+    return f"maps/eq/district_{district_id}/{filename}"
 
 
 class village_flood_raster_Files(models.Model):
