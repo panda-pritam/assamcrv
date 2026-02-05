@@ -8,14 +8,14 @@ class FieldImageSerializer(serializers.ModelSerializer):
     district_name = serializers.CharField(source='village.gram_panchayat.circle.district.name', read_only=True)
     circle_id = serializers.IntegerField(source='village.gram_panchayat.circle.id', read_only=True)
     gram_panchayat_id = serializers.IntegerField(source='village.gram_panchayat.id', read_only=True)
-    uploaded_by_name = serializers.CharField(source='uploaded_by.get_full_name', read_only=True)
+    uploaded_by_name = serializers.SerializerMethodField()
     image_url = serializers.SerializerMethodField()
 
     class Meta:
         model = FieldImage
         fields = [
             'id', 'village', 'village_name', 'district_id', 'circle_id', 'gram_panchayat_id',
-            'image', 'image_url', 'upload_datetime', 'category',
+            'image', 'image_url', 'upload_datetime', 'category', 'name',
             'uploaded_by', 'uploaded_by_name', 'district_name'
         ]
         extra_kwargs = {
@@ -28,6 +28,14 @@ class FieldImageSerializer(serializers.ModelSerializer):
         if obj.image:
             return self.context['request'].build_absolute_uri(obj.image.url)
         return None
+
+    def get_uploaded_by_name(self, obj):
+        if not obj.uploaded_by:
+            return None
+        full_name = obj.uploaded_by.get_full_name()
+        if full_name:
+            return full_name
+        return getattr(obj.uploaded_by, "username", None) or getattr(obj.uploaded_by, "email", None)
 
     def validate(self, data):
         village = data.get('village')

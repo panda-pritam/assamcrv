@@ -27,4 +27,7 @@ __pycache__/
 **/*.pyc
 **/*.pyo
 **/*.pyd
+media/
+assam_crv/media/
+
 

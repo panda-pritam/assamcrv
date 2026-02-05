@@ -16,6 +16,12 @@ CATEGORY_CHOICES = [
     ('PRA Map', 'PRA Map'),
 ]
 
+def field_image_upload_to(instance, filename):
+    village_id = instance.village_id or "unknown"
+    category = (instance.category or "uncategorized").strip().lower()
+    category = category.replace(" ", "_").replace("/", "_")
+    return f"field_images/{category}/{village_id}/{filename}"
+
 class FieldImage(models.Model):
     """
     Model to store field images with their categories and village associations.
@@ -30,7 +36,7 @@ class FieldImage(models.Model):
     )
     
     image = models.ImageField(
-        upload_to='field_images/',
+        upload_to=field_image_upload_to,
         verbose_name="Image File"
     )
     

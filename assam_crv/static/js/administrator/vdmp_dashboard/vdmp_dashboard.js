@@ -22,7 +22,8 @@ const allowedUploadTypes = new Set([
     "fgd_wash_summary",
     "fgd_livelihood_summary",
     "line_department",
-    "photos"
+    "photos",
+    "hazard"
 ]);
 
 const uploadTypeMap = {
@@ -65,6 +66,9 @@ function resolveUploadDataType(value) {
     const selectedCategory = (document.getElementById("uploadCategory")?.value || "").toLowerCase();
     if (selectedCategory === "photos") {
         return "photos";
+    }
+    if (selectedCategory === "hazard") {
+        return "hazard";
     }
     const normalized = normalizeTypeValue(value);
     const mapped = uploadTypeMap[normalized];
@@ -110,8 +114,11 @@ function updateUploadTypesForCategory() {
         return;
     }
     populateTypeSelect(uploadCatalog.mapping[category] || []);
-    if ((category || "").toLowerCase() === "photos") {
+    const normalizedCategory = (category || "").toLowerCase();
+    if (normalizedCategory === "photos") {
         setFileInputAccepts("image/*");
+    } else if (normalizedCategory === "hazard") {
+        setFileInputAccepts(".jpg,.jpeg,.png,.tif,.tiff");
     } else {
         setFileInputAccepts(".csv,.xlsx,.xls");
     }
@@ -172,8 +179,14 @@ function setFileInputCount(count) {
 function updateFileInputsForType() {
     const typeSelect = document.getElementById("dataType");
     if (!typeSelect) return;
-    const isPhotoType = (uploadTypeToCategory[typeSelect.value] || "").toLowerCase() === "photos";
-    setFileInputAccepts(isPhotoType ? "image/*" : ".csv,.xlsx,.xls");
+    const normalizedCategory = (uploadTypeToCategory[typeSelect.value] || "").toLowerCase();
+    if (normalizedCategory === "photos") {
+        setFileInputAccepts("image/*");
+    } else if (normalizedCategory === "hazard") {
+        setFileInputAccepts(".jpg,.jpeg,.png,.tif,.tiff");
+    } else {
+        setFileInputAccepts(".csv,.xlsx,.xls");
+    }
     const count = getExpectedFileCount(typeSelect.value);
     setFileInputCount(count);
 }
@@ -330,6 +343,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 formData.append("file_index", fileIndex);
                 const uploadCategory = document.getElementById("uploadCategory")?.value || "";
                 formData.append("upload_category", uploadCategory);
+                const districtId = document.getElementById("upload_district")?.value || "";
+                if (districtId) {
+                    formData.append("district_id", districtId);
+                }
                 const villageId = document.getElementById("upload_village")?.value || "";
                 if (villageId) {
                     formData.append("village_id", villageId);
