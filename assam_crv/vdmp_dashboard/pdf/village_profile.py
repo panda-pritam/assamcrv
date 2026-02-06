@@ -140,7 +140,7 @@ def getPowerInfrastructureData_Total(village_id):
                 
                 if cursor.fetchone()[0]:
                     cursor.execute("""
-                        SELECT COUNT(*) FROM public.transformer WHERE "Vill_ID" = %s
+                        SELECT COUNT(*) FROM public.transformer WHERE "vill_id" = %s
                     """, [village_code])
                     transformer_data_total = cursor.fetchone()[0] or 0
         except Exception:
@@ -372,6 +372,9 @@ def getSocialEconomicStatusData(village_id):
             social_key = normalize_social_status(hh.social_status)
             economic_key = map_economic_status(hh.economic_status)
 
+            if social_key == 'Others' or not economic_key:
+                continue
+
             if economic_key:
                 data[social_key][economic_key] += 1   # ✅ counted ONCE
 
@@ -430,64 +433,60 @@ def getSocialEconomicStatusData(village_id):
 
     except Exception as e:
         print("Social-economic table error:", e)
-        return [], {}
+        empty_result = [["S. No.", "Social/Economic Status Household", "AAY", "APL", "AY", "BPL", "PHH", "Total", "%"]]
+        empty_summary = {'bpl_percent': 0, 'phh_percent': 0, 'aay_percent': 0, 'widow_percent': 0, 'married_male_percent': 0}
+        return empty_result, empty_summary
 
+
+from django.db.models import Case, When, IntegerField, Value, Q
+from django.db.models.functions import Replace, Cast
 
 def getIncomeGroupData(village_id):
-    try:
-        households = HouseholdSurvey.objects.filter(village_id=village_id)
+    households = HouseholdSurvey.objects.filter(village_id=village_id)
 
-        # 🔹 Clean & convert income string → integer
-        from django.db.models import Value
-        households = households.annotate(
-            income_clean=Replace(
-                Replace('approximate_income_earned_every_year_inr', Value(','), Value('')),
-                Value(' '), Value('')
-            )
-        ).annotate(
-            income_amt=Cast(Cast('income_clean', FloatField()), IntegerField())
+    households = households.annotate(
+        income_clean=Replace(
+            Replace('approximate_income_earned_every_year_inr', Value(','), Value('')),
+            Value(' '), Value('')
         )
+    ).annotate(
+        income_amt=Case(
+            When(income_clean__regex=r'^\d+$',
+                 then=Cast('income_clean', IntegerField())),
+            default=None,
+            output_field=IntegerField()
+        )
+    )
 
-        # 🔹 Classification
-        upto_50k = households.filter(income_amt__lte=50000).count()
-        upto_150k = households.filter(income_amt__gt=50000, income_amt__lte=150000).count()
-        upto_250k = households.filter(income_amt__gt=150000, income_amt__lte=250000).count()
-        above_250k = households.filter(income_amt__gt=250000).count()
+    upto_50k = households.filter(income_amt__lte=50000).count()
+    upto_150k = households.filter(income_amt__gt=50000, income_amt__lte=150000).count()
+    upto_250k = households.filter(income_amt__gt=150000, income_amt__lte=250000).count()
+    above_250k = households.filter(income_amt__gt=250000).count()
 
-        total = upto_50k + upto_150k + upto_250k + above_250k
+    unknown = households.filter(income_amt__isnull=True).count()
 
-        def pct(val):
-            return f"{round(val / total * 100, 1)}%" if total > 0 else "0%"
+    total = households.count()   # ✅ correct total
 
-        low_income_percent = (
-            (upto_50k + upto_150k) / total * 100
-        ) if total > 0 else 0
+    def pct(val):
+        return f"{round(val / total * 100, 1)}%" if total else "0%"
 
-        stats = {
-            "low_income_percent": round(low_income_percent, 1)
-        }
+    table_data = [
+        ["Sr. No.", "Income Group", "No. of Household", "Percentage"],
+        ["1", "Upto 50,000", upto_50k, pct(upto_50k)],
+        ["2", "Upto 1,50,000", upto_150k, pct(upto_150k)],
+        ["3", "Upto 2,50,000", upto_250k, pct(upto_250k)],
+        ["4", "> 2,50,000", above_250k, pct(above_250k)],
+        ["5", "Income Not Reported", unknown, pct(unknown)],
+        ["6", "Total", total, "100%"]
+    ]
 
-        table_data = [
-            ["Sr. No.", "Income Group", "No. of Household", "Percentage"],
-            ["1", "Upto 50,000", str(upto_50k), pct(upto_50k)],
-            ["2", "Upto 1,50,000", str(upto_150k), pct(upto_150k)],
-            ["3", "Upto 2,50,000", str(upto_250k), pct(upto_250k)],
-            ["4", "> 2,50,000", str(above_250k), pct(above_250k)],
-            ["5", "Total", str(total), "100%"]
-        ]
+    low_income_percent = round(
+        ((upto_50k + upto_150k) / total * 100), 1
+    ) if total else 0
 
-        return table_data, stats
+    return table_data, {"low_income_percent": low_income_percent}
 
-    except Exception as e:
-        print("Income classification error:", e)
-        return [
-            ["Sr. No.", "Income Group", "No. of Household", "Percentage"],
-            ["1", "Upto 50,000", "N/A", "N/A"],
-            ["2", "Upto 1,50,000", "N/A", "N/A"],
-            ["3", "Upto 2,50,000", "N/A", "N/A"],
-            ["4", "> 2,50,000", "N/A", "N/A"],
-            ["5", "Total", "N/A", "N/A"]
-        ], {"low_income_percent": 0}
+
 
 def getAgricultureLandHoldingData(village_id):
     try:
@@ -1542,53 +1541,55 @@ def getDrinkingWaterSourceData(village_id):
 def getJJMHouseConnect(village_id):
     try:
         households = HouseholdSurvey.objects.filter(village_id=village_id)
-        total_households = households.count()
-
-        if total_households == 0:
-            return [["S. No.", "JJM House Connection", "No of HHs", "%"],
-                    ["", "No data available", "0", "0%"],
-                    ["", "Total", "0", "100%"]]
-
-        jjm_qs = (
-            households
-            .exclude(jjm_house_connection__isnull=True)
-            .exclude(jjm_house_connection__exact="")
-            .annotate(jjm_n=Lower(Trim("jjm_house_connection")))
-            .values("jjm_n")
-            .annotate(count=Count("jjm_n"))
-        )
 
         table_data = [["S. No.", "JJM House Connection", "No of HHs", "%"]]
-        sr_no = 1
 
-        for row in jjm_qs:
-            value = row["jjm_n"].title()
-            count = row["count"]
-            percentage = round((count / total_households) * 100)
+        yes_count = 0
+        no_count = 0
+        valid_households = 0
 
-            table_data.append([
-                str(sr_no),
-                value,
-                str(count),
-                f"{percentage}%"
-            ])
-            sr_no += 1
+        for hh in households:
+            if not hh.jjm_house_connection:
+                continue
+
+            v = str(hh.jjm_house_connection).strip().lower()
+
+            if v in ["yes", "y", "true", "1"]:
+                yes_count += 1
+                valid_households += 1
+            elif v in ["no", "n", "false", "0"]:
+                no_count += 1
+                valid_households += 1
+            # ❌ ignore anything else
+
+        if valid_households == 0:
+            table_data.append(["", "No data available", "0", "0%"])
+            table_data.append(["", "Total", "0", "100%"])
+            return table_data
+
+        yes_percentage = round((yes_count / valid_households) * 100)
+        no_percentage = round((no_count / valid_households) * 100)
+
+        table_data.append(["1", "Yes", str(yes_count), f"{yes_percentage}%"])
+        table_data.append(["2", "No", str(no_count), f"{no_percentage}%"])
 
         table_data.append([
             "",
             "Total",
-            str(total_households),
+            str(valid_households),
             "100%"
         ])
 
         return table_data
 
-    except Exception:
+    except Exception as e:
+        print("JJM error:", e)
         return [
             ["S. No.", "JJM House Connection", "No of HHs", "%"],
             ["", "No data available", "N/A", "N/A"],
             ["", "Total", "N/A", "N/A"]
         ]
+
 
 
 def getAdequacyOfDrinkingWaterData(village_id):
@@ -1690,20 +1691,22 @@ def getSanitationFacilities(village_id):
             .annotate(count=Count("sanitation_n"))
         )
 
-        sr_no = 1
-
+        yes_count = 0
+        no_count = 0
+        
         for row in sanitation_qs:
-            value = row["sanitation_n"].title()
+            value = row["sanitation_n"]
             count = row["count"]
-            percentage = round((count / total_households) * 100)
-
-            table_data.append([
-                str(sr_no),
-                value,
-                str(count),
-                f"{percentage}%"
-            ])
-            sr_no += 1
+            if value in ["yes", "y", "true", "1"]:
+                yes_count += count
+            elif value in ["no", "n", "false", "0"]:
+                no_count += count
+        
+        yes_percentage = round((yes_count / total_households) * 100)
+        no_percentage = round((no_count / total_households) * 100)
+        
+        table_data.append(["1", "Yes", str(yes_count), f"{yes_percentage}%"])
+        table_data.append(["2", "No", str(no_count), f"{no_percentage}%"])
 
         # Total row (no S. No.)
         table_data.append([
@@ -1723,117 +1726,158 @@ def getSanitationFacilities(village_id):
         ]
 
 
+def normalize_toilet_type(value):
+    if not value:
+        return None
+
+    v = value.lower()
+
+    if 'single' in v and 'pit' in v:
+        return 'Single Pit'
+
+    if ('twin' in v or 'double' in v) and 'pit' in v:
+        return 'Twin Pit'
+
+    return None   # ❌ ignore everything else
+
+
 def getHouseholdToiletsType(village_id):
     try:
         households = HouseholdSurvey.objects.filter(village_id=village_id)
-        total_households = households.count()
 
-        # Header (added S. No.)
         table_data = [
             ["S. No.", "Type of Household Toilet", "No of HHs", "%"]
         ]
 
-        if total_households == 0:
+        toilet_counts = {
+            'Single Pit': 0,
+            'Twin Pit': 0
+        }
+
+        valid_households = 0
+
+        for hh in households:
+            toilet_type = normalize_toilet_type(hh.type_of_toilet)
+
+            if not toilet_type:
+                continue   # ❌ skip Grid / Solar / None / blanks
+
+            toilet_counts[toilet_type] += 1
+            valid_households += 1
+
+        if valid_households == 0:
             table_data.append(["1", "No data available", "0", "0%"])
             table_data.append(["", "Total", "0", "100%"])
             return table_data
 
-        toilet_type_qs = (
-            households
-            .exclude(type_of_toilet__isnull=True)
-            .exclude(type_of_toilet__exact="")
-            .annotate(toilet_type_n=Lower(Trim("type_of_toilet")))
-            .values("toilet_type_n")
-            .annotate(count=Count("toilet_type_n"))
-        )
-
         sr_no = 1
-
-        for row in toilet_type_qs:
-            value = row["toilet_type_n"].title()
-            count = row["count"]
-            percentage = round((count / total_households) * 100)
+        for toilet, count in toilet_counts.items():
+            percent = round((count / valid_households) * 100)
 
             table_data.append([
                 str(sr_no),
-                value,
+                toilet,
                 str(count),
-                f"{percentage}%"
+                f"{percent}%"
             ])
             sr_no += 1
 
-        # Total row (no S. No.)
         table_data.append([
             "",
             "Total",
-            str(total_households),
+            str(valid_households),
             "100%"
         ])
 
         return table_data
 
-    except Exception:
+    except Exception as e:
+        print("Toilet table error:", e)
         return [
             ["S. No.", "Type of Household Toilet", "No of HHs", "%"],
             ["", "No data available", "N/A", "N/A"],
             ["", "Total", "N/A", "N/A"]
         ]
-    
-def getDe_sludgeMaterial(village):
-    try:
-        households = HouseholdSurvey.objects.filter(village_id=village)
-        total_households = households.count()
 
-        # Header (added S. No.)
+
+def normalize_sludge_disposal(value):
+    if not value:
+        return None
+
+    v = value.lower()
+
+    if 'nearby' in v and 'open' in v:
+        return 'Nearby Open Area'
+
+    if 'agriculture' in v:
+        return 'Agriculture Land'
+
+    if 'tanker' in v and 'safe' in v:
+        return 'Collect By Tanker To Dispose Safe'
+
+    return None   # ❌ ignore blanks / others
+
+
+def getDe_sludgeMaterial(village_id):
+    try:
+        households = HouseholdSurvey.objects.filter(village_id=village_id)
+
         table_data = [
             ["S. No.", "De-sludge Material Disposal Method", "No of HHs", "%"]
         ]
 
-        if total_households == 0:
+        disposal_counts = {
+            'Nearby Open Area': 0,
+            'Agriculture Land': 0,
+            'Collect By Tanker To Dispose Safe': 0
+        }
+
+        valid_households = 0
+
+        for hh in households:
+            method = normalize_sludge_disposal(hh.sludge_be_disposed_type)
+
+            if not method:
+                continue   # ❌ skip blanks
+
+            disposal_counts[method] += 1
+            valid_households += 1
+
+        if valid_households == 0:
             table_data.append(["1", "No data available", "0", "0%"])
             table_data.append(["", "Total", "0", "100%"])
             return table_data
 
-        disposal_method_qs = (
-            households
-            .exclude(sludge_be_disposed_type__isnull=True)
-            .exclude(sludge_be_disposed_type__exact="")
-            .annotate(disposal_method_n=Lower(Trim("sludge_be_disposed_type")))
-            .values("disposal_method_n")
-            .annotate(count=Count("disposal_method_n"))
-        )
-
         sr_no = 1
-
-        for row in disposal_method_qs:
-            value = row["disposal_method_n"].title()
-            count = row["count"]
-            percentage = round((count / total_households) * 100)
+        for method, count in disposal_counts.items():
+            percent = round((count / valid_households) * 100)
 
             table_data.append([
                 str(sr_no),
-                value,
+                method,
                 str(count),
-                f"{percentage}%"
+                f"{percent}%"
             ])
             sr_no += 1
 
-        # Total row (no S. No.)
         table_data.append([
             "",
             "Total",
-            str(total_households),
+            str(valid_households),
             "100%"
         ])
 
         return table_data
 
-    except Exception:
+    except Exception as e:
+        print("De-sludge error:", e)
         return [
             ["S. No.", "De-sludge Material Disposal Method", "No of HHs", "%"],
             ["", "No data available", "N/A", "N/A"],
             ["", "Total", "N/A", "N/A"]
         ]
+
+
     
 def getElectricityconnection(vilage_id):
     try:
@@ -1859,20 +1903,22 @@ def getElectricityconnection(vilage_id):
             .annotate(count=Count("electricity_n"))
         )
 
-        sr_no = 1
-
+        yes_count = 0
+        no_count = 0
+        
         for row in electricity_qs:
-            value = row["electricity_n"].title()
+            value = row["electricity_n"]
             count = row["count"]
-            percentage = round((count / total_households) * 100)
-
-            table_data.append([
-                str(sr_no),
-                value,
-                str(count),
-                f"{percentage}%"
-            ])
-            sr_no += 1
+            if value in ["yes", "y", "true", "1"]:
+                yes_count += count
+            elif value in ["no", "n", "false", "0"]:
+                no_count += count
+        
+        yes_percentage = round((yes_count / total_households) * 100)
+        no_percentage = round((no_count / total_households) * 100)
+        
+        table_data.append(["1", "Yes", str(yes_count), f"{yes_percentage}%"])
+        table_data.append(["2", "No", str(no_count), f"{no_percentage}%"])
 
         # Total row (no S. No.)
         table_data.append([
