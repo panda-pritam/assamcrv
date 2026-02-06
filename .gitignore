@@ -29,5 +29,9 @@ __pycache__/
 **/*.pyd
 media/
 assam_crv/media/
+assam_crv/django_error.log
+data_upload_2.csv
+file/
+sheets/
 
 
