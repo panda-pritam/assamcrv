@@ -13,8 +13,9 @@ from django.http import JsonResponse, HttpResponse, FileResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.core.exceptions import ObjectDoesNotExist
-from .models import (HouseholdSurvey, tblVillage, Transformer, Commercial,Critical_Facility,ElectricPole,VillageListOfAllTheDistricts,
-                     VillageRoadInfo,VillageRoadInfoErosion, BridgeSurvey, Risk_Assesment, Upload_data_vdmp)
+from .models import (HouseholdSurvey, tblVillage, Transformer, Commercial, Critical_Facility, ElectricPole, VillageListOfAllTheDistricts,
+                     VillageRoadInfo, VillageRoadInfoErosion, BridgeSurvey, Risk_Assesment, Upload_data_vdmp,
+                     VdmpVillageMapData, VdmDistrictMapData)
 from administrator.models import PRA_main, PRA_assets, PRA_shelter, FGD_wash_summary, FGD_livelihood_summary
 from layers.models import village_flood_raster_Files, district_wind_raster_file, district_eq_raster_file
 from village_profile.models import tblDistrict
@@ -248,17 +249,21 @@ def upload_data_vdmp(request):
                             "error": "Invalid village for flood hazard upload"
                         }, status=400)
 
-                    record, _ = village_flood_raster_Files.objects.get_or_create(village=village)
                     if ext in {".tif", ".tiff"}:
+                        record, _ = village_flood_raster_Files.objects.get_or_create(village=village)
                         record.raster_file = file
+                        record.save()
+                        file_path = record.raster_file.name
                     else:
-                        record.flood_map_image = file
-                    record.save()
+                        map_record, _ = VdmpVillageMapData.objects.get_or_create(village=village)
+                        map_record.flood_erosion = file
+                        map_record.save()
+                        file_path = map_record.flood_erosion.name
                     return JsonResponse({
                         "status": "success",
                         "records_created": 1,
                         "records_updated": 0,
-                        "file_path": record.flood_map_image.name if record.flood_map_image else record.raster_file.name
+                        "file_path": file_path
                     })
 
                 if type_name_normalized.startswith("wind") or type_name_normalized.startswith("eq"):
@@ -277,30 +282,38 @@ def upload_data_vdmp(request):
                         }, status=400)
 
                     if type_name_normalized.startswith("wind"):
-                        record, _ = district_wind_raster_file.objects.get_or_create(district=district)
                         if ext in {".tif", ".tiff"}:
+                            record, _ = district_wind_raster_file.objects.get_or_create(district=district)
                             record.raster_file = file
+                            record.save()
+                            file_path = record.raster_file.name
                         else:
-                            record.wind_map_image = file
-                        record.save()
+                            map_record, _ = VdmDistrictMapData.objects.get_or_create(district=district)
+                            map_record.wind_hazard = file
+                            map_record.save()
+                            file_path = map_record.wind_hazard.name
                         return JsonResponse({
                             "status": "success",
                             "records_created": 1,
                             "records_updated": 0,
-                            "file_path": record.wind_map_image.name if record.wind_map_image else record.raster_file.name
+                            "file_path": file_path
                         })
 
-                    record, _ = district_eq_raster_file.objects.get_or_create(district=district)
                     if ext in {".tif", ".tiff"}:
+                        record, _ = district_eq_raster_file.objects.get_or_create(district=district)
                         record.raster_file = file
+                        record.save()
+                        file_path = record.raster_file.name
                     else:
-                        record.eq_map_image = file
-                    record.save()
+                        map_record, _ = VdmDistrictMapData.objects.get_or_create(district=district)
+                        map_record.earthquake_hazard = file
+                        map_record.save()
+                        file_path = map_record.earthquake_hazard.name
                     return JsonResponse({
                         "status": "success",
                         "records_created": 1,
                         "records_updated": 0,
-                        "file_path": record.eq_map_image.name if record.eq_map_image else record.raster_file.name
+                        "file_path": file_path
                     })
 
                 return JsonResponse({

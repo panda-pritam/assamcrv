@@ -1,6 +1,7 @@
 from django.contrib import admin
 from .models import ( HouseholdSurvey, Transformer, Commercial, Critical_Facility, ElectricPole,
-                      VillageListOfAllTheDistricts, VillageRoadInfo,VDMP_Maps_Data, BridgeSurvey, Risk_Assesment,AttributeMapping)
+                      VillageListOfAllTheDistricts, VillageRoadInfo, VdmpVillageMapData, VdmDistrictMapData,
+                      BridgeSurvey, Risk_Assesment, AttributeMapping)
 
 
 
@@ -64,8 +65,14 @@ class VillageRoadInfoAdmin(admin.ModelAdmin):
     search_fields = ('village_name', 'road_surface_type')
     list_filter = ('village', 'road_surface_type')
 
-@admin.register(VDMP_Maps_Data)
-class VDMP_Maps_DataAdmin(admin.ModelAdmin):
+@admin.register(VdmpVillageMapData)
+class VdmpVillageMapDataAdmin(admin.ModelAdmin):
     list_display = ('id', 'village',)
     search_fields = ('village',)
     list_filter = ('village',)
+
+@admin.register(VdmDistrictMapData)
+class VdmDistrictMapDataAdmin(admin.ModelAdmin):
+    list_display = ('id', 'district',)
+    search_fields = ('district',)
+    list_filter = ('district',)
