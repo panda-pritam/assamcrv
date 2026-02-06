@@ -2583,7 +2583,7 @@ def _classify_income(income):
     try:
         income = float(income)
         if income <= 50000: return "Upto 50K"
-        elif income <= 150000: return "Upto 100K"
+        elif income <= 150000: return "Upto 150K"
         elif income <= 250000: return "Upto 250K"
         else: return ">250K"
     except (ValueError, TypeError):

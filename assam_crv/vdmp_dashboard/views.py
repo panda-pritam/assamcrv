@@ -704,7 +704,7 @@ def get_household_summary_data(request):
     pra_data = PRA_main.objects.select_related('village').all()
     pra_data = apply_location_filters(pra_data, district_id, circle_id, gram_panchayat_id, village_id)
     pra_record = pra_data.first()
-    print("PRA Record:", pra_record, pra_record.persons_with_chronic_illness )
+    # print("PRA Record:", pra_record, pra_record.persons_with_chronic_illness )
     chronic_illness_count = pra_record.persons_with_chronic_illness or 0 if pra_record else 0
     
     # Calculate total population (male + female, excluding seniors to avoid double counting)
