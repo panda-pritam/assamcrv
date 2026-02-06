@@ -217,10 +217,10 @@ def upload_data_vdmp(request):
                     total_files_int = int(total_files)
                 except ValueError:
                     return JsonResponse({"status": "error", "error": "Invalid total_files"}, status=400)
-                if total_files_int != expected_files:
+                if total_files_int > expected_files:
                     return JsonResponse({
                         "status": "error",
-                        "error": f"Expected {expected_files} file(s) for this type"
+                        "error": f"Expected up to {expected_files} file(s) for this type"
                     }, status=400)
             ext = os.path.splitext(file.name)[1].lower()
             if allowed_exts and ext not in allowed_exts and ext not in image_exts:

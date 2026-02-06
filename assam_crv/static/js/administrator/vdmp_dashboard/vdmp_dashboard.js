@@ -292,15 +292,14 @@ document.addEventListener('DOMContentLoaded', function () {
         const button = this;
         const originalText = button.innerHTML;
         const expectedCount = getExpectedFileCount(rawType);
-        const activeInputs = fileInputs.slice(0, expectedCount);
-        const selectedFiles = activeInputs.map((input) => input.files[0]).filter(Boolean);
+        const selectedFiles = fileInputs.map((input) => input.files[0]).filter(Boolean);
 
         if (!rawType) {
             Swal.fire("Error", "Please select a file and data type.", "error");
             return;
         }
-        if (selectedFiles.length !== expectedCount) {
-            Swal.fire("Error", `Please select ${expectedCount} file(s).`, "error");
+        if (selectedFiles.length < 1) {
+            Swal.fire("Error", "Please select at least 1 file.", "error");
             return;
         }
         if (!dataType) {
@@ -339,7 +338,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 formData.append("file", file);
                 formData.append("data_type", dataType);
                 formData.append("type_name", rawType);
-                formData.append("total_files", expectedCount);
+                formData.append("total_files", selectedFiles.length);
                 formData.append("file_index", fileIndex);
                 const uploadCategory = document.getElementById("uploadCategory")?.value || "";
                 formData.append("upload_category", uploadCategory);
