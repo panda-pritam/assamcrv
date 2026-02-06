@@ -334,7 +334,7 @@ function updateVillageSummary(data) {
         'population_bl_six',         // Children below 6 years
         'senior_citizens',           // Senior citizens count
         'total_disabled',            // Disabled persons count
-        'chronic_illiness',        // Chronic illness count
+        'chronic_illness',        // Chronic illness count
         'total_households',          // Total household count
 
         // Vulnerable Populations
