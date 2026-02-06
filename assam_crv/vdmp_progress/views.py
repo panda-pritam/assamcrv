@@ -12,7 +12,7 @@ from django.utils.translation import get_language
 
 from .data_pipeline import process_survey_data, process_others_data
 from village_profile.models import district_village_mapping, tblDistrict, tblVillage
-from vdmp_dashboard.models import HouseholdSurvey
+from vdmp_dashboard.models import Commercial, Critical_Facility, BridgeSurvey,Transformer,ElectricPole, HouseholdSurvey
 from .risk_assessment_pipeline import run_risk_assessment_pipeline
 
 
@@ -532,30 +532,29 @@ def delete_and_rerun_pipeline(request, status_id):
         if 'household survey' in activity_name:
             HouseholdSurvey.objects.filter(village=village).delete()
 
-        elif 'physical vulnerability survey' in activity_name:
-            from vdmp_dashboard.models import Commercial, Critical_Facility, BridgeSurvey,Transformer,ElectricPole
+        if 'physical vulnerability survey' in activity_name:
             Commercial.objects.filter(village=village).delete()
             Critical_Facility.objects.filter(village=village).delete()
             BridgeSurvey.objects.filter(village=village).delete()
             Transformer.objects.filter(village=village).delete()
             ElectricPole.objects.filter(village=village).delete()
 
-        elif 'road' in activity_name:
+        if 'road' in activity_name:
             from vdmp_dashboard.models import VillageRoadInfo, VillageRoadInfoErosion, VillageRoadInfoEQ, VillageRoadInfoWind
             VillageRoadInfo.objects.filter(village=village).delete()
             VillageRoadInfoErosion.objects.filter(village=village).delete()
             VillageRoadInfoEQ.objects.filter(village=village).delete()
             VillageRoadInfoWind.objects.filter(village=village).delete()
-        # 🏗 Re-run data pipeline
-        elif "agriculture" in activity_name:
+
+        if "agriculture" in activity_name:
             from vdmp_dashboard.models import villageAgricultureLandFloodInfo, villageAgricultureLandErosionInfo, villageAgricultureLandWindInfo, villageAgricultureLandEQInfo
             villageAgricultureLandFloodInfo.objects.filter(village=village).delete()
             villageAgricultureLandErosionInfo.objects.filter(village=village).delete()
             villageAgricultureLandWindInfo.objects.filter(village=village).delete()
             villageAgricultureLandEQInfo.objects.filter(village=village).delete()
             
-        elif "GIS Maps" in activity_name:
-            from vdmp_dashboard.models import VillageRoadInfo, VillageRoadInfoEQ, HouseholdSurvey
+        if "GIS Maps" in activity_name:
+            from vdmp_dashboard.models import VillageRoadInfo, VillageRoadInfoEQ
             print(f"🗺️ Deleting existing GIS Maps data for village: {village.name}")
             
             road_count = VillageRoadInfo.objects.filter(village=village).count()
