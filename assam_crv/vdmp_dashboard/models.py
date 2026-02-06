@@ -497,9 +497,9 @@ class VDMP_Maps_Data(models.Model):
     distribution_of_building = models.FileField(upload_to="maps/distribution_of_building/", max_length=255, null=True, blank=True)
     road_infrastructure = models.FileField(upload_to="maps/road_infrastructure/", max_length=255, null=True, blank=True)
     landuse = models.FileField(upload_to="maps/landuse/", max_length=255, null=True, blank=True)
-    flood_erosion = models.FileField(upload_to="maps/flood_erosion/", max_length=255, null=True, blank=True)
-    wind_hazard = models.FileField(upload_to="maps/wind_hazard/", max_length=255, null=True, blank=True)
-    earthquake_hazard = models.FileField(upload_to="maps/earthquake_hazard/", max_length=255, null=True, blank=True)
+    # flood_erosion = models.FileField(upload_to="maps/flood_erosion/", max_length=255, null=True, blank=True)
+    # wind_hazard = models.FileField(upload_to="maps/wind_hazard/", max_length=255, null=True, blank=True)
+    # earthquake_hazard = models.FileField(upload_to="maps/earthquake_hazard/", max_length=255, null=True, blank=True)
     essential_facilities = models.FileField(upload_to="maps/essential_facilities/", max_length=255, null=True, blank=True)
     electrical_infrastructure = models.FileField(upload_to="maps/electrical_infrastructure/", max_length=255, null=True, blank=True)
     
