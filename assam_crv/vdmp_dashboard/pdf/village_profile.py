@@ -29,7 +29,7 @@ from reportlab.platypus import Paragraph, Spacer, PageBreak
 from reportlab.platypus import Table as ReportLabTable
 # from .village_summary import VILLAGE_SUMMARY_DATA
 from django.db.models.functions import Lower, Trim  
-from vdmp_dashboard.models import VDMP_Maps_Data
+from vdmp_dashboard.models import VdmpVillageMapData, VdmDistrictMapData
 
 from django.db.models import Sum, IntegerField, FloatField
 from django.db.models.functions import Cast, Coalesce, Replace
@@ -1950,17 +1950,26 @@ def getElectricitySource(vilage_id):
 
 def draw_village_profile(elements,village_id):
 
-    map_file_fields = VDMP_Maps_Data.objects.filter(village_id=village_id).values(
+    village_maps = VdmpVillageMapData.objects.filter(village_id=village_id).values(
         'village_id',
         'distribution_of_building',
         'road_infrastructure',
         'landuse',
         'flood_erosion',
-        'wind_hazard',
-        'earthquake_hazard',
         'essential_facilities',
         'electrical_infrastructure'
     ).first() or {}
+    district_id = tblVillage.objects.filter(id=village_id).values_list(
+        'gram_panchayat__circle__district_id',
+        flat=True
+    ).first()
+    district_maps = {}
+    if district_id:
+        district_maps = VdmDistrictMapData.objects.filter(district_id=district_id).values(
+            'wind_hazard',
+            'earthquake_hazard'
+        ).first() or {}
+    map_file_fields = {**village_maps, **district_maps}
 
 
     styles = getSampleStyleSheet()
