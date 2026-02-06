@@ -83,9 +83,8 @@ def getVLCDMCMemberList(village_id):
 
 def getSafeShelterData(village_id):
     try:
-        # Assuming SafeShelter model exists - adjust model name as needed
-        from shelter.models import SafeShelter  # Adjust import as needed
-        shelters = SafeShelter.objects.filter(village_id=village_id)
+        from administrator.models import PRA_shelter
+        shelters = PRA_shelter.objects.filter(village_id=village_id)
         
         data = [
             [Paragraph("Type of Shelter", bold_style), Paragraph("Rooms", bold_style), 
@@ -95,17 +94,14 @@ def getSafeShelterData(village_id):
         
         for shelter in shelters:
             contact_info = f"{shelter.contact_person or 'N/A'}"
-            if shelter.contact_designation:
-                contact_info += f"<br/>{shelter.contact_designation}"
-            if shelter.contact_phone:
-                contact_info += f"<br/>Mobile: {shelter.contact_phone}"
-                
+            if shelter.phone_number:
+                contact_info += f"<br/>Mobile: {shelter.phone_number}"
             data.append([
-                Paragraph(shelter.shelter_name or "N/A", normal_style),
-                Paragraph(shelter.rooms or "N/A", normal_style),
-                Paragraph(shelter.capacity or "N/A", normal_style),
+                Paragraph(shelter.name_of_shelter or "N/A", normal_style),
+                Paragraph(str(shelter.number_of_rooms or "N/A"), normal_style),
+                Paragraph(str(shelter.capacity or "N/A"), normal_style),
                 Paragraph(contact_info, normal_style),
-                Paragraph(shelter.remarks or "N/A", normal_style)
+                Paragraph("N/A", normal_style)
             ])
         
         return data
@@ -118,6 +114,54 @@ def getSafeShelterData(village_id):
             [Paragraph("940 LPS School, Rupakuchi", normal_style), Paragraph("04 & Campus Ground", normal_style), 
              Paragraph("50 HH", normal_style), Paragraph("Mr. Tutu Das<br/>Principal,<br/>Mobile: 7002698428", normal_style),
              Paragraph("Village head should coordinate with School in-charge to make sure the school is open in case of any emergency. Has two toilet, handpump for drinking and grid supply for electricity. Suitable only for moderate flood only.", normal_style)]
+        ]
+
+def get_pra_shelter_data(village_id):
+    try:
+        from administrator.models import PRA_shelter
+        shelters = PRA_shelter.objects.filter(village_id=village_id)
+
+        data = [
+            [Paragraph("Shelter", bold_style), Paragraph("Single/Multi stories/Room", bold_style),
+             Paragraph("Capacity", bold_style), Paragraph("Contact Persons and Phone No.", bold_style),
+             Paragraph("Remarks", bold_style)]
+        ]
+
+        for shelter in shelters:
+            rooms = shelter.number_of_rooms if shelter.number_of_rooms is not None else "N/A"
+            contact_lines = []
+            if shelter.contact_person:
+                contact_lines.append(shelter.contact_person)
+            if shelter.phone_number:
+                contact_lines.append(f"Mobile: {shelter.phone_number}")
+            contact_info = "<br/>".join(contact_lines) if contact_lines else "N/A"
+
+            remarks_parts = []
+            if shelter.toilet_facility_available:
+                remarks_parts.append(f"Toilet: {shelter.toilet_facility_available}")
+            if shelter.drinking_water_facility_available:
+                remarks_parts.append(f"Drinking water: {shelter.drinking_water_facility_available}")
+            if shelter.alternate_power_source:
+                remarks_parts.append(f"Power: {shelter.alternate_power_source}")
+            remarks = "; ".join(remarks_parts) if remarks_parts else "N/A"
+
+            data.append([
+                Paragraph(shelter.name_of_shelter or "N/A", normal_style),
+                Paragraph(str(rooms), normal_style),
+                Paragraph(str(shelter.capacity or "N/A"), normal_style),
+                Paragraph(contact_info, normal_style),
+                Paragraph(remarks, normal_style)
+            ])
+
+        return data
+    except Exception:
+        return [
+            [Paragraph("Shelter", bold_style), Paragraph("Single/Multi stories/Room", bold_style),
+             Paragraph("Capacity", bold_style), Paragraph("Contact Persons and Phone No.", bold_style),
+             Paragraph("Remarks", bold_style)],
+            [Paragraph("N/A", normal_style), Paragraph("N/A", normal_style),
+             Paragraph("N/A", normal_style), Paragraph("N/A", normal_style),
+             Paragraph("N/A", normal_style)]
         ]
 
 def draw_disaster_preparedness_and_response_plan(elements, village_id):
@@ -883,14 +927,7 @@ def draw_disaster_preparedness_and_response_plan(elements, village_id):
     #      Paragraph("50 HH", normal_style), Paragraph("Mr. Tutu Das<br/>Principal,<br/>Mobile: 7002698428", normal_style),
     #      Paragraph("Only suitable for moderate flood. Community move to Jania and Barpeta Road for shelter.", normal_style)]
     # ]
-    safe_shelter_data = [
-        [Paragraph("Shelter", bold_style), Paragraph("Single/Multi stories/Room", bold_style), 
-         Paragraph("Capacity", bold_style), Paragraph("Contact Persons and Phone No.", bold_style), 
-         Paragraph("Remarks", bold_style)],
-        [Paragraph("-", normal_style), Paragraph("-", normal_style),
-         Paragraph("-", normal_style), Paragraph("-", normal_style),
-         Paragraph("-", normal_style)]
-    ]
+    safe_shelter_data = get_pra_shelter_data(village_id)
     table = create_styled_table(safe_shelter_data, [100, 80, 50, 120, 150], False, True, srNoStyle, "Safe Shelter")
     elements.append(table)
     elements.append(Spacer(1, 12))
