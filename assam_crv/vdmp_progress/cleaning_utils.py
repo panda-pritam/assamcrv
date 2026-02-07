@@ -17,6 +17,7 @@ import os
 import geopandas as gpd
 from sqlalchemy import create_engine
 from django.conf import settings
+from urllib.parse import quote_plus
 
 def extract_flood_depth_from_raster(df, village_id):
     """
@@ -37,7 +38,7 @@ def extract_flood_depth_from_raster(df, village_id):
     if not raster_file or not raster_file.raster_file:
         return df
 
-    raster_path = f"c:\\assamcrv\\assam_crv\\media\\{raster_file.raster_file}"
+    raster_path = os.path.join(settings.MEDIA_ROOT, raster_file.raster_file.name)
     ds = gdal.Open(raster_path)
 
     if not ds:
@@ -124,9 +125,11 @@ def extract_erosion_buffer_values(df):
     from shapely.geometry import Point
     import os
 
-    geojson_path = (
-        r"c:\assamcrv\assam_crv\media\pipeline_data"
-        r"\river_buff_shp_file\new_river_buff.geojson"
+    geojson_path = os.path.join(
+        settings.MEDIA_ROOT,
+        "pipeline_data",
+        "river_buff_shp_file",
+        "new_river_buff.geojson"
     )
 
     if not os.path.exists(geojson_path):
@@ -851,7 +854,7 @@ def process_arrgicultural_data_pipeline(
             print("❌ Flood raster not found")
             return
 
-        raster_path = f"c:\\assamcrv\\assam_crv\\media\\{flood_raster.raster_file}"
+        raster_path = os.path.join(settings.MEDIA_ROOT, flood_raster.raster_file.name)
 
         # -----------------------------
         # Load agriculture polygons
@@ -1376,7 +1379,7 @@ def raster_to_grid_gdf(
     # 4. OPTIONAL: Export to GeoJSON for verification
     # --------------------------------------------------
     if export_geojson:
-        media_dir = r"c:\assamcrv\assam_crv\media"
+        media_dir = settings.MEDIA_ROOT
         os.makedirs(media_dir, exist_ok=True)
 
         geojson_path = os.path.join(media_dir, geojson_name)
@@ -1409,13 +1412,14 @@ def get_sqlalchemy_engine():
     """
     Create SQLAlchemy engine using Django DB settings.
     Keeps DB config in ONE place (env → settings.py).
+    Properly escapes special characters in credentials.
     """
 
     db = settings.DATABASES["default"]
 
     engine_url = (
         f"postgresql+psycopg2://"
-        f"{db['USER']}:{db['PASSWORD']}@"
+        f"{quote_plus(db['USER'])}:{quote_plus(db['PASSWORD'])}@"
         f"{db['HOST']}:{db['PORT']}/"
         f"{db['NAME']}"
     )
@@ -1976,14 +1980,14 @@ def _process_road_flood_data(
     ).first()
 
     # Fallback to state-level rasters if district-level not available
-    wind_raster_path = f"c:\\assamcrv\\assam_crv\\media\\{dist_wind_raster.raster_file}" if dist_wind_raster else r"c:\assamcrv\assam_crv\media\pipeline_data\wind_raster\Wind.tif"
-    eq_raster_path = f"c:\\assamcrv\\assam_crv\\media\\{dist_eq_raster.raster_file}" if dist_eq_raster else r"c:\assamcrv\assam_crv\media\pipeline_data\eq_raster\eq.tif"
+    wind_raster_path = os.path.join(settings.MEDIA_ROOT, dist_wind_raster.raster_file.name) if dist_wind_raster else os.path.join(settings.MEDIA_ROOT, "pipeline_data", "wind_raster", "Wind.tif")
+    eq_raster_path = os.path.join(settings.MEDIA_ROOT, dist_eq_raster.raster_file.name) if dist_eq_raster else os.path.join(settings.MEDIA_ROOT, "pipeline_data", "eq_raster", "eq.tif")
 
     print("🌊 Processing flood hazard zonal length...")
     process_road_flood_zonal_length(
         village_obj,
         village_code,
-       f"c:\\assamcrv\\assam_crv\\media\\{flood_raster.raster_file}"
+        os.path.join(settings.MEDIA_ROOT, flood_raster.raster_file.name)
     )
 
     # process_road_eq_zonal_length(
@@ -2969,7 +2973,7 @@ def validate_gis_data_availability(village_obj):
     # ----------------------------
     wind_raster = district_wind_raster_file.objects.filter(district=district).first()
     if not wind_raster or not wind_raster.raster_file:
-        wind_fallback = r"c:\assamcrv\assam_crv\media\pipeline_data\wind_raster\Wind.tif"
+        wind_fallback = os.path.join(settings.MEDIA_ROOT, "pipeline_data", "wind_raster", "Wind.tif")
         if not os.path.exists(wind_fallback):
             errors.append(
                 f"Wind raster not available for district {district.name} "
@@ -2981,7 +2985,7 @@ def validate_gis_data_availability(village_obj):
     # ----------------------------
     eq_raster = district_eq_raster_file.objects.filter(district=district).first()
     if not eq_raster or not eq_raster.raster_file:
-        eq_fallback = r"c:\assamcrv\assam_crv\media\pipeline_data\eq_raster\eq.tif"
+        eq_fallback = os.path.join(settings.MEDIA_ROOT, "pipeline_data", "eq_raster", "eq.tif")
         if not os.path.exists(eq_fallback):
             errors.append(
                 f"Earthquake raster not available for district {district.name} "
@@ -3183,9 +3187,9 @@ def run_gis_risk_assessment_pipeline(village_obj, village_code):
     wind_raster = district_wind_raster_file.objects.filter(district=district).first()
     eq_raster = district_eq_raster_file.objects.filter(district=district).first()
     
-    flood_raster_path = f"c:\\assamcrv\\assam_crv\\media\\{flood_raster.raster_file}"
-    wind_raster_path = f"c:\\assamcrv\\assam_crv\\media\\{wind_raster.raster_file}" if wind_raster else r"c:\assamcrv\assam_crv\media\pipeline_data\wind_raster\Wind.tif"
-    eq_raster_path = f"c:\\assamcrv\\assam_crv\\media\\{eq_raster.raster_file}" if eq_raster else r"c:\assamcrv\assam_crv\media\pipeline_data\eq_raster\eq.tif"
+    flood_raster_path = os.path.join(settings.MEDIA_ROOT, flood_raster.raster_file.name)
+    wind_raster_path = os.path.join(settings.MEDIA_ROOT, wind_raster.raster_file.name) if wind_raster else os.path.join(settings.MEDIA_ROOT, "pipeline_data", "wind_raster", "Wind.tif")
+    eq_raster_path = os.path.join(settings.MEDIA_ROOT, eq_raster.raster_file.name) if eq_raster else os.path.join(settings.MEDIA_ROOT, "pipeline_data", "eq_raster", "eq.tif")
     
     village_id = village_obj.id
     
