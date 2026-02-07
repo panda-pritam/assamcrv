@@ -474,16 +474,21 @@ def update_vdmp_activity_status(request, status_id):
                     from .cleaning_utils import validate_gis_data_availability, run_gis_risk_assessment_pipeline
                     
                     print("🔍 Validating GIS data availability...")
-                    validation_errors = validate_gis_data_availability(village_obj)
+                    validation_errors, validation_warnings = validate_gis_data_availability(village_obj)
+
+                    # Log warnings but DO NOT FAIL
+                    for warning in validation_warnings:
+                        print(f"⚠️ GIS warning: {warning}")
+
+                    # Fail ONLY if hard errors exist
                     if validation_errors:
                         print(f"❌ GIS data validation failed: {validation_errors}")
                         return Response({
                             'error': 'Missing required GIS data: ' + '; '.join(validation_errors)
                         }, status=status.HTTP_400_BAD_REQUEST)
-                    
-                    print("✅ GIS data validation passed")
-                    print("🚀 Starting GIS risk assessment pipeline...")
-                    
+
+                    print("✅ GIS data validation passed (with optional warnings)")
+                                        
                     # Run GIS risk assessment pipeline
                     run_gis_risk_assessment_pipeline(village_obj, village_code)
                     

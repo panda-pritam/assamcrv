@@ -317,14 +317,14 @@ class VillageRoadInfo(models.Model):
     flood_class = models.CharField(max_length=50)
     road_width_m = models.FloatField(null=True, blank=True)
     road_type_id = models.IntegerField(null=True, blank=True)
-    unit_cost = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    replacement_cost_inr = models.DecimalField(max_digits=15, decimal_places=2, default=0.00)
+    unit_cost = models.DecimalField(max_digits=20, decimal_places=4, default=0.00)
+    replacement_cost_inr = models.DecimalField(max_digits=20, decimal_places=2, default=0.00)
     # Flood hazard data
     # MDR (Mean Damage Ratio) data
-    flood_hazard_mdr = models.DecimalField(max_digits=10, decimal_places=8, null=True, blank=True)
+    flood_hazard_mdr = models.DecimalField(max_digits=20, decimal_places=8, null=True, blank=True)
     
     # Loss calculations
-    flood_loss = models.DecimalField(max_digits=15, decimal_places=8, null=True, blank=True)
+    flood_loss = models.DecimalField(max_digits=20, decimal_places=8, null=True, blank=True)
 
     
     def __str__(self):
@@ -342,11 +342,11 @@ class VillageRoadInfoEQ(models.Model):
     road_length_m = models.FloatField()
     road_width_m = models.FloatField(null=True, blank=True)
     road_type_id = models.IntegerField(null=True, blank=True)
-    unit_cost = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    replacement_cost_inr = models.DecimalField(max_digits=15, decimal_places=2, default=0.00)
-    eq_hazard = models.DecimalField(max_digits=10, decimal_places=8, null=True, blank=True)
-    eq_hazard_mdr = models.DecimalField(max_digits=10, decimal_places=8, null=True, blank=True)
-    eq_loss = models.DecimalField(max_digits=15, decimal_places=8, null=True, blank=True)
+    unit_cost = models.DecimalField(max_digits=20, decimal_places=4, default=0.00)
+    replacement_cost_inr = models.DecimalField(max_digits=20, decimal_places=2, default=0.00)
+    eq_hazard = models.DecimalField(max_digits=20, decimal_places=8, null=True, blank=True)
+    eq_hazard_mdr = models.DecimalField(max_digits=20, decimal_places=8, null=True, blank=True)
+    eq_loss = models.DecimalField(max_digits=20, decimal_places=8, null=True, blank=True)
     
     def __str__(self):
         return f"{self.village_name} EQ ({self.road_surface_type})"
@@ -364,10 +364,10 @@ class VillageRoadInfoWind(models.Model):
     road_width_m = models.FloatField(null=True, blank=True)
     road_type_id = models.IntegerField(null=True, blank=True)
     unit_cost = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    replacement_cost_inr = models.DecimalField(max_digits=15, decimal_places=2, default=0.00)
-    wind_hazard = models.DecimalField(max_digits=10, decimal_places=8, null=True, blank=True)
-    wind_hazard_mdr = models.DecimalField(max_digits=10, decimal_places=8, null=True, blank=True)
-    wind_loss = models.DecimalField(max_digits=15, decimal_places=8, null=True, blank=True)
+    replacement_cost_inr = models.DecimalField(max_digits=20, decimal_places=2, default=0.00)
+    wind_hazard = models.DecimalField(max_digits=20, decimal_places=8, null=True, blank=True)
+    wind_hazard_mdr = models.DecimalField(max_digits=20, decimal_places=8, null=True, blank=True)
+    wind_loss = models.DecimalField(max_digits=20, decimal_places=8, null=True, blank=True)
     
     def __str__(self):
         return f"{self.village_name} Wind ({self.road_surface_type})"
@@ -381,7 +381,7 @@ class villageAgricultureLandFloodInfo(models.Model):
     total_area_sqm = models.FloatField()
     flood_depth_m = models.FloatField(null=True, blank=True)
     flood_class = models.CharField(max_length=50)
-    unit_cost_per_sqm = models.DecimalField(max_digits=15, decimal_places=2, default=0.00)
+    unit_cost_per_sqm = models.DecimalField(max_digits=20, decimal_places=4, default=0.00)
     total_replacement_cost_inr = models.DecimalField(max_digits=20, decimal_places=2, default=0.00)
     # Flood hazard data 
     flood_hazard_mdr = models.DecimalField(max_digits=10, decimal_places=8, null=True, blank=True)
@@ -398,9 +398,9 @@ class villageAgricultureLandWindInfo(models.Model):
     village_name = models.CharField(max_length=100)
     village_code = models.CharField(max_length=20)
     total_area_sqm = models.FloatField()
-    wind_hazard = models.DecimalField(max_digits=10, decimal_places=8, null=True, blank=True)
-    wind_hazard_mdr = models.DecimalField(max_digits=10, decimal_places=8, null=True, blank=True)
-    unit_cost_per_sqm = models.DecimalField(max_digits=15, decimal_places=2, default=0.00)
+    wind_hazard = models.DecimalField(max_digits=20, decimal_places=8, null=True, blank=True)
+    wind_hazard_mdr = models.DecimalField(max_digits=20, decimal_places=8, null=True, blank=True)
+    unit_cost_per_sqm = models.DecimalField(max_digits=20, decimal_places=4, default=0.00)
     total_replacement_cost_inr = models.DecimalField(max_digits=20, decimal_places=2, default=0.00)
     wind_loss = models.DecimalField(max_digits=20, decimal_places=2, null=True, blank=True)
 
@@ -415,9 +415,9 @@ class villageAgricultureLandEQInfo(models.Model):
     village_name = models.CharField(max_length=100)
     village_code = models.CharField(max_length=20)
     total_area_sqm = models.FloatField()
-    eq_hazard = models.DecimalField(max_digits=10, decimal_places=8, null=True, blank=True)
-    eq_hazard_mdr = models.DecimalField(max_digits=10, decimal_places=8, null=True, blank=True)
-    unit_cost_per_sqm = models.DecimalField(max_digits=15, decimal_places=2, default=0.00)
+    eq_hazard = models.DecimalField(max_digits=20, decimal_places=4, null=True, blank=True)
+    eq_hazard_mdr = models.DecimalField(max_digits=20, decimal_places=8, null=True, blank=True)
+    unit_cost_per_sqm = models.DecimalField(max_digits=20, decimal_places=4, default=0.00)
     total_replacement_cost_inr = models.DecimalField(max_digits=20, decimal_places=2, default=0.00)
     eq_loss = models.DecimalField(max_digits=20, decimal_places=2, null=True, blank=True)
 
@@ -453,6 +453,15 @@ class agricultureLandFloodMDRMapping(models.Model):
     flood_depth_m = models.FloatField()
     mdr = models.DecimalField(max_digits=10, decimal_places=8)
     crop_type = models.CharField(max_length=100)
+
+    def __str__(self):
+        return f"Flood Depth: {self.flood_depth_m} m - MDR: {self.mdr}"
+    
+
+class roadFloodMDRMapping(models.Model):
+    flood_depth_m = models.FloatField()
+    mdr = models.DecimalField(max_digits=10, decimal_places=8)
+    road_surface_type = models.CharField(max_length=100)
 
     def __str__(self):
         return f"Flood Depth: {self.flood_depth_m} m - MDR: {self.mdr}"

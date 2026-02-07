@@ -201,7 +201,7 @@ def extract_erosion_buffer_values(df):
 
 def extract_erosion_buffer_values_postgis(
     df,
-    buffer_table="public.new_river_buff",
+    buffer_table="public.riverbuffer",
     db_name="crv_assam",
     db_user="postgres",
     db_password="admin",
@@ -240,9 +240,13 @@ def extract_erosion_buffer_values_postgis(
                 ),
                 32646
             ),
-            ST_Transform(geom, 32646)
+            ST_Transform(
+                ST_SetSRID(geom, 4326),
+                32646
+            )
         );
     """
+
 
     with conn.cursor() as cur:
         for idx, row in df.iterrows():
@@ -509,6 +513,8 @@ def get_agriculture_unit_cost(land_type="Agriculture Land"):
     cost_mapping = AgricultureLandCostMaping.objects.filter(
         land_type__icontains=land_type
     ).first()
+
+    print(f"🔍 Fetching unit cost for {land_type}: {cost_mapping}")
     
     if cost_mapping:
         return float(cost_mapping.unit_cost_per_sqm)
@@ -518,16 +524,45 @@ def get_agriculture_unit_cost(land_type="Agriculture Land"):
 
 def get_agriculture_flood_mdr(flood_depth_m, crop_type):
     """
-    Get MDR value for agriculture flood based on flood depth and crop type
+    Get MDR value for agriculture flood:
+    - default crop_type
+    - round depth
+    - nearest lower match
+    - cap at max MDR
     """
     from vdmp_dashboard.models import agricultureLandFloodMDRMapping
-    
-    mdr_record = agricultureLandFloodMDRMapping.objects.filter(
-        flood_depth_m__lte=flood_depth_m,
+
+    # Default crop type
+    crop_type = crop_type or "Agriculture Land"
+
+    # No flood → no damage
+    if flood_depth_m is None or flood_depth_m <= 0:
+        return 0.0
+
+    # Round flood depth
+    flood_depth = round(float(flood_depth_m), 2)
+
+    base_qs = agricultureLandFloodMDRMapping.objects.filter(
         crop_type=crop_type
-    ).order_by('-flood_depth_m').first()
-    
-    return float(mdr_record.mdr) if mdr_record else 0.0
+    )
+
+    if not base_qs.exists():
+        return 0.0
+
+    # Nearest LOWER depth
+    record = (
+        base_qs
+        .filter(flood_depth_m__lte=flood_depth)
+        .order_by("-flood_depth_m")
+        .first()
+    )
+
+    # Cap at max MDR if depth exceeds table
+    if not record:
+        record = base_qs.order_by("-flood_depth_m").first()
+
+    return float(record.mdr) if record else 0.0
+
 
 
 def get_agriculture_wind_mdr(wind_hazard, crop_type):
@@ -580,7 +615,7 @@ def process_agriculture_wind_pipeline(
     vill_obj = tblVillage.objects.get(id=int(village_obj))
     
     # Wind raster path
-    raster_path = "c:\\assamcrv\\assam_crv\\static\\risk_assessment_raster\\Wind_Raster.tif"
+    raster_path = "c:\\assamcrv\\assam_crv\\static\\risk_assessment_raster\\Wind.tif"
     
     # Load agriculture polygons
     lulc_gdf = load_village_agriculture_lulc(village_code)
@@ -790,111 +825,131 @@ def process_arrgicultural_data_pipeline(
 
     from layers.models import village_flood_raster_Files
     from vdmp_dashboard.models import villageAgricultureLandFloodInfo
+    from django.db import transaction
     from decimal import Decimal
 
     vill_obj = tblVillage.objects.get(id=int(village_obj))
 
-    # Load flood raster
-    flood_raster = village_flood_raster_Files.objects.filter(
-        village_id=vill_obj
-    ).first()
+    # -----------------------------
+    # DELETE old data first
+    # -----------------------------
+    with transaction.atomic():
+        deleted_count, _ = villageAgricultureLandFloodInfo.objects.filter(
+            village=vill_obj
+        ).delete()
 
-    if not flood_raster:
-        print("❌ Flood raster not found")
-        return
+        print(f"🧹 Deleted {deleted_count} old agriculture flood records for {village_name}")
 
-    raster_path = f"c:\\assamcrv\\assam_crv\\media\\{flood_raster.raster_file}"
-    
-    # Load agriculture polygons
-    lulc_gdf = load_village_agriculture_lulc(village_code)
-    if lulc_gdf.empty:
-        print("⚠️ No agriculture polygons found")
-        return
+        # -----------------------------
+        # Load flood raster
+        # -----------------------------
+        flood_raster = village_flood_raster_Files.objects.filter(
+            village_id=vill_obj
+        ).first()
 
-    print(f"📌 Processing {len(lulc_gdf)} agriculture polygons...")
+        if not flood_raster:
+            print("❌ Flood raster not found")
+            return
 
-    records = []
-    stats_summary = {'flooded': 0, 'no_flood': 0, 'no_coverage': 0}
-    fallback_value = None
+        raster_path = f"c:\\assamcrv\\assam_crv\\media\\{flood_raster.raster_file}"
 
-    # Process each polygon
-    for idx, row in lulc_gdf.iterrows():
-        stats = get_zonal_stats_gdal(raster_path, row["geom"])
-        
-        flood_depth = stats['max']
-        flood_class = _classify_flood(flood_depth)
-        area_sqm = float(row["Area_SqM"])
-        
-        # Track statistics
-        if stats['valid_pixels'] == 0:
-            stats_summary['no_coverage'] += 1
-        elif flood_depth > 0:
-            stats_summary['flooded'] += 1
-        else:
-            stats_summary['no_flood'] += 1
+        # -----------------------------
+        # Load agriculture polygons
+        # -----------------------------
+        lulc_gdf = load_village_agriculture_lulc(village_code)
+        if lulc_gdf.empty:
+            print("⚠️ No agriculture polygons found")
+            return
 
-        # Calculate costs and get MDR from database
-        unit_cost = Decimal(str(get_agriculture_unit_cost("Agriculture Land")))
-        replacement_cost = Decimal(str(area_sqm)) * unit_cost
-        crop_type = row.get("Class_name", "Agriculture Land")
-        mdr = Decimal(str(get_agriculture_flood_mdr(flood_depth, crop_type)))
-        loss = replacement_cost * mdr
+        print(f"📌 Processing {len(lulc_gdf)} agriculture polygons...")
 
-        records.append(
-            villageAgricultureLandFloodInfo(
-                village=vill_obj,
-                district_name=district_name,
-                district_code=district_code,
-                village_name=village_name,
-                village_code=village_code,
-                total_area_sqm=area_sqm,
-                flood_depth_m=flood_depth,
-                flood_class=flood_class,
-                unit_cost_per_sqm=unit_cost,
-                total_replacement_cost_inr=replacement_cost,
-                flood_hazard_mdr=mdr,
-                flood_loss=loss,
+        records = []
+        stats_summary = {'flooded': 0, 'no_flood': 0, 'no_coverage': 0}
+        fallback_value = None
+
+        # -----------------------------
+        # Process each polygon
+        # -----------------------------
+        for idx, row in lulc_gdf.iterrows():
+            stats = get_zonal_stats_gdal(raster_path, row["geom"])
+
+            flood_depth = stats['max']
+            flood_class = _classify_flood(flood_depth)
+            area_sqm = float(row["Area_SqM"])
+
+            if stats['valid_pixels'] == 0:
+                stats_summary['no_coverage'] += 1
+            elif flood_depth > 0:
+                stats_summary['flooded'] += 1
+            else:
+                stats_summary['no_flood'] += 1
+
+            unit_cost = Decimal(str(get_agriculture_unit_cost("Agriculture Land")))
+            replacement_cost = Decimal(str(area_sqm)) * unit_cost
+
+            crop_type = row.get("Class_name") or "Agriculture Land"
+            mdr = Decimal(str(get_agriculture_flood_mdr(flood_depth, crop_type)))
+            loss = replacement_cost * mdr
+
+            records.append(
+                villageAgricultureLandFloodInfo(
+                    village=vill_obj,
+                    district_name=district_name,
+                    district_code=district_code,
+                    village_name=village_name,
+                    village_code=village_code,
+                    total_area_sqm=area_sqm,
+                    flood_depth_m=flood_depth,
+                    flood_class=flood_class,
+                    unit_cost_per_sqm=unit_cost,
+                    total_replacement_cost_inr=replacement_cost,
+                    flood_hazard_mdr=mdr,
+                    flood_loss=loss,
+                )
             )
-        )
 
-    # 🔥 FALLBACK: If no flooded polygons, use median of whole raster
-    if stats_summary['flooded'] == 0 and stats_summary['no_coverage'] > 0:
-        print("🔄 No flooded polygons found, applying fallback using raster median...")
-        fallback_value = get_raster_fallback_stats(raster_path, village_code, 'median')
-        
-        if fallback_value > 0:
-            # Update records with fallback value for polygons with no coverage
-            updated_records = []
-            for i, record in enumerate(records):
-                if record.flood_depth_m == 0.0:  # No coverage polygons
-                    # Get crop_type from original lulc_gdf data
-                    crop_type = lulc_gdf.iloc[i].get("Class_name", "Agriculture Land")
-                    
-                    record.flood_depth_m = fallback_value
-                    record.flood_class = _classify_flood(fallback_value)
-                    mdr = Decimal(str(get_agriculture_flood_mdr(fallback_value, crop_type)))
-                    record.flood_hazard_mdr = mdr
-                    record.flood_loss = record.total_replacement_cost_inr * mdr
-                    
-                    stats_summary['flooded'] += 1
-                    stats_summary['no_coverage'] -= 1
-                updated_records.append(record)
-            records = updated_records
-            print(f"✅ Applied fallback value {fallback_value}m to {stats_summary['flooded']} polygons")
+        # -----------------------------
+        # FALLBACK logic (unchanged)
+        # -----------------------------
+        if stats_summary['flooded'] == 0 and stats_summary['no_coverage'] > 0:
+            print("🔄 No flooded polygons found, applying fallback using raster median...")
+            fallback_value = get_raster_fallback_stats(
+                raster_path, village_code, 'median'
+            )
 
-    # Save records
-    if records:
-        villageAgricultureLandFloodInfo.objects.bulk_create(records, batch_size=500)
-        
-        print(f"\n📊 Summary:")
-        print(f"   ✅ Saved {len(records)} records")
-        print(f"   🌊 Flooded polygons: {stats_summary['flooded']}")
-        print(f"   ✅ No flood (safe): {stats_summary['no_flood']}")
-        print(f"   ⚠️  No coverage: {stats_summary['no_coverage']}")
-        if fallback_value:
-            print(f"   🔄 Fallback value used: {fallback_value}m")
-    else:
-        print("⚠️ No records to save")
+            if fallback_value > 0:
+                for i, record in enumerate(records):
+                    if record.flood_depth_m == 0.0:
+                        crop_type = lulc_gdf.iloc[i].get("Class_name") or "Agriculture Land"
+                        record.flood_depth_m = fallback_value
+                        record.flood_class = _classify_flood(fallback_value)
+                        mdr = Decimal(str(get_agriculture_flood_mdr(fallback_value, crop_type)))
+                        record.flood_hazard_mdr = mdr
+                        record.flood_loss = record.total_replacement_cost_inr * mdr
+
+                        stats_summary['flooded'] += 1
+                        stats_summary['no_coverage'] -= 1
+
+                print(f"✅ Applied fallback value {fallback_value}m")
+
+        # -----------------------------
+        # Save new records
+        # -----------------------------
+        if records:
+            villageAgricultureLandFloodInfo.objects.bulk_create(
+                records, batch_size=500
+            )
+
+            print(f"\n📊 Summary:")
+            print(f"   ✅ Saved {len(records)} records")
+            print(f"   🌊 Flooded polygons: {stats_summary['flooded']}")
+            print(f"   ✅ No flood (safe): {stats_summary['no_flood']}")
+            print(f"   ⚠️  No coverage: {stats_summary['no_coverage']}")
+            if fallback_value:
+                print(f"   🔄 Fallback value used: {fallback_value}m")
+        else:
+            print("⚠️ No records to save")
+
 
 # ============================================================================
 # EROSION PROCESSING
@@ -922,13 +977,20 @@ def get_erosion_buffer_for_polygon(polygon_wkt,
         
         # PostGIS query to find intersecting buffers
         sql = f"""
-            SELECT MIN("BUFF_DIST") as min_buffer
+            SELECT MIN("BUFF_DIST") AS min_buffer
             FROM {buffer_table}
             WHERE ST_Intersects(
-                ST_GeomFromText(%s, 4326),
-                geom
+                ST_Transform(
+                    ST_SetSRID(ST_GeomFromText(%s), 4326),
+                    32646
+                ),
+                ST_Transform(
+                    ST_SetSRID(geom, 4326),
+                    32646
+                )
             );
         """
+
         
         cur.execute(sql, (polygon_wkt,))
         result = cur.fetchone()
@@ -1154,7 +1216,7 @@ def load_village_boundary(village_code):
     sql = """
     SELECT geom
     FROM public.village_boundary  
-    WHERE vill_id = %s;
+    WHERE "Vill_ID" = %s;
     """
 
     gdf = gpd.read_postgis(
@@ -1381,9 +1443,10 @@ def load_village_roads(village_code):
         geom,
         "Rd_Surface" AS rd_surface,
         "RSur_Type" AS rsur_type,
-        "RSurTypeId" AS rsurtypeid,
+        "Type_R" AS rsurtypeid,
         "Width" AS width,
-        "Length"    AS length
+        "Length" AS length,
+        "UnitRpCost" AS unit_cost
     FROM public.road_network
     WHERE "Vill_ID" = %s
       AND geom IS NOT NULL;
@@ -1406,14 +1469,19 @@ def load_village_roads(village_code):
 
 # Lengths in meters are only valid in projected CRS
 def reproject_for_length(roads_gdf, grid_gdf):
-    """
-    Reproject both roads and grid to EPSG:32646
-    so that length is measured in meters.
-    """
+    # Ensure CRS exists
+    if roads_gdf.crs is None:
+        raise ValueError("Roads GeoDataFrame has no CRS")
+
+    if grid_gdf.crs is None:
+        print("⚠️ grid_gdf CRS missing — assuming EPSG:4326")
+        grid_gdf = grid_gdf.set_crs("EPSG:4326")
+
     roads_utm = roads_gdf.to_crs("EPSG:32646")
     grid_utm = grid_gdf.to_crs("EPSG:32646")
 
     return roads_utm, grid_utm
+
 
 # ZONAL INTERSECTION (THIS IS THE KEY STEP)
 def intersect_roads_with_grid(roads_utm, grid_utm):
@@ -1460,6 +1528,7 @@ def aggregate_by_grid_and_road(intersections):
                 "rsur_type",
                 "rsurtypeid",
                 "width",
+                "unit_cost",
             ],
             as_index=False
         )
@@ -1473,83 +1542,112 @@ def aggregate_by_grid_and_road(intersections):
 
 
 
+def get_road_flood_mdr(flood_depth_m, road_type_id):
+    from vdmp_dashboard.models import roadFloodMDRMapping
+
+    # No flood → no damage
+    if flood_depth_m is None or flood_depth_m <= 0:
+        return 0.0
+
+    # 1️⃣ Round depth
+    flood_depth = round(float(flood_depth_m), 2)
+
+    # 2️⃣ Pick MDR curve dynamically (no hardcoding)
+    # Assumes only ONE curve exists (current data reality)
+    base_qs = roadFloodMDRMapping.objects.all()
+
+    if not base_qs.exists():
+        return 0.0
+
+    # 3️⃣ Nearest LOWER depth
+    record = (
+        base_qs
+        .filter(flood_depth_m__lte=flood_depth)
+        .order_by("-flood_depth_m")
+        .first()
+    )
+
+    # 4️⃣ If depth > max available → cap to max MDR
+    if not record:
+        record = base_qs.order_by("-flood_depth_m").first()
+
+    return float(record.mdr) if record else 0.0
+
+
+
 def save_grid_results(result_df, village_obj, village_code):
     from vdmp_dashboard.models import VillageRoadInfo
+    from django.db import transaction
+
     district_name, district_code = get_district_from_village(village_obj)
     records = []
 
-    for _, row in result_df.iterrows():
+    # -----------------------------
+    # DELETE old data for village
+    # -----------------------------
+    with transaction.atomic():
+        deleted_count, _ = VillageRoadInfo.objects.filter(
+            village=village_obj
+        ).delete()
+
+        print(f"🧹 Deleted {deleted_count} old road records for village {village_obj.name}")
 
         # -----------------------------
-        # Basic values
+        # Prepare new records
         # -----------------------------
-        flood_depth_m = float(row["flood_depth_m"]) if row["flood_depth_m"] is not None else None
-        road_length_m = float(row["road_length_m"] or 0.0)
+        for _, row in result_df.iterrows():
 
-        # Convert meters → feet for classification
-        flood_depth_ft = flood_depth_m * 3.28084
-
-        # -----------------------------
-        # Road attributes
-        # -----------------------------
-        asset_typology = row["rsur_type"] or "Unknown"
-        road_type_id = row["rsurtypeid"]
-        road_width_m = row["width"]
-
-        # -----------------------------
-        # Classification
-        # -----------------------------
-        flood_class = _classify_flood(flood_depth_m)
-
-        # -----------------------------
-        # Cost & loss calculation
-        # -----------------------------
-        unit_cost = get_road_unit_cost(asset_typology)
-
-        replacement_cost = road_length_m * unit_cost * road_width_m
-
-        flood_mdr = get_mdr_value(
-            hazard_value=flood_depth_m,
-            hazard_type="flood",
-            road_type_id=road_type_id,
-        )
-
-        flood_loss = replacement_cost * flood_mdr
-
-        # -----------------------------
-        # Create DB object
-        # -----------------------------
-        records.append(
-            VillageRoadInfo(
-                village=village_obj,
-                village_code=village_code,
-                village_name=village_obj.name,
-                district_name=district_name,
-                district_code=district_code,
-
-                # Road info
-                road_surface_type=asset_typology,
-                road_width_m=road_width_m,
-                road_type_id=road_type_id,
-
-                # Exposure
-                road_length_m=road_length_m,
-                flood_depth_m=flood_depth_m,
-                flood_class=flood_class,
-
-                # Economics
-                unit_cost=unit_cost,
-                replacement_cost_inr=replacement_cost,
-                flood_hazard_mdr=flood_mdr,
-                flood_loss=flood_loss,
+            flood_depth_m = (
+                float(row["flood_depth_m"])
+                if row["flood_depth_m"] is not None
+                else None
             )
-        )
+            road_length_m = float(row["road_length_m"] or 0.0)
 
-    if records:
-        VillageRoadInfo.objects.bulk_create(
-            records,
-            batch_size=1000
-        )
+            asset_typology = row["rsur_type"] or "Unknown"
+            road_type_id = row["rsurtypeid"]
+            road_width_m = row["width"]
+            unit_cost = float(row["unit_cost"] or 0.0)
+
+            flood_class = _classify_flood(flood_depth_m)
+
+            replacement_cost = road_length_m * unit_cost * road_width_m
+            flood_mdr = get_road_flood_mdr(flood_depth_m, road_type_id)
+            flood_loss = replacement_cost * flood_mdr
+
+            records.append(
+                VillageRoadInfo(
+                    village=village_obj,
+                    village_code=village_code,
+                    village_name=village_obj.name,
+                    district_name=district_name,
+                    district_code=district_code,
+
+                    road_surface_type=asset_typology,
+                    road_width_m=road_width_m,
+                    road_type_id=road_type_id,
+
+                    road_length_m=road_length_m,
+                    flood_depth_m=flood_depth_m,
+                    flood_class=flood_class,
+
+                    unit_cost=unit_cost,
+                    replacement_cost_inr=replacement_cost,
+                    flood_hazard_mdr=flood_mdr,
+                    flood_loss=flood_loss,
+                )
+            )
+
+        # -----------------------------
+        # Bulk insert
+        # -----------------------------
+        if records:
+            VillageRoadInfo.objects.bulk_create(
+                records,
+                batch_size=1000
+            )
+
+            print(f"✅ Inserted {len(records)} new road records for village {village_obj.name}")
 
 
 def get_road_unit_cost(asset_typology):
@@ -1674,6 +1772,7 @@ def process_road_eq_zonal_length(
                 "rsur_type",
                 "rsurtypeid",
                 "width",
+                "unit_cost",
             ],
             as_index=False
         )
@@ -1693,8 +1792,7 @@ def process_road_eq_zonal_length(
         road_surface = row["rsur_type"]
         road_type_id = row["rsurtypeid"]
         road_width_m = row["width"]
-
-        unit_cost = get_road_unit_cost(road_surface)
+        unit_cost = float(row["unit_cost"] or 0.0)
 
         replacement_cost = calculate_replacement_cost_road(
             road_length_m,
@@ -1787,6 +1885,7 @@ def process_road_wind_zonal_length(
                 "rsur_type",
                 "rsurtypeid",
                 "width",
+                "unit_cost",
             ],
             as_index=False
         )
@@ -1806,8 +1905,7 @@ def process_road_wind_zonal_length(
         road_surface = row["rsur_type"]
         road_type_id = row["rsurtypeid"]
         road_width_m = row["width"]
-
-        unit_cost = get_road_unit_cost(road_surface)
+        unit_cost = float(row["unit_cost"] or 0.0)
 
         replacement_cost = calculate_replacement_cost_road(
             road_length_m,
@@ -1869,6 +1967,9 @@ def _process_road_flood_data(
         village_id=village_obj.id
     ).first()
 
+    if not flood_raster:
+        return
+
     dist_wind_raster = district_wind_raster_file.objects.filter(
         district_id=district_id
     ).first()
@@ -1877,14 +1978,9 @@ def _process_road_flood_data(
         district_id=district_id
     ).first()
 
-    if not flood_raster:
-        return
-    
-    if not dist_wind_raster:
-        return
-    
-    if not dist_eq_raster:
-        return
+    # Fallback to state-level rasters if district-level not available
+    wind_raster_path = f"c:\\assamcrv\\assam_crv\\media\\{dist_wind_raster.raster_file}" if dist_wind_raster else r"c:\assamcrv\assam_crv\media\pipeline_data\wind_raster\Wind.tif"
+    eq_raster_path = f"c:\\assamcrv\\assam_crv\\media\\{dist_eq_raster.raster_file}" if dist_eq_raster else r"c:\assamcrv\assam_crv\media\pipeline_data\eq_raster\eq.tif"
 
     print("🌊 Processing flood hazard zonal length...")
     process_road_flood_zonal_length(
@@ -1896,13 +1992,12 @@ def _process_road_flood_data(
     # process_road_eq_zonal_length(
     #     village_obj,
     #     village_code,
-    #     f"c:\\assamcrv\\assam_crv\\media\\{flood_raster.raster_file}"
-        
+    #     eq_raster_path
     # )
     # process_road_wind_zonal_length(
     #     village_obj,
     #     village_code,
-    #     f"c:\\assamcrv\\assam_crv\\media\\{dist_wind_raster.raster_file}"
+    #     wind_raster_path
     # )
 
  
@@ -1941,7 +2036,7 @@ def _process_road_erosion_data(
         SELECT
             "BUFF_DIST" AS buffer_distance,
             ST_Transform(ST_SetSRID(geom, 4326), 32646) AS geom_utm
-        FROM public.new_river_buff
+        FROM public.riverbuffer
     ),
 
     road_buffer_intersections AS (
@@ -2841,51 +2936,93 @@ def _classify_erosion_buffer(buffer_value):
 
 
 def validate_gis_data_availability(village_obj):
-    """Validate if all required GIS data is available for the village"""
-    from layers.models import village_flood_raster_Files, district_wind_raster_file, district_eq_raster_file
+    """
+    Validate required GIS data.
+    River buffer / erosion is OPTIONAL.
+    """
+    from layers.models import (
+        village_flood_raster_Files,
+        district_wind_raster_file,
+        district_eq_raster_file,
+    )
     from django.db import connection
-    
+    import os
+
     errors = []
-    
-    # Check flood raster for village
+    warnings = []
+
+    # ----------------------------
+    # Flood raster (MANDATORY)
+    # ----------------------------
     flood_raster = village_flood_raster_Files.objects.filter(village=village_obj).first()
     if not flood_raster or not flood_raster.raster_file:
         errors.append(f"Flood raster not available for village {village_obj.name}")
-    
-    # Get district from village
+
+    # ----------------------------
+    # District resolution
+    # ----------------------------
     try:
         district = village_obj.gram_panchayat.circle.district
     except Exception:
         errors.append("Unable to determine district for village")
-        return errors
-    
-    # Check wind raster for district
+        return errors, warnings
+
+    # ----------------------------
+    # Wind raster (MANDATORY with fallback)
+    # ----------------------------
     wind_raster = district_wind_raster_file.objects.filter(district=district).first()
     if not wind_raster or not wind_raster.raster_file:
-        errors.append(f"Wind raster not available for district {district.name}")
-    
-    # Check earthquake raster for district
+        wind_fallback = r"c:\assamcrv\assam_crv\media\pipeline_data\wind_raster\Wind.tif"
+        if not os.path.exists(wind_fallback):
+            errors.append(
+                f"Wind raster not available for district {district.name} "
+                "and state-level fallback not found"
+            )
+
+    # ----------------------------
+    # Earthquake raster (MANDATORY with fallback)
+    # ----------------------------
     eq_raster = district_eq_raster_file.objects.filter(district=district).first()
     if not eq_raster or not eq_raster.raster_file:
-        errors.append(f"Earthquake raster not available for district {district.name}")
-    
-    # Check riverbuffer table exists and has data for village
+        eq_fallback = r"c:\assamcrv\assam_crv\media\pipeline_data\eq_raster\eq.tif"
+        if not os.path.exists(eq_fallback):
+            errors.append(
+                f"Earthquake raster not available for district {district.name} "
+                "and state-level fallback not found"
+            )
+
+    # ----------------------------
+    # River buffer / erosion (OPTIONAL)
+    # ----------------------------
     try:
         with connection.cursor() as cursor:
-            cursor.execute("SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'riverbuffer')")
+            cursor.execute("""
+                SELECT EXISTS (
+                    SELECT 1
+                    FROM information_schema.tables
+                    WHERE table_name = 'riverbuffer'
+                )
+            """)
             table_exists = cursor.fetchone()[0]
-            
+
             if not table_exists:
-                errors.append("River buffer table does not exist in database")
+                warnings.append("River buffer table does not exist (erosion risk will be skipped)")
             else:
-                cursor.execute("SELECT COUNT(*) FROM public.riverbuffer WHERE \"Vill_ID\" = %s", [village_obj.code])
+                cursor.execute(
+                    'SELECT COUNT(*) FROM public.riverbuffer WHERE "Vill_ID" = %s',
+                    [village_obj.code],
+                )
                 buffer_count = cursor.fetchone()[0]
+
                 if buffer_count == 0:
-                    errors.append(f"No river buffer data found for village {village_obj.name}")
+                    warnings.append(
+                        f"No river buffer / erosion zones for village {village_obj.name} "
+                        "(this is expected for many villages)"
+                    )
     except Exception as e:
-        errors.append(f"Error checking river buffer data: {str(e)}")
-    
-    return errors
+        warnings.append(f"River buffer check failed, skipping erosion risk: {str(e)}")
+
+    return errors, warnings
 
 
 def process_household_risk_assessment(village_obj, village_code, flood_raster_path):
@@ -3031,10 +3168,18 @@ def run_gis_risk_assessment_pipeline(village_obj, village_code):
     from vdmp_dashboard.models import HouseholdSurvey, Commercial, Critical_Facility, Transformer
     
     # Validate data availability first
-    validation_errors = validate_gis_data_availability(village_obj)
+    validation_errors, validation_warnings = validate_gis_data_availability(village_obj)
+
+    # Log warnings but continue
+    for warning in validation_warnings:
+        print(f"⚠️ GIS warning: {warning}")
+
+    # Stop ONLY on real errors
     if validation_errors:
-        raise ValueError("Missing required data: " + "; ".join(validation_errors))
-    
+        raise ValueError(
+            "Missing required data: " + "; ".join(validation_errors)
+        )
+        
     # Get raster file paths
     flood_raster = village_flood_raster_Files.objects.filter(village=village_obj).first()
     district = village_obj.gram_panchayat.circle.district
@@ -3042,8 +3187,8 @@ def run_gis_risk_assessment_pipeline(village_obj, village_code):
     eq_raster = district_eq_raster_file.objects.filter(district=district).first()
     
     flood_raster_path = f"c:\\assamcrv\\assam_crv\\media\\{flood_raster.raster_file}"
-    wind_raster_path = f"c:\\assamcrv\\assam_crv\\media\\{wind_raster.raster_file}"
-    eq_raster_path = f"c:\\assamcrv\\assam_crv\\media\\{eq_raster.raster_file}"
+    wind_raster_path = f"c:\\assamcrv\\assam_crv\\media\\{wind_raster.raster_file}" if wind_raster else r"c:\assamcrv\assam_crv\media\pipeline_data\wind_raster\Wind.tif"
+    eq_raster_path = f"c:\\assamcrv\\assam_crv\\media\\{eq_raster.raster_file}" if eq_raster else r"c:\assamcrv\assam_crv\media\pipeline_data\eq_raster\eq.tif"
     
     village_id = village_obj.id
     
@@ -3157,35 +3302,7 @@ def get_household_data_for_village(village_code):
 
 
 
-def extract_erosion_buffer_values_postgis(df):
-    """Extract erosion buffer values from PostGIS riverbuffer table"""
-    from django.db import connection
-    import pandas as pd
-    
-    if df.empty:
-        return df
-    
-    if 'erosion_buffer_m' not in df.columns:
-        df['erosion_buffer_m'] = None
-    
-    try:
-        with connection.cursor() as cursor:
-            if 'longitude' in df.columns and 'latitude' in df.columns:
-                for idx, row in df.iterrows():
-                    if pd.notna(row['longitude']) and pd.notna(row['latitude']):
-                        cursor.execute("""
-                            SELECT buffer_m FROM public.riverbuffer 
-                            WHERE ST_Contains(geom, ST_SetSRID(ST_MakePoint(%s, %s), 4326))
-                            LIMIT 1
-                        """, [row['longitude'], row['latitude']])
-                        
-                        result = cursor.fetchone()
-                        if result:
-                            df.at[idx, 'erosion_buffer_m'] = result[0]
-    except Exception as e:
-        print(f"Error extracting erosion buffer values: {e}")
-    
-    return df
+# 
 
 
 def save_household_results(household_df, village_obj, village_code):

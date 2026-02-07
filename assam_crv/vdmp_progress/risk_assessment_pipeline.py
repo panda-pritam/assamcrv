@@ -29,6 +29,7 @@ except ImportError as e:
 def get_raster_paths(district_id):
     """
     Get raster file paths from database based on district_id
+    Falls back to state-level rasters if district-level not available
     """
     dist_wind_raster = district_wind_raster_file.objects.filter(
         district_id=district_id
@@ -38,8 +39,8 @@ def get_raster_paths(district_id):
         district_id=district_id
     ).first()
     
-    eq_path = f"c:\\assamcrv\\assam_crv\\media\\{dist_eq_raster.raster_file}" if dist_eq_raster else None
-    wind_path = f"c:\\assamcrv\\assam_crv\\media\\{dist_wind_raster.raster_file}" if dist_wind_raster else None
+    eq_path = f"c:\\assamcrv\\assam_crv\\media\\{dist_eq_raster.raster_file}" if dist_eq_raster else r"c:\assamcrv\assam_crv\media\pipeline_data\eq_raster\eq.tif"
+    wind_path = f"c:\\assamcrv\\assam_crv\\media\\{dist_wind_raster.raster_file}" if dist_wind_raster else r"c:\assamcrv\assam_crv\media\pipeline_data\wind_raster\Wind.tif"
     
     return eq_path, wind_path
 

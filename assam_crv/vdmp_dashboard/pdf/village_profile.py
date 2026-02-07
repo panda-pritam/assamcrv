@@ -199,7 +199,7 @@ def getVillageLocationDetails(village_id):
                     cursor.execute("""
                         SELECT block_name, hq_distckm, area_sqkm, avg_elev_m, topography
                         FROM public.village_boundary
-                        WHERE vill_id = %s
+                        WHERE "Vill_ID" = %s
                     """, [village_code])
                     
                     row = cursor.fetchone()
@@ -1549,10 +1549,10 @@ def getJJMHouseConnect(village_id):
         valid_households = 0
 
         for hh in households:
-            if not hh.jjm_house_connection:
+            if not hh.JJM_or_other_taped_water_connection:
                 continue
 
-            v = str(hh.jjm_house_connection).strip().lower()
+            v = str(hh.JJM_or_other_taped_water_connection).strip().lower()
 
             if v in ["yes", "y", "true", "1"]:
                 yes_count += 1
@@ -1670,60 +1670,57 @@ def getAdequacyOfDrinkingWaterData(village_id):
 def getSanitationFacilities(village_id):
     try:
         households = HouseholdSurvey.objects.filter(village_id=village_id)
-        total_households = households.count()
 
-        # Header (added S. No.)
         table_data = [
             ["S. No.", "Sanitation Facility", "No of HHs", "%"]
         ]
 
-        if total_households == 0:
-            table_data.append(["1", "No data available", "0", "0%"])
+        yes_count = 0
+        no_count = 0
+        valid_households = 0
+
+        for hh in households:
+            if not hh.sanitation_facility:
+                continue
+
+            v = str(hh.sanitation_facility).strip().lower()
+
+            if v in ["yes", "y", "true", "1","own"]:
+                yes_count += 1
+                valid_households += 1
+            elif v in ["no", "n", "false", "0"]:
+                no_count += 1
+                valid_households += 1
+            # ❌ ignore blanks / junk
+
+        if valid_households == 0:
+            table_data.append(["", "No data available", "0", "0%"])
             table_data.append(["", "Total", "0", "100%"])
             return table_data
 
-        sanitation_qs = (
-            households
-            .exclude(toilet_facility__isnull=True)
-            .exclude(toilet_facility__exact="")
-            .annotate(sanitation_n=Lower(Trim("toilet_facility")))
-            .values("sanitation_n")
-            .annotate(count=Count("sanitation_n"))
-        )
+        yes_percentage = round((yes_count / valid_households) * 100)
+        no_percentage = round((no_count / valid_households) * 100)
 
-        yes_count = 0
-        no_count = 0
-        
-        for row in sanitation_qs:
-            value = row["sanitation_n"]
-            count = row["count"]
-            if value in ["yes", "y", "true", "1"]:
-                yes_count += count
-            elif value in ["no", "n", "false", "0"]:
-                no_count += count
-        
-        yes_percentage = round((yes_count / total_households) * 100)
-        no_percentage = round((no_count / total_households) * 100)
-        
         table_data.append(["1", "Yes", str(yes_count), f"{yes_percentage}%"])
         table_data.append(["2", "No", str(no_count), f"{no_percentage}%"])
 
-        # Total row (no S. No.)
         table_data.append([
             "",
             "Total",
-            str(total_households),
+            str(valid_households),
             "100%"
         ])
 
         return table_data
 
-    except Exception:
+    except Exception as e:
+        print("Sanitation error:", e)
         return [
             ["S. No.", "Sanitation Facility", "No of HHs", "%"],
             ["", "No data available", "N/A", "N/A"],
             ["", "Total", "N/A", "N/A"]
         ]
+
 
 
 def normalize_toilet_type(value):
@@ -2601,7 +2598,7 @@ def draw_village_profile(elements,village_id):
     elements.append(Spacer(1, 6))
     data=getDe_sludgeMaterial(village_id)
 
-    table = create_styled_table(data,  [50,90,180, 180], False, True, custom_styles, "Digital Access")
+    table = create_styled_table(data,  [50,250,100, 100], False, True, custom_styles, "Digital Access")
     elements.append(table)
     elements.append(Spacer(1, 12))
 

@@ -143,7 +143,7 @@ def get_village_area(village_id):
             cursor.execute("""
                 SELECT area_sqkm
                 FROM public.village_boundary
-                WHERE vill_id = %s
+                WHERE Vill_ID = %s
             """, [village_code])
             
             row = cursor.fetchone()
