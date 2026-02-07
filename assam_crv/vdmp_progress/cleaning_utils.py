@@ -1207,16 +1207,12 @@ import os
 
 
 def load_village_boundary(village_code):
-    """
-    Load village boundary geometry from PostGIS.
-    CRS: EPSG:4326
-    """
     engine = get_sqlalchemy_engine()
 
     sql = """
     SELECT geom
-    FROM public.village_boundary  
-    WHERE "Vill_ID" = %s;
+    FROM public.village_boundary
+    WHERE TRIM("Vill_ID") = %s;
     """
 
     gdf = gpd.read_postgis(
@@ -1228,9 +1224,10 @@ def load_village_boundary(village_code):
     )
 
     if gdf.empty:
-        raise RuntimeError("Village boundary not found")
+        raise RuntimeError(f"Village boundary not found for Vill_ID={village_code}")
 
     return gdf
+
 
 
 
@@ -1448,7 +1445,7 @@ def load_village_roads(village_code):
         "Length" AS length,
         "UnitRpCost" AS unit_cost
     FROM public.road_network
-    WHERE "Vill_ID" = %s
+    WHERE TRIM("Vill_ID") = TRIM(%s)
       AND geom IS NOT NULL;
     """
 
@@ -1460,11 +1457,11 @@ def load_village_roads(village_code):
         crs="EPSG:4326"
     )
 
-    # Safety check
     if roads_gdf.empty:
         print(f"⚠️ No roads found for village_code={village_code}")
 
     return roads_gdf
+
 
 
 # Lengths in meters are only valid in projected CRS
