@@ -809,7 +809,7 @@ PRA_MAIN_MAPPING = {
     'Strong wind hazard severity': 'strong_wind_hazard_severity',
     'Earthquake hazard frequency': 'earthquake_hazard_frequency',
     'Earthquake hazard severity': 'earthquake_hazard_severity',
-    'Distance from District headquarter ': 'distance_from_district_headquarter_km',
+    'Distance from District headquarter': 'distance_from_district_headquarter_km',
     'Average elevation (about MSL)': 'average_elevation_msl',
     'Farmers groups (Name and phone number)': 'farmers_groups',
     'Weavers groups (Name and phone number)': 'weavers_groups',

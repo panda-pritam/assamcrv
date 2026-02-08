@@ -103,10 +103,7 @@ abbreviations={
       "abbreviation": "LVI",
       "expanded_form": "Livelihood Vulnerability Index"
     },
-    {
-      "abbreviation": "MEM",
-      "expanded_form": "Marginalized Excluded Minorities"
-    },
+  
     {
       "abbreviation": "MMI",
       "expanded_form": "Modified Mercalli Intensity"
@@ -115,10 +112,7 @@ abbreviations={
       "abbreviation": "MNREGA",
       "expanded_form": "Mahatma Gandhi National Rural Employment Guarantee Act"
     },
-    {
-      "abbreviation": "MRP",
-      "expanded_form": "Max Retail Price"
-    },
+  
     {
       "abbreviation": "MSL",
       "expanded_form": "Mean Sea Level"
@@ -180,9 +174,13 @@ abbreviations={
       "expanded_form": "Village Disaster Mitigation Plan"
     },
     {
-      "abbreviation": "VLCDMC",
-      "expanded_form": "The village has a Village Land Conservation & Disaster Management Committee"
+      "abbreviation": "VDMC",
+      "expanded_form": "Village Disaster Mitigation Committee"
     },
+    # {
+    #   "abbreviation": "VLCDMC",
+    #   "expanded_form": "The village has a Village Land Conservation & Disaster Management Committee"
+    # },
     {
       "abbreviation": "WASH",
       "expanded_form": "Water Sanitation and Hygiene"
@@ -779,11 +777,11 @@ def getPublicAssetsData(village_id):
 def getMitigationIntervention(village_id):
     return [
         ['Multi hazard mitigation intervention (estimated budget in INR)'],
-        ['Resilient Housing', '-'],
-        ['Resilient Roads', '-'],
-        ['Resilient Bridge','-'],
-        ['River Bank Protection', '-'],
-        ['Sluice Gate', '-'],
+        ['Resilient housing', '-'],
+        ['Resilient road', '-'],
+        ['Resilient bridge','-'],
+        ['River bank protection', '-'],
+        ['Sluice gate', '-'],
         
         [Paragraph('Resilient essential service (educational facilities)',bold_12), '-'],
         [Paragraph('Resilient essential service (Public WASH facilities and drinking water)',bold_12), '-'],

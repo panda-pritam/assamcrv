@@ -430,7 +430,7 @@ def process_household_data(village_id):
 
     district_id = district.id
     households = HouseholdSurvey.objects.filter(village_id=village_id).values(
-        'id', 'wall_type', 'roof_type', 'floor_type', 'building_area_sqft', 
+        'id', 'wall_type', 'roof_type', 'floor_type', 'building_area_sqft','building_length_feet', 'building_width_feet',
         'flood_class', 'flood_depth_m', 'point_id', 'latitude', 'longitude'
     )
     
@@ -440,18 +440,18 @@ def process_household_data(village_id):
     df['village_code'] = village.code
     df['asset_type'] = 'household'
     
-    # For households, we don't have separate length/width, so set to None
-    df['building_length_ft'] = None
-    df['building_width_ft'] = None
-    
     # Map house types and rates
     df[['mapped_house_type', 'unit_rate_inr']] = df.apply(
         lambda x: pd.Series(get_house_type_mapping(x['wall_type'], x['roof_type'], x['floor_type'])), axis=1
     )
     
-    # For households, validate existing building_area_sqft
-    df['building_area_sqft'] = df.apply(
-        lambda row: validate_building_dimensions(0, 0, pd.to_numeric(row['building_area_sqft'], errors='coerce'))[2], axis=1
+    # Validate and calculate building dimensions
+    df[['building_length_ft', 'building_width_ft', 'building_area_sqft']] = df.apply(
+        lambda row: pd.Series(validate_building_dimensions(
+            pd.to_numeric(row['building_length_feet'], errors='coerce'),
+            pd.to_numeric(row['building_width_feet'], errors='coerce'),
+            pd.to_numeric(row['building_area_sqft'], errors='coerce')
+        )), axis=1
     )
     df['replacement_cost_inr'] = df['building_area_sqft'] * df['unit_rate_inr']
     

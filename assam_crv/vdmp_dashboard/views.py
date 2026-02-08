@@ -532,6 +532,13 @@ def upload_data_vdmp(request):
             "status": "error",
             "error": f"Unexpected error: {str(e)}"
         }, status=500)
+    
+
+
+
+
+
+    
 
 @api_view(['GET'])
 def get_upload_data_catalog(request):

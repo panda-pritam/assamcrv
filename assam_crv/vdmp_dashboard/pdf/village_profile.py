@@ -1,4 +1,4 @@
-from reportlab.platypus import Paragraph, Spacer,  ListFlowable, ListItem, Image
+from reportlab.platypus import Paragraph, Spacer,  ListFlowable, ListItem, Image,Table,TableStyle
 
 from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
@@ -9,7 +9,7 @@ from reportlab.platypus import Image as RLImage, Table as ReportLabTable, TableS
 import os
 from reportlab.platypus import Image as ReportLabImage, Table as ReportLabTable, TableStyle
 from reportlab.lib import colors
-from .global_styles import blue_level3_heading, blue_heading,table_sub_title,blue_sub_heading,image_title,notes_style,tb_header_bg,Legend_heading,indented_style,bold_style,normal_style, bold_center_style,srNoStyle
+from .global_styles import blue_level3_heading, blue_heading,table_sub_title,blue_sub_heading,image_title,notes_style,tb_header_bg,Legend_heading,indented_style,bold_style,normal_style, bold_center_style,srNoStyle, heading_box_color
 from .utils.table import create_styled_table
 from .utils.geoserverLayerImage import  get_geoserver_legend_path,get_geoserver_image_as_rl_image
 
@@ -165,6 +165,7 @@ def getPowerInfrastructureData_Total(village_id):
 
 def getVillageLocationDetails(village_id):
     from django.db import connection
+    from administrator.models import PRA_main
     
     try:
         # Get basic village data from tblVillage
@@ -173,20 +174,20 @@ def getVillageLocationDetails(village_id):
         ).get(id=village_id)
         
         village_name = village.name or "N/A"
+        block_name = village.gram_panchayat.name if village.gram_panchayat else "N/A"
         circle_name = village.gram_panchayat.circle.name if village.gram_panchayat and village.gram_panchayat.circle else "N/A"
         district_name = village.gram_panchayat.circle.district.name if village.gram_panchayat and village.gram_panchayat.circle and village.gram_panchayat.circle.district else "N/A"
         village_code = village.code
         
-        # Try to get additional data from village_boundary table
-        block_name = "N/A"
+        # Initialize with defaults
         distance_hq = "N/A"
         total_area = "N/A"
         avg_elevation = "N/A"
         topography = "N/A"
         
+        # Try to get data from village_polygon table (geometry-based area calculation)
         try:
             with connection.cursor() as cursor:
-                # Check if table exists
                 cursor.execute("""
                     SELECT EXISTS (
                         SELECT FROM information_schema.tables 
@@ -197,29 +198,67 @@ def getVillageLocationDetails(village_id):
                 
                 if cursor.fetchone()[0]:
                     cursor.execute("""
-                        SELECT block_name, hq_distckm, area_sqkm, avg_elev_m, topography
+                        SELECT 
+                            ST_Area(ST_Transform(geom, 32646)) / 1000000.0 as area_sqkm
+                        FROM public.village_boundary
+                        WHERE "Vill_ID" = %s
+                    """, [village_code])
+                    
+                    row = cursor.fetchone()
+                    if row and row[0]:
+                        total_area = f"{row[0]:.2f}"
+        except Exception as e:
+            print("Village area query error:", e)
+            pass
+        
+        # Try to get additional data from village_boundary table
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("""
+                    SELECT EXISTS (
+                        SELECT FROM information_schema.tables 
+                        WHERE table_schema = 'public' 
+                        AND table_name = 'village_boundary'
+                    )
+                """)
+                
+                if cursor.fetchone()[0]:
+                    cursor.execute("""
+                        SELECT hq_distckm, avg_elev_m, topography
                         FROM public.village_boundary
                         WHERE "Vill_ID" = %s
                     """, [village_code])
                     
                     row = cursor.fetchone()
                     if row:
-                        block_name = row[0] or "N/A"
-                        distance_hq = str(row[1]) if row[1] else "N/A"
-                        total_area = str(row[2]) if row[2] else "N/A"
-                        avg_elevation = str(row[3]) if row[3] else "N/A"
-                        topography = row[4] or "N/A"
+                        distance_hq = str(row[0]) if row[0] else "N/A"
+                        avg_elevation = str(row[1]) if row[1] else "N/A"
+                        topography = row[2] or "N/A"
         except Exception:
-            pass  # Keep default N/A values
+            pass
+        
+        # Fallback to PRA_main if data not found
+        if avg_elevation == "N/A" or topography == "N/A" or distance_hq == "N/A":
+            try:
+                pra_data = PRA_main.objects.filter(village_id=village_id).first()
+                if pra_data:
+                    if avg_elevation == "N/A" and pra_data.average_elevation_msl:
+                        avg_elevation = str(pra_data.average_elevation_msl)
+                    if topography == "N/A" and pra_data.topography:
+                        topography = pra_data.topography
+                    if distance_hq == "N/A" and pra_data.distance_from_district_headquarter_km:
+                        distance_hq = str(pra_data.distance_from_district_headquarter_km)
+            except Exception:
+                pass
         
         return [
             [Paragraph("Village", bold_style), Paragraph(village_name, normal_style)],
             [Paragraph("Block", bold_style), Paragraph(block_name, normal_style)],
             [Paragraph("Circle", bold_style), Paragraph(circle_name, normal_style)],
             [Paragraph("District", bold_style), Paragraph(district_name, normal_style)],
-            [Paragraph("Distance from Headquarter (km)", bold_style), Paragraph(distance_hq, normal_style)],
-            [Paragraph("Total Area (sq km)", bold_style), Paragraph(total_area, normal_style)],
-            [Paragraph("Average Elevation (m)", bold_style), Paragraph(avg_elevation, normal_style)],
+            [Paragraph("Distance from district headquarter (km)", bold_style), Paragraph(distance_hq, normal_style)],
+            [Paragraph("Total area (sq km)", bold_style), Paragraph(total_area, normal_style)],
+            [Paragraph("Average elevation (above MSL)", bold_style), Paragraph(avg_elevation, normal_style)],
             [Paragraph("Topography", bold_style), Paragraph(topography, normal_style)],
         ]
         
@@ -229,9 +268,9 @@ def getVillageLocationDetails(village_id):
             [Paragraph("Block", bold_style), Paragraph("N/A", normal_style)],
             [Paragraph("Circle", bold_style), Paragraph("N/A", normal_style)],
             [Paragraph("District", bold_style), Paragraph("N/A", normal_style)],
-            [Paragraph("Distance from Headquarter (km)", bold_style), Paragraph("N/A", normal_style)],
-            [Paragraph("Total Area (sq km)", bold_style), Paragraph("N/A", normal_style)],
-            [Paragraph("Average Elevation (m)", bold_style), Paragraph("N/A", normal_style)],
+            [Paragraph("Distance from district headquarter (km)", bold_style), Paragraph("N/A", normal_style)],
+            [Paragraph("Total area (sq km)", bold_style), Paragraph("N/A", normal_style)],
+            [Paragraph("Average elevation (above MSL)", bold_style), Paragraph("N/A", normal_style)],
             [Paragraph("Topography", bold_style), Paragraph("N/A", normal_style)],
         ]
 
@@ -2019,7 +2058,8 @@ def draw_village_profile(elements,village_id):
     heading = Paragraph("<a name='village_profile'/><b>3 Village Profile</b>", blue_heading)
     # add_heading_with_toc("Village Profile", blue_heading, level=1, elements=elements)
     elements.append(heading)
-    # elements.append(Spacer(1, 12))
+    elements.append(Spacer(1, 12))
+
 
     heading = Paragraph("<b>3.1 Location details</b>", blue_sub_heading)
     # add_heading_with_toc("Location details", blue_sub_heading, level=2, elements=elements)

@@ -3,6 +3,7 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfbase import pdfmetrics
 from reportlab.platypus import TableStyle
+from reportlab.lib.enums import TA_CENTER
 
 # Global color variables
 tb_header_bg = colors.HexColor('#e1edff')
@@ -11,6 +12,9 @@ tb_border_width = 0.20
 
 # page heading 
 heading_color=colors.HexColor('#245fae')
+
+heading_box_color = colors.HexColor("#e1edff")
+
 
 #heading left Indent
 heading_left_indent=-45
@@ -32,11 +36,21 @@ common_table_style = TableStyle([
 
 styles = getSampleStyleSheet()
 
+toc_main_heading = ParagraphStyle(
+    name='TOCMainHeading',
+    parent=styles['Heading1'],
+    textColor=heading_color,
+    alignment=TA_CENTER,
+    underline=1,
+    leftIndent=0,      # ✅ reset
+    rightIndent=0,     # ✅ reset
+    spaceAfter=12
+)
 list_of_table_heading= ParagraphStyle(
         name='ListofTableHeading',
-        parent=styles['Heading1'],
+        parent=styles['Heading2'],
         textColor=heading_color,
-        leftIndent=heading_left_indent,
+        # leftIndent=heading_left_indent,
         underline=1
     )
 
@@ -56,6 +70,16 @@ blue_heading = ParagraphStyle(
      leftIndent=heading_left_indent,
     
 )
+
+box_heading_text=ParagraphStyle(
+    name='BoxHeadingText',
+    parent=styles['Heading1'],
+    textColor=heading_color,
+    #  leftIndent=heading_left_indent,
+    
+)
+
+
 
 blue_sub_heading = ParagraphStyle(
         name='BlueSubHeading',
@@ -198,3 +222,5 @@ left_indent_paragraph = ParagraphStyle(
     parent=styles['Normal'],
     leftIndent=heading_left_indent,
 )
+
+

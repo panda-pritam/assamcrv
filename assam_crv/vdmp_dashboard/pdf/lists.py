@@ -136,7 +136,7 @@ def draw_abbreviations(elements):
         ])
 
     # Define table layout and styles
-    table = Table(table_data, colWidths=[50, 120, 350])
+    table = Table(table_data, colWidths=[50, 120, 330])
     table.setStyle(common_table_style)
 
     elements.append(table)
