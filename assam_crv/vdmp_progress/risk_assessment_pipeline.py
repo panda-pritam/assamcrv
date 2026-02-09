@@ -30,6 +30,7 @@ def get_raster_paths(district_id):
     """
     Get raster file paths from database based on district_id
     Falls back to state-level rasters if district-level not available
+    Uses dynamic paths from Django settings.MEDIA_ROOT
     """
     dist_wind_raster = district_wind_raster_file.objects.filter(
         district_id=district_id
@@ -39,8 +40,17 @@ def get_raster_paths(district_id):
         district_id=district_id
     ).first()
     
-    eq_path = f"c:\\assamcrv\\assam_crv\\media\\{dist_eq_raster.raster_file}" if dist_eq_raster else r"c:\assamcrv\assam_crv\media\pipeline_data\eq_raster\eq.tif"
-    wind_path = f"c:\\assamcrv\\assam_crv\\media\\{dist_wind_raster.raster_file}" if dist_wind_raster else r"c:\assamcrv\assam_crv\media\pipeline_data\wind_raster\Wind.tif"
+    # EQ Raster path - use district-level if available, else fallback to state-level
+    if dist_eq_raster and dist_eq_raster.raster_file:
+        eq_path = os.path.join(settings.MEDIA_ROOT, dist_eq_raster.raster_file.name)
+    else:
+        eq_path = os.path.join(settings.MEDIA_ROOT, "pipeline_data", "eq_raster", "eq.tif")
+    
+    # Wind Raster path - use district-level if available, else fallback to state-level
+    if dist_wind_raster and dist_wind_raster.raster_file:
+        wind_path = os.path.join(settings.MEDIA_ROOT, dist_wind_raster.raster_file.name)
+    else:
+        wind_path = os.path.join(settings.MEDIA_ROOT, "pipeline_data", "wind_raster", "Wind.tif")
     
     return eq_path, wind_path
 
