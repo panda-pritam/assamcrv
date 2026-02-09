@@ -220,14 +220,25 @@ def extract_erosion_buffer_values(df):
     return df
 
 
+def _get_db_config(db_name=None, db_user=None, db_password=None, db_host=None, db_port=None):
+    db_settings = settings.DATABASES.get("default", {})
+    return {
+        "dbname": db_name or db_settings.get("NAME"),
+        "user": db_user or db_settings.get("USER"),
+        "password": db_password or db_settings.get("PASSWORD"),
+        "host": db_host or db_settings.get("HOST"),
+        "port": db_port or db_settings.get("PORT"),
+    }
+
+
 def extract_erosion_buffer_values_postgis(
     df,
     buffer_table="public.riverbuffer",
-    db_name="crv_assam",
-    db_user="postgres",
-    db_password="admin",
-    db_host="localhost",
-    db_port="5434",
+    db_name=None,
+    db_user=None,
+    db_password=None,
+    db_host=None,
+    db_port=None,
 ):
     """
     SAFE erosion extraction using PostGIS
@@ -242,13 +253,14 @@ def extract_erosion_buffer_values_postgis(
     df["erosion_buffer_m"] = None
     df["erosion_value"] = None
 
-    conn = psycopg2.connect(
-        dbname=db_name,
-        user=db_user,
-        password=db_password,
-        host=db_host,
-        port=db_port,
+    db_config = _get_db_config(
+        db_name=db_name,
+        db_user=db_user,
+        db_password=db_password,
+        db_host=db_host,
+        db_port=db_port,
     )
+    conn = psycopg2.connect(**db_config)
 
     sql = f"""
         SELECT MIN("BUFF_DIST")
@@ -306,11 +318,11 @@ def process_road_data_pipeline(
     district_name,
     village_name,
     district_id,
-    db_name="crv_assam",
-    db_user="postgres",
-    db_password="admin",
-    db_host="localhost",
-    db_port="5434",
+    db_name=None,
+    db_user=None,
+    db_password=None,
+    db_host=None,
+    db_port=None,
 ):
    
   
@@ -319,13 +331,14 @@ def process_road_data_pipeline(
 
     village_obj = tblVillage.objects.get(id=village_id)
 
-    conn = psycopg2.connect(
-        dbname=db_name,
-        user=db_user,
-        password=db_password,
-        host=db_host,
-        port=db_port,
+    db_config = _get_db_config(
+        db_name=db_name,
+        db_user=db_user,
+        db_password=db_password,
+        db_host=db_host,
+        db_port=db_port,
     )
+    conn = psycopg2.connect(**db_config)
 
  
 
@@ -984,13 +997,7 @@ def get_erosion_buffer_for_polygon(polygon_wkt,
     Returns: buffer distance (50, 100, 150) or None
     """
     if db_config is None:
-        db_config = {
-            'dbname': 'crv_assam',
-            'user': 'postgres',
-            'password': 'admin',
-            'host': 'localhost',
-            'port': '5434'
-        }
+        db_config = _get_db_config()
     
     try:
         conn = psycopg2.connect(**db_config)
@@ -3288,14 +3295,7 @@ def run_gis_risk_assessment_pipeline(village_obj, village_code):
     # Process road erosion analysis
     try:
         import psycopg2
-        db_config = {
-            'dbname': 'crv_assam',
-            'user': 'postgres', 
-            'password': 'admin',
-            'host': 'localhost',
-            'port': '5434'
-        }
-        conn = psycopg2.connect(**db_config)
+        conn = psycopg2.connect(**_get_db_config())
         
         district_name, district_code = get_district_from_village(village_obj)
         _process_road_erosion_data(
