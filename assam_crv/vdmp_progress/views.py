@@ -325,8 +325,8 @@ def update_vdmp_activity_status(request, status_id):
                     district_name = tblDistrict.objects.get(id=district_id).name
                     village_name = tblVillage.objects.get(id=village_id).name
                     # Process multiple activities for physical vulnerability survey
-                    activities_to_process = ['Commercial', 'Critical_Facility', 'BridgeSurvey','others']
-                    # activities_to_process = ['others']
+                    # activities_to_process = ['Commercial', 'Critical_Facility', 'BridgeSurvey','others']
+                    activities_to_process = ['others']
                     total_records = 0
                     import_statuses = []
                     failed_activities = []

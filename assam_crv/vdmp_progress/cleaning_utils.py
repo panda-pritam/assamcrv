@@ -2940,15 +2940,15 @@ def _classify_duration(duration):
 
 def _classify_erosion_buffer(buffer_value):
     """Classify erosion based on buffer distance"""
-    if pd.isna(buffer_value) or buffer_value is None:
+    if pd.isna(buffer_value) or buffer_value is None or buffer_value == 'None':
         return "Low"
     try:
-        buffer_value = int(buffer_value)
-        if buffer_value == 50:
+        buffer_value = float(buffer_value)
+        if buffer_value <= 50:
             return "Severe"
-        elif buffer_value == 100:
+        elif buffer_value <= 100:
             return "High"
-        elif buffer_value == 150:
+        elif buffer_value <= 150:
             return "Medium"
         else:
             return "Low"
@@ -3198,7 +3198,7 @@ def run_gis_risk_assessment_pipeline(village_obj, village_code):
     """Run complete GIS risk assessment pipeline for all activities"""
     from layers.models import village_flood_raster_Files, district_wind_raster_file, district_eq_raster_file
     from vdmp_progress.risk_assessment_pipeline import run_risk_assessment_pipeline
-    from vdmp_dashboard.models import HouseholdSurvey, Commercial, Critical_Facility, Transformer
+    from vdmp_dashboard.models import HouseholdSurvey, Commercial, Critical_Facility, Transformer, ElectricPole
     
     # Validate data availability first
     validation_errors, validation_warnings = validate_gis_data_availability(village_obj)
@@ -3251,6 +3251,12 @@ def run_gis_risk_assessment_pipeline(village_obj, village_code):
     if transformer_records.exists():
         print(f"Processing {transformer_records.count()} transformer records...")
         _process_model_flood_erosion(transformer_records, village_id, 'transformer')
+    
+    # Process ElectricPole
+    electric_pole_records = ElectricPole.objects.filter(village=village_obj)
+    if electric_pole_records.exists():
+        print(f"Processing {electric_pole_records.count()} electric pole records...")
+        _process_model_flood_erosion(electric_pole_records, village_id, 'electric_pole')
     
     # Step 2: Run risk assessment pipelines
     print("🏠 Step 2: Running household risk assessment pipeline...")

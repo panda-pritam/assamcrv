@@ -612,9 +612,11 @@ TRANSFORMER_MAPPING = {
     'Transformer_Site_Address': 'transformer_site_address',
     'Latitude': 'latitude',
     'Longitude': 'longitude',
-    'Flood_Depth(m)': 'flood_depth_m',
-    'Flood_Class': 'flood_class',
-    'Erosion_Class': 'erosion_class',
+    'Photo': 'photo',
+    'Fencing': 'fencing',
+    'Material': 'material',
+    'Condition': 'condition',
+    
 }
 
 CRITICAL_FACILITY = {
@@ -663,16 +665,17 @@ ELECTRIC_POLES = {
     'District_Name': 'district_name',
     'District_Code': 'district_code',
     'Village_Id': 'village_code', 
-    'Uid': 'uid',
+    # 'Uid': 'uid',
     'Latitude': 'latitude',
     'Longitude': 'longitude',
-    'Electric_Pole_Name': 'electric_pole_name',
-    'Electric_Pole_Material': 'electric_pole_material',
-    'Remarks_On_Pole_Condition': 'remarks_on_pole_condition',
+    # 'Electric_Pole_Name': 'electric_pole_name',
+    'Material': 'electric_pole_material',
+    'Condition': 'electric_pole_condition',
+    # 'Remarks_On_Pole_Condition': 'remarks_on_pole_condition',
     'Photo': 'photo',
-    'Flood_Depth(m)': 'flood_depth_m',
-    'Flood_Class': 'flood_class',
-    'Erosion_Class': 'erosion_class',
+    # 'Flood_Depth(m)': 'flood_depth_m',
+    # 'Flood_Class': 'flood_class',
+    # 'Erosion_Class': 'erosion_class',
 }
 
 

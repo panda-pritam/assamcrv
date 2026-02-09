@@ -291,12 +291,9 @@ def build_dynamic_selects_from_mappings(model_name):
 
 
 def get_others_sql_script(village_id, model_name):
-    """
-    Dynamic SQL builder for Others / Transformer / Electric Pole
-    """
+    """Dynamic SQL builder for Others with village_id hardcoded"""
 
     dynamic_selects = build_dynamic_selects_from_mappings('others')
-    tab_id=14
 
     sql = f"""
     WITH media_urls AS (
@@ -307,7 +304,7 @@ def get_others_sql_script(village_id, model_name):
         FROM public.formdata fd
         JOIN public.attributes att ON att.id = fd.attribute_id
         WHERE att.widget_id = 10
-          AND att.tab_id = %(tab_id)s
+          AND att.tab_id = 14
           AND fd.media_id IS NOT NULL
         GROUP BY fd.spatial_id, fd.attribute_id
     ),
@@ -335,9 +332,9 @@ def get_others_sql_script(village_id, model_name):
         LEFT JOIN media_urls mu
             ON mu.spatial_id = fd.spatial_id
            AND mu.attribute_id = fd.attribute_id
-        WHERE att.tab_id = %(tab_id)s
+        WHERE att.tab_id = 14
           AND fd.spatial_id IN (
-                SELECT id FROM public.spatialdata WHERE village_id = %(village_id)s AND user_id != 1
+                SELECT id FROM public.spatialdata WHERE village_id = {village_id} AND user_id != 1
           )
     ),
     attribute_values AS (
@@ -368,8 +365,8 @@ def get_others_sql_script(village_id, model_name):
     JOIN public.spatialdata s ON s.id = rv.spatial_id
     JOIN public.users u ON u.id = s.user_id
     JOIN public.villages v ON v.id = s.village_id
-    WHERE a.tab_id = %(tab_id)s
-      AND v.id = %(village_id)s
+    WHERE a.tab_id = 14
+      AND v.id = {village_id}
       AND u.id != 1
     GROUP BY
         s.survey_id, s.spatial_id,
@@ -378,9 +375,7 @@ def get_others_sql_script(village_id, model_name):
     ORDER BY s.survey_id
     """
 
-    params = {
-        "tab_id": tab_id,
-        "village_id": village_id
-    }
+    print("---- Generated SQL for others ----")
+    print(sql[:500] + "...")
 
-    return sql, params
+    return sql, None

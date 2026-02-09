@@ -208,9 +208,14 @@ class Transformer(models.Model):
     transformer_site_address = models.CharField(max_length=255, null=True, blank=True)
     latitude = models.CharField(max_length=255, null=True, blank=True)
     longitude = models.CharField(max_length=255, null=True, blank=True)
+    fencing = models.CharField(max_length=255, null=True, blank=True)
+    material= models.CharField(max_length=255, null=True, blank=True)
+    condition = models.CharField(max_length=255, null=True, blank=True)
+    photo = models.CharField(max_length=255, null=True, blank=True)
     flood_depth_m = models.CharField(max_length=255, null=True, blank=True)
     flood_class = models.CharField(max_length=255, null=True, blank=True)
     erosion_class = models.CharField(max_length=255, null=True, blank=True)
+    erosion_value=models.CharField(max_length=255, null=True, blank=True)
 
     def __str__(self):
         return f"{self.district_code} - {self.village_name}"
@@ -278,6 +283,8 @@ class ElectricPole(models.Model):
     flood_depth_m = models.CharField(max_length=255, null=True, blank=True)
     flood_class = models.CharField(max_length=100, blank=True, null=True)
     erosion_class = models.CharField(max_length=100, blank=True, null=True)
+    erosion_value=models.CharField(max_length=255, null=True, blank=True)
+    
     unique_id=models.CharField(max_length=255, null=True, blank=True, unique=True)
     form_id=models.CharField(max_length=255, null=True, blank=True, unique=True)
 

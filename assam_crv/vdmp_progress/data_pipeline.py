@@ -170,12 +170,9 @@ def process_others_data(activity_name, village_id, district_id, mobile_village_i
                 model_name='others'
             )
 
-            df = pd.read_sql(sql_script, conn, params=params)
-
-            
-            # Execute query without parameters since they're hardcoded
-            # df = pd.read_sql(sql_script, conn)
+            df = pd.read_sql(sql_script, conn)
             print(f"Extracted {len(df)} records from mobile_db")
+            print(f"Columns in extracted data: {df.columns.tolist()}")
             
             # Check if data exists
             if len(df) == 0:
@@ -193,6 +190,13 @@ def process_others_data(activity_name, village_id, district_id, mobile_village_i
     # Apply data cleaning with flood depth mapping
     print("Starting data cleaning process for others")
     cleaned_df = clean_survey_data(df, district_code, village_code, activity_type="others", village_id=village_id)
+    print(f"Columns after cleaning: {cleaned_df.columns.tolist()}")
+    if 'erosion_class' in cleaned_df.columns:
+        print(f"Erosion class value counts: {cleaned_df['erosion_class'].value_counts(dropna=False)}")
+        print(f"Sample rows with erosion data:")
+        print(cleaned_df[['asset_name', 'assets_type', 'erosion_class', 'erosion_buffer_m']].head(10))
+    else:
+        print("erosion_class column not found!")
     
     # Save CSV for verification
     with tempfile.NamedTemporaryFile(mode='w', suffix=f'_others_village_{village_id}.csv', delete=False) as tmp_file:
@@ -371,9 +375,15 @@ def save_transformer_data(df, village_id, district_code):
     created_count = 0
     updated_count = 0
     
+    print(f"DEBUG: Transformer dataframe columns: {df.columns.tolist()}")
+    print(f"DEBUG: Sample transformer erosion_class: {df['erosion_class'].tolist() if 'erosion_class' in df.columns else 'Not found'}")
+    
     for idx, row in df.iterrows():
         if idx % 50 == 0:
             print(f"Processing transformer record {idx + 1}/{len(df)}")
+        
+        erosion_val = row.get('erosion_class', '')
+        print(f"DEBUG: Row {idx} erosion_class value: '{erosion_val}' (type: {type(erosion_val)})")
         
         defaults = {
             'village_id': village_id,
@@ -381,18 +391,21 @@ def save_transformer_data(df, village_id, district_code):
             'district_name': row.get('district_name', ''),
             'district_code': row.get('district_code', district_code),
             'village_code': row.get('village_code', ''),
-            'transformer_site_address': row.get('Asset Name', ''),
+            'transformer_site_address': row.get('asset_name', ''),
+            'fencing': row.get('fencing', ''),
+            'material': row.get('material', ''),
+            'condition': row.get('condition', ''),
             'latitude': row.get('latitude', ''),
             'longitude': row.get('longitude', ''),
             'flood_depth_m': str(row.get('flood_depth_m', '')),
             'flood_class': row.get('flood_class', ''),
-            'erosion_class': row.get('erosion_class', '')
+            'erosion_class': str(erosion_val) if pd.notna(erosion_val) else ''
         }
         
         try:
             obj, created = Transformer.objects.update_or_create(
                 village_id=village_id,
-                transformer_site_address=row.get('Asset Name', ''),
+                transformer_site_address=row.get('asset_name', ''),
                 latitude=row.get('latitude', ''),
                 longitude=row.get('longitude', ''),
                 defaults=defaults
@@ -428,10 +441,10 @@ def save_electric_pole_data(df, village_id, district_code):
             'uid': row.get('unique_id', ''),
             'latitude': row.get('latitude', ''),
             'longitude': row.get('longitude', ''),
-            'electric_pole_name': row.get('Asset Name', ''),
-            'electric_pole_material': row.get('Material', ''),
-            'remarks_on_pole_condition': row.get('Condition', ''),
-            'photo': row.get('photo', ''),
+            'electric_pole_name': row.get('asset_name', ''),
+            'electric_pole_material': row.get('material', ''),
+            'remarks_on_pole_condition': row.get('condition', ''),
+            'photo': row.get('photo_with_coordinates_of_the_building', ''),
             'flood_depth_m': str(row.get('flood_depth_m', '')),
             'flood_class': row.get('flood_class', ''),
             'erosion_class': row.get('erosion_class', ''),
