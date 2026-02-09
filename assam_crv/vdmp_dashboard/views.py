@@ -266,6 +266,31 @@ def upload_data_vdmp(request):
                         "file_path": file_path
                     })
 
+                if "calendar" in type_name_normalized or "calender" in type_name_normalized:
+                    district_id = request.POST.get("district_id")
+                    if not district_id:
+                        return JsonResponse({
+                            "status": "error",
+                            "error": "District is required for hazard calendar uploads"
+                        }, status=400)
+                    try:
+                        district = tblDistrict.objects.get(pk=district_id)
+                    except tblDistrict.DoesNotExist:
+                        return JsonResponse({
+                            "status": "error",
+                            "error": "Invalid district for hazard calendar upload"
+                        }, status=400)
+
+                    map_record, _ = VdmDistrictMapData.objects.get_or_create(district=district)
+                    map_record.hazard_calendar = file
+                    map_record.save()
+                    return JsonResponse({
+                        "status": "success",
+                        "records_created": 1,
+                        "records_updated": 0,
+                        "file_path": map_record.hazard_calendar.name
+                    })
+
                 if type_name_normalized.startswith("wind") or type_name_normalized.startswith("eq"):
                     district_id = request.POST.get("district_id")
                     if not district_id:

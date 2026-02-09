@@ -528,6 +528,7 @@ class VdmDistrictMapData(models.Model):
     district = models.OneToOneField(tblDistrict, on_delete=models.CASCADE)
     wind_hazard = models.FileField(upload_to="maps/wind_hazard/", max_length=255, null=True, blank=True)
     earthquake_hazard = models.FileField(upload_to="maps/earthquake_hazard/", max_length=255, null=True, blank=True)
+    hazard_calendar = models.FileField(upload_to="maps/hazard_calendar/", max_length=255, null=True, blank=True)
 
     class Meta:
         db_table = "vdm_district_map_data"
