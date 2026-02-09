@@ -560,7 +560,11 @@ HOUSEHOLD_MAPPING = {
     'adequate_water_supply': 'adequate_water_supply',
     'JJM_or_other_taped_water_connection': 'JJM_or_other_taped_water_connection',
     'sludge_be_disposed_type': 'sludge_be_disposed_type',
-    'type_of_toilet': 'type_of_toilet'
+    'type_of_toilet': 'type_of_toilet',
+    # temp
+    "You get adequate water from this source throughout the year": "adequate_water_supply",
+    "Type of toilet?": "Sanitation_Type",
+    "While de-sludging where the sludge be disposed -": "sludge_be_disposed_type",
 }
 
 COMMERCIAL_MAPPING = {
@@ -809,7 +813,7 @@ PRA_MAIN_MAPPING = {
     'Strong wind hazard severity': 'strong_wind_hazard_severity',
     'Earthquake hazard frequency': 'earthquake_hazard_frequency',
     'Earthquake hazard severity': 'earthquake_hazard_severity',
-    'Distance from District headquarter ': 'distance_from_district_headquarter_km',
+    'Distance from District headquarter': 'distance_from_district_headquarter_km',
     'Average elevation (about MSL)': 'average_elevation_msl',
     'Farmers groups (Name and phone number)': 'farmers_groups',
     'Weavers groups (Name and phone number)': 'weavers_groups',

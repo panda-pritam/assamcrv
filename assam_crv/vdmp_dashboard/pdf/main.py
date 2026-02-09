@@ -22,7 +22,7 @@ from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfbase import pdfmetrics
 
 # Style
-from .global_styles import non_toc_heading,blue_heading,list_of_table_heading
+from .global_styles import non_toc_heading,blue_heading,list_of_table_heading,toc_main_heading
 
 from .cover import add_cover_page
 from .client_info import draw_client_info_table
@@ -69,7 +69,16 @@ class MyDocTemplate(BaseDocTemplate):
         # Add page templates
         self.addPageTemplates([
             PageTemplate(id='Cover', frames=[Frame(2.5*cm, 2.5*cm, 15*cm, 25*cm)], onPage=self.cover_page),
-            PageTemplate(id='Normal', frames=[Frame(3*cm, 2.5*cm, 15*cm, 25*cm)], onPage=self.normal_page),
+            PageTemplate(
+                id='Normal',
+                frames=[Frame(
+                    3.3*cm,     # left margin
+                    2.2*cm,     # bottom margin (slightly up)
+                    15*cm,      # width
+                    26.2*cm     # ⬆️ increase height → content moves UP
+                )],
+                onPage=self.normal_page
+            ),
             PageTemplate(id='Last', frames=[Frame(2.5*cm, 2.5*cm, 15*cm, 25*cm)], onPage=self.last_page)
         ])
    
@@ -82,7 +91,7 @@ class MyDocTemplate(BaseDocTemplate):
     def normal_page(self, canvas, doc):
         """All content pages except last"""
         canvas.saveState()
-        if doc.page >= 3:  # Start from 3rd page (after cover and TOC)
+        if doc.page >= 4:  # Start from 3rd page (after cover and TOC)
             add_common_header_footer(canvas, doc,self.village)
         canvas.restoreState()
    
@@ -118,7 +127,7 @@ class MyDocTemplate(BaseDocTemplate):
             #     self.notify('TOCEntry', (0, text, self.page, key))
                 
             # Heading1 and its variants
-            elif style in ['Heading1','ListofTableHeading','BlueHeading']:
+            elif style in ['Heading1','ListofTableHeading','BlueHeading','TOCMainHeading', 'BoxHeadingText']:
                 key = f'h1_{hash(text)}'
                 self.canv.bookmarkPage(key)
                 self.notify('TOCEntry', (0, text, self.page, key))
@@ -158,11 +167,11 @@ def generate_pdf(village_id=None, village=None):
    
     # Define styles with explicit names
     styles = {
-        'Heading1': ParagraphStyle(name='Heading1', fontSize=14, ),
-        'Heading2': ParagraphStyle(name='Heading2', fontSize=12, leftIndent=10),
-        'TOCHeading1': ParagraphStyle(name='TOCHeading1', fontSize=12, textColor=HexColor('#0066CC'), fontName='Helvetica-Bold',leftIndent=10),
-        'TOCHeading2': ParagraphStyle(name='TOCHeading2', fontSize=10, textColor=HexColor('#0066CC'), leftIndent=15),
-        'TOCHeading3': ParagraphStyle(name='TOCHeading2', fontSize=10, textColor=HexColor('#0066CC'), leftIndent=20)
+        'Heading1': ParagraphStyle(name='Heading1', fontSize=14, leftIndent=-20),
+        'Heading2': ParagraphStyle(name='Heading2', fontSize=12, leftIndent=-20),
+        'TOCHeading1': ParagraphStyle(name='TOCHeading1', fontSize=12, textColor=HexColor('#0066CC'), fontName='Helvetica-Bold',leftIndent=-45),
+        'TOCHeading2': ParagraphStyle(name='TOCHeading2', fontSize=10, textColor=HexColor('#0066CC'), leftIndent=-25),
+        'TOCHeading3': ParagraphStyle(name='TOCHeading3', fontSize=10, textColor=HexColor('#0066CC'), leftIndent=-10)
     }
  
     # Create document
@@ -177,7 +186,7 @@ def generate_pdf(village_id=None, village=None):
     draw_client_info_table(elements)
    
     # Add TOC section
-    elements.append(Paragraph("Table of Contents", list_of_table_heading))
+    elements.append(Paragraph("Table of Contents", toc_main_heading))
     elements.append(toc)
     elements.append(PageBreak())
    
@@ -217,7 +226,7 @@ def generate_pdf(village_id=None, village=None):
     draw_client_info_table(elements)
    
     # Add TOC section
-    elements.append(Paragraph("Table of Contents", list_of_table_heading))
+    elements.append(Paragraph("Table of Contents", toc_main_heading))
     elements.append(toc)
     elements.append(PageBreak())
    

@@ -10,13 +10,15 @@ def add_common_header_footer(canvas, doc,data=None):
     width, height = A4
    
     # === Header ===
-    # Left Header Text
+# Left Header Text
     header_text = "Socio Technical Agency (STA) Climate Resilient Village (CRV), Assam"
-    canvas.drawString(inch * 0.5, height - 0.5 * inch, header_text)
- 
+
+    canvas.setFont("Helvetica", 10)   # ✅ reduce font size here (try 7 or 8)
+    canvas.drawString(inch * 0.72, height - 0.4 * inch, header_text)
+    
     # Right-side logo
      #Right Header Image (adjust path)
-    image_path = os.path.join(settings.BASE_DIR, "static", "images", "AIRBMP_logo.jpg")  # use your logo image path
+    image_path = os.path.join(settings.BASE_DIR, "static", "images", "AIRBMP_logo1.jpg")  # use your logo image path
     if os.path.exists(image_path):
         image_width = 60
         image_height = 30

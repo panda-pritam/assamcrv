@@ -24,10 +24,8 @@ def extract_flood_depth_from_raster(df, village_id):
     SAFE flood depth extraction from raster (EPSG:4326)
     - Uses inverse geotransform
     - Checks raster extent
-    - Skips invalid / outside points
+    - Falls back to clipped raster max value if point extraction fails
     """
-
-  
 
     print("---- Extracting flood depth from raster ----")
 
@@ -59,6 +57,7 @@ def extract_flood_depth_from_raster(df, village_id):
     miny = maxy + gt[5] * ds.RasterYSize
 
     flood_values = []
+    failed_count = 0
 
     for _, row in df.iterrows():
         try:
@@ -66,12 +65,14 @@ def extract_flood_depth_from_raster(df, village_id):
             lon = safe_float(row["longitude"])
 
             if lat is None or lon is None:
-                flood_values.append(0.0)
+                flood_values.append(None)
+                failed_count += 1
                 continue
 
             # 🔒 EXTENT CHECK (CRITICAL)
             if not (minx <= lon <= maxx and miny <= lat <= maxy):
-                flood_values.append(0.0)
+                flood_values.append(None)
+                failed_count += 1
                 continue
 
             px, py = gdal.ApplyGeoTransform(inv_gt, lon, lat)
@@ -82,22 +83,39 @@ def extract_flood_depth_from_raster(df, village_id):
                 px >= ds.RasterXSize or
                 py >= ds.RasterYSize
             ):
-                flood_values.append(0.0)
+                flood_values.append(None)
+                failed_count += 1
                 continue
 
             val = band.ReadAsArray(px, py, 1, 1)[0, 0]
 
             if val is None or (isinstance(val, float) and math.isnan(val)):
-                flood_values.append(0.0)
+                flood_values.append(None)
+                failed_count += 1
             elif nodata is not None and val == nodata:
-                flood_values.append(0.0)
+                flood_values.append(None)
+                failed_count += 1
             else:
                 flood_values.append(round(float(val), 3))
 
         except Exception:
-            flood_values.append(0.0)
+            flood_values.append(None)
+            failed_count += 1
 
     df["flood_depth_m"] = flood_values
+
+    # Fallback: Use clipped raster max value for failed extractions
+    if failed_count > 0:
+        try:
+            village = tblVillage.objects.get(id=village_id)
+            fallback_value = get_raster_fallback_stats(raster_path, village.code, 'max')
+            if fallback_value > 0:
+                df["flood_depth_m"] = df["flood_depth_m"].fillna(fallback_value)
+                print(f"✅ Applied fallback value {fallback_value}m to {failed_count} points")
+        except Exception as e:
+            print(f"⚠️ Fallback failed: {e}")
+            df["flood_depth_m"] = df["flood_depth_m"].fillna(0.0)
+
     df["flood_class"] = df["flood_depth_m"].apply(_classify_flood)
 
     return df
@@ -1077,8 +1095,10 @@ def process_agriculture_erosion_pipeline(
                 village_code=village_code,
                 total_area_sqm=area_sqm,
                 erosion_class=erosion_class,
-                unit_cost_per_sqm=Decimal(str(get_agriculture_unit_cost("Agriculture Land"))),
-                total_replacement_cost_inr=Decimal(str(area_sqm)) * Decimal(str(get_agriculture_unit_cost("Agriculture Land"))),
+                unit_cost_per_sqm=Decimal(0.0),
+                total_replacement_cost_inr=Decimal(0.0),
+                # unit_cost_per_sqm=Decimal(str(get_agriculture_unit_cost("Agriculture Land"))),
+                # total_replacement_cost_inr=Decimal(str(area_sqm)) * Decimal(str(get_agriculture_unit_cost("Agriculture Land"))),
             )
         )
 
@@ -2202,7 +2222,7 @@ def map_flood_depth_from_household_db(child_df, village_id):
 
     # Extract flood depth from raster for missing values
     if flood_mask.sum() > 0:
-        child_df = extract_flood_depth_from_raster(child_df)
+        child_df = extract_flood_depth_from_raster(child_df, village_id)
     
     # Extract erosion class from PostGIS for missing values
     if erosion_mask.sum() > 0:
@@ -3104,14 +3124,18 @@ def _process_model_flood_erosion(queryset, village_id, model_type):
     
     df = pd.DataFrame(records)
     
+    # Convert flood_depth_m to numeric, treating empty strings and '0' as None
+    df['flood_depth_m'] = pd.to_numeric(df['flood_depth_m'], errors='coerce')
+    
     # For household model, map flood_depth_from_survey_meter to flood_depth_m if needed
     if model_type == 'household' and 'flood_depth_from_survey_meter' in df.columns:
+        df['flood_depth_from_survey_meter'] = pd.to_numeric(df['flood_depth_from_survey_meter'], errors='coerce')
         survey_mask = df['flood_depth_m'].isna() & df['flood_depth_from_survey_meter'].notna()
         if survey_mask.any():
             df.loc[survey_mask, 'flood_depth_m'] = df.loc[survey_mask, 'flood_depth_from_survey_meter']
     
-    # Extract flood depth from raster for records without flood_depth_m
-    flood_mask = df['flood_depth_m'].isna() | (df['flood_depth_m'] == '') | (df['flood_depth_m'] == '0')
+    # Extract flood depth from raster for records without valid flood_depth_m
+    flood_mask = df['flood_depth_m'].isna() | (df['flood_depth_m'] <= 0)
     if flood_mask.any():
         print(f"Extracting flood depth for {flood_mask.sum()} {model_type} records...")
         df = extract_flood_depth_from_raster(df, village_id)
@@ -3130,36 +3154,44 @@ def _process_model_flood_erosion(queryset, village_id, model_type):
     df['erosion_class'] = df['erosion_value'].apply(_classify_erosion_buffer)
     
     # Update records in database
+    updated_count = 0
     for _, row in df.iterrows():
         try:
             record = queryset.get(id=row['id'])
+            changed = False
             
             # Update flood_depth_m if it was extracted
             if pd.notna(row.get('flood_depth_m')):
-                record.flood_depth_m = str(row['flood_depth_m'])
+                record.flood_depth_m = float(row['flood_depth_m'])
+                changed = True
                 # For household model, also update flood_depth_from_survey_meter
                 if model_type == 'household' and hasattr(record, 'flood_depth_from_survey_meter'):
-                    record.flood_depth_from_survey_meter = str(row['flood_depth_m'])
+                    record.flood_depth_from_survey_meter = float(row['flood_depth_m'])
             
             # Update flood_class if model has this field
             if hasattr(record, 'flood_class') and pd.notna(row.get('flood_class')):
                 record.flood_class = row['flood_class']
+                changed = True
             
             # Update erosion_value if it was extracted
             if pd.notna(row.get('erosion_value')):
                 record.erosion_value = str(row['erosion_value'])
+                changed = True
             
             # Update erosion_class if model has this field
             if hasattr(record, 'erosion_class') and pd.notna(row.get('erosion_class')):
                 record.erosion_class = row['erosion_class']
+                changed = True
             
-            record.save()
+            if changed:
+                record.save()
+                updated_count += 1
             
         except Exception as e:
             print(f"Error updating {model_type} record {row['id']}: {e}")
             continue
     
-    print(f"✅ Updated {len(df)} {model_type} records with flood depth and erosion data")
+    print(f"✅ Updated {updated_count}/{len(df)} {model_type} records with flood depth and erosion data")
 
 
 def run_gis_risk_assessment_pipeline(village_obj, village_code):
@@ -3244,8 +3276,8 @@ def run_gis_risk_assessment_pipeline(village_obj, village_code):
     # Process road flood analysis
     process_road_flood_zonal_length(village_obj, village_code, flood_raster_path)
     
-    # Process road earthquake analysis  
-    process_road_eq_zonal_length(village_obj, village_code, eq_raster_path)
+    # # Process road earthquake analysis  
+    # process_road_eq_zonal_length(village_obj, village_code, eq_raster_path)
     
     # Process road erosion analysis
     try:
