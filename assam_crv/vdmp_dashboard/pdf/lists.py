@@ -39,7 +39,7 @@ def draw_list_of_figures(elements, doc):
             figure_num, figure_title = title.split(':', 1)
             figure_num = figure_num.strip()
             figure_title = figure_title.strip()
-            figure_title_text = Paragraph(f"<b>{figure_num}</b>: {figure_title}", normal)
+            figure_title_text = Paragraph(f"{figure_num}: {figure_title}", normal)
         else:
             figure_title_text = Paragraph(title, normal)
 
@@ -63,7 +63,7 @@ def draw_list_of_tables(elements, doc):
     tb_border_width = 0.5
     
     # # Add heading
-    elements.append(Paragraph("<b>List of Tables</b>", list_of_table_heading))
+    elements.append(Paragraph("List of Tables", list_of_table_heading))
     elements.append(Spacer(1, 12))
     
         # Create the heading paragraph
@@ -99,7 +99,7 @@ def draw_list_of_tables(elements, doc):
             table_num, table_title = title.split(':', 1)
             table_num = table_num.strip()
             table_title = table_title.strip()
-            table_title_text = Paragraph(f"<b>{table_num}</b>: {table_title}", normal)
+            table_title_text = Paragraph(f"{table_num}: {table_title}", normal)
         else:
             table_title_text = Paragraph(title, normal)
 

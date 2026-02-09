@@ -560,7 +560,11 @@ HOUSEHOLD_MAPPING = {
     'adequate_water_supply': 'adequate_water_supply',
     'JJM_or_other_taped_water_connection': 'JJM_or_other_taped_water_connection',
     'sludge_be_disposed_type': 'sludge_be_disposed_type',
-    'type_of_toilet': 'type_of_toilet'
+    'type_of_toilet': 'type_of_toilet',
+    # temp
+    "You get adequate water from this source throughout the year": "adequate_water_supply",
+    "Type of toilet?": "Sanitation_Type",
+    "While de-sludging where the sludge be disposed -": "sludge_be_disposed_type",
 }
 
 COMMERCIAL_MAPPING = {

@@ -6,6 +6,8 @@ from reportlab.lib.pagesizes import letter
 
 from village_profile.models import tblVillage
 from datetime import datetime
+import locale
+locale.setlocale(locale.LC_ALL, 'en_IN.UTF-8')
 
 from vdmp_dashboard.models import HouseholdSurvey, Critical_Facility, Risk_Assesment,VillageRoadInfo,VillageRoadInfoErosion, VillageRoadInfoEQ, VillageRoadInfoWind, villageAgricultureLandWindInfo,villageAgricultureLandEQInfo,villageAgricultureLandFloodInfo
 from vdmp_progress.models import Risk_Assessment_Result
@@ -29,6 +31,12 @@ from .dummy_data import  getMitigationIntervention
 from .global_styles import blue_heading, underline_heading, notes_style, bold_center_style,normal_style,bold_12,bold_12,blue_sub_heading
 
 from .utils.table import create_styled_table
+
+def format_indian_number(num):
+    try:
+        return locale.format_string('%d', int(num), grouping=True)
+    except:
+        return str(num)
 
 # Global dictionary for village summary data
 VILLAGE_SUMMARY_DATA = {
@@ -200,9 +208,10 @@ def get_village_area(village_id):
     try:
         with connection.cursor() as cursor:
             cursor.execute("""
-                SELECT area_sqkm
-                FROM public.village_boundary
-                WHERE Vill_ID = %s
+                SELECT 
+                    ST_Area(ST_Transform(geom, 32646)) / 1000000.0 as area_sqkm
+                        FROM public.village_boundary
+                        WHERE "Vill_ID" = %s
             """, [village_code])
             
             row = cursor.fetchone()
@@ -432,8 +441,8 @@ def generate_socio_economic_summary_table(village_id):
         # =========================
         return [
             ['Socio-Economic Summary'],
-            ['Total population', f"{total_population} persons (as reported)"],
-            ['Total households', f"{total_households_count} households surveyed"],
+            ['Total population', f"{format_indian_number(total_population)} persons (as reported)"],
+            ['Total households', f"{format_indian_number(total_households_count)} households surveyed"],
             ['Dominant house type', dominant_house_type],
             ['Major landuse', major_land_use],
             ['Occupational category', occupational_category],
@@ -531,11 +540,11 @@ def getRiskAssessment(village_id):
     return [
         ['Risk Assessment (excluding content loss)'],
         ['Sector', Paragraph('Flood'), 'Earthquake 475 RP', 'Strong wind 100 RP'],
-        [Paragraph('Potential average loss (residential)', bold_12), f'INR {household_flood:.2f} Crore', f'INR {household_eq:.2f} Crore', f'INR {household_wind:.2f} Crore'],
-        [Paragraph('Potential average loss (commercial)',bold_12), f'INR {commercial_flood:.2f} Crore', f'INR {commercial_eq:.2f} Crore', f'INR {commercial_wind:.2f} Crore'],
-        [Paragraph('Potential average loss (critical facilities – Health facilities, educational facilities, flood shelter)', bold_12), f'INR {critical_flood:.2f} Crore', f'INR {critical_eq:.2f} Crore', f'INR {critical_wind:.2f} Crore'],
-        [Paragraph('Potential average loss (road)', bold_12), f'INR {road_risk_flood:.2f} Crore', '-', '-'],
-        [Paragraph('Potential average loss (agriculture)',bold_12), f'INR {agriculture_flood:.2f} Crore', '-', '-'],
+        [Paragraph('Potential average loss (residential)', bold_12), f'INR {format_indian_number(int(household_flood * 10000000))}', f'INR {format_indian_number(int(household_eq * 10000000))}', f'INR {format_indian_number(int(household_wind * 10000000))}'],
+        [Paragraph('Potential average loss (commercial)',bold_12), f'INR {format_indian_number(int(commercial_flood * 10000000))}', f'INR {format_indian_number(int(commercial_eq * 10000000))}', f'INR {format_indian_number(int(commercial_wind * 10000000))}'],
+        [Paragraph('Potential average loss (critical facilities – Health facilities, educational facilities, flood shelter)', bold_12), f'INR {format_indian_number(int(critical_flood * 10000000))}', f'INR {format_indian_number(int(critical_eq * 10000000))}', f'INR {format_indian_number(int(critical_wind * 10000000))}'],
+        [Paragraph('Potential average loss (road)', bold_12), f'INR {format_indian_number(int(road_risk_flood * 10000000))}', '-', '-'],
+        [Paragraph('Potential average loss (agriculture)',bold_12), f'INR {format_indian_number(int(agriculture_flood * 10000000))}', '-', '-'],
       
     ]
 
@@ -739,7 +748,7 @@ def getVulnerabilityAssessment(village_id):
 
         if total_population > 0:
             vulnerable_percent = round((vulnerable_count / total_population) * 100)
-            vulnerable_population = f"{vulnerable_count} ({vulnerable_percent}%)"
+            vulnerable_population = f"{format_indian_number(vulnerable_count)} ({vulnerable_percent}%)"
         else:
             vulnerable_population = "No data"
 

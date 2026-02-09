@@ -191,6 +191,10 @@ def map_mdr_from_db(df, hazard_col, mdr_model, hazard_field):
     """
     try:
         print(f"DEBUG: Starting MDR mapping for {hazard_col}")
+        print(f"DEBUG: Total records before MDR mapping: {len(df)}")
+        print(f"DEBUG: Records with valid house_type_id: {df['house_type_id'].notna().sum()}")
+        print(f"DEBUG: Records with NULL house_type_id: {df['house_type_id'].isna().sum()}")
+        
         out = []
         # Process each house type separately (R1, R2A, R3B, etc. have different vulnerability)
         for h_type_id in df["house_type_id"].dropna().unique():
@@ -435,6 +439,8 @@ def process_household_data(village_id):
     )
     
     df = pd.DataFrame(households)
+    print(f"DEBUG: Household dataset length before save--------------------: {len(df)}")
+
     df['reference_id'] = df['id']
     df['village_name'] = village.name
     df['village_code'] = village.code
@@ -444,6 +450,18 @@ def process_household_data(village_id):
     df[['mapped_house_type', 'unit_rate_inr']] = df.apply(
         lambda x: pd.Series(get_house_type_mapping(x['wall_type'], x['roof_type'], x['floor_type'])), axis=1
     )
+    
+    # DEBUG: Print combinations that didn't get house type mapping
+    unmapped = df[df['mapped_house_type'] == 'Other / Unknown']
+    if len(unmapped) > 0:
+        print(f"\nDEBUG: Found {len(unmapped)} records with unmapped house types")
+        print("DEBUG: Material combinations that failed to map:")
+        unique_combos = unmapped[['wall_type', 'roof_type', 'floor_type']].drop_duplicates()
+        for idx, row in unique_combos.iterrows():
+            count = len(unmapped[(unmapped['wall_type'] == row['wall_type']) & 
+                                (unmapped['roof_type'] == row['roof_type']) & 
+                                (unmapped['floor_type'] == row['floor_type'])])
+            print(f"  - Wall: '{row['wall_type']}', Roof: '{row['roof_type']}', Floor: '{row['floor_type']}' (Count: {count})")
     
     # Validate and calculate building dimensions
     df[['building_length_ft', 'building_width_ft', 'building_area_sqft']] = df.apply(
@@ -457,6 +475,8 @@ def process_household_data(village_id):
     
     # Process hazards and losses
     df = process_hazards_and_losses(df, district_id)
+
+    print(f"DEBUG: Household dataset length after processing hazards and losses--------------------: {len(df)}")
     
     # Save to database
     save_risk_results(df, village_id, 'household')
