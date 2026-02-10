@@ -2517,16 +2517,9 @@ def _apply_classifications(df):
         logger.debug("Applied economic loss household classification")
     
     # Agriculture livelihood loss classification
-    if 'amount_spent_for_agriculture_livestock' in df.columns:
-        df['loss_agricultire_livelihood'] = df['amount_spent_for_agriculture_livestock'].apply(_classify_cost)
+    if 'loss_agricultire_livlihood' in df.columns:
+        df['loss_AgriLivli'] = df['loss_agricultire_livlihood'].apply(_classify_cost)
         logger.debug("Applied agriculture livelihood loss classification")
-    
-    if "amount_spent_for_agriculture_livestock_every_year" in df.columns:
-        df["loss_AgriLivli"] = df["amount_spent_for_agriculture_livestock_every_year"].apply(_classify_cost)
-        logger.debug("Applied Loss_AgriLivli classification")
-    elif "amount_spent_for_agriculture_livestock" in df.columns:
-        df["loss_AgriLivli"] = df["amount_spent_for_agriculture_livestock"].apply(_classify_cost)
-        logger.debug("Applied Loss_AgriLivli classification from amount_spent_for_agriculture_livestock")
     else:
         logger.debug(f"Agriculture livestock columns not found. Available columns: {[col for col in df.columns if 'agriculture' in col.lower() or 'livestock' in col.lower()]}")
     

@@ -444,7 +444,7 @@ def process_household_data(village_id):
 
     district_id = district.id
     households = HouseholdSurvey.objects.filter(village_id=village_id).values(
-        'id', 'wall_type', 'roof_type', 'floor_type', 'building_area_sqft','building_length_feet', 'building_width_feet',
+        'id', 'wall_type', 'roof_type', 'floor_type', 'building_area_sqft','building_length_feet', 'building_width_feet', 'erosion_class',
         'flood_class', 'flood_depth_m', 'point_id', 'latitude', 'longitude'
     )
     
@@ -455,6 +455,7 @@ def process_household_data(village_id):
     df['village_name'] = village.name
     df['village_code'] = village.code
     df['asset_type'] = 'household'
+    df['erosion_class'] = df['erosion_class'].fillna('Unknown')
     
     # Map house types and rates
     df[['mapped_house_type', 'unit_rate_inr']] = df.apply(
@@ -502,7 +503,7 @@ def process_commercial_data(village_id):
     district = village.gram_panchayat.circle.district
     district_id = district.id
     commercial = Commercial.objects.filter(village_id=village_id).values(
-        'id', 'wall_type', 'roof_type', 'floor_type', 'flood_depth_m', 
+        'id', 'wall_type', 'roof_type', 'floor_type', 'flood_depth_m', 'erosion_class',
         'point_id', 'latitude', 'longitude', 'average_room_length_ft', 'average_room_width_ft'
     )
     
@@ -511,6 +512,7 @@ def process_commercial_data(village_id):
     df['village_name'] = village.name
     df['village_code'] = village.code
     df['asset_type'] = 'commercial'
+    df['erosion_class'] = df['erosion_class'].fillna('Unknown')
     
     # Calculate area from room dimensions with validation
     length = pd.to_numeric(df['average_room_length_ft'], errors='coerce').fillna(0)
@@ -549,7 +551,7 @@ def process_critical_facility_data(village_id):
     district = village.gram_panchayat.circle.district
     district_id = district.id
     facilities = Critical_Facility.objects.filter(village_id=village_id).values(
-        'id', 'wall_type', 'roof_type', 'floor_type', 'flood_depth_m', 'flood_class',
+        'id', 'wall_type', 'roof_type', 'floor_type', 'flood_depth_m', 'flood_class', 'erosion_class',
         'point_id', 'latitude', 'longitude', 'average_room_length_ft', 'average_room_width_ft'
     )
     
@@ -558,6 +560,7 @@ def process_critical_facility_data(village_id):
     df['village_name'] = village.name
     df['village_code'] = village.code
     df['asset_type'] = 'critical_facility'
+    df['erosion_class'] = df['erosion_class'].fillna('Unknown')
     
     # Calculate area with validation
     df[['building_length_ft', 'building_width_ft', 'building_area_sqft']] = df.apply(
@@ -650,7 +653,10 @@ def save_risk_results(df, village_id, asset_type):
             # Loss data
             flood_loss=safe_decimal(row.get('flood_loss'), 'loss'),
             eq_loss=safe_decimal(row.get('eq_loss'), 'loss'),
-            wind_loss=safe_decimal(row.get('wind_loss'), 'loss')
+            wind_loss=safe_decimal(row.get('wind_loss'), 'loss'),
+
+            #erosion class
+            erosion_class=row.get('erosion_class'),
         )
         results.append(result)
         
