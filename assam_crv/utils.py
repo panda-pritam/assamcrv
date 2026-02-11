@@ -804,7 +804,7 @@ PRA_MAIN_MAPPING = {
     'Nearest High School (km)': 'nearest_high_school_km',
     'Nearest Higher secondary': 'nearest_higher_secondary_km',
     'Nearest College (km)': 'nearest_college_km',
-    'Nearest Police station )km)': 'nearest_police_station_km',
+    'Nearest Police station (km)': 'nearest_police_station_km',
     'Farmers availing  agriculture insurance %': 'farmers_agriculture_insurance',
     'Farmers availing livestock insurance%': 'farmers_livestock_insurance',
     'Occupational category': 'occupational_category',
