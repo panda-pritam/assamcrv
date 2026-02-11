@@ -1,5 +1,5 @@
 let mapObj = null;
-let geoserverURL = "http://localhost:8080/geoserver";
+let geoserverURL = window.GEOSERVER_URL || "http://localhost:8085/geoserver";
 
 // Add these variables at the top of your map.js file after existing declarations
 //let printSelectedLayers = new Set(); // To store selected layers for printing

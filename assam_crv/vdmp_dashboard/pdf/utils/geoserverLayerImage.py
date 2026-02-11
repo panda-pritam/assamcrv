@@ -19,6 +19,9 @@ import requests
 import xml.etree.ElementTree as ET
 from village_profile.models import tblVillage
 from reportlab.platypus import Image as RLImage
+from django.conf import settings
+
+GEOSERVER_BASE_URL = settings.GEOSERVER_URL.rstrip('/')
 
 # =============================================================================
 # GLOBAL CACHE VARIABLES
@@ -148,7 +151,7 @@ def get_layer_bbox_from_wfs(layer_name, village_code, zoom_factor=0.5):
     Returns:
         str or None: Bbox string if successful, None if failed
     """
-    wfs_url = "http://localhost:8080/geoserver/wfs"
+    wfs_url = f"{GEOSERVER_BASE_URL}/wfs"
     params = {
         'service': 'WFS',
         'version': '1.0.0',
@@ -231,7 +234,7 @@ def get_layer_bbox_from_capabilities(layer_name):
     Returns:
         str or None: Bbox string if successful, None if failed
     """
-    capabilities_url = "http://localhost:8080/geoserver/wms"
+    capabilities_url = f"{GEOSERVER_BASE_URL}/wms"
     params = {
         'service': 'WMS',
         'version': '1.1.1',
@@ -424,7 +427,7 @@ def fetch_geoserver_map(layers, width, height, village_id=None):
     if village_code and 'assam:village_boundary' not in user_filtered_layers:
         user_filtered_layers.insert(0, 'assam:village_boundary')
     
-    wms_url = "http://localhost:8080/geoserver/wms"
+    wms_url = f"{GEOSERVER_BASE_URL}/wms"
     final_image = None
     
     # 1. Get base layers (no filtering needed) - ALWAYS include these
@@ -708,7 +711,7 @@ def get_geoserver_legend_path(layers, width=20, height=20):
 
 def fetch_geoserver_legends(layers, width=20, height=20):
     """Fetch legends from geoserver for multiple layers"""
-    wms_url = "http://localhost:8080/geoserver/wms"
+    wms_url = f"{GEOSERVER_BASE_URL}/wms"
     legend_images = []
     
     for layer in layers:

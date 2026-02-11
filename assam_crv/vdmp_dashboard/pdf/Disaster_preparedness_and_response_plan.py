@@ -22,7 +22,7 @@ styles = getSampleStyleSheet()
 
 def getTeamMemberList(village_id, team_type):
     try:
-        members = TaskForce.objects.filter(village_id=village_id, team_type=team_type)
+        members = TaskForce.objects.filter(village_id=village_id, team_type__iexact=team_type)
         data = [
             [Paragraph("S. No.", bold_style), Paragraph("Name", bold_style), Paragraph("Father's Name", bold_style), 
              Paragraph("Gender", bold_style), Paragraph("Phone number", bold_style), Paragraph("Position/Responsibility", bold_style)]

@@ -128,6 +128,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'django.template.context_processors.i18n',
+                'assam_crv.context_processors.geoserver_url',
             ],
         },
     },
@@ -203,6 +204,8 @@ DATA_UPLOAD_MAX_NUMBER_FIELDS = None
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+GEOSERVER_URL = config('GEOSERVER_URL', default='http://localhost:8085/geoserver')
 
 
 # Django GIS Library Paths (set from environment variables configured above)

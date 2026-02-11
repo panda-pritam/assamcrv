@@ -1,4 +1,5 @@
 from django.shortcuts import render, get_object_or_404
+from django.conf import settings
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
@@ -974,7 +975,7 @@ def get_total_road_length(district_id=None, circle_id=None, gram_panchayat_id=No
             codes_str = "','".join(village_codes)
             cql_filter = f"vill_id IN ('{codes_str}')"
         
-        wfs_url = "http://localhost:8080/geoserver/assam/ows"
+        wfs_url = f"{settings.GEOSERVER_URL.rstrip('/')}/assam/ows"
         params = {
             "service": "WFS",
             "version": "1.0.0",

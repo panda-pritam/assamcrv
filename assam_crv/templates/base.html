@@ -47,6 +47,7 @@
     {% block extraheader %}
     {% endblock %}
 <script src="{% url 'javascript-catalog' %}"></script>
+<script>window.GEOSERVER_URL = "{{ GEOSERVER_URL|default:'' }}";</script>
     <style>
         .right_div img {
             width: 16px;
