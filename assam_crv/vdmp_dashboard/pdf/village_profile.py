@@ -42,6 +42,9 @@ from vdmp_dashboard.models import VdmpVillageMapData, VdmDistrictMapData
 from django.db.models import Sum, IntegerField, FloatField
 from django.db.models.functions import Cast, Coalesce, Replace
 from assam_crv.settings import MEDIA_ROOT
+from django.conf import settings
+
+GEOSERVER_BASE_URL = settings.GEOSERVER_URL.rstrip('/')
 
 styles = getSampleStyleSheet()
 page_width, page_height = A4
@@ -1469,7 +1472,8 @@ def getRoadLengthByTypologyData(village_id, workspace, layer):
     # 2️⃣ FALLBACK TO GEOSERVER
     # =========================
     try:
-        wfs_url = f"http://localhost:8080/geoserver/{workspace}/ows"
+        # Build WFS request
+        wfs_url = f"{GEOSERVER_BASE_URL}/{workspace}/ows"
         params = {
             "service": "WFS",
             "version": "1.0.0",
@@ -1569,7 +1573,7 @@ def getVillageArea(village_id):
     except tblVillage.DoesNotExist:
         return 0
 
-    wfs_url = "http://localhost:8080/geoserver/assam/ows"
+    wfs_url = f"{GEOSERVER_BASE_URL}/assam/ows"
     params = {
         "service": "WFS",
         "version": "1.0.0",
@@ -1675,7 +1679,7 @@ def getLULCData(village_id, workspace, layer, onlymax=False):
         pass  # Fall back to GeoServer
 
     # Fallback to GeoServer
-    wfs_url = f"http://localhost:8080/geoserver/{workspace}/ows"
+    wfs_url = f"{GEOSERVER_BASE_URL}/{workspace}/ows"
     params = {
         "service": "WFS",
         "version": "1.0.0",

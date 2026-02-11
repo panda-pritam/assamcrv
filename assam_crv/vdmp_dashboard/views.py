@@ -1,4 +1,5 @@
 from django.shortcuts import render, get_object_or_404
+from django.conf import settings
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
@@ -264,6 +265,31 @@ def upload_data_vdmp(request):
                         "records_created": 1,
                         "records_updated": 0,
                         "file_path": file_path
+                    })
+
+                if "calendar" in type_name_normalized or "calender" in type_name_normalized:
+                    district_id = request.POST.get("district_id")
+                    if not district_id:
+                        return JsonResponse({
+                            "status": "error",
+                            "error": "District is required for hazard calendar uploads"
+                        }, status=400)
+                    try:
+                        district = tblDistrict.objects.get(pk=district_id)
+                    except tblDistrict.DoesNotExist:
+                        return JsonResponse({
+                            "status": "error",
+                            "error": "Invalid district for hazard calendar upload"
+                        }, status=400)
+
+                    map_record, _ = VdmDistrictMapData.objects.get_or_create(district=district)
+                    map_record.hazard_calendar = file
+                    map_record.save()
+                    return JsonResponse({
+                        "status": "success",
+                        "records_created": 1,
+                        "records_updated": 0,
+                        "file_path": map_record.hazard_calendar.name
                     })
 
                 if type_name_normalized.startswith("wind") or type_name_normalized.startswith("eq"):
@@ -949,7 +975,7 @@ def get_total_road_length(district_id=None, circle_id=None, gram_panchayat_id=No
             codes_str = "','".join(village_codes)
             cql_filter = f"vill_id IN ('{codes_str}')"
         
-        wfs_url = "http://localhost:8080/geoserver/assam/ows"
+        wfs_url = f"{settings.GEOSERVER_URL.rstrip('/')}/assam/ows"
         params = {
             "service": "WFS",
             "version": "1.0.0",

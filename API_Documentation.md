@@ -201,7 +201,7 @@ This document provides a comprehensive list of all APIs available in the Assam S
 #### Analytics & Reporting APIs - **USES GEOSERVER**
 - **GET** `/api/get_household_summary_data` - **Comprehensive village statistics**
   - **GeoServer Usage**: Fetches road network data via WFS service
-  - **WFS Endpoint**: `http://localhost:8080/geoserver/assam/ows`
+  - **WFS Endpoint**: `${GEOSERVER_URL}/assam/ows` (set in `.env`)
   - **Layer**: `assam:road_network`
   - **Purpose**: Calculates total road length for infrastructure statistics
   - **Returns**: Demographics, housing, infrastructure, vulnerability data
@@ -235,7 +235,7 @@ The system integrates with GeoServer for spatial data management and analysis:
 2. **`/api/get_household_summary_data` (vdmp_dashboard app)**
    - **Purpose**: Infrastructure statistics calculation
    - **GeoServer Component**: WFS (Web Feature Service)
-   - **Service URL**: `http://localhost:8080/geoserver/assam/ows`
+   - **Service URL**: `${GEOSERVER_URL}/assam/ows` (set in `.env`)
    - **Layer**: `assam:road_network`
    - **Operation**: Spatial query for road length calculation
    - **CQL Filters**: Village-based spatial filtering

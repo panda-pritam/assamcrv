@@ -1,5 +1,5 @@
 // CRV Dashboard JavaScript with ApexCharts
-let geoserverURL = "http://localhost:8080/geoserver";
+let geoserverURL = window.GEOSERVER_URL || "http://localhost:8085/geoserver";
 
 let charts = {};
 
