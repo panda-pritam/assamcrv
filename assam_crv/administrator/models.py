@@ -115,6 +115,24 @@ class PRA_main(models.Model):
 
      modification_of_natural_drains = models.BooleanField(default=False, blank=True, null=True)
 
+     # Access, inputs, and practices
+     access_to_market_output_produce = models.CharField(max_length=255, blank=True, null=True)
+     access_to_market_input_produce = models.CharField(max_length=255, blank=True, null=True)
+     access_to_high_quality_seeds = models.CharField(max_length=255, blank=True, null=True)
+     access_to_fair_price_input_supplies = models.CharField(max_length=255, blank=True, null=True)
+     access_to_high_technology_farming_practices = models.CharField(max_length=255, blank=True, null=True)
+     access_to_scientific_methods_of_farming_practices = models.CharField(max_length=255, blank=True, null=True)
+     agriculture_insurance = models.CharField(max_length=255, blank=True, null=True)
+     sericulture_insurance = models.CharField(max_length=255, blank=True, null=True)
+     weaving_equipment_insurance = models.CharField(max_length=255, blank=True, null=True)
+     access_to_credit = models.CharField(max_length=255, blank=True, null=True)
+     access_to_flood_resilient_seed = models.CharField(max_length=255, blank=True, null=True)
+     access_to_technology = models.CharField(max_length=255, blank=True, null=True)
+     more_than_one_crop_a_year = models.CharField(max_length=255, blank=True, null=True)
+     diversity_of_crops = models.CharField(max_length=255, blank=True, null=True)
+     access_to_knowledge_kvk_on_farming = models.CharField(max_length=255, blank=True, null=True)
+     access_to_health_service_including_vaccination = models.CharField(max_length=255, blank=True, null=True)
+
 
      created_at = models.DateTimeField(auto_now_add=True, blank=True, null=True)
 
