@@ -54,6 +54,11 @@ async function setupLocationSelectors(districtId, circleId, gpId, villageId, use
     const gpEl = document.getElementById(gpId);
     const villageEl = document.getElementById(villageId);
 
+    if (!districtEl || !circleEl || !gpEl || !villageEl) {
+        console.error('One or more location selector elements not found');
+        return;
+    }
+
     // Load Districts on page load
     const districtRes = await fetch('/api/get_districts');
     const districtData = await districtRes.json();

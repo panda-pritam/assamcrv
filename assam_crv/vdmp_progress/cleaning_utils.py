@@ -548,7 +548,7 @@ def get_agriculture_unit_cost(land_type="Agriculture Land"):
         land_type__icontains=land_type
     ).first()
 
-    print(f"🔍 Fetching unit cost for {land_type}: {cost_mapping}")
+    # print(f"🔍 Fetching unit cost for {land_type}: {cost_mapping}")
     
     if cost_mapping:
         return float(cost_mapping.unit_cost_per_sqm)
@@ -601,16 +601,44 @@ def get_agriculture_flood_mdr(flood_depth_m, crop_type):
 
 def get_agriculture_wind_mdr(wind_hazard, crop_type):
     """
-    Get MDR value for agriculture wind based on wind hazard and crop type
+    Get MDR value for agriculture wind:
+    - default crop_type
+    - round hazard
+    - nearest lower match
+    - cap at max MDR
     """
     from vdmp_dashboard.models import agricultureLandWindMDRMapping
-    
-    mdr_record = agricultureLandWindMDRMapping.objects.filter(
-        wind_hazard__lte=wind_hazard,
+
+    # Default crop type
+    crop_type = crop_type or "Agriculture Land"
+
+    # No wind → no damage
+    if wind_hazard is None or wind_hazard <= 0:
+        return 0.0
+
+    # Round wind hazard
+    wind_hazard = round(float(wind_hazard), 2)
+
+    base_qs = agricultureLandWindMDRMapping.objects.filter(
         crop_type=crop_type
-    ).order_by('-wind_hazard').first()
-    
-    return float(mdr_record.mdr) if mdr_record else 0.0
+    )
+
+    if not base_qs.exists():
+        return 0.0
+
+    # Nearest LOWER hazard
+    record = (
+        base_qs
+        .filter(wind_hazard__lte=wind_hazard)
+        .order_by("-wind_hazard")
+        .first()
+    )
+
+    # Cap at max MDR if hazard exceeds table
+    if not record:
+        record = base_qs.order_by("-wind_hazard").first()
+
+    return float(record.mdr) if record else 0.0
 
 
 def get_agriculture_eq_mdr(eq_hazard, crop_type):
@@ -632,6 +660,34 @@ def get_agriculture_eq_mdr(eq_hazard, crop_type):
 # WIND HAZARD PROCESSING
 # ============================================================================
 
+def sample_raster_at_point(ds, point_geom):
+    band = ds.GetRasterBand(1)
+    nodata = band.GetNoDataValue()
+    gt = ds.GetGeoTransform()
+
+    inv_gt = gdal.InvGeoTransform(gt)
+    if not inv_gt:
+        return None
+
+    px, py = gdal.ApplyGeoTransform(inv_gt, point_geom.x, point_geom.y)
+    px, py = int(px), int(py)
+
+    if (
+        px < 0 or py < 0 or
+        px >= ds.RasterXSize or py >= ds.RasterYSize
+    ):
+        return None
+
+    val = band.ReadAsArray(px, py, 1, 1)[0, 0]
+
+    if val is None or (nodata is not None and val == nodata):
+        return None
+
+    return round(float(val), 4)
+
+
+
+
 def process_agriculture_wind_pipeline(
     village_obj,
     village_code,
@@ -645,12 +701,18 @@ def process_agriculture_wind_pipeline(
     print(f"💨 Processing Agriculture Wind Hazard for {village_name} ({village_code})")
 
     from vdmp_dashboard.models import villageAgricultureLandWindInfo
+    from django.db import transaction
 
     vill_obj = tblVillage.objects.get(id=int(village_obj))
     
-    # Wind raster path
-    raster_path = "c:\\assamcrv\\assam_crv\\static\\risk_assessment_raster\\Wind.tif"
+    # Delete old data first
+    with transaction.atomic():
+        deleted_count, _ = villageAgricultureLandWindInfo.objects.filter(village=vill_obj).delete()
+        print(f"🧹 Deleted {deleted_count} old wind records for {village_name}")
     
+    # Wind raster path
+    raster_path = os.path.join(settings.MEDIA_ROOT, "pipeline_data", "wind_raster", "Wind.tif")
+    ds = gdal.Open(raster_path)
     # Load agriculture polygons
     lulc_gdf = load_village_agriculture_lulc(village_code)
     if lulc_gdf.empty:
@@ -672,10 +734,24 @@ def process_agriculture_wind_pipeline(
         
         # Track statistics
         if stats['valid_pixels'] > 0:
+            wind_hazard = max(stats['mean'], stats['max'])
             stats_summary['with_hazard'] += 1
+
         else:
-            stats_summary['no_coverage'] += 1
-            wind_hazard = 0.0
+            # 🔑 CENTROID FALLBACK
+            centroid = row["geom"].centroid
+            print(f"⚠️ No valid pixels for polygon {idx}, using centroid fallback at {centroid.y}, {centroid.x}")
+            centroid_value = sample_raster_at_point(ds, centroid)
+            print(f"   Centroid value: {centroid_value}")
+
+            if centroid_value is not None:
+                wind_hazard = centroid_value
+                stats_summary['with_hazard'] += 1
+            else:
+                wind_hazard = 0.0
+                stats_summary['no_coverage'] += 1
+
+       
 
         # Calculate costs and get MDR from database
         unit_cost = Decimal(str(get_agriculture_unit_cost("Agriculture Land")))
@@ -1049,8 +1125,14 @@ def process_agriculture_erosion_pipeline(
     print(f"🌊 Processing Agriculture Erosion Risk for {village_name} ({village_code})")
 
     from vdmp_dashboard.models import villageAgricultureLandErosionInfo
+    from django.db import transaction
 
     vill_obj = tblVillage.objects.get(id=int(village_obj))
+    
+    # Delete old data first
+    with transaction.atomic():
+        deleted_count, _ = villageAgricultureLandErosionInfo.objects.filter(village=vill_obj).delete()
+        print(f"🧹 Deleted {deleted_count} old erosion records for {village_name}")
     
     # Load agriculture polygons
     lulc_gdf = load_village_agriculture_lulc(village_code)
@@ -1149,11 +1231,11 @@ def process_all_agriculture_hazards(
         village_obj, village_code, district_name, district_code, village_name
     )
     
-    # # 2. Wind
-    # print("\n2️⃣ WIND HAZARD")
-    # process_agriculture_wind_pipeline(
-    #     village_obj, village_code, district_name, district_code, village_name
-    # )
+    # 2. Wind
+    print("\n2️⃣ WIND HAZARD")
+    process_agriculture_wind_pipeline(
+        village_obj, village_code, district_name, district_code, village_name
+    )
     
     # # 3. Earthquake
     # print("\n3️⃣ EARTHQUAKE HAZARD")
@@ -1454,6 +1536,9 @@ def get_sqlalchemy_engine():
     return create_engine(engine_url)
 
 
+import geopandas as gpd
+from sqlalchemy.exc import ProgrammingError
+
 def load_village_roads(village_code):
     """
     Load all road geometries and related attributes
@@ -1465,33 +1550,72 @@ def load_village_roads(village_code):
 
     engine = get_sqlalchemy_engine()
 
-    sql = """
-    SELECT
-        id,
-        geom,
-        "Rd_Surface" AS rd_surface,
-        "RSur_Type" AS rsur_type,
-        "Type_R" AS rsurtypeid,
-        "Width" AS width,
-        "Length" AS length,
-        "UnitRpCost" AS unit_cost
-    FROM public.road_network
-    WHERE TRIM("Vill_ID") = TRIM(%s)
-      AND geom IS NOT NULL;
+    # First attempt: lowercase column names (recommended standard)
+    sql_lower = """
+        SELECT
+            id,
+            geom,
+            rd_surface,
+            rsur_type,
+            type_r AS rsurtypeid,
+            width,
+            length,
+            unitrpcost AS unit_cost
+        FROM public.road_network
+        WHERE TRIM(vill_id) = TRIM(%s)
+        AND geom IS NOT NULL;
     """
 
-    roads_gdf = gpd.read_postgis(
-        sql,
-        engine,
-        params=(village_code,),
-        geom_col="geom",
-        crs="EPSG:4326"
-    )
+    # Second attempt: quoted mixed-case column names
+    sql_upper = """
+        SELECT
+            id,
+            geom,
+            "Rd_Surface" AS rd_surface,
+            "RSur_Type" AS rsur_type,
+            "Type_R" AS rsurtypeid,
+            "Width" AS width,
+            "Length" AS length,
+            "UnitRpCost" AS unit_cost
+        FROM public.road_network
+        WHERE TRIM("Vill_ID") = TRIM(%s)
+        AND geom IS NOT NULL;
+    """
 
-    if roads_gdf.empty:
-        print(f"⚠️ No roads found for village_code={village_code}")
+    # Try lowercase first
+    try:
+        roads_gdf = gpd.read_postgis(
+            sql_lower,
+            engine,
+            params=(village_code,),
+            geom_col="geom",
+            crs="EPSG:4326"
+        )
 
-    return roads_gdf
+        if not roads_gdf.empty:
+            return roads_gdf
+
+    except Exception as e:
+        print("Lowercase query failed. Trying uppercase version...")
+
+    # Try uppercase version
+    try:
+        roads_gdf = gpd.read_postgis(
+            sql_upper,
+            engine,
+            params=(village_code,),
+            geom_col="geom",
+            crs="EPSG:4326"
+        )
+
+        if not roads_gdf.empty:
+            return roads_gdf
+
+    except Exception as e:
+        print("Uppercase query also failed.")
+
+    print(f"⚠️ No roads found for village_code={village_code}")
+    return gpd.GeoDataFrame()  # return empty GeoDataFrame
 
 
 
@@ -2048,6 +2172,12 @@ def _process_road_erosion_data(
     """
 
     from vdmp_dashboard.models import VillageRoadInfoErosion
+    from django.db import transaction
+
+    # Delete old data first
+    with transaction.atomic():
+        deleted_count, _ = VillageRoadInfoErosion.objects.filter(village=village_obj).delete()
+        print(f"🧹 Deleted {deleted_count} old road erosion records for {village_name}")
 
     sql = """
     WITH road_utm AS (
@@ -2524,16 +2654,9 @@ def _apply_classifications(df):
         logger.debug("Applied economic loss household classification")
     
     # Agriculture livelihood loss classification
-    if 'amount_spent_for_agriculture_livestock' in df.columns:
-        df['loss_agricultire_livelihood'] = df['amount_spent_for_agriculture_livestock'].apply(_classify_cost)
+    if 'loss_agricultire_livlihood' in df.columns:
+        df['loss_AgriLivli'] = df['loss_agricultire_livlihood'].apply(_classify_cost)
         logger.debug("Applied agriculture livelihood loss classification")
-    
-    if "amount_spent_for_agriculture_livestock_every_year" in df.columns:
-        df["loss_AgriLivli"] = df["amount_spent_for_agriculture_livestock_every_year"].apply(_classify_cost)
-        logger.debug("Applied Loss_AgriLivli classification")
-    elif "amount_spent_for_agriculture_livestock" in df.columns:
-        df["loss_AgriLivli"] = df["amount_spent_for_agriculture_livestock"].apply(_classify_cost)
-        logger.debug("Applied Loss_AgriLivli classification from amount_spent_for_agriculture_livestock")
     else:
         logger.debug(f"Agriculture livestock columns not found. Available columns: {[col for col in df.columns if 'agriculture' in col.lower() or 'livestock' in col.lower()]}")
     

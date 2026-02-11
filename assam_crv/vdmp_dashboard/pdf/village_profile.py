@@ -111,65 +111,83 @@ def getFacilityAccessData(village_id):
             ["12", "Veterinary Hospitals", "N/A"]
         ]
 
+from django.db import connection
+
 def getPowerInfrastructureData_Total(village_id):
-    from django.db import connection
-    
     try:
-        # Get village object
         village = tblVillage.objects.get(id=village_id)
         village_code = village.code
-        
-        electric_data_total = 0
-        transformer_data_total = 0
-        
-        # Try database tables first
-        try:
-            with connection.cursor() as cursor:
-                # Check if electricpoles table exists
-                cursor.execute("""
-                    SELECT EXISTS (
-                        SELECT FROM information_schema.tables 
-                        WHERE table_schema = 'public' 
-                        AND table_name = 'electricpoles'
-                    )
-                """)
-                
-                if cursor.fetchone()[0]:
-                    cursor.execute("""
-                        SELECT COUNT(*) FROM public.electricpoles WHERE "Vill_Id" = %s
-                    """, [village_code])
-                    electric_data_total = cursor.fetchone()[0] or 0
-                
-                # Check if transformer table exists
-                cursor.execute("""
-                    SELECT EXISTS (
-                        SELECT FROM information_schema.tables 
-                        WHERE table_schema = 'public' 
-                        AND table_name = 'transformer'
-                    )
-                """)
-                
-                if cursor.fetchone()[0]:
-                    cursor.execute("""
-                        SELECT COUNT(*) FROM public.transformer WHERE "Vill_ID" = %s
-                    """, [village_code])
-                    transformer_data_total = cursor.fetchone()[0] or 0
-        except Exception as e:
-            print("Error in getPowerInfrastructureData_Total:", e)
-            # Fallback to Django models
-           
-        
+    except tblVillage.DoesNotExist:
         return [
-            [Paragraph("S. No.", bold_center_style), Paragraph("Type", bold_center_style), Paragraph("Number")],
-            ["1", Paragraph("Electric post and network", normal_style), str(electric_data_total)],
-            ["2", Paragraph("Transformer", normal_style), str(transformer_data_total)],
-        ]
-    except Exception:
-        return [
-            [Paragraph("S. No.", bold_center_style), Paragraph("Type", bold_center_style), Paragraph("Number")],
-             ["1", Paragraph("Electric post and network", normal_style), "N/A"],
+            [Paragraph("S. No.", bold_center_style),
+             Paragraph("Type", bold_center_style),
+             Paragraph("Number", bold_center_style)],
+            ["1", Paragraph("Electric post and network", normal_style), "N/A"],
             ["2", Paragraph("Transformer", normal_style), "N/A"],
         ]
+
+    electric_data_total = 0
+    transformer_data_total = 0
+
+    # =========================
+    # ELECTRIC POLES
+    # =========================
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                SELECT EXISTS (
+                    SELECT 1 FROM information_schema.tables
+                    WHERE table_schema='public'
+                    AND table_name='electricpoles'
+                )
+            """)
+            if cursor.fetchone()[0]:
+                cursor.execute("""
+                    SELECT COUNT(*)
+                    FROM public.electricpoles
+                    WHERE "Vill_Id" = %s
+                """, [village_code])
+                electric_data_total = cursor.fetchone()[0] or 0
+    except Exception as e:
+        print("Electric poles error:", e)
+        electric_data_total = 0
+
+    # =========================
+    # TRANSFORMER
+    # =========================
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                SELECT EXISTS (
+                    SELECT 1 FROM information_schema.tables
+                    WHERE table_schema='public'
+                    AND table_name='transformer'
+                )
+            """)
+            if cursor.fetchone()[0]:
+                cursor.execute("""
+                    SELECT COUNT(*)
+                    FROM public.transformer
+                    WHERE "Vill_ID" = %s
+                """, [village_code])
+                transformer_data_total = cursor.fetchone()[0] or 0
+    except Exception as e:
+        print("Transformer error:", e)
+        transformer_data_total = 0
+
+    # =========================
+    # RETURN TABLE
+    # =========================
+    return [
+        [Paragraph("S. No.", bold_center_style),
+         Paragraph("Type", bold_center_style),
+         Paragraph("Number", bold_center_style)],
+        ["1", Paragraph("Electric post and network", normal_style),
+         Paragraph(str(electric_data_total))],
+        ["2", Paragraph("Transformer", normal_style),
+         Paragraph(str(transformer_data_total))],
+    ]
+
 
 
 
@@ -1374,11 +1392,19 @@ def getPublicAssetsData(village_id):
         ]
 
 
-def getRoadLengthByTypologyData(village_id, workspace, layer): 
-    from django.db import connection
-    
+from collections import defaultdict
+from django.db import connection
+import requests
+
+def percent(val, total, is_total=False):
+    if not total:
+        return "0%"
+    if is_total:
+        return "100%"
+    return f"{round((val / total) * 100, 2)}%"
+
+def getRoadLengthByTypologyData(village_id, workspace, layer):
     try:
-        # Get village code
         village = tblVillage.objects.get(id=village_id)
         village_code = village.code
     except tblVillage.DoesNotExist:
@@ -1387,60 +1413,64 @@ def getRoadLengthByTypologyData(village_id, workspace, layer):
             ["", "Village not found", "0", "0%"]
         ]
 
-    # Try database first
+    # =========================
+    # 1️⃣ TRY DATABASE FIRST
+    # =========================
     try:
         with connection.cursor() as cursor:
-            # Check if table exists
             cursor.execute("""
                 SELECT EXISTS (
-                    SELECT FROM information_schema.tables 
-                    WHERE table_schema = 'public' 
+                    SELECT 1
+                    FROM information_schema.tables
+                    WHERE table_schema = 'public'
                     AND table_name = 'road_network'
                 )
             """)
-            
-            if cursor.fetchone()[0]:
+            table_exists = cursor.fetchone()[0]
+
+            if table_exists:
                 cursor.execute("""
-                    SELECT "RSur_Type", SUM("Length") as total_length
+                    SELECT "RSur_Type", SUM("Length") AS total_length
                     FROM public.road_network
                     WHERE "Vill_ID" = %s
                     GROUP BY "RSur_Type"
                     ORDER BY total_length DESC
                 """, [village_code])
-                
+
                 rows = cursor.fetchall()
-                
+
                 if rows:
-                    # Calculate total length in km
-                    total_length_m = sum(row[1] for row in rows if row[1])
-                    total_length_km = total_length_m / 1000
-                    
-                    result = [["S. No.", "Surface Type", "Length (km)", "% to Total Road Length"]]
-                    
-                    for idx, (surface_type, length_m) in enumerate(rows, 1):
-                        if length_m:
-                            length_km = length_m / 1000
-                            percentage = f"{round(length_km / total_length_km * 100, 2)}%" if total_length_km > 0 else "0%"
-                            result.append([
-                                str(idx),
-                                surface_type or "Unknown",
-                                f"{length_km:.2f}",
-                                percentage
-                            ])
-                    
-                    # Add total row
+                    total_length_m = sum(r[1] for r in rows if r[1])
+                    total_length_km = total_length_m / 1000 if total_length_m else 0
+
+                    result = [
+                        ["S. No.", "Surface Type", "Length (km)", "% to Total Road Length"]
+                    ]
+
+                    for idx, (surface, length_m) in enumerate(rows, 1):
+                        length_km = (length_m or 0) / 1000
+                        result.append([
+                            str(idx),
+                            surface or "Unknown",
+                            f"{length_km:.2f}",
+                            percent(length_km, total_length_km)
+                        ])
+
+                    # ✅ TOTAL ROW (NO HARDCODE)
                     result.append([
                         str(len(rows) + 1),
                         "Total",
                         f"{total_length_km:.2f}",
-                        "100.00%" if total_length_km > 0 else "0%"
+                        percent(total_length_km, total_length_km, is_total=True)
                     ])
-                    
+
                     return result
     except Exception:
-        pass  # Fall back to GeoServer
+        pass  # fallback to GeoServer
 
-    # Fallback to GeoServer
+    # =========================
+    # 2️⃣ FALLBACK TO GEOSERVER
+    # =========================
     try:
         # Build WFS request
         wfs_url = f"{GEOSERVER_BASE_URL}/{workspace}/ows"
@@ -1454,69 +1484,49 @@ def getRoadLengthByTypologyData(village_id, workspace, layer):
         }
 
         response = requests.get(wfs_url, params=params, timeout=10)
-        if response.status_code != 200:
-            return [["S. No.", "Surface Type", "Length (km)", "% to Total Road Length"],
-                    ["", "Geoserver unavailable", "N/A", "N/A"]]
+        response.raise_for_status()
 
         geojson = response.json()
         features = geojson.get("features", [])
-        if not features:
-            return [
-                ["S. No.", "Surface Type", "Length (km)", "% to Total Road Length"],
-                ["1", "PNRD (Earthen road)", "0", "0%"],
-                ["2", "PWD (Bituminous road)", "0", "0%"],
-                ["3", "PWD (Cement block road)", "0", "0%"],
-                ["4", "PNRD (Cement block road)", "0", "0%"],
-                ["5", "PNRD (Concrete road)", "0", "0%"],
-                ["6", "WRD (Earthen road)", "0", "0%"],
-                ["7", "Total", "0", "0%"]
-            ]
 
-        # Aggregate lengths
         surface_lengths = defaultdict(float)
-        for feature in features:
-            props = feature.get("properties", {})
-            surface_type = props.get("rsur_type", "Unknown").strip()
-            length_m = props.get("length", 0.0) or 0.0
-            surface_lengths[surface_type] += float(length_m)
 
-        # Convert to km and calculate total
-        total_length = sum(surface_lengths.values()) / 1000
-        
-        # Build result dynamically
-        result = [["S. No.", "Surface Type", "Length (km)", "% to Total Road Length"]]
-        
-        for idx, (surface_type, length_m) in enumerate(surface_lengths.items(), 1):
+        for f in features:
+            props = f.get("properties", {})
+            surface = (props.get("rsur_type") or "Unknown").strip()
+            length_m = props.get("length") or 0
+            surface_lengths[surface] += float(length_m)
+
+        total_length_km = sum(surface_lengths.values()) / 1000
+
+        result = [
+            ["S. No.", "Surface Type", "Length (km)", "% to Total Road Length"]
+        ]
+
+        for idx, (surface, length_m) in enumerate(surface_lengths.items(), 1):
             length_km = length_m / 1000
-            percentage = f"{round(length_km / total_length * 100, 2)}%" if total_length > 0 else "0%"
             result.append([
                 str(idx),
-                surface_type,
+                surface,
                 f"{length_km:.2f}",
-                percentage
+                percent(length_km, total_length_km)
             ])
-        
-        # Add total row
+
+        # ✅ TOTAL ROW (NO HARDCODE)
         result.append([
             str(len(surface_lengths) + 1),
             "Total",
-            f"{total_length:.2f}",
-            "100.00%" if total_length > 0 else "0%"
+            f"{total_length_km:.2f}",
+            percent(total_length_km, total_length_km, is_total=True)
         ])
-        
+
         return result
 
-    except (requests.exceptions.ConnectionError, requests.exceptions.Timeout, requests.exceptions.RequestException):
-        return [
-            ["S. No.", "Surface Type", "Length (km)", "% to Total Road Length"],
-            ["", "Geoserver offline", "N/A", "N/A"]
-        ]
     except Exception:
         return [
             ["S. No.", "Surface Type", "Length (km)", "% to Total Road Length"],
             ["", "Data unavailable", "N/A", "N/A"]
         ]
-
 
 
 

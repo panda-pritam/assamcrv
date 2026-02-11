@@ -140,6 +140,8 @@ class Risk_Assessment_Result(models.Model):
     flood_loss = models.DecimalField(max_digits=15, decimal_places=8, null=True, blank=True)
     eq_loss = models.DecimalField(max_digits=15, decimal_places=8, null=True, blank=True)
     wind_loss = models.DecimalField(max_digits=15, decimal_places=8, null=True, blank=True)
+
+    erosion_class = models.CharField(max_length=255, null=True, blank=True)
     
     # Metadata
     created_at = models.DateTimeField(auto_now_add=True)
