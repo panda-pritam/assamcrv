@@ -1536,6 +1536,9 @@ def get_sqlalchemy_engine():
     return create_engine(engine_url)
 
 
+import geopandas as gpd
+from sqlalchemy.exc import ProgrammingError
+
 def load_village_roads(village_code):
     """
     Load all road geometries and related attributes
@@ -1547,33 +1550,72 @@ def load_village_roads(village_code):
 
     engine = get_sqlalchemy_engine()
 
-    sql = """
-    SELECT
-        id,
-        geom,
-        "Rd_Surface" AS rd_surface,
-        "RSur_Type" AS rsur_type,
-        "Type_R" AS rsurtypeid,
-        "Width" AS width,
-        "Length" AS length,
-        "UnitRpCost" AS unit_cost
-    FROM public.road_network
-    WHERE TRIM("Vill_ID") = TRIM(%s)
-      AND geom IS NOT NULL;
+    # First attempt: lowercase column names (recommended standard)
+    sql_lower = """
+        SELECT
+            id,
+            geom,
+            rd_surface,
+            rsur_type,
+            type_r AS rsurtypeid,
+            width,
+            length,
+            unitrpcost AS unit_cost
+        FROM public.road_network
+        WHERE TRIM(vill_id) = TRIM(%s)
+        AND geom IS NOT NULL;
     """
 
-    roads_gdf = gpd.read_postgis(
-        sql,
-        engine,
-        params=(village_code,),
-        geom_col="geom",
-        crs="EPSG:4326"
-    )
+    # Second attempt: quoted mixed-case column names
+    sql_upper = """
+        SELECT
+            id,
+            geom,
+            "Rd_Surface" AS rd_surface,
+            "RSur_Type" AS rsur_type,
+            "Type_R" AS rsurtypeid,
+            "Width" AS width,
+            "Length" AS length,
+            "UnitRpCost" AS unit_cost
+        FROM public.road_network
+        WHERE TRIM("Vill_ID") = TRIM(%s)
+        AND geom IS NOT NULL;
+    """
 
-    if roads_gdf.empty:
-        print(f"⚠️ No roads found for village_code={village_code}")
+    # Try lowercase first
+    try:
+        roads_gdf = gpd.read_postgis(
+            sql_lower,
+            engine,
+            params=(village_code,),
+            geom_col="geom",
+            crs="EPSG:4326"
+        )
 
-    return roads_gdf
+        if not roads_gdf.empty:
+            return roads_gdf
+
+    except Exception as e:
+        print("Lowercase query failed. Trying uppercase version...")
+
+    # Try uppercase version
+    try:
+        roads_gdf = gpd.read_postgis(
+            sql_upper,
+            engine,
+            params=(village_code,),
+            geom_col="geom",
+            crs="EPSG:4326"
+        )
+
+        if not roads_gdf.empty:
+            return roads_gdf
+
+    except Exception as e:
+        print("Uppercase query also failed.")
+
+    print(f"⚠️ No roads found for village_code={village_code}")
+    return gpd.GeoDataFrame()  # return empty GeoDataFrame
 
 
 
