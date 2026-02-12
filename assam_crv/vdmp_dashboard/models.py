@@ -1,7 +1,6 @@
 from django.db import models
 from village_profile.models import tblVillage, tblDistrict
 
-
 class AttributeMapping(models.Model):
     MODEL_CHOICES = [
         ('HouseholdSurvey', 'Household Survey'),
@@ -477,7 +476,7 @@ class roadFloodMDRMapping(models.Model):
     
 class agricultureLandWindMDRMapping(models.Model):
     wind_hazard = models.FloatField()
-    mdr = models.DecimalField(max_digits=10, decimal_places=8)
+    mdr = models.DecimalField(max_digits=11, decimal_places=8)
     crop_type = models.CharField(max_length=100)
 
     def __str__(self):
@@ -485,7 +484,7 @@ class agricultureLandWindMDRMapping(models.Model):
     
 class agricultureLandEQMDRMapping(models.Model):
     eq_hazard = models.FloatField()
-    mdr = models.DecimalField(max_digits=10, decimal_places=8)
+    mdr = models.DecimalField(max_digits=11, decimal_places=8)
     crop_type = models.CharField(max_length=100)
 
     def __str__(self):

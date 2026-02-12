@@ -206,7 +206,7 @@ DATA_UPLOAD_MAX_NUMBER_FIELDS = None
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-GEOSERVER_URL = config('GEOSERVER_URL', default='http://localhost:8085/geoserver')
+GEOSERVER_URL = config('GEOSERVER_URL', default='http://localhost:8080/geoserver')
 
 
 # Django GIS Library Paths (set from environment variables configured above)
