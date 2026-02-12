@@ -532,6 +532,19 @@ def process_commercial_data(village_id):
     df[['mapped_house_type', 'unit_rate_inr']] = df.apply(
         lambda x: pd.Series(get_house_type_mapping(x['wall_type'], x['roof_type'], x['floor_type'])), axis=1
     )
+    
+    # DEBUG: Print combinations that didn't get house type mapping
+    unmapped = df[df['mapped_house_type'] == 'Other / Unknown']
+    if len(unmapped) > 0:
+        print(f"\nDEBUG: Found {len(unmapped)} commercial records with unmapped house types")
+        print("DEBUG: Material combinations that failed to map:")
+        unique_combos = unmapped[['wall_type', 'roof_type', 'floor_type']].drop_duplicates()
+        for idx, row in unique_combos.iterrows():
+            count = len(unmapped[(unmapped['wall_type'] == row['wall_type']) & 
+                                (unmapped['roof_type'] == row['roof_type']) & 
+                                (unmapped['floor_type'] == row['floor_type'])])
+            print(f"  - Wall: '{row['wall_type']}', Roof: '{row['roof_type']}', Floor: '{row['floor_type']}' (Count: {count})")
+    
     df['replacement_cost_inr'] = df['building_area_sqft'] * df['unit_rate_inr']
     
     # Process hazards and losses
@@ -575,6 +588,19 @@ def process_critical_facility_data(village_id):
     df[['mapped_house_type', 'unit_rate_inr']] = df.apply(
         lambda x: pd.Series(get_house_type_mapping(x['wall_type'], x['roof_type'], x['floor_type'])), axis=1
     )
+    
+    # DEBUG: Print combinations that didn't get house type mapping
+    unmapped = df[df['mapped_house_type'] == 'Other / Unknown']
+    if len(unmapped) > 0:
+        print(f"\nDEBUG: Found {len(unmapped)} critical facility records with unmapped house types")
+        print("DEBUG: Material combinations that failed to map:")
+        unique_combos = unmapped[['wall_type', 'roof_type', 'floor_type']].drop_duplicates()
+        for idx, row in unique_combos.iterrows():
+            count = len(unmapped[(unmapped['wall_type'] == row['wall_type']) & 
+                                (unmapped['roof_type'] == row['roof_type']) & 
+                                (unmapped['floor_type'] == row['floor_type'])])
+            print(f"  - Wall: '{row['wall_type']}', Roof: '{row['roof_type']}', Floor: '{row['floor_type']}' (Count: {count})")
+    
     df['replacement_cost_inr'] = df['building_area_sqft'] * df['unit_rate_inr']
     
     # Process hazards and losses

@@ -1,5 +1,5 @@
 let mapObj = null;
-let geoserverURL = window.GEOSERVER_URL || "http://localhost:8085/geoserver";
+let geoserverURL = window.GEOSERVER_URL || "http://localhost:8080/geoserver";
 
 // Add these variables at the top of your map.js file after existing declarations
 //let printSelectedLayers = new Set(); // To store selected layers for printing
@@ -30,12 +30,12 @@ document.addEventListener("DOMContentLoaded", function () {
     const districtSelect = document.getElementById("Layer_district");
     const villageSelect = document.getElementById("layer_village");
 
-    if (districtSelect) {
-      districtSelect.addEventListener("change", reloadLayersWithFilter);
-    }
-    if (villageSelect) {
-      villageSelect.addEventListener("change", reloadLayersWithFilter);
-    }
+    // if (districtSelect) {
+    //   districtSelect.addEventListener("change", reloadLayersWithFilter);
+    // }
+    // if (villageSelect) {
+    //   villageSelect.addEventListener("change", reloadLayersWithFilter);
+    // }
   }, 100);
 
   baseLayer = new ol.layer.Tile({
@@ -584,7 +584,7 @@ function getCurrentCQLFilter() {
 function addLayerToMap(layer, type = "vector") {
   const fullLayerName = `${layer.id}_${layer.layer_name}_${layer.workspace}`;
   let newLayer;
-  const currentFilter = getCurrentCQLFilter();
+  // const currentFilter = getCurrentCQLFilter();
 
   other_layer_zIndex += 1;
 
@@ -595,7 +595,7 @@ function addLayerToMap(layer, type = "vector") {
       FORMAT: "image/png",
       TRANSPARENT: true,
     };
-    if (currentFilter) params.CQL_FILTER = currentFilter;
+    // if (currentFilter) params.CQL_FILTER = currentFilter;
 
     newLayer = new ol.layer.Tile({
       title: fullLayerName,
@@ -613,7 +613,7 @@ function addLayerToMap(layer, type = "vector") {
       FORMAT: "image/png",
       TRANSPARENT: true,
     };
-    if (currentFilter) params.CQL_FILTER = currentFilter;
+    // if (currentFilter) params.CQL_FILTER = currentFilter;
 
     newLayer = new ol.layer.Tile({
       title: fullLayerName,
