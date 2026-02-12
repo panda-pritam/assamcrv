@@ -504,13 +504,13 @@
                       </div>
                     </div>
 
-                    <div class="asset-item">
+                    {% comment %} <div class="asset-item">
                       <div class="asset-icon light-violet"><img src="/static/images/industrial.svg" alt="industrial"></div>
                       <div class="asset-content">
                         <div class="asset-title">{% trans "Industrial Buildings" %}</div>
                         <div class="asset-value">-</div>
                       </div>
-                    </div>
+                    </div> {% endcomment %}
 
                     <div class="asset-item">
                       <div class="asset-icon light-cyan"><img src="/static/images/watertank.svg" alt="watertank"></div>
@@ -603,7 +603,7 @@
 
                       <div class="hazard-content">
                         <div class="hazard-title">{% trans "Wind velocity (km/hour)" %}</div>
-                        <div class="hazard-value">51 km/hour</div>
+                        <div class="hazard-value" id="max_wind_speed">51 km/hour</div>
                       </div>
                     </div>
                     <div class="hazard-item">
@@ -613,13 +613,13 @@
                         <div class="hazard-value">Zone V</div>
                       </div>
                     </div>
-                    <div class="hazard-item">
+                    {% comment %} <div class="hazard-item">
                       <div class="hazard-icon light-violet"><img src="/static/images/landslide.svg" alt="landslide"></div>
                       <div class="hazard-content">
                         <div class="hazard-title">{% trans "Landslide susceptibility" %}</div>
                         <div class="hazard-value">Nil</div>
                       </div>
-                    </div>
+                    </div> {% endcomment %}
                   </div>
                 </div>
               </div>

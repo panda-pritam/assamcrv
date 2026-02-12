@@ -37,6 +37,8 @@ import posixpath
 from django.core.files.storage import default_storage
 from django.utils.text import slugify
 from field_images.models import FieldImage
+from osgeo import gdal
+import numpy as np
 
 def vdmp_dashboard(request):
     """Render the VDMP dashboard page.
@@ -807,15 +809,20 @@ def get_household_summary_data(request):
 
     bridge_length_km = round(total_bridge_length, 2) if total_bridge_length else None
 
-    village_codes = get_village_codes(district_id, circle_id, gram_panchayat_id, village_id)
-
-    try:
-        bank_erosion_data = ExposureRiver.objects.filter(vill_id__in=village_codes).values('length_m', 'erosion_m')
-        print("-------------------------------",bank_erosion_data)
-        total_erosion_m = sum([x['erosion_m'] for x in bank_erosion_data if x['erosion_m'] is not None])
-        total_erosion_m = round(total_erosion_m/1000, 2) if total_erosion_m else None
-    except Exception as e:
-        bank_erosion_data = None
+    # Calculate river erosion length from VillageRoadInfoErosion
+    road_erosion_data_for_length = VillageRoadInfoErosion.objects.select_related(
+        'village',
+        'village__gram_panchayat',
+        'village__gram_panchayat__circle',
+        'village__gram_panchayat__circle__district',
+    ).all()
+    road_erosion_data_for_length = apply_location_filters(road_erosion_data_for_length, district_id, circle_id, gram_panchayat_id, village_id)
+    
+    # Sum road length for High and Severe erosion classes
+    total_erosion_m = road_erosion_data_for_length.filter(
+        erosion_class__in=['high', 'severe', 'Severe', 'High']
+    ).aggregate(total=Sum('road_length_m'))['total'] or 0
+    total_erosion_km = round(total_erosion_m / 1000, 2) if total_erosion_m else None
         
     # STEP 12: Build initial summary data structure
     # Organize all calculated statistics into response format
@@ -855,10 +862,8 @@ def get_household_summary_data(request):
 
         'commercial_buildings':commercial_buildings_count,
         'transformer_count':transformer_count,
-        # 'bridge_length_km': f"{bridge_length_km/1000} km" if bridge_length_km else '-',
         'bridge_count': bridges_count,
-        # 'river_erosion_length_km': f"{total_erosion_m} km" if total_erosion_m else '-',
-        'river_erosion_length_km': None,
+        'river_erosion_length_km': f"{total_erosion_km} km" if total_erosion_km else '-',
 
     }
 
@@ -866,7 +871,7 @@ def get_household_summary_data(request):
     # Fetches total road length using WFS service based on location filters
     total_road_length = get_total_road_length(district_id, circle_id, gram_panchayat_id, village_id)
     
-    # Calculate flood depth statistics
+    # Calculate flood depth statistics from HouseholdSurvey
     def safe_avg(field):
         return data.exclude(
             Q(**{f"{field}__isnull": True}) |
@@ -883,6 +888,7 @@ def get_household_summary_data(request):
             max=Max(Cast(field, FloatField()))
         )['max'] or 0
     
+    # Use flood_depth_m from HouseholdSurvey for avg and max calculations
     avg_flood_depth_m = safe_avg('flood_depth_m')
     max_flood_depth_m = safe_max('flood_depth_m')
     
@@ -890,23 +896,23 @@ def get_household_summary_data(request):
     avg_flood_depth_ft = round(avg_flood_depth_m * 3.28084, 1) if avg_flood_depth_m else 0
     max_flood_depth_ft = round(max_flood_depth_m * 3.28084, 1) if max_flood_depth_m else 0
     
+    # Get max wind speed from Wind.tif raster
+    max_wind_speed = get_max_wind_speed()
+    max_wind_speed_kmh = round(max_wind_speed, 1) if max_wind_speed else 51
+    
     # Calculate vulnerability data
-    # Flood vulnerable houses (flood_class: 0.5 - 1.0 M, >1.0 M)
-    flood_vulnerable_houses = data.filter(
-        flood_class__in=['0.5 - 1.0 M', '>1.0 M','0.5 - 1.0 m', '>1.0 m',"0.5 – 1.0 m",">1.0 m"]
+    # Flood vulnerable houses: flood_depth_m > 0.5
+    flood_vulnerable_houses = data.exclude(
+        Q(flood_depth_m__isnull=True) | Q(flood_depth_m__in=['', 'nan'])
+    ).annotate(
+        flood_depth_float=Cast('flood_depth_m', FloatField())
+    ).filter(
+        flood_depth_float__gt=0.5
     ).count()
     
-    # If no flood vulnerable houses found by class, check flood_depth_m >= 0.5
-    if flood_vulnerable_houses == 0:
-        flood_vulnerable_houses = data.exclude(
-            Q(flood_depth_m__isnull=True) | Q(flood_depth_m__in=['', 'nan'])
-        ).filter(
-            flood_depth_m__gte=0.5
-        ).count()
-    
-    # Erosion vulnerable houses (erosion_class: 100, 50)
+    # Erosion vulnerable houses: erosion_class High or Severe
     erosion_vulnerable_houses = data.filter(
-        erosion_class__in=['high','severe','Severe', 'High',100,150]
+        erosion_class__in=['high', 'severe', 'Severe', 'High']
     ).count()
     
     # Get road data for vulnerability calculations
@@ -927,26 +933,74 @@ def get_household_summary_data(request):
     road_data = apply_location_filters(road_data, district_id, circle_id, gram_panchayat_id, village_id)
     road_erosion_data = apply_location_filters(road_erosion_data, district_id, circle_id, gram_panchayat_id, village_id)
     
-    # Flood vulnerable roads (sum of road_length_m for flood_class: 0.5 - 1.0 M, >1.0 M)
-    flood_vulnerable_roads_m = road_data.filter(
-        flood_class__in=['0.5 - 1.0 M', '>1.0 M','0.5 - 1.0 m', '>1.0 m',"0.5 – 1.0 m",">1.0 m"]
+    # Debug: Check if data exists
+    print(f"Road data count: {road_data.count()}")
+    print(f"Road erosion data count: {road_erosion_data.count()}")
+    
+    # Flood vulnerable roads: flood_depth_m > 0.5
+    flood_vulnerable_roads_m = road_data.exclude(
+        Q(flood_depth_m__isnull=True)
+    ).filter(
+        flood_depth_m__gt=0.5
     ).aggregate(total=Sum('road_length_m'))['total'] or 0
     flood_vulnerable_roads = round(flood_vulnerable_roads_m / 1000, 2)  # Convert to km
     
-    # Erosion vulnerable roads (sum of road_length_m for erosion_class: 100, 150)
+    print(f"Flood vulnerable roads (m): {flood_vulnerable_roads_m}, (km): {flood_vulnerable_roads}")
+    
+    # Erosion vulnerable roads: erosion_class High or Severe
     erosion_vulnerable_roads_m = road_erosion_data.filter(
-        erosion_class__in=['high','severe','Severe', 'High',100,150]
+        erosion_class__in=['high', 'severe', 'Severe', 'High']
     ).aggregate(total=Sum('road_length_m'))['total'] or 0
     erosion_vulnerable_roads = round(erosion_vulnerable_roads_m / 1000, 2)  # Convert to km
+    
+    print(f"Erosion vulnerable roads (m): {erosion_vulnerable_roads_m}, (km): {erosion_vulnerable_roads}")
     
     summary['total_road_length'] = total_road_length
     summary['avg_flood_depth'] = avg_flood_depth_ft
     summary['max_flood_depth'] = max_flood_depth_ft
+    summary['max_wind_speed'] = max_wind_speed_kmh
     summary['flood_vulnerable_houses'] = flood_vulnerable_houses
     summary['erosion_vulnerable_houses'] = erosion_vulnerable_houses
     summary['flood_vulnerable_roads'] = flood_vulnerable_roads
     summary['erosion_vulnerable_roads'] = erosion_vulnerable_roads
     return Response(summary)
+
+
+
+
+
+
+def get_max_wind_speed():
+    """Get maximum wind speed from Wind.tif raster file"""
+    try:
+        wind_raster_path = os.path.join(settings.MEDIA_ROOT, 'pipeline_data', 'wind_raster', 'Wind.tif')
+        
+        if not os.path.exists(wind_raster_path):
+            print(f"Wind raster file not found: {wind_raster_path}")
+            return None
+        
+        dataset = gdal.Open(wind_raster_path)
+        if dataset is None:
+            print("Failed to open wind raster file")
+            return None
+        
+        band = dataset.GetRasterBand(1)
+        data = band.ReadAsArray()
+        
+        # Get max value, ignoring NoData values
+        nodata = band.GetNoDataValue()
+        if nodata is not None:
+            data = np.ma.masked_equal(data, nodata)
+        
+        max_value = np.max(data)
+        dataset = None  # Close dataset
+        
+        return float(max_value)
+        
+    except Exception as e:
+        print(f"Error reading wind raster: {e}")
+        return None
+
 
 def get_total_road_length(district_id=None, circle_id=None, gram_panchayat_id=None, village_id=None):
     """Get total road length based on location filters"""

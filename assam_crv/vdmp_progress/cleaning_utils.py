@@ -247,6 +247,7 @@ def extract_erosion_buffer_values_postgis(
     """
 
     import psycopg2
+    import math
 
     df["latitude_f"] = df["latitude"].apply(safe_float)
     df["longitude_f"] = df["longitude"].apply(safe_float)
@@ -282,30 +283,51 @@ def extract_erosion_buffer_values_postgis(
 
 
     with conn.cursor() as cur:
+        processed_count = 0
+        skipped_count = 0
+        
         for idx, row in df.iterrows():
 
             lat = row["latitude_f"]
             lon = row["longitude_f"]
 
-            # 🔒 HARD SAFETY CHECK (THIS FIXES EVERYTHING)
-            if (
-                lat is None or lon is None or
-                lat < -90 or lat > 90 or
-                lon < -180 or lon > 180
-            ):
+            # 🔒 HARD SAFETY CHECK - Skip None, NaN, and out-of-range values
+            if lat is None or lon is None:
+                skipped_count += 1
+                continue
+            
+            # Check for NaN (NaN != NaN is True)
+            if isinstance(lat, float) and math.isnan(lat):
+                skipped_count += 1
+                continue
+            if isinstance(lon, float) and math.isnan(lon):
+                skipped_count += 1
+                continue
+            
+            # Check valid coordinate ranges
+            if lat < -90 or lat > 90 or lon < -180 or lon > 180:
+                skipped_count += 1
                 continue
 
             try:
                 cur.execute(sql, (lon, lat))
                 result = cur.fetchone()[0]
-            except Exception:
-                # 🔕 SILENT SKIP — DO NOT CRASH PIPELINE
+                
+                if result is not None:
+                    val = str(int(result))
+                    df.at[idx, "erosion_buffer_m"] = val
+                    df.at[idx, "erosion_value"] = val
+                
+                processed_count += 1
+                    
+            except Exception as e:
+                # Rollback and continue - doesn't re-run previous queries
+                conn.rollback()
+                skipped_count += 1
                 continue
-
-            if result is not None:
-                val = str(int(result))
-                df.at[idx, "erosion_buffer_m"] = val
-                df.at[idx, "erosion_value"] = val
+        
+        if skipped_count > 0:
+            print(f"⚠️ Skipped {skipped_count} rows with invalid coordinates, processed {processed_count} rows")
 
     conn.close()
     return df
@@ -740,9 +762,9 @@ def process_agriculture_wind_pipeline(
         else:
             # 🔑 CENTROID FALLBACK
             centroid = row["geom"].centroid
-            print(f"⚠️ No valid pixels for polygon {idx}, using centroid fallback at {centroid.y}, {centroid.x}")
+            # print(f"⚠️ No valid pixels for polygon {idx}, using centroid fallback at {centroid.y}, {centroid.x}")
             centroid_value = sample_raster_at_point(ds, centroid)
-            print(f"   Centroid value: {centroid_value}")
+            # print(f"   Centroid value: {centroid_value}")
 
             if centroid_value is not None:
                 wind_hazard = centroid_value
@@ -986,6 +1008,7 @@ def process_arrgicultural_data_pipeline(
             flood_depth = stats['max']
             flood_class = _classify_flood(flood_depth)
             area_sqm = float(row["Area_SqM"])
+            area_sqkm = area_sqm / 1_000_000  # Convert sq meters to sq kilometers
 
             if stats['valid_pixels'] == 0:
                 stats_summary['no_coverage'] += 1
@@ -995,7 +1018,7 @@ def process_arrgicultural_data_pipeline(
                 stats_summary['no_flood'] += 1
 
             unit_cost = Decimal(str(get_agriculture_unit_cost("Agriculture Land")))
-            replacement_cost = Decimal(str(area_sqm)) * unit_cost
+            replacement_cost = Decimal(str(area_sqkm)) * unit_cost
 
             crop_type = row.get("Class_name") or "Agriculture Land"
             mdr = Decimal(str(get_agriculture_flood_mdr(flood_depth, crop_type)))
@@ -1593,6 +1616,7 @@ def load_village_roads(village_code):
         )
 
         if not roads_gdf.empty:
+            print(f"📍 Loaded {len(roads_gdf)} road features for village {village_code}")
             return roads_gdf
 
     except Exception as e:
@@ -1609,6 +1633,7 @@ def load_village_roads(village_code):
         )
 
         if not roads_gdf.empty:
+            print(f"📍 Loaded {len(roads_gdf)} road features for village {village_code}")
             return roads_gdf
 
     except Exception as e:
@@ -1669,6 +1694,7 @@ def aggregate_by_grid_and_road(intersections):
     Aggregate road length per grid cell
     AND per road attributes.
     """
+    print(f"📊 Aggregating {len(intersections)} intersection records...")
 
     result = (
         intersections
@@ -1688,7 +1714,8 @@ def aggregate_by_grid_and_road(intersections):
             road_length_m=("road_length_m", "sum")
         )
     )
-
+    
+    print(f"✅ Aggregated to {len(result)} unique grid-road combinations")
     return result
 
 
@@ -1733,6 +1760,8 @@ def save_grid_results(result_df, village_obj, village_code):
 
     district_name, district_code = get_district_from_village(village_obj)
     records = []
+    
+    print(f"💾 Preparing to save {len(result_df)} road grid results...")
 
     # -----------------------------
     # DELETE old data for village
@@ -2168,78 +2197,131 @@ def _process_road_erosion_data(
     Erosion analysis:
     - Road × river buffer intersection
     - Length of road inside erosion-prone buffers
-    - One record per road (grouped)
+    - One record per road feature (NOT grouped)
     """
 
     from vdmp_dashboard.models import VillageRoadInfoErosion
     from django.db import transaction
+    
+    print(f"🌊 Starting road erosion analysis for {village_name}...")
 
     # Delete old data first
     with transaction.atomic():
         deleted_count, _ = VillageRoadInfoErosion.objects.filter(village=village_obj).delete()
         print(f"🧹 Deleted {deleted_count} old road erosion records for {village_name}")
 
-    sql = """
+    # Try uppercase column names first (QGIS import)
+    sql_upper = """
     WITH road_utm AS (
         SELECT
             id,
             "Rd_Surface" AS rd_surface,
             "RSur_Type" AS rsur_type,
-            ST_Transform(ST_SetSRID(geom, 4326), 32646) AS geom_utm
+            ST_Length(ST_Transform(ST_SetSRID(geom, 4326), 32646)) AS road_length_m,
+            ST_Centroid(ST_Transform(ST_SetSRID(geom, 4326), 32646)) AS centroid_utm
         FROM public.road_network
         WHERE "Vill_ID" = %s
     ),
-
+    
     buffer_utm AS (
         SELECT
             "BUFF_DIST" AS buffer_distance,
             ST_Transform(ST_SetSRID(geom, 4326), 32646) AS geom_utm
         FROM public.riverbuffer
     ),
-
-    road_buffer_intersections AS (
+    
+    road_with_erosion AS (
         SELECT
             r.id,
             r.rd_surface,
             r.rsur_type,
-            b.buffer_distance,
-            ST_Intersection(r.geom_utm, b.geom_utm) AS intersection_geom
+            r.road_length_m,
+            MIN(b.buffer_distance) AS min_buffer_distance,
+            ST_Y(ST_Transform(r.centroid_utm, 4326)) AS lat,
+            ST_X(ST_Transform(r.centroid_utm, 4326)) AS lon
         FROM road_utm r
-        JOIN buffer_utm b
-          ON ST_Intersects(r.geom_utm, b.geom_utm)
-    ),
-
-    erosion_summary AS (
-        SELECT
-            id,
-            rd_surface,
-            rsur_type,
-            MIN(buffer_distance) AS min_buffer_distance,
-            SUM(ST_Length(intersection_geom)) AS total_length,
-            ST_Centroid(ST_Collect(intersection_geom)) AS centroid_geom
-        FROM road_buffer_intersections
-        WHERE intersection_geom IS NOT NULL
-          AND NOT ST_IsEmpty(intersection_geom)
-        GROUP BY id, rd_surface, rsur_type
+        LEFT JOIN buffer_utm b
+          ON ST_Intersects(r.centroid_utm, b.geom_utm)
+        GROUP BY r.id, r.rd_surface, r.rsur_type, r.road_length_m, r.centroid_utm
     )
-
+    
     SELECT
         id,
         rd_surface,
         rsur_type,
         min_buffer_distance,
-        total_length,
-        ST_Y(ST_Transform(centroid_geom, 4326)) AS lat,
-        ST_X(ST_Transform(centroid_geom, 4326)) AS lon
-    FROM erosion_summary;
+        road_length_m,
+        lat,
+        lon
+    FROM road_with_erosion;
     """
 
-    with conn.cursor() as cur:
-        cur.execute(sql, (village_code,))
-        rows = cur.fetchall()
+    # Fallback to lowercase column names (CLI import)
+    sql_lower = """
+    WITH road_utm AS (
+        SELECT
+            id,
+            rd_surface,
+            rsur_type,
+            ST_Length(ST_Transform(ST_SetSRID(geom, 4326), 32646)) AS road_length_m,
+            ST_Centroid(ST_Transform(ST_SetSRID(geom, 4326), 32646)) AS centroid_utm
+        FROM public.road_network
+        WHERE vill_id = %s
+    ),
+    
+    buffer_utm AS (
+        SELECT
+            "BUFF_DIST" AS buffer_distance,
+            ST_Transform(ST_SetSRID(geom, 4326), 32646) AS geom_utm
+        FROM public.riverbuffer
+    ),
+    
+    road_with_erosion AS (
+        SELECT
+            r.id,
+            r.rd_surface,
+            r.rsur_type,
+            r.road_length_m,
+            MIN(b.buffer_distance) AS min_buffer_distance,
+            ST_Y(ST_Transform(r.centroid_utm, 4326)) AS lat,
+            ST_X(ST_Transform(r.centroid_utm, 4326)) AS lon
+        FROM road_utm r
+        LEFT JOIN buffer_utm b
+          ON ST_Intersects(r.centroid_utm, b.geom_utm)
+        GROUP BY r.id, r.rd_surface, r.rsur_type, r.road_length_m, r.centroid_utm
+    )
+    
+    SELECT
+        id,
+        rd_surface,
+        rsur_type,
+        min_buffer_distance,
+        road_length_m,
+        lat,
+        lon
+    FROM road_with_erosion;
+    """
+
+    rows = []
+    try:
+        with conn.cursor() as cur:
+            cur.execute(sql_upper, (village_code,))
+            rows = cur.fetchall()
+            print(f"✅ Query returned {len(rows)} road features (uppercase columns)")
+    except Exception as e:
+        print(f"⚠️ Uppercase columns failed, trying lowercase: {e}")
+        conn.rollback()
+        try:
+            with conn.cursor() as cur:
+                cur.execute(sql_lower, (village_code,))
+                rows = cur.fetchall()
+                print(f"✅ Query returned {len(rows)} road features (lowercase columns)")
+        except Exception as e2:
+            print(f"❌ Road erosion query failed: {e2}")
+            conn.rollback()
+            return
 
     records = []
-
     for id, surf, rsur, buff_dist, length, lat, lon in rows:
         records.append(
             VillageRoadInfoErosion(
@@ -2259,6 +2341,9 @@ def _process_road_erosion_data(
 
     if records:
         VillageRoadInfoErosion.objects.bulk_create(records, batch_size=1000)
+        print(f"✅ Inserted {len(records)} road erosion records for {village_name}")
+    else:
+        print(f"⚠️ No road erosion records to save for {village_name}")
 
 
 
@@ -3069,6 +3154,7 @@ def _classify_duration(duration):
         return duration_str
 
 def _classify_erosion_buffer(buffer_value):
+    # print(f"Classifying erosion buffer value: {buffer_value}")
     """Classify erosion based on buffer distance"""
     if pd.isna(buffer_value) or buffer_value is None or buffer_value == 'None':
         return "Low"
@@ -3279,9 +3365,9 @@ def _process_model_flood_erosion(queryset, village_id, model_type):
         if 'erosion_buffer_m' in df.columns:
             df.loc[erosion_mask, 'erosion_value'] = df.loc[erosion_mask, 'erosion_buffer_m']
     
-    # Apply classifications
-    df['flood_class'] = df['flood_depth_m'].apply(_classify_flood)
-    df['erosion_class'] = df['erosion_value'].apply(_classify_erosion_buffer)
+    # Apply classifications only for valid values
+    df['flood_class'] = df['flood_depth_m'].apply(lambda x: _classify_flood(x) if pd.notna(x) and x > 0 else None)
+    df['erosion_class'] = df['erosion_value'].apply(lambda x: _classify_erosion_buffer(x) if pd.notna(x) and x != '' else None)
     
     # Update records in database
     updated_count = 0
@@ -3364,12 +3450,16 @@ def run_gis_risk_assessment_pipeline(village_obj, village_code):
         print(f"Processing {household_records.count()} household records...")
         _process_model_flood_erosion(household_records, village_id, 'household')
     
+    print(f"Processing {household_records.count()} household records...")
+
+    print("-------------------- Commercial Records --------------------")
     # Process Commercial
     commercial_records = Commercial.objects.filter(village=village_obj)
     if commercial_records.exists():
         print(f"Processing {commercial_records.count()} commercial records...")
         _process_model_flood_erosion(commercial_records, village_id, 'commercial')
     
+    print("-------------------- Critical_Facility --------------------")
     # Process Critical_Facility
     critical_records = Critical_Facility.objects.filter(village=village_obj)
     if critical_records.exists():
@@ -3412,10 +3502,9 @@ def run_gis_risk_assessment_pipeline(village_obj, village_code):
     # Process road flood analysis
     process_road_flood_zonal_length(village_obj, village_code, flood_raster_path)
     
-    # # Process road earthquake analysis  
-    # process_road_eq_zonal_length(village_obj, village_code, eq_raster_path)
+   
     
-    # Process road erosion analysis
+    #Process road erosion analysis
     try:
         import psycopg2
         conn = psycopg2.connect(**_get_db_config())

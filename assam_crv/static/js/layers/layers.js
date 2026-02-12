@@ -47,12 +47,7 @@ async function getAllTheLayers() {
                                    onchange="toggleLayer(this.checked, ${index})" 
                                    onclick="event.stopPropagation();" ${checkedAttr}>
                         </div>
-                        <button class="layer-zoom-btn" 
-                                id="zoom-btn-${layer.uuid}"
-                                title="Zoom to layer"
-                                onclick="event.stopPropagation(); zoomToLayer('${layer.workspace}', '${layer.layer_name}')">
-                            <i class="fa-solid fa-magnifying-glass srchIcn"></i>
-                        </button>
+                       
                     </h2>
                     <div id="collapse${layer.uuid}" class="accordion-collapse collapse ${collapseClass}" 
                          data-bs-parent="#accordionLayerDiv">
@@ -139,7 +134,7 @@ function changeOpacity(value, layerIndex) {
 }
 
 async function zoomToLayer(workspace, layerName) {
-    const url = `${geoserverURL}/${workspace}/wms?service=WMS&version=1.3.0&request=GetCapabilities`;
+    const url = `${geoserverURL}${workspace}/wms?service=WMS&version=1.3.0&request=GetCapabilities`;
 
     try {
         const response = await fetch(url);
@@ -186,3 +181,13 @@ function clearPrintSelection() {
     printSelectedLayers.clear();
     console.log('Print selection cleared');
 }
+
+
+
+
+ // <button class="layer-zoom-btn" 
+                        //         id="zoom-btn-${layer.uuid}"
+                        //         title="Zoom to layer"
+                        //         onclick="event.stopPropagation(); zoomToLayer('${layer.workspace}', '${layer.layer_name}')">
+                        //     <i class="fa-solid fa-magnifying-glass srchIcn"></i>
+                        // </button>
