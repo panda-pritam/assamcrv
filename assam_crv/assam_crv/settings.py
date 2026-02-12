@@ -98,6 +98,7 @@ INSTALLED_APPS = [
     'field_images',
     'shapefiles',
     'dashboard',
+    'mitigation',
 ]
 
 MIDDLEWARE = [

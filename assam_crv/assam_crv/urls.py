@@ -37,7 +37,8 @@ urlpatterns += i18n_patterns(
     path('', include('vdmp_progress.urls')),
     path('', include('layers.urls')),
     path('', include('task_force.urls')),
-    path('api/', include('field_images.urls')),  
+    path('api/', include('field_images.urls')),
+    path('api/mitigation/', include('mitigation.urls')),  
     path('', include('dashboard.urls')),
     path('api/upload_line_department_data/', upload_line_department_data, name='upload_line_department_data'),      
 )
