@@ -23,7 +23,7 @@
     
     margin-bottom: 20px;
   }
-  .mitigation-form-section h6 {
+  h6.mitigation-form-heading {
     font-size: 16px;
     font-weight: 400;
     color: #0b0b0b;
@@ -35,18 +35,23 @@
   .mitigation-form-wrap {
     padding: 17px;
 }
-  .mitigation-measures-section {
-    background: #F8FBFF;
+ .mitigation-measures-section {
     border-radius: 4px;
-    padding: 20px;
+    padding: 13px;
     margin-top: 20px;
-  }
+    border: 1px solid rgba(202,221,248,1);
+    padding-top: 0px;
+}
   .mitigation-measures-section h6 {
     font-size: 16px;
-    font-weight: 500;
-    color: #0b0b0b;
+    font-weight: 400;
+    color: rgba(11,11,11,1);
     margin-bottom: 20px;
     font-family: 'Work Sans';
+     border-bottom: 1px solid  rgba(202,221,248,1);
+     padding: 12px;
+     margin-left: -12px;
+    margin-right: -12px;
   }
   .form-row-inline {
     display: flex;
@@ -56,6 +61,16 @@
   .form-row-inline > div {
     flex: 1;
   }
+  .form-row-inline select.form-select {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='none' stroke='%23696e76' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 12px;
+    padding-right: 35px;
+  }
   .unit-cost-row {
     display: flex;
     gap: 15px;
@@ -63,6 +78,7 @@
   }
   .unit-cost-row > div {
     flex: 1;
+    max-width: calc(33.333% - 10px);
   }
   .lumpsum-cost-row {
     display: flex;
@@ -71,12 +87,14 @@
   }
   .lumpsum-cost-row > div {
     flex: 1;
+    max-width: calc(50% - 244.5px);
   }
-  .added-interventions-table {
+ .added-interventions-table {
     background: #fff;
     border-radius: 4px;
     margin-top: 20px;
-  }
+    border: 1px solid #CADDF8;
+}
   .added-interventions-table table {
     width: 100%;
     border-collapse: collapse;
@@ -105,10 +123,10 @@
     margin-top: 20px;
   }
   .total-quantity-box {
-    background: #F5F5F5;
-    padding: 15px 20px;
+    background: #EFF1F4;
+    padding: 10px 20px;
     border-radius: 4px;
-    border: 1px solid #E0E0E0;
+    border: 1px solid #D2D9E3;
   }
   .total-quantity-box p {
     font-size: 14px;
@@ -117,27 +135,27 @@
     font-weight: 400;
   }
   .total-quantity-box h5 {
-    font-size: 18px;
-    font-weight: 600;
+    font-size: 20px;
+    font-weight: 500;
     color: #0b0b0b;
     margin: 0;
   }
   .total-cost-box {
-    background: #F5F5F5;
-    padding: 15px 20px;
+    background: #EFF6FF;
+    padding: 10px 20px;
     border-radius: 4px;
-    border: 1px solid #E0E0E0;
+    border: 1px solid #C4DCFF;
     text-align: left;
   }
   .total-cost-box p {
-    font-size: 14px;
-    color: #666;
+    font-size: 15px;
+    color: #245fae;
     margin-bottom: 5px;
     font-weight: 400;
   }
   .total-cost-box h5 {
-    font-size: 18px;
-    font-weight: 600;
+    font-size: 20px;
+    font-weight: 500;
     color: #0b0b0b;
     margin: 0;
   }
@@ -155,32 +173,49 @@
     font-weight: 500;
   }
   .add-intervention-btn {
-    color: #245FAE;
-    font-size: 14px;
+    color: #265BAB;
+    font-size: 16px;
     font-weight: 500;
     text-decoration: none;
     display: inline-flex;
     align-items: center;
     gap: 5px;
-    margin-top: 10px;
+    margin-top: 19px;
   }
+  .mitigation-cost-wrapper {
+    background-color: rgba(235,243,255,1);
+    padding: 15px;
+    border-radius: 4px;
+    border: 1px solid rgba(220,221,248,1);
+    position: relative;
+}
   .add-intervention-btn:hover {
     text-decoration: underline;
   }
   .dummy-table-section {
     background: #fff;
     border-radius: 4px;
-    padding: 20px;
+    padding: 12px;
     margin-bottom: 20px;
      border: 1px solid  rgba(202,221,248,1);
   }
-  .dummy-table-section h6 {
+  svg.svg-inline--fa.fa-circle-info.text-muted {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+}
+ .dummy-table-section h6 {
     font-size: 16px;
-    font-weight: 500;
-    color: #0b0b0b;
+    font-weight: 400;
+    color: rgba(11,11,11,1);
     margin-bottom: 15px;
     font-family: 'Work Sans';
-  }
+    border-bottom: 1px solid  rgba(202,221,248,1);
+    margin-left: -12px;
+    margin-right: -12px;
+    padding: 12px;
+    padding-top: 0px;
+}
   .dummy-table {
     width: 100%;
     border-collapse: collapse;
@@ -230,6 +265,41 @@
     font-size: 13px;
     font-weight: 500;
   }
+  .added-interventions-table {
+    background: #fff;
+    border-radius: 4px;
+    margin-top: 20px;
+    border: 1px solid #CADDF8;
+    padding: 12px;
+}
+h6.interventions-heading{
+  
+    font-size: 16px;
+    font-weight: 400;
+    color: rgba(11,11,11,1);
+    margin-bottom: 20px;
+    font-family: 'Work Sans';
+    border-bottom: 1px solid  rgba(202,221,248,1);
+    padding: 12px;
+    margin-left: -12px;
+    margin-right: -12px;
+}
+.added-interventions-table {
+   
+    padding-top: 0px;
+}
+.total-quantity-wrap {
+    display: flex;
+    gap: 35px;
+}
+input[type="number"] {
+    -moz-appearance: textfield;
+}
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: auto;
+    opacity: 1;
+}
 </style>
 {% endblock %}
 
@@ -370,7 +440,7 @@
     <!-- Mitigation Measures -->
     <div class="mitigation-measures-section">
       <h6>{% trans "Mitigation Measures" %}</h6>
-      
+       <div class="mitigation-measures-wrapper">
       <div class="form-row-inline">
         <div>
           <label class="form-label" for="component">{% trans "Component" %} *</label>
@@ -396,11 +466,11 @@
           </select>
         </div>
       </div>
-
+<div class="mitigation-cost-wrapper">
       <div class="unit-cost-row">
         <div>
           <label class="form-label" for="unit">{% trans "Unit" %} *</label>
-          <input type="text" name="unit" id="unit" class="form-control" placeholder="Sq. ft." value="Sq. ft.">
+          <input type="text" name="unit" id="unit" class="form-control" placeholder="Sq. ft." value="Sq. ft." readonly style="background-color: #F2F4F6;">
         </div>
         <div>
           <label class="form-label" for="quantity">{% trans "Quantity" %} *</label>
@@ -408,7 +478,7 @@
         </div>
         <div>
           <label class="form-label" for="unit_cost">{% trans "Unit Cost (₹)" %} <i class="fas fa-info-circle text-muted"></i></label>
-          <input type="text" name="unit_cost" id="unit_cost" class="form-control" value="50,000" readonly>
+          <input type="text" name="unit_cost" id="unit_cost" class="form-control" value="50,000" readonly style="background-color: #F2F4F6;">
         </div>
       </div>
 
@@ -422,15 +492,15 @@
           <input type="text" name="estimated_cost" id="estimated_cost" class="form-control" value="₹ 50,00,000" readonly>
         </div>
       </div>
-
+    </div>
       <a href="#" class="add-intervention-btn">
         <i class="fas fa-plus"></i> {% trans "Add Another Intervention" %}
       </a>
-    </div>
+    </div></div>
 
     <!-- Added Interventions Table -->
     <div class="added-interventions-table">
-      <h6 class="intervensio_heading">{% trans "Added Interventions (2)" %}</h6>
+      <h6 class="interventions-heading">{% trans "Added Interventions (2)" %}</h6>
       <table>
         <thead>
           <tr>
@@ -471,6 +541,7 @@
 
     <!-- Total Summary -->
     <div class="total-summary">
+       <div class="total-quantity-wrap">
       <div class="total-quantity-box">
         <p>{% trans "Total Quantity" %}</p>
         <h5>200/200</h5>
@@ -478,13 +549,14 @@
       <div class="total-cost-box">
         <p>{% trans "Total Estimated Cost" %}</p>
         <h5>₹ 1,47,50,000</h5>
-      </div>
+      </div> </div>
+       <div class="submit-btn-wrapper">
+      <button class="btn" data-bs-toggle="modal" data-bs-target="#reviewModal">{% trans "Submit" %}</button>
+    </div>
     </div>
 
     <!-- Submit Button -->
-    <div class="submit-btn-wrapper">
-      <button class="btn" data-bs-toggle="modal" data-bs-target="#reviewModal">{% trans "Submit" %}</button>
-    </div>
+   
   </div></div>
 </section>
 </div>
