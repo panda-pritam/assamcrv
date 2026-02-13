@@ -4,303 +4,7 @@
 {% block title %}{% trans "Mitigation Intervention" %} {% endblock %}
 
 {% block extraheader %}
-<style>
-  .select2-container--default .select2-selection--single .select2-selection__arrow {
-    display: block !important;
-  }
-  #filter .select2-container--default .select2-selection--single {
-    border: 1px solid #CADDF8 !important;
-  }
-  .miti_table .form-select,
-  .miti_table .form-control {
-    border: 1px solid #CADDF8 !important;
-    color: #0b0b0b !important;
-  }
-  .mitigation-form-section {
-    background: #fff;
-    border-radius: 4px;
-    border: 1px solid  rgba(202,221,248,1);
-    
-    margin-bottom: 20px;
-  }
-  h6.mitigation-form-heading {
-    font-size: 16px;
-    font-weight: 400;
-    color: #0b0b0b;
-    margin-bottom: 0px;
-    font-family: 'Work Sans';
-    padding: 14px 17px;
-     border-bottom: 1px solid  rgba(202,221,248,1);
-  }
-  .mitigation-form-wrap {
-    padding: 17px;
-}
- .mitigation-measures-section {
-    border-radius: 4px;
-    padding: 13px;
-    margin-top: 20px;
-    border: 1px solid rgba(202,221,248,1);
-    padding-top: 0px;
-}
-  .mitigation-measures-section h6 {
-    font-size: 16px;
-    font-weight: 400;
-    color: rgba(11,11,11,1);
-    margin-bottom: 20px;
-    font-family: 'Work Sans';
-     border-bottom: 1px solid  rgba(202,221,248,1);
-     padding: 12px;
-     margin-left: -12px;
-    margin-right: -12px;
-  }
-  .form-row-inline {
-    display: flex;
-    gap: 15px;
-    margin-bottom: 15px;
-  }
-  .form-row-inline > div {
-    flex: 1;
-  }
-  .form-row-inline select.form-select {
-    appearance: none;
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='none' stroke='%23696e76' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 12px center;
-    background-size: 12px;
-    padding-right: 35px;
-  }
-  .unit-cost-row {
-    display: flex;
-    gap: 15px;
-    align-items: end;
-  }
-  .unit-cost-row > div {
-    flex: 1;
-    max-width: calc(33.333% - 10px);
-  }
-  .lumpsum-cost-row {
-    display: flex;
-    gap: 15px;
-    margin-top: 15px;
-  }
-  .lumpsum-cost-row > div {
-    flex: 1;
-    max-width: calc(50% - 244.5px);
-  }
- .added-interventions-table {
-    background: #fff;
-    border-radius: 4px;
-    margin-top: 20px;
-    border: 1px solid #CADDF8;
-}
-  .added-interventions-table table {
-    width: 100%;
-    border-collapse: collapse;
-  }
-  .added-interventions-table thead {
-    background: #E1EDFF;
-  }
-  .added-interventions-table th {
-    padding: 12px;
-    text-align: left;
-    font-size: 14px;
-    font-weight: 500;
-    color: #0b0b0b;
-    border: 1px solid #96b9e7;
-  }
-  .added-interventions-table td {
-    padding: 12px;
-    font-size: 14px;
-    color: #0b0b0b;
-    border: 1px solid #96b9e7;
-  }
-  .total-summary {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: 20px;
-  }
-  .total-quantity-box {
-    background: #EFF1F4;
-    padding: 10px 20px;
-    border-radius: 4px;
-    border: 1px solid #D2D9E3;
-  }
-  .total-quantity-box p {
-    font-size: 14px;
-    color: #666;
-    margin-bottom: 5px;
-    font-weight: 400;
-  }
-  .total-quantity-box h5 {
-    font-size: 20px;
-    font-weight: 500;
-    color: #0b0b0b;
-    margin: 0;
-  }
-  .total-cost-box {
-    background: #EFF6FF;
-    padding: 10px 20px;
-    border-radius: 4px;
-    border: 1px solid #C4DCFF;
-    text-align: left;
-  }
-  .total-cost-box p {
-    font-size: 15px;
-    color: #245fae;
-    margin-bottom: 5px;
-    font-weight: 400;
-  }
-  .total-cost-box h5 {
-    font-size: 20px;
-    font-weight: 500;
-    color: #0b0b0b;
-    margin: 0;
-  }
-  .submit-btn-wrapper {
-    text-align: right;
-    margin-top: 20px;
-  }
-  .submit-btn-wrapper .btn {
-    background: #245FAE;
-    color: #fff;
-    padding: 8px 30px;
-    border-radius: 4px;
-    border: none;
-    font-size: 16px;
-    font-weight: 500;
-  }
-  .add-intervention-btn {
-    color: #265BAB;
-    font-size: 16px;
-    font-weight: 500;
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    margin-top: 19px;
-  }
-  .mitigation-cost-wrapper {
-    background-color: rgba(235,243,255,1);
-    padding: 15px;
-    border-radius: 4px;
-    border: 1px solid rgba(220,221,248,1);
-    position: relative;
-}
-  .add-intervention-btn:hover {
-    text-decoration: underline;
-  }
-  .dummy-table-section {
-    background: #fff;
-    border-radius: 4px;
-    padding: 12px;
-    margin-bottom: 20px;
-     border: 1px solid  rgba(202,221,248,1);
-  }
-  svg.svg-inline--fa.fa-circle-info.text-muted {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-}
- .dummy-table-section h6 {
-    font-size: 16px;
-    font-weight: 400;
-    color: rgba(11,11,11,1);
-    margin-bottom: 15px;
-    font-family: 'Work Sans';
-    border-bottom: 1px solid  rgba(202,221,248,1);
-    margin-left: -12px;
-    margin-right: -12px;
-    padding: 12px;
-    padding-top: 0px;
-}
-  .dummy-table {
-    width: 100%;
-    border-collapse: collapse;
-  }
-  .dummy-table thead {
-    background: #E1EDFF;
-  }
-  .dummy-table th {
-    padding: 12px;
-    text-align: center;
-    font-size: 14px;
-    font-weight: 500;
-    color: #0b0b0b;
-    border: 1px solid #96b9e7;
-  }
-  .dummy-table td {
-    padding: 12px;
-    text-align: center;
-    font-size: 14px;
-    color: #0b0b0b;
-    border: 1px solid #96b9e7;
-  }
-  .dummy-table td.text-left {
-    text-align: left;
-  }
-  .badge-blue {
-    background: #D7E9FF;
-    color: #245FAE;
-    padding: 4px 12px;
-    border-radius: 12px;
-    font-size: 13px;
-    font-weight: 500;
-  }
-  .badge-green {
-    background: #D4F5EE;
-    color: #579F55;
-    padding: 4px 12px;
-    border-radius: 12px;
-    font-size: 13px;
-    font-weight: 500;
-  }
-  .badge-dark {
-    background: #E8EAED;
-    color: #5F6368;
-    padding: 4px 12px;
-    border-radius: 12px;
-    font-size: 13px;
-    font-weight: 500;
-  }
-  .added-interventions-table {
-    background: #fff;
-    border-radius: 4px;
-    margin-top: 20px;
-    border: 1px solid #CADDF8;
-    padding: 12px;
-}
-h6.interventions-heading{
-  
-    font-size: 16px;
-    font-weight: 400;
-    color: rgba(11,11,11,1);
-    margin-bottom: 20px;
-    font-family: 'Work Sans';
-    border-bottom: 1px solid  rgba(202,221,248,1);
-    padding: 12px;
-    margin-left: -12px;
-    margin-right: -12px;
-}
-.added-interventions-table {
-   
-    padding-top: 0px;
-}
-.total-quantity-wrap {
-    display: flex;
-    gap: 35px;
-}
-input[type="number"] {
-    -moz-appearance: textfield;
-}
-input[type="number"]::-webkit-inner-spin-button,
-input[type="number"]::-webkit-outer-spin-button {
-    -webkit-appearance: auto;
-    opacity: 1;
-}
-</style>
+
 {% endblock %}
 
 {% block content %}
@@ -394,6 +98,7 @@ input[type="number"]::-webkit-outer-spin-button {
     <!-- Dummy Table -->
     <div class="dummy-table-section">
       <h6>{% trans "Dummy Table (Table View)" %}</h6>
+      <div class="dummy_wrapper">
       <table class="dummy-table">
         <thead>
           <tr>
@@ -434,7 +139,7 @@ input[type="number"]::-webkit-outer-spin-button {
             <td><span class="badge-blue">1</span></td>
           </tr>
         </tbody>
-      </table>
+      </table></div>
     </div>
 
     <!-- Mitigation Measures -->
@@ -501,6 +206,7 @@ input[type="number"]::-webkit-outer-spin-button {
     <!-- Added Interventions Table -->
     <div class="added-interventions-table">
       <h6 class="interventions-heading">{% trans "Added Interventions (2)" %}</h6>
+      <div class="interventions_wrapper">
       <table>
         <thead>
           <tr>
@@ -537,6 +243,7 @@ input[type="number"]::-webkit-outer-spin-button {
           </tr>
         </tbody>
       </table>
+      </div>
     </div>
 
     <!-- Total Summary -->

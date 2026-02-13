@@ -79,6 +79,7 @@
         width: 100%;
         text-align: left;
     }
+   
 }
 
 /* Select2 padding increase */
@@ -295,11 +296,48 @@ footer ul {
     border: none;
     border-radius: 4px;
     color: #0B0B0B;
-   margin-bottom: 10px;
+    margin-bottom: 10px;
     padding: 5px 18px;
     margin-right: 2px;
+    width: 100%;
+}
+#dataTab li{
+    width: 100%;
+    margin-bottom: 10px;
+}
+.child_health .bg_color {
+    padding-bottom: 25px;
+    padding-left: 0px!important;
+    padding-right: 0px!important;
+}
+#dataTab li button{
+    width: 100%;
+}
+.distance_div {
+    padding: 16px 0px 25px 0px!important;
+}
+.other-data-section-title {
+  
+    margin-top: 10px;
+}
+#descriptiveNote label {
+    font-size: 12px!important;
    
-   
+}
+#communityAccordion #communityInfo .accordion-body {
+    padding: 27px!important;
+    padding-top: 10px!important;
+}
+.custom_table {
+    width: 100%;
+    overflow: auto;
+    overflow: auto!important;
+}
+.other-data-form .col-md-4 {
+    margin-bottom: 15px;
+}
+.other-data-tabs .nav-tabs {
+    margin-bottom: 0px;
 }
 #dataLevelTabContent .card_header {
     height: auto!important;
@@ -487,9 +525,9 @@ div#dashboardTabContent {
     }
 
     .mitigation__header {
-
-        flex-direction: column;
-    }
+    flex-direction: column;
+    height: unset!important;
+}
 .mitigation__header ul li {
     display: flex;
     align-items: center;
@@ -693,6 +731,56 @@ div#dashboardTabContent {
 }
 #dataLevelTabContent .margin_top {
     margin-top: 0px!important;
+}
+ .dummy_wrapper, .interventions_wrapper{
+    width: 100%;
+    overflow: auto;
+}
+.form-row-inline {
+   
+    flex-direction: column;
+}
+.unit-cost-row {
+    flex-direction: column;
+}
+.unit-cost-row > div {
+    flex: 1;
+    max-width: 100%;
+    width: 100%;
+}
+.lumpsum-cost-row {
+   
+    flex-direction: column;
+}
+.lumpsum-cost-row > div {
+    flex: 1;
+    max-width: 100%;
+    width: 1000%;
+}
+.total-summary {
+   
+    flex-direction: column;
+}
+.total-cost-box h5 {
+    font-size: 16px;
+   
+}
+.total-quantity-box h5 {
+    font-size: 16px;
+  
+}
+.total-quantity-wrap {
+    
+    gap: 5px;
+}
+.total-cost-box {
+  
+    padding: 10px 18px;
+   
+}
+.dummy-table td {
+    padding: 12px;
+  
 }
 }
 
