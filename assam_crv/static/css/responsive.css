@@ -783,7 +783,32 @@ div#dashboardTabContent {
   
 }
 }
-
+@media (min-width: 500px) and (max-width: 767px) {
+ .main-content {
+    margin-left: 0px!important;
+    height: auto!important;
+    width: 100%!important;
+}
+.select2-container {
+   
+    width: 100%!important;
+}
+ul#dashboardTabs {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+}
+ul#dashboardTabs li{
+    width: 48%;
+}
+ul#dashboardTabs li button{
+    width: 100%;
+}
+.lumpsum-cost-row > div {
+    flex: 1;
+    max-width: unset;
+}
+}
 .form-control-static {
     width: 100%;
     padding: 0.3rem;
