@@ -47,7 +47,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
           console.log('District selected:', { id: this.value, lat, lng });
           zoomToLatLon(lat, lng, 12)
-          reloadLayersWithFilter()
+          // reloadLayersWithFilter()
      });
 
      $('#layer_village').on('change', function () {
@@ -56,7 +56,7 @@ document.addEventListener("DOMContentLoaded", () => {
           const lng = selectedOption.getAttribute('data-lng') || "92.9376";
           console.log('Village selected:', { id: this.value, lat, lng });
           zoomToLatLon(lat, lng, 14)
-          reloadLayersWithFilter()
+          // reloadLayersWithFilter()
      });
 });
 
