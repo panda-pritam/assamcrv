@@ -70,11 +70,30 @@ def resolve_image_path(img_obj):
     if os.path.exists(candidate):
         return candidate
 
+    # Build expected paths from model data to handle legacy vs current layouts
+    filename = os.path.basename(rel)
+    category = (img_obj.category or "uncategorized").strip().lower()
+    category = category.replace(" ", "_").replace("/", "_")
+    village_id = str(getattr(img_obj, "village_id", "") or "")
+
+    if filename and village_id:
+        expected = os.path.join(base, "field_images", category, village_id, filename)
+        if os.path.exists(expected):
+            return expected
+
+        legacy = os.path.join(base, "field_images", category, f"village_id_{village_id}", filename)
+        if os.path.exists(legacy):
+            return legacy
+
+        legacy_swapped = os.path.join(base, "field_images", f"village_id_{village_id}", category, filename)
+        if os.path.exists(legacy_swapped):
+            return legacy_swapped
+
     parts = [p for p in rel.split(os.sep) if p]
     if len(parts) >= 4 and parts[0] == "field_images" and parts[1].startswith("village_id_"):
-        field_images, village_id, category = parts[0], parts[1], parts[2]
+        field_images, village_id_part, category_part = parts[0], parts[1], parts[2]
         rest = parts[3:]
-        swapped = os.path.join(base, field_images, category, village_id, *rest)
+        swapped = os.path.join(base, field_images, category_part, village_id_part, *rest)
         if os.path.exists(swapped):
             return swapped
 
