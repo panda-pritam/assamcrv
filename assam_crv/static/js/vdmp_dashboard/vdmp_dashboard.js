@@ -411,7 +411,8 @@ function updateVillageSummary(data) {
     // Displays flood statistics with feet units (converted from meters in API)
     const hazardFields = {
         'avg_flood_depth': (val) => `${val} feet`,  // Average flood depth
-        'max_flood_depth': (val) => `${val} feet`   // Maximum flood depth
+        'max_flood_depth': (val) => `${val} feet`,   // Maximum flood depth
+        'max_wind_speed': (val) => `${val} km/hour`  // Maximum wind speed
     };
 
     Object.entries(hazardFields).forEach(([fieldId, formatter]) => {

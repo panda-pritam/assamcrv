@@ -1429,15 +1429,26 @@ def getRoadLengthByTypologyData(village_id, workspace, layer):
             table_exists = cursor.fetchone()[0]
 
             if table_exists:
-                cursor.execute("""
-                    SELECT "RSur_Type", SUM("Length") AS total_length
-                    FROM public.road_network
-                    WHERE "Vill_ID" = %s
-                    GROUP BY "RSur_Type"
-                    ORDER BY total_length DESC
-                """, [village_code])
-
-                rows = cursor.fetchall()
+                # Try uppercase first
+                try:
+                    cursor.execute("""
+                        SELECT "RSur_Type", SUM("Length") AS total_length
+                        FROM public.road_network
+                        WHERE "Vill_ID" = %s
+                        GROUP BY "RSur_Type"
+                        ORDER BY total_length DESC
+                    """, [village_code])
+                    rows = cursor.fetchall()
+                except Exception:
+                    # Fallback to lowercase
+                    cursor.execute("""
+                        SELECT rsur_type, SUM(length) AS total_length
+                        FROM public.road_network
+                        WHERE vill_id = %s
+                        GROUP BY rsur_type
+                        ORDER BY total_length DESC
+                    """, [village_code])
+                    rows = cursor.fetchall()
 
                 if rows:
                     total_length_m = sum(r[1] for r in rows if r[1])
