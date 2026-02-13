@@ -82,15 +82,13 @@
       <div>
         <label class="form-label" for="theme">{% trans "Theme/Sector" %}</label>
         <select name="theme" id="theme" class="form-select select2">
-          <option value="governance" selected>{% trans "Governance & Partnerships for Resilience" %}</option>
-          <option value="other">{% trans "Other" %}</option>
+          <option value="" selected disabled>{% trans "Select Theme" %}</option>
         </select>
       </div>
       <div>
         <label class="form-label" for="subtheme">{% trans "Sub-theme" %}</label>
         <select name="subtheme" id="subtheme" class="form-select select2">
-          <option value="development" selected>{% trans "Development Activites" %}</option>
-          <option value="other">{% trans "Other" %}</option>
+          <option value="" selected disabled>{% trans "Select Sub-theme" %}</option>
         </select>
       </div>
     </div>
@@ -150,24 +148,19 @@
         <div>
           <label class="form-label" for="component">{% trans "Component" %} *</label>
           <select name="component" id="component" class="form-select select2">
-            <option value="" selected>{% trans "Asset Type" %}</option>
-            <option value="housing">{% trans "Housing" %}</option>
-            <option value="road">{% trans "Road" %}</option>
+            <option value="" selected disabled>{% trans "Select Component" %}</option>
           </select>
         </div>
         <div>
           <label class="form-label" for="operations">{% trans "Operations" %} *</label>
           <select name="operations" id="operations" class="form-select select2">
-            <option value="" selected>{% trans "Relocate & Reconstruct" %}</option>
-            <option value="repair">{% trans "Repair" %}</option>
-            <option value="upgrade">{% trans "Upgrade" %}</option>
+            <option value="" selected disabled>{% trans "Select Operation" %}</option>
           </select>
         </div>
         <div>
           <label class="form-label" for="mitigation_intervention">{% trans "Mitigation Intervention" %} *</label>
           <select name="mitigation_intervention" id="mitigation_intervention" class="form-select select2">
-            <option value="" selected>{% trans "Pucca house with raise plinth" %}</option>
-            <option value="other">{% trans "Other" %}</option>
+            <option value="" selected disabled>{% trans "Select Intervention" %}</option>
           </select>
         </div>
       </div>
@@ -179,7 +172,7 @@
         </div>
         <div>
           <label class="form-label" for="quantity">{% trans "Quantity" %} *</label>
-          <input type="number" name="quantity" id="quantity" class="form-control" value="100">
+          <input type="number" name="quantity" id="quantity" class="form-control" value="">
         </div>
         <div>
           <label class="form-label" for="unit_cost">{% trans "Unit Cost (₹)" %} <i class="fas fa-info-circle text-muted"></i></label>
@@ -190,11 +183,11 @@
       <div class="lumpsum-cost-row">
         <div>
           <label class="form-label" for="lumpsum">{% trans "Lumpsum" %}</label>
-          <input type="text" name="lumpsum" id="lumpsum" class="form-control" value="50,000" readonly>
+          <input type="text" name="lumpsum" id="lumpsum" class="form-control" value="" readonly>
         </div>
         <div>
           <label class="form-label" for="estimated_cost">{% trans "Estimated Cost (₹)" %}</label>
-          <input type="text" name="estimated_cost" id="estimated_cost" class="form-control" value="₹ 50,00,000" readonly>
+          <input type="text" name="estimated_cost" id="estimated_cost" class="form-control" value="" readonly>
         </div>
       </div>
     </div>
@@ -220,28 +213,7 @@
             <th>{% trans "Lumpsum (₹)" %}</th>
           </tr>
         </thead>
-        <tbody>
-          <tr>
-            <td>1</td>
-            <td>Kachicha house</td>
-            <td>Relocate & Reconstruct</td>
-            <td>Pucca house with raise plinth</td>
-            <td>Sq. ft.</td>
-            <td>100</td>
-            <td>50,000</td>
-            <td>50,000</td>
-          </tr>
-          <tr>
-            <td>2</td>
-            <td>Semi pucca house</td>
-            <td>Repair</td>
-            <td>Low cost semi pucca stilt house</td>
-            <td>Sq. ft.</td>
-            <td>100</td>
-            <td>50,000</td>
-            <td>50,000</td>
-          </tr>
-        </tbody>
+        <tbody id="addedInterventionsBody"></tbody>
       </table>
       </div>
     </div>
@@ -251,7 +223,7 @@
        <div class="total-quantity-wrap">
       <div class="total-quantity-box">
         <p>{% trans "Total Quantity" %}</p>
-        <h5>200/200</h5>
+        <h5 id="total-quantity">0</h5>
       </div>
       <div class="total-cost-box">
         <p>{% trans "Total Estimated Cost" %}</p>
@@ -282,12 +254,12 @@
           <h6 class="mb-3">{% trans "Selection Summary" %}</h6>
           <div class="row">
             <div class="col-md-6">
-              <p class="mb-2"><strong>{% trans "Theme/Sector:" %}</strong><br>Theme 1: Resilient Housing</p>
-              <p class="mb-0"><strong>{% trans "Component:" %}</strong><br>Theme 1: Resilient Housing</p>
+              <p class="mb-2"><strong>{% trans "Theme/Sector:" %}</strong><br><span id="review-theme">-</span></p>
+              <p class="mb-0"><strong>{% trans "Component:" %}</strong><br><span id="review-component">-</span></p>
             </div>
             <div class="col-md-6">
-              <p class="mb-2"><strong>{% trans "Sub-theme:" %}</strong><br>Flood resilient Housing</p>
-              <p class="mb-0"><strong>{% trans "Vulnerable Asset:" %}</strong><br>Flood resilient Housing</p>
+              <p class="mb-2"><strong>{% trans "Sub-theme:" %}</strong><br><span id="review-subtheme">-</span></p>
+              <p class="mb-0"><strong>{% trans "Vulnerable Asset:" %}</strong><br><span id="review-vulnerable-asset">-</span></p>
             </div>
           </div>
         </div>
@@ -295,46 +267,18 @@
         <!-- Planned Interventions -->
         <h6 class="mb-3">{% trans "Planned Interventions" %}</h6>
         
-        <div class="bg-gray p-3 rounded mb-2">
-          <div class="d-flex justify-content-between align-items-start">
-            <div>
-              <p class="mb-1 fw-bold">Flood resilient housing construction</p>
-              <p class="mb-0 text-muted small">Quantity: 100 × Unit Cost: ₹50,000</p>
-            </div>
-            <p class="mb-0 fw-bold text-primary">₹ 50,00,000</p>
-          </div>
-        </div>
-
-        <div class="bg-gray p-3 rounded mb-2">
-          <div class="d-flex justify-content-between align-items-start">
-            <div>
-              <p class="mb-1 fw-bold">Erosion resilient housing relocation</p>
-              <p class="mb-0 text-muted small">Quantity: 50 × Unit Cost: ₹75,000</p>
-            </div>
-            <p class="mb-0 fw-bold text-primary">₹ 37,50,000</p>
-          </div>
-        </div>
-
-        <div class="bg-gray p-3 rounded mb-3">
-          <div class="d-flex justify-content-between align-items-start">
-            <div>
-              <p class="mb-1 fw-bold">All-weather road construction</p>
-              <p class="mb-0 text-muted small">Quantity: 50 × Unit Cost: ₹1,20,000</p>
-            </div>
-            <p class="mb-0 fw-bold text-primary">₹ 60,00,000</p>
-          </div>
-        </div>
+        <div id="review-interventions"></div>
 
         <!-- Total -->
         <div class="bg-darkgray p-3 rounded">
           <div class="d-flex justify-content-between align-items-center">
             <div>
               <p class="mb-0 fw-bold">{% trans "Total Quantity" %}</p>
-              <p class="mb-0">200 / 200 units</p>
+              <p class="mb-0" id="review-total-quantity">0</p>
             </div>
             <div class="text-end">
               <p class="mb-0 ">{% trans "Total Estimated Cost" %}</p>
-              <h4 class="mb-0 ">₹ 1,47,50,000</h4>
+              <h4 class="mb-0 " id="review-total-cost">₹ 0</h4>
             </div>
           </div>
         </div>
@@ -349,5 +293,6 @@
 {% endblock %}
 
 {% block extrajs %}
-<script src="{% static 'js/vdmp_dashboard/vdmp_dashboard.js' %}"></script>
+<script src="{% static 'js/utils/summery.js' %}"></script>
+<script src="{% static 'js/mitigation_intervention.js' %}"></script>
 {% endblock %}
