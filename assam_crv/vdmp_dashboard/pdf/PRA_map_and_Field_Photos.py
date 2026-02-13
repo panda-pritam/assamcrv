@@ -19,6 +19,9 @@ from decimal import Decimal, ROUND_HALF_UP
 from field_images.models import FieldImage
 from reportlab.lib.pagesizes import A4
 from PIL import Image as PILImage
+from PIL import ImageOps
+from io import BytesIO
+from django.conf import settings
 page_width, page_height = A4
 max_width = page_width - 2*inch   # leave 1 inch margin left/right
 max_height = page_height - 3*inch  # leave space for header/footer
@@ -28,11 +31,14 @@ max_height = page_height - 3*inch  # leave space for header/footer
 # http://127.0.0.1:8000/en/administrator/field_images
 
 def get_scaled_image(img_path):
-    # get original size
+    # get original size and normalize orientation from EXIF
     with PILImage.open(img_path) as im:
-        iw, ih = im.size  
-
-    aspect = ih / float(iw)
+        im = ImageOps.exif_transpose(im)
+        iw, ih = im.size
+        aspect = ih / float(iw)
+        img_buffer = BytesIO()
+        im.save(img_buffer, format=im.format or "JPEG")
+        img_buffer.seek(0)
 
     # fit to max width
     width = min(max_width, iw)
@@ -43,7 +49,55 @@ def get_scaled_image(img_path):
         height = max_height
         width = height / aspect
 
-    return Image(img_path, width=width, height=height)
+    return Image(img_buffer, width=width, height=height)
+
+
+def resolve_image_path(img_obj):
+    try:
+        direct_path = img_obj.image.path
+        if os.path.exists(direct_path):
+            return direct_path
+    except Exception:
+        direct_path = None
+
+    name = getattr(img_obj.image, "name", "")
+    if not name:
+        return direct_path
+
+    rel = name.replace("/", os.sep).replace("\\", os.sep)
+    base = settings.MEDIA_ROOT
+    candidate = os.path.join(base, rel)
+    if os.path.exists(candidate):
+        return candidate
+
+    # Build expected paths from model data to handle legacy vs current layouts
+    filename = os.path.basename(rel)
+    category = (img_obj.category or "uncategorized").strip().lower()
+    category = category.replace(" ", "_").replace("/", "_")
+    village_id = str(getattr(img_obj, "village_id", "") or "")
+
+    if filename and village_id:
+        expected = os.path.join(base, "field_images", category, village_id, filename)
+        if os.path.exists(expected):
+            return expected
+
+        legacy = os.path.join(base, "field_images", category, f"village_id_{village_id}", filename)
+        if os.path.exists(legacy):
+            return legacy
+
+        legacy_swapped = os.path.join(base, "field_images", f"village_id_{village_id}", category, filename)
+        if os.path.exists(legacy_swapped):
+            return legacy_swapped
+
+    parts = [p for p in rel.split(os.sep) if p]
+    if len(parts) >= 4 and parts[0] == "field_images" and parts[1].startswith("village_id_"):
+        field_images, village_id_part, category_part = parts[0], parts[1], parts[2]
+        rest = parts[3:]
+        swapped = os.path.join(base, field_images, category_part, village_id_part, *rest)
+        if os.path.exists(swapped):
+            return swapped
+
+    return candidate
 
 
 def draw_PRA_map_and_field_photos(elements,village_id):
@@ -119,7 +173,8 @@ def draw_PRA_map_and_field_photos(elements,village_id):
                         
                         # Create image with 80% page width, maintain aspect ratio
                         # img = Image(img_obj.image.path, width=500)
-                        img = get_scaled_image(img_obj.image.path)
+                        img_path = resolve_image_path(img_obj)
+                        img = get_scaled_image(img_path)
                         img.hAlign = 'CENTER'
                         elements.append(img)
                         
