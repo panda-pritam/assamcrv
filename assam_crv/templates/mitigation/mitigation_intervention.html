@@ -28,6 +28,7 @@
 
 <!-- Hidden User Location Data -->
 <div class="visually-hidden">
+  {% csrf_token %}
   <input type="hidden" id="userDistrictId" value="{{ user_location.district_id|default:'' }}">
   <input type="hidden" id="userCircleId" value="{{ user_location.circle_id|default:'' }}">
   <input type="hidden" id="userGramPanchayatId" value="{{ user_location.gram_panchayat_id|default:'' }}">
@@ -95,7 +96,7 @@
 
     <!-- Dummy Table -->
     <div class="dummy-table-section">
-      <h6>{% trans "Dummy Table (Table View)" %}</h6>
+      <h6>{% trans "Vulnerable Assets (Dummy)" %}</h6>
       <div class="dummy_wrapper">
       <table class="dummy-table">
         <thead>
@@ -183,7 +184,7 @@
       <div class="lumpsum-cost-row">
         <div>
           <label class="form-label" for="lumpsum">{% trans "Lumpsum" %}</label>
-          <input type="text" name="lumpsum" id="lumpsum" class="form-control" value="" readonly>
+          <input type="text" name="lumpsum" id="lumpsum" class="form-control" value="">
         </div>
         <div>
           <label class="form-label" for="estimated_cost">{% trans "Estimated Cost (₹)" %}</label>
@@ -191,14 +192,19 @@
         </div>
       </div>
     </div>
-      <a href="#" class="add-intervention-btn">
-        <i class="fas fa-plus"></i> {% trans "Add Another Intervention" %}
-      </a>
+      <div class="d-flex justify-content-between align-items-center mt-3">
+        <a href="#" class="add-intervention-btn">
+          <i class="fas fa-plus"></i> {% trans "Add Another Intervention" %}
+        </a>
+        <button type="button" class="btn" id="addInterventionBtn">
+          {% trans "Save" %}
+        </button>
+      </div>
     </div></div>
 
     <!-- Added Interventions Table -->
     <div class="added-interventions-table">
-      <h6 class="interventions-heading">{% trans "Added Interventions (2)" %}</h6>
+      <h6 class="interventions-heading">{% trans "Added Interventions" %} (<span id="added-interventions-count">0</span>)</h6>
       <div class="interventions_wrapper">
       <table>
         <thead>
@@ -227,7 +233,7 @@
       </div>
       <div class="total-cost-box">
         <p>{% trans "Total Estimated Cost" %}</p>
-        <h5>₹ 1,47,50,000</h5>
+        <h5 id="total-estimated-cost">₹ 0</h5>
       </div> </div>
        <div class="submit-btn-wrapper">
       <button class="btn" data-bs-toggle="modal" data-bs-target="#reviewModal">{% trans "Submit" %}</button>
