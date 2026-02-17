@@ -52,64 +52,101 @@ page_width, page_height = A4
 
 # ------------------ data query -------------------------------
 
-from shapefiles.models import ShapefileElectricPole ,ShapefileTransformer
 
 def getFacilityAccessData(village_id):
     try:
         pra_data = PRA_main.objects.filter(village_id=village_id).first()
+
+        # -----------------------------
+        # Helper function
+        # -----------------------------
+        def format_distance(distance):
+            if distance is None:
+                return "N/A"
+            return f"{distance:.0f} km" if float(distance).is_integer() else f"{distance:.1f} km"
+
+        # -----------------------------
+        # If no PRA data
+        # -----------------------------
         if not pra_data:
             return [
                 ["S. No.", "Asset Type", "Distance from Village"],
-                ["1", "Higher education/College", "N/A"],
-                ["2", "Post Office", "N/A"],
-                ["3", "Police Station", "N/A"],
-                ["4", "Banks", "N/A"],
-                ["5", "Cooperative society", "N/A"],
-                ["6", "PHC/CHC", "N/A"],
-                ["7", "Private clinic/ hospital", "N/A"],
-                ["8", "Major Government offices", "N/A"],
+                ["1", "Higher Secondary School", "N/A"],
+                ["2", "College", "N/A"],
+                ["3", "Post Office", "N/A"],
+                ["4", "Police Station", "N/A"],
+                ["5", "Banks", "N/A"],
+                ["6", "PHC", "N/A"],
+                ["7", "CHC", "N/A"],
+                ["8", "Private clinic/ hospital", "N/A"],
                 ["9", "Ambulance", "N/A"],
                 ["10", "Bus service", "N/A"],
                 ["11", "Main markets", "N/A"],
                 ["12", "Veterinary Hospitals", "N/A"]
             ]
-        
-        def format_distance(distance):
-            if distance is None:
-                return "N/A"
-            return f"{distance:.0f} km" if distance == int(distance) else f"{distance:.1f} km"
-        
+
+        # -----------------------------
+        # Return actual data
+        # -----------------------------
         return [
             ["S. No.", "Asset Type", "Distance from Village"],
-            ["1", "Higher education/College", format_distance(pra_data.nearest_college_km)],
-            ["2", "Post Office", format_distance(pra_data.nearest_post_office_km)],
-            ["3", "Police Station", format_distance(pra_data.nearest_police_station_km)],
-            ["4", "Banks", format_distance(pra_data.nearest_bank_atm_km)],
-            
-            ["6", "PHC/CHC", format_distance(pra_data.nearest_phc_km or pra_data.nearest_chc_km)],
-            ["7", "Private clinic/ hospital", format_distance(pra_data.nearest_hospital_km)],
-           
-            ["9", "Ambulance", format_distance(pra_data.nearest_ambulance_km)],
-            ["10", "Bus service", format_distance(pra_data.nearest_bus_service_km)],
-            ["11", "Main markets", format_distance(pra_data.main_market_km)],
-            ["12", "Veterinary Hospitals", format_distance(pra_data.nearest_veterinary_clinic_km)]
+
+            ["1", "Higher secondary school",
+             format_distance(pra_data.nearest_higher_secondary_km)],
+
+            ["2", "College",
+             format_distance(pra_data.nearest_college_km)],
+
+            ["3", "Post office",
+             format_distance(pra_data.nearest_post_office_km)],
+
+            ["4", "Police station",
+             format_distance(pra_data.nearest_police_station_km)],
+
+            ["5", "Banks",
+             format_distance(pra_data.nearest_bank_atm_km)],
+
+            ["6", "PHC",
+             format_distance(pra_data.nearest_phc_km)],
+
+            ["7", "CHC",
+             format_distance(pra_data.nearest_chc_km)],
+
+            ["8", "Private clinic/ hospital",
+             format_distance(pra_data.nearest_hospital_km)],
+
+            ["9", "Ambulance",
+             format_distance(pra_data.nearest_ambulance_km)],
+
+            ["10", "Bus service",
+             format_distance(pra_data.nearest_bus_service_km)],
+
+            ["11", "Main markets",
+             format_distance(pra_data.main_market_km)],
+
+            ["12", "Veterinary hospitals",
+             format_distance(pra_data.nearest_veterinary_clinic_km)],
         ]
-    except Exception:
+
+    except Exception as e:
+        print("Facility access error:", e)
+
         return [
             ["S. No.", "Asset Type", "Distance from Village"],
-            ["1", "Higher education/College", "N/A"],
-            ["2", "Post Office", "N/A"],
-            ["3", "Police Station", "N/A"],
-            ["4", "Banks", "N/A"],
-            ["5", "Cooperative society", "N/A"],
-            ["6", "PHC/CHC", "N/A"],
-            ["7", "Private clinic/ hospital", "N/A"],
-            ["8", "Major Government offices", "N/A"],
+            ["1", "Higher secondary school", "N/A"],
+            ["2", "College", "N/A"],
+            ["3", "Post office", "N/A"],
+            ["4", "Police station", "N/A"],
+            ["5", "Banks", "N/A"],
+            ["6", "PHC", "N/A"],
+            ["7", "CHC", "N/A"],
+            ["8", "Private clinic/ hospital", "N/A"],
             ["9", "Ambulance", "N/A"],
             ["10", "Bus service", "N/A"],
             ["11", "Main markets", "N/A"],
-            ["12", "Veterinary Hospitals", "N/A"]
+            ["12", "Veterinary hospitals", "N/A"]
         ]
+
 
 from django.db import connection
 
@@ -1640,19 +1677,45 @@ def getVillageArea(village_id):
 
 def getLULCData(village_id, workspace, layer, onlymax=False):
     from django.db import connection
-    
+    from collections import defaultdict
+    from decimal import Decimal, ROUND_HALF_UP
+    import requests
+
+    # ---------------------------------------
+    # Helper: Normalize Landuse Name
+    # ---------------------------------------
+    def normalize_landuse_name(name):
+        if not name:
+            return "Unknown"
+
+        name = str(name).strip().lower()
+
+        # Merge fallow into agriculture
+        if name in ["fallow land", "agriculture land"]:
+            return "Agriculture land"
+
+        # Sentence case (first letter capital)
+        return name.capitalize()
+
+    # ---------------------------------------
+    # Get village
+    # ---------------------------------------
     try:
         village = tblVillage.objects.get(id=village_id)
         village_code = village.code
     except tblVillage.DoesNotExist:
         if onlymax:
             return "N/A"
-        return [["S. No.", "Landuse", "Area (sqm)", "%"], ["", "Village not found", "0", "0%"]]
+        return [
+            ["S. No.", "Landuse", "Area (sqm)", "%"],
+            ["", "Village not found", "0", "0%"]
+        ]
 
-    # Try database first
+    # =======================================
+    # 1️⃣ TRY DATABASE FIRST
+    # =======================================
     try:
         with connection.cursor() as cursor:
-            # Check if lulc table exists
             cursor.execute("""
                 SELECT EXISTS (
                     SELECT FROM information_schema.tables 
@@ -1660,60 +1723,90 @@ def getLULCData(village_id, workspace, layer, onlymax=False):
                     AND table_name = 'lulc'
                 )
             """)
-            
+
             if cursor.fetchone()[0]:
+
                 cursor.execute("""
                     SELECT "Class_name", SUM("Area_SqM") as total_area
                     FROM public.lulc
                     WHERE "Vill_ID" = %s
                     GROUP BY "Class_name"
-                    ORDER BY total_area DESC
                 """, [village_code])
-                
+
                 rows = cursor.fetchall()
-                
+
                 if rows:
-                    from collections import defaultdict
-                    from decimal import Decimal, ROUND_HALF_UP
-                    
                     class_area = defaultdict(float)
+
                     for class_name, area_sqm in rows:
                         if class_name and area_sqm:
-                            class_area[class_name] = float(area_sqm)
-                    
+                            clean_name = normalize_landuse_name(class_name)
+                            class_area[clean_name] += float(area_sqm)
+
                     total_area = sum(class_area.values())
-                    
-                    if onlymax and class_area:
+
+                    if total_area == 0:
+                        if onlymax:
+                            return "N/A"
+                        return [
+                            ["S. No.", "Landuse", "Area (sqm)", "%"],
+                            ["", "No data available", "0", "0%"]
+                        ]
+
+                    # ----------------------------------
+                    # ONLY MAX MODE
+                    # ----------------------------------
+                    if onlymax:
                         max_land_use = max(class_area, key=class_area.get)
                         max_area = class_area[max_land_use]
-                        percentage = round((max_area / total_area) * 100) if total_area > 0 else 0
+                        percentage = round((max_area / total_area) * 100)
                         return f"{max_land_use} - {percentage}%"
-                    elif onlymax:
-                        return "N/A"
-                    
-                    def format_number(n):
-                        return f"{int(n):,}"
-                    
+
+                    # ----------------------------------
+                    # NORMAL TABLE MODE
+                    # ----------------------------------
                     result = [["S. No.", "Landuse", "Area (sqm)", "%"]]
-                    
+
+                    # Sort by descending area
+                    sorted_classes = sorted(
+                        class_area.items(),
+                        key=lambda x: x[1],
+                        reverse=True
+                    )
+
                     total_percent = Decimal("0")
-                    for idx, (class_name, area) in enumerate(class_area.items(), start=1):
-                        percent = (Decimal(area) / Decimal(total_area) * 100).quantize(Decimal('1'), rounding=ROUND_HALF_UP)
+
+                    for idx, (class_name, area) in enumerate(sorted_classes, start=1):
+                        percent = (
+                            Decimal(area) / Decimal(total_area) * 100
+                        ).quantize(Decimal('1'), rounding=ROUND_HALF_UP)
+
                         total_percent += percent
+
                         result.append([
                             str(idx),
                             class_name,
-                            format_number(area),
+                            f"{int(area):,}",
                             f"{percent}%"
                         ])
-                    
+
                     total_percent = min(Decimal("100"), total_percent)
-                    result.append(["", "Total Area", format_number(total_area), f"{total_percent}%"])
+
+                    result.append([
+                        "",
+                        "Total area",
+                        f"{int(total_area):,}",
+                        f"{total_percent}%"
+                    ])
+
                     return result
+
     except Exception:
         pass  # Fall back to GeoServer
 
-    # Fallback to GeoServer
+    # =======================================
+    # 2️⃣ FALLBACK TO GEOSERVER (WFS)
+    # =======================================
     wfs_url = f"{GEOSERVER_BASE_URL}/{workspace}/ows"
     params = {
         "service": "WFS",
@@ -1726,10 +1819,14 @@ def getLULCData(village_id, workspace, layer, onlymax=False):
 
     try:
         response = requests.get(wfs_url, params=params, timeout=10)
+
         if response.status_code != 200:
             if onlymax:
                 return "N/A"
-            return [["S. No.", "Landuse", "Area (sqm)", "%"], ["", "Geoserver unavailable", "N/A", "N/A"]]
+            return [
+                ["S. No.", "Landuse", "Area (sqm)", "%"],
+                ["", "Geoserver unavailable", "N/A", "N/A"]
+            ]
 
         geojson = response.json()
         features = geojson.get("features", [])
@@ -1737,55 +1834,80 @@ def getLULCData(village_id, workspace, layer, onlymax=False):
         if not features:
             if onlymax:
                 return "N/A"
-            return [["S. No.", "Landuse", "Area (sqm)", "%"], ["", "No data available for this village", "0", "0%"]]
-
-        from collections import defaultdict
-        from decimal import Decimal, ROUND_HALF_UP
+            return [
+                ["S. No.", "Landuse", "Area (sqm)", "%"],
+                ["", "No data available", "0", "0%"]
+            ]
 
         class_area = defaultdict(float)
+
         for feature in features:
-            props = feature["properties"]
-            class_name = props.get("class_name", "Unknown")
+            props = feature.get("properties", {})
+            class_name = props.get("class_name")
             area_sqm = props.get("shape_area", 0.0) or 0.0
-            class_area[class_name] += float(area_sqm)
+
+            clean_name = normalize_landuse_name(class_name)
+            class_area[clean_name] += float(area_sqm)
 
         total_area = sum(class_area.values())
-        
-        if onlymax and class_area:
+
+        if total_area == 0:
+            if onlymax:
+                return "N/A"
+            return [
+                ["S. No.", "Landuse", "Area (sqm)", "%"],
+                ["", "No data available", "0", "0%"]
+            ]
+
+        if onlymax:
             max_land_use = max(class_area, key=class_area.get)
             max_area = class_area[max_land_use]
-            percentage = round((max_area / total_area) * 100) if total_area > 0 else 0
+            percentage = round((max_area / total_area) * 100)
             return f"{max_land_use} - {percentage}%"
-        elif onlymax:
-            return "N/A"
-
-        def format_number(n):
-            return f"{int(n):,}"
 
         result = [["S. No.", "Landuse", "Area (sqm)", "%"]]
-        
+
+        sorted_classes = sorted(
+            class_area.items(),
+            key=lambda x: x[1],
+            reverse=True
+        )
+
         total_percent = Decimal("0")
-        for idx, (class_name, area) in enumerate(class_area.items(), start=1):
-            percent = (Decimal(area) / Decimal(total_area) * 100).quantize(Decimal('1'), rounding=ROUND_HALF_UP)
+
+        for idx, (class_name, area) in enumerate(sorted_classes, start=1):
+            percent = (
+                Decimal(area) / Decimal(total_area) * 100
+            ).quantize(Decimal('1'), rounding=ROUND_HALF_UP)
+
             total_percent += percent
+
             result.append([
                 str(idx),
                 class_name,
-                format_number(area),
+                f"{int(area):,}",
                 f"{percent}%"
             ])
+
         total_percent = min(Decimal("100"), total_percent)
-        result.append(["", "Total Area", format_number(total_area), f"{total_percent}%"])
+
+        result.append([
+            "",
+            "Total area",
+            f"{int(total_area):,}",
+            f"{total_percent}%"
+        ])
+
         return result
 
-    except (requests.exceptions.ConnectionError, requests.exceptions.Timeout, requests.exceptions.RequestException):
-        if onlymax:
-            return "N/A"
-        return [["S. No.", "Landuse", "Area (sqm)", "%"], ["", "Geoserver offline", "N/A", "N/A"]]
     except Exception:
         if onlymax:
             return "N/A"
-        return [["S. No.", "Landuse", "Area (sqm)", "%"], ["", "Data unavailable", "N/A", "N/A"]]
+        return [
+            ["S. No.", "Landuse", "Area (sqm)", "%"],
+            ["", "Data unavailable", "N/A", "N/A"]
+        ]
+
 
 
 def getDrinkingWaterSourceData(village_id):
@@ -1908,71 +2030,61 @@ def getJJMHouseConnect(village_id):
 
 
 
+from django.db.models.functions import Lower, Trim
+from django.db.models import Count
+
 def getAdequacyOfDrinkingWaterData(village_id):
-    """
-    Table 3.13: Adequacy of drinking water
-    """
 
     try:
         households = HouseholdSurvey.objects.filter(village_id=village_id)
 
-        # Header (added S. No.)
         table_data = [
             ["S. No.", "Adequacy of drinking water", "No of HHs", "%"]
         ]
 
-        adequacy_qs = (
-            households
-            .exclude(adequate_water_supply__isnull=True)
-            .exclude(adequate_water_supply__exact="")
-            .annotate(adequacy_n=Lower(Trim("adequate_water_supply")))
-            .values("adequacy_n")
-            .annotate(count=Count("adequacy_n"))
-        )
+        total_households = households.count()
 
-        yes_count = 0
-        no_count = 0
-
-        for row in adequacy_qs:
-            value = row["adequacy_n"]
-            count = row["count"]
-
-            if value in ["yes", "y", "adequate"]:
-                yes_count += count
-            elif value in ["no", "n", "inadequate"]:
-                no_count += count
-
-        valid_households = yes_count + no_count
-
-        if valid_households == 0:
+        if total_households == 0:
             table_data.append(["1", "No data available", "0", "0%"])
             table_data.append(["", "Total", "0", "0%"])
             return table_data
 
-        yes_percentage = round((yes_count / valid_households) * 100)
-        no_percentage = round((no_count / valid_households) * 100)
-        total_pct = f"{yes_percentage + no_percentage}%"
+        yes_count = 0
+        no_count = 0
+        unknown_count = 0
 
-        # Rows with S. No.
-        table_data.append([
-            "1",
-            "Yes",
-            str(yes_count),
-            f"{yes_percentage}%"
-        ])
+        for hh in households:
+            value = hh.adequate_water_supply
 
-        table_data.append([
-            "2",
-            "No",
-            str(no_count),
-            f"{no_percentage}%"
-        ])
+            if value is None:
+                unknown_count += 1
+                continue
+
+            v = str(value).strip().lower()
+
+            if not v:
+                unknown_count += 1
+            elif v in ["yes", "y", "adequate"]:
+                yes_count += 1
+            elif v in ["no", "n", "inadequate"]:
+                no_count += 1
+            else:
+                unknown_count += 1
+
+        # Percentages
+        yes_pct = round((yes_count / total_households) * 100, 2)
+        no_pct = round((no_count / total_households) * 100, 2)
+        unknown_pct = round((unknown_count / total_households) * 100, 2)
+
+        table_data.append(["1", "Yes", str(yes_count), f"{yes_pct}%"])
+        table_data.append(["2", "No", str(no_count), f"{no_pct}%"])
+        table_data.append(["3", "Unknown", str(unknown_count), f"{unknown_pct}%"])
 
         table_data.append([
             "",
             "Total",
-            str(valid_households),
-            total_pct
+            str(total_households),
+            "100%"
         ])
 
         return table_data
@@ -1983,6 +2095,7 @@ def getAdequacyOfDrinkingWaterData(village_id):
             ["", "No data available", "N/A", "N/A"],
             ["", "Total", "N/A", "N/A"]
         ]
+
 
 
 def getSanitationFacilities(village_id):
@@ -2048,20 +2161,26 @@ def normalize_toilet_type(value):
     Normalize toilet type into:
     - Single Pit
     - Twin Pit
-    - No Toilet
+    - Unknown
     """
-    if not value:
-        return "None"
+
+    if value is None:
+        return "Unknown"
 
     v = str(value).strip().lower()
 
-    if 'single' in v and 'pit' in v:
-        return 'Single Pit'
+    if not v or v in ["none", "null", "na", "n/a", "-"]:
+        return "Unknown"
 
-    if ('twin' in v or 'double' in v) and 'pit' in v:
-        return 'Double Pit'
+    if "single" in v and "pit" in v:
+        return "Single Pit"
 
-    return "None"
+    if ("twin" in v or "double" in v) and "pit" in v:
+        return "Twin Pit"
+
+
+    return "Unknown"
+
 
 
 
@@ -2076,26 +2195,32 @@ def getHouseholdToiletsType(village_id):
         toilet_counts = {
             'Single Pit': 0,
             'Twin Pit': 0,
-            'No Toilet': 0
+            'Unknown': 0
         }
 
-        valid_households = 0
-
-        for hh in households:
-            toilet_type = normalize_toilet_type(hh.type_of_toilet)
-
-            toilet_counts[toilet_type] += 1
-            valid_households += 1
+        valid_households = households.count()
 
         if valid_households == 0:
             table_data.append(["1", "No data available", "0", "0%"])
             table_data.append(["", "Total", "0", "0%"])
             return table_data
 
+        # Count types
+        for hh in households:
+            toilet_type = normalize_toilet_type(hh.type_of_toilet)
+
+            # Safety check (prevents KeyError)
+            if toilet_type not in toilet_counts:
+                toilet_type = "Unknown"
+
+            toilet_counts[toilet_type] += 1
+
+        # Build table
         sr_no = 1
         total_pct = 0
+
         for toilet, count in toilet_counts.items():
-            percent = round((count / valid_households) * 100)
+            percent = round((count / valid_households) * 100, 2)
             total_pct += percent
 
             table_data.append([
@@ -2110,7 +2235,7 @@ def getHouseholdToiletsType(village_id):
             "",
             "Total",
             str(valid_households),
-            f"{total_pct}%"
+            "100%"
         ])
 
         return table_data
@@ -2122,8 +2247,6 @@ def getHouseholdToiletsType(village_id):
             ["", "No data available", "N/A", "N/A"],
             ["", "Total", "N/A", "N/A"]
         ]
-
-
 
 
 
@@ -2275,10 +2398,22 @@ def getElectricityconnection(vilage_id):
         ]
 
 def normalize_electricity_source(value):
-    if not value:
-        return 'None'
+    """
+    Normalize electricity source into:
+    - Grid
+    - Solar
+    - Grid & Solar
+    - Unknown
+    """
+
+    if value is None:
+        return 'Unknown'
 
     v = str(value).strip().lower()
+
+    # Handle blanks and text-based nulls
+    if not v or v in ['none', 'null', 'na', 'n/a', '-']:
+        return 'Unknown'
 
     if 'grid' in v and 'solar' in v:
         return 'Grid & Solar'
@@ -2289,7 +2424,7 @@ def normalize_electricity_source(value):
     if 'solar' in v:
         return 'Solar'
 
-    return 'None'
+    return 'Unknown'
 
 
 from django.db.models import Count
@@ -2303,12 +2438,12 @@ def getElectricitySource(village_id):
             ["S. No.", "Source of Electricity", "No of households", "%"]
         ]
 
-        # ✅ Fixed categories (always shown)
+        # Fixed categories (always shown)
         source_counts = {
             'Grid': 0,
             'Solar': 0,
             'Grid & Solar': 0,
-            'None': 0
+            'Unknown': 0
         }
 
         if total_households == 0:
@@ -2325,16 +2460,19 @@ def getElectricitySource(village_id):
         # -----------------------------
         for hh in households:
             src = normalize_electricity_source(hh.source_of_electricity)
+
+            if src not in source_counts:
+                src = "Unknown"
+
             source_counts[src] += 1
 
         # -----------------------------
         # BUILD TABLE
         # -----------------------------
         sr_no = 1
-        total_pct = 0
+
         for source, count in source_counts.items():
-            percent = round((count / total_households) * 100)
-            total_pct += percent
+            percent = round((count / total_households) * 100, 2)
 
             table_data.append([
                 str(sr_no),
@@ -2348,7 +2486,7 @@ def getElectricitySource(village_id):
             "",
             "Total",
             str(total_households),
-            f"{total_pct}%"
+            "100%"
         ])
 
         return table_data
@@ -2360,7 +2498,7 @@ def getElectricitySource(village_id):
             ["1", "Grid", "N/A", "N/A"],
             ["2", "Solar", "N/A", "N/A"],
             ["3", "Grid & Solar", "N/A", "N/A"],
-            ["4", "None", "N/A", "N/A"],
+            ["4", "Unknown", "N/A", "N/A"],
             ["", "Total", "N/A", "N/A"]
         ]
 
@@ -2931,7 +3069,7 @@ def draw_village_profile(elements,village_id):
     elements.append(Spacer(1, 6))
     data=getDrinkingWaterSourceData(village_id)
 
-    table = create_styled_table(data, [50,130,160, 160], False, True, custom_styles, "Digital Access")
+    table = create_styled_table(data, [50,170,140, 140], False, True, custom_styles, "Digital Access")
     elements.append(table)
     elements.append(Spacer(1, 12))
 
@@ -2940,7 +3078,7 @@ def draw_village_profile(elements,village_id):
     elements.append(Spacer(1, 6))
     data=getAdequacyOfDrinkingWaterData(village_id)
 
-    table = create_styled_table(data,  [50,90,180, 180], False, True, custom_styles, "Digital Access")
+    table = create_styled_table(data,  [50,150,150, 150], False, True, custom_styles, "Digital Access")
     elements.append(table)
     elements.append(Spacer(1, 12))
 
@@ -2949,7 +3087,7 @@ def draw_village_profile(elements,village_id):
     elements.append(Spacer(1, 6))
     data=getJJMHouseConnect(village_id)
 
-    table = create_styled_table(data,  [50,90,180, 180], False, True, custom_styles, "Digital Access")
+    table = create_styled_table(data,  [50,150,150, 150], False, True, custom_styles, "Digital Access")
     elements.append(table)
     elements.append(Spacer(1, 12))
 
@@ -2958,7 +3096,7 @@ def draw_village_profile(elements,village_id):
     elements.append(Spacer(1, 6))
     data=getSanitationFacilities(village_id)
 
-    table = create_styled_table(data,  [50,90,180, 180], False, True, custom_styles, "Digital Access")
+    table = create_styled_table(data,  [50,150,150, 150], False, True, custom_styles, "Digital Access")
     elements.append(table)
     elements.append(Spacer(1, 12))
 
@@ -2967,7 +3105,7 @@ def draw_village_profile(elements,village_id):
     elements.append(Spacer(1, 6))
     data=getHouseholdToiletsType(village_id)
 
-    table = create_styled_table(data,  [50,90,180, 180], False, True, custom_styles, "Digital Access")
+    table = create_styled_table(data,  [50,150,150, 150], False, True, custom_styles, "Digital Access")
     elements.append(table)
     elements.append(Spacer(1, 12))
 
@@ -3027,7 +3165,7 @@ def draw_village_profile(elements,village_id):
     elements.append(table)
     elements.append(Spacer(1, 12))
    
-    image_height = page_height * 0.75
+    image_height = page_height * 0.70
     
     img_field = map_file_fields.get('essential_facilities')
     if img_field:
@@ -3043,7 +3181,7 @@ def draw_village_profile(elements,village_id):
 
         elements.append(img_table)
 
-        elements.append(Spacer(1, 12))
+        elements.append(Spacer(1, 6))
         sub_title=Paragraph("Figure 3-2: Essential Facilities", image_title)
         elements.append(sub_title)
         elements.append(PageBreak() )
