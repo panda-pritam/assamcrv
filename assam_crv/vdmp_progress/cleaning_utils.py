@@ -24,7 +24,7 @@ def extract_flood_depth_from_raster(df, village_id):
     SAFE flood depth extraction from raster (EPSG:4326)
     - Uses inverse geotransform
     - Checks raster extent
-    - Falls back to clipped raster max value if point extraction fails
+    - Returns None for failed extractions
     """
 
     print("---- Extracting flood depth from raster ----")
@@ -34,12 +34,14 @@ def extract_flood_depth_from_raster(df, village_id):
     ).first()
 
     if not raster_file or not raster_file.raster_file:
+        print("⚠️ No raster file found for village")
         return df
 
     raster_path = os.path.join(settings.MEDIA_ROOT, raster_file.raster_file.name)
     ds = gdal.Open(raster_path)
 
     if not ds:
+        print("⚠️ Failed to open raster file")
         return df
 
     band = ds.GetRasterBand(1)
@@ -48,6 +50,7 @@ def extract_flood_depth_from_raster(df, village_id):
 
     inv_gt = gdal.InvGeoTransform(gt)
     if inv_gt is None:
+        print("⚠️ Invalid geotransform")
         return df
 
     # Raster extent (lon/lat)
@@ -57,22 +60,22 @@ def extract_flood_depth_from_raster(df, village_id):
     miny = maxy + gt[5] * ds.RasterYSize
 
     flood_values = []
-    failed_count = 0
+    skipped_count = 0
 
-    for _, row in df.iterrows():
+    for idx, row in df.iterrows():
         try:
             lat = safe_float(row["latitude"])
             lon = safe_float(row["longitude"])
 
             if lat is None or lon is None:
                 flood_values.append(None)
-                failed_count += 1
+                skipped_count += 1
                 continue
 
-            # 🔒 EXTENT CHECK (CRITICAL)
+            # EXTENT CHECK
             if not (minx <= lon <= maxx and miny <= lat <= maxy):
                 flood_values.append(None)
-                failed_count += 1
+                skipped_count += 1
                 continue
 
             px, py = gdal.ApplyGeoTransform(inv_gt, lon, lat)
@@ -84,37 +87,28 @@ def extract_flood_depth_from_raster(df, village_id):
                 py >= ds.RasterYSize
             ):
                 flood_values.append(None)
-                failed_count += 1
+                skipped_count += 1
                 continue
 
             val = band.ReadAsArray(px, py, 1, 1)[0, 0]
 
             if val is None or (isinstance(val, float) and math.isnan(val)):
                 flood_values.append(None)
-                failed_count += 1
+                skipped_count += 1
             elif nodata is not None and val == nodata:
                 flood_values.append(None)
-                failed_count += 1
+                skipped_count += 1
             else:
                 flood_values.append(round(float(val), 3))
 
         except Exception:
             flood_values.append(None)
-            failed_count += 1
+            skipped_count += 1
 
     df["flood_depth_m"] = flood_values
-
-    # Fallback: Use clipped raster max value for failed extractions
-    if failed_count > 0:
-        try:
-            village = tblVillage.objects.get(id=village_id)
-            fallback_value = get_raster_fallback_stats(raster_path, village.code, 'max')
-            if fallback_value > 0:
-                df["flood_depth_m"] = df["flood_depth_m"].fillna(fallback_value)
-                print(f"✅ Applied fallback value {fallback_value}m to {failed_count} points")
-        except Exception as e:
-            print(f"⚠️ Fallback failed: {e}")
-            df["flood_depth_m"] = df["flood_depth_m"].fillna(0.0)
+    
+    if skipped_count > 0:
+        print(f"⚠️ Skipped {skipped_count}/{len(df)} records (missing/invalid coordinates or no raster value)")
 
     df["flood_class"] = df["flood_depth_m"].apply(_classify_flood)
 
@@ -294,19 +288,23 @@ def extract_erosion_buffer_values_postgis(
             # 🔒 HARD SAFETY CHECK - Skip None, NaN, and out-of-range values
             if lat is None or lon is None:
                 skipped_count += 1
+                df.at[idx, "erosion_value"] = None
                 continue
             
             # Check for NaN (NaN != NaN is True)
             if isinstance(lat, float) and math.isnan(lat):
                 skipped_count += 1
+                df.at[idx, "erosion_value"] = None
                 continue
             if isinstance(lon, float) and math.isnan(lon):
                 skipped_count += 1
+                df.at[idx, "erosion_value"] = None
                 continue
             
             # Check valid coordinate ranges
             if lat < -90 or lat > 90 or lon < -180 or lon > 180:
                 skipped_count += 1
+                df.at[idx, "erosion_value"] = None
                 continue
 
             try:
@@ -327,7 +325,7 @@ def extract_erosion_buffer_values_postgis(
                 continue
         
         if skipped_count > 0:
-            print(f"⚠️ Skipped {skipped_count} rows with invalid coordinates, processed {processed_count} rows")
+            print(f"⚠️ Skipped {skipped_count}/{len(df)} records (invalid coordinates or no erosion buffer)")
 
     conn.close()
     return df
@@ -946,6 +944,12 @@ def process_agriculture_earthquake_pipeline(
         print("⚠️ No records to save")
 
 
+import os
+from decimal import Decimal
+from django.conf import settings
+from django.db import transaction
+from django.utils import timezone
+
 def process_arrgicultural_data_pipeline(
     village_obj,
     village_code,
@@ -953,28 +957,41 @@ def process_arrgicultural_data_pipeline(
     district_code,
     village_name,
 ):
-    print(f"🌾 Processing Agriculture Flood Data for {village_name} ({village_code})")
+    """
+    Agriculture Flood Hazard Pipeline
+
+    Steps:
+    1. Delete old records
+    2. Load flood raster
+    3. Load agriculture polygons
+    4. Perform zonal statistics
+    5. Calculate replacement cost & loss
+    6. Apply fallback if needed
+    7. Bulk insert fresh records
+    """
+
+    print(f"\n🌾 Processing Agriculture Flood Data for {village_name} ({village_code})")
 
     from layers.models import village_flood_raster_Files
     from vdmp_dashboard.models import villageAgricultureLandFloodInfo
-    from django.db import transaction
-    from decimal import Decimal
+    from administrator.models import tblVillage
 
     vill_obj = tblVillage.objects.get(id=int(village_obj))
 
-    # -----------------------------
-    # DELETE old data first
-    # -----------------------------
     with transaction.atomic():
+
+        # --------------------------------------------------
+        # STEP 1: DELETE OLD DATA (ENSURE FRESH CALCULATION)
+        # --------------------------------------------------
         deleted_count, _ = villageAgricultureLandFloodInfo.objects.filter(
             village=vill_obj
         ).delete()
 
-        print(f"🧹 Deleted {deleted_count} old agriculture flood records for {village_name}")
+        print(f"🧹 Deleted {deleted_count} old agriculture flood records")
 
-        # -----------------------------
-        # Load flood raster
-        # -----------------------------
+        # --------------------------------------------------
+        # STEP 2: LOAD FLOOD RASTER
+        # --------------------------------------------------
         flood_raster = village_flood_raster_Files.objects.filter(
             village_id=vill_obj
         ).first()
@@ -983,34 +1000,43 @@ def process_arrgicultural_data_pipeline(
             print("❌ Flood raster not found")
             return
 
-        raster_path = os.path.join(settings.MEDIA_ROOT, flood_raster.raster_file.name)
+        raster_path = os.path.join(
+            settings.MEDIA_ROOT,
+            flood_raster.raster_file.name
+        )
 
-        # -----------------------------
-        # Load agriculture polygons
-        # -----------------------------
+        # --------------------------------------------------
+        # STEP 3: LOAD AGRICULTURE POLYGONS
+        # --------------------------------------------------
         lulc_gdf = load_village_agriculture_lulc(village_code)
+
         if lulc_gdf.empty:
             print("⚠️ No agriculture polygons found")
             return
 
-        print(f"📌 Processing {len(lulc_gdf)} agriculture polygons...")
+        print(f"📌 Processing {len(lulc_gdf)} polygons...")
 
         records = []
         stats_summary = {'flooded': 0, 'no_flood': 0, 'no_coverage': 0}
         fallback_value = None
 
-        # -----------------------------
-        # Process each polygon
-        # -----------------------------
+        # --------------------------------------------------
+        # STEP 4: PROCESS EACH POLYGON
+        # --------------------------------------------------
         for idx, row in lulc_gdf.iterrows():
+
             stats = get_zonal_stats_gdal(raster_path, row["geom"])
 
-            flood_depth = stats['max']
-            flood_class = _classify_flood(flood_depth)
-            area_sqm = float(row["Area_SqM"])
-            area_sqkm = area_sqm / 1_000_000  # Convert sq meters to sq kilometers
+            flood_depth = float(stats.get("max", 0) or 0)
+            valid_pixels = stats.get("valid_pixels", 0)
 
-            if stats['valid_pixels'] == 0:
+            flood_class = _classify_flood(flood_depth)
+
+            # Convert sq meters → sq km (IMPORTANT)
+            area_sqm = float(row["Area_SqM"])
+            # area_sqkm = area_sqm / 1_000_000
+
+            if valid_pixels == 0:
                 stats_summary['no_coverage'] += 1
             elif flood_depth > 0:
                 stats_summary['flooded'] += 1
@@ -1018,9 +1044,10 @@ def process_arrgicultural_data_pipeline(
                 stats_summary['no_flood'] += 1
 
             unit_cost = Decimal(str(get_agriculture_unit_cost("Agriculture Land")))
-            replacement_cost = Decimal(str(area_sqkm)) * unit_cost
+            replacement_cost = Decimal(str(area_sqm)) * unit_cost
 
             crop_type = row.get("Class_name") or "Agriculture Land"
+
             mdr = Decimal(str(get_agriculture_flood_mdr(flood_depth, crop_type)))
             loss = replacement_cost * mdr
 
@@ -1038,51 +1065,76 @@ def process_arrgicultural_data_pipeline(
                     total_replacement_cost_inr=replacement_cost,
                     flood_hazard_mdr=mdr,
                     flood_loss=loss,
+                    
                 )
             )
 
-        # -----------------------------
-        # FALLBACK logic (unchanged)
-        # -----------------------------
+        # --------------------------------------------------
+        # STEP 5: FALLBACK LOGIC
+        # --------------------------------------------------
+        """
+        If:
+            - No flooded polygons detected
+            - Some polygons had no raster coverage
+        Then:
+            Use village-level raster median depth
+            to avoid under-estimating risk.
+        """
+
         if stats_summary['flooded'] == 0 and stats_summary['no_coverage'] > 0:
-            print("🔄 No flooded polygons found, applying fallback using raster median...")
+
+            print("🔄 Applying fallback using raster median...")
+
             fallback_value = get_raster_fallback_stats(
-                raster_path, village_code, 'median'
+                raster_path,
+                village_code,
+                'median'
             )
 
-            if fallback_value > 0:
+            if fallback_value and fallback_value > 0:
+
                 for i, record in enumerate(records):
+
                     if record.flood_depth_m == 0.0:
-                        crop_type = lulc_gdf.iloc[i].get("Class_name") or "Agriculture Land"
+
+                        crop_type = (
+                            lulc_gdf.iloc[i].get("Class_name")
+                            or "Agriculture Land"
+                        )
+
                         record.flood_depth_m = fallback_value
                         record.flood_class = _classify_flood(fallback_value)
-                        mdr = Decimal(str(get_agriculture_flood_mdr(fallback_value, crop_type)))
+
+                        mdr = Decimal(
+                            str(get_agriculture_flood_mdr(fallback_value, crop_type))
+                        )
+
                         record.flood_hazard_mdr = mdr
-                        record.flood_loss = record.total_replacement_cost_inr * mdr
+                        record.flood_loss = (
+                            record.total_replacement_cost_inr * mdr
+                        )
 
                         stats_summary['flooded'] += 1
                         stats_summary['no_coverage'] -= 1
 
-                print(f"✅ Applied fallback value {fallback_value}m")
+                print(f"✅ Fallback applied ({fallback_value}m)")
 
-        # -----------------------------
-        # Save new records
-        # -----------------------------
+        # --------------------------------------------------
+        # STEP 6: BULK INSERT NEW RECORDS
+        # --------------------------------------------------
         if records:
             villageAgricultureLandFloodInfo.objects.bulk_create(
-                records, batch_size=500
+                records,
+                batch_size=500
             )
 
-            print(f"\n📊 Summary:")
-            print(f"   ✅ Saved {len(records)} records")
-            print(f"   🌊 Flooded polygons: {stats_summary['flooded']}")
-            print(f"   ✅ No flood (safe): {stats_summary['no_flood']}")
-            print(f"   ⚠️  No coverage: {stats_summary['no_coverage']}")
-            if fallback_value:
-                print(f"   🔄 Fallback value used: {fallback_value}m")
+            print("\n📊 Flood Summary:")
+            print(f"   Total records: {len(records)}")
+            print(f"   Flooded: {stats_summary['flooded']}")
+            print(f"   Safe: {stats_summary['no_flood']}")
+            print(f"   No coverage: {stats_summary['no_coverage']}")
         else:
-            print("⚠️ No records to save")
-
+            print("⚠️ No records generated")
 
 # ============================================================================
 # EROSION PROCESSING
@@ -1241,41 +1293,59 @@ def process_all_agriculture_hazards(
     db_config=None
 ):
     """
-    Run all hazard assessments for agriculture land
+    Master Agriculture Hazard Assessment
+
+    Each pipeline:
+        - Deletes old data
+        - Recalculates fresh values
+        - Stores new values in DB
     """
+
     print(f"\n{'='*60}")
-    print(f"🌾 AGRICULTURE HAZARD ASSESSMENT")
+    print("🌾 AGRICULTURE HAZARD ASSESSMENT")
     print(f"Village: {village_name} ({village_code})")
     print(f"{'='*60}\n")
-    
-    # 1. Flood
+
+    # --------------------------------------------------
+    # 1️⃣ FLOOD
+    # --------------------------------------------------
     print("1️⃣ FLOOD HAZARD")
     process_arrgicultural_data_pipeline(
-        village_obj, village_code, district_name, district_code, village_name
+        village_obj,
+        village_code,
+        district_name,
+        district_code,
+        village_name
     )
-    
-    # 2. Wind
+
+    # --------------------------------------------------
+    # 2️⃣ WIND
+    # --------------------------------------------------
     print("\n2️⃣ WIND HAZARD")
     process_agriculture_wind_pipeline(
-        village_obj, village_code, district_name, district_code, village_name
+        village_obj,
+        village_code,
+        district_name,
+        district_code,
+        village_name
     )
-    
-    # # 3. Earthquake
-    # print("\n3️⃣ EARTHQUAKE HAZARD")
-    # process_agriculture_earthquake_pipeline(
-    #     village_obj, village_code, district_name, district_code, village_name
-    # )
-    
-    # 4. Erosion
-    print("\n4️⃣ EROSION RISK")
-    process_agriculture_erosion_pipeline(
-        village_obj, village_code, district_name, district_code, village_name, db_config
-    )
-    
-    print(f"\n{'='*60}")
-    print(f"✅ ALL HAZARD ASSESSMENTS COMPLETED!")
-    print(f"{'='*60}\n")
 
+    # --------------------------------------------------
+    # 3️⃣ EROSION
+    # --------------------------------------------------
+    print("\n3️⃣ EROSION RISK")
+    process_agriculture_erosion_pipeline(
+        village_obj,
+        village_code,
+        district_name,
+        district_code,
+        village_name,
+        db_config
+    )
+
+    print(f"\n{'='*60}")
+    print("✅ ALL AGRICULTURE HAZARD ASSESSMENTS COMPLETED!")
+    print(f"{'='*60}\n")
 
 # ============================================================================
 # USAGE EXAMPLE
@@ -3337,33 +3407,21 @@ def _process_model_flood_erosion(queryset, village_id, model_type):
     records = list(queryset.values(*fields))
     if not records:
         return
-    
+        
     df = pd.DataFrame(records)
+    print("DataFrame length before processing:", len(df))
+    # Always extract flood depth from raster
+    print(f"Extracting flood depth for {len(df)} {model_type} records...")
     
-    # Convert flood_depth_m to numeric, treating empty strings and '0' as None
-    df['flood_depth_m'] = pd.to_numeric(df['flood_depth_m'], errors='coerce')
+    df = extract_flood_depth_from_raster(df, village_id)
     
-    # For household model, map flood_depth_from_survey_meter to flood_depth_m if needed
-    if model_type == 'household' and 'flood_depth_from_survey_meter' in df.columns:
-        df['flood_depth_from_survey_meter'] = pd.to_numeric(df['flood_depth_from_survey_meter'], errors='coerce')
-        survey_mask = df['flood_depth_m'].isna() & df['flood_depth_from_survey_meter'].notna()
-        if survey_mask.any():
-            df.loc[survey_mask, 'flood_depth_m'] = df.loc[survey_mask, 'flood_depth_from_survey_meter']
-    
-    # Extract flood depth from raster for records without valid flood_depth_m
-    flood_mask = df['flood_depth_m'].isna() | (df['flood_depth_m'] <= 0)
-    if flood_mask.any():
-        print(f"Extracting flood depth for {flood_mask.sum()} {model_type} records...")
-        df = extract_flood_depth_from_raster(df, village_id)
-    
-    # Extract erosion values for records without erosion_value
-    erosion_mask = df['erosion_value'].isna() | (df['erosion_value'] == '')
-    if erosion_mask.any():
-        print(f"Extracting erosion values for {erosion_mask.sum()} {model_type} records...")
-        df = extract_erosion_buffer_values_postgis(df)
-        # Map erosion_buffer_m to erosion_value if it was extracted
-        if 'erosion_buffer_m' in df.columns:
-            df.loc[erosion_mask, 'erosion_value'] = df.loc[erosion_mask, 'erosion_buffer_m']
+    # Always extract erosion values
+    print(f"Extracting erosion values for {len(df)} {model_type} records...")
+    df = extract_erosion_buffer_values_postgis(df)
+    if 'erosion_buffer_m' in df.columns:
+        df['erosion_value'] = df['erosion_buffer_m']
+
+    print("Length-----------------> ", len(df))
     
     # Apply classifications only for valid values
     df['flood_class'] = df['flood_depth_m'].apply(lambda x: _classify_flood(x) if pd.notna(x) and x > 0 else None)
@@ -3376,27 +3434,36 @@ def _process_model_flood_erosion(queryset, village_id, model_type):
             record = queryset.get(id=row['id'])
             changed = False
             
-            # Update flood_depth_m if it was extracted
-            if pd.notna(row.get('flood_depth_m')):
-                record.flood_depth_m = float(row['flood_depth_m'])
+            # Always update flood_depth_m (including None values)
+            flood_value = row.get('flood_depth_m')
+            if pd.notna(flood_value):
+                record.flood_depth_m = float(flood_value)
                 changed = True
-                # For household model, also update flood_depth_from_survey_meter
                 if model_type == 'household' and hasattr(record, 'flood_depth_from_survey_meter'):
-                    record.flood_depth_from_survey_meter = float(row['flood_depth_m'])
+                    record.flood_depth_from_survey_meter = float(flood_value)
+            else:
+                record.flood_depth_m = None
+                changed = True
+                if model_type == 'household' and hasattr(record, 'flood_depth_from_survey_meter'):
+                    record.flood_depth_from_survey_meter = None
             
-            # Update flood_class if model has this field
-            if hasattr(record, 'flood_class') and pd.notna(row.get('flood_class')):
-                record.flood_class = row['flood_class']
+            # Update flood_class
+            if hasattr(record, 'flood_class'):
+                record.flood_class = row.get('flood_class')
                 changed = True
             
-            # Update erosion_value if it was extracted
-            if pd.notna(row.get('erosion_value')):
-                record.erosion_value = str(row['erosion_value'])
+            # Always update erosion_value (including None values)
+            erosion_value = row.get('erosion_value')
+            if pd.notna(erosion_value):
+                record.erosion_value = str(erosion_value)
+                changed = True
+            else:
+                record.erosion_value = None
                 changed = True
             
-            # Update erosion_class if model has this field
-            if hasattr(record, 'erosion_class') and pd.notna(row.get('erosion_class')):
-                record.erosion_class = row['erosion_class']
+            # Update erosion_class
+            if hasattr(record, 'erosion_class'):
+                record.erosion_class = row.get('erosion_class')
                 changed = True
             
             if changed:
@@ -3518,7 +3585,7 @@ def run_gis_risk_assessment_pipeline(village_obj, village_code):
     except Exception as e:
         print(f"Road erosion processing failed: {e}")
     
-    # Step 4: Process agriculture assessments
+    # Step 5: Process agriculture assessments
     print("🌾 Step 6: Processing agriculture risk assessments...")
     try:
         district_name, district_code = get_district_from_village(village_obj)
