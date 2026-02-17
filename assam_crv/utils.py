@@ -562,9 +562,9 @@ HOUSEHOLD_MAPPING = {
     'sludge_be_disposed_type': 'sludge_be_disposed_type',
     'type_of_toilet': 'type_of_toilet',
     # temp
-    "You get adequate water from this source throughout the year": "adequate_water_supply",
-    "Type of toilet?": "Sanitation_Type",
-    "While de-sludging where the sludge be disposed -": "sludge_be_disposed_type",
+    # "You get adequate water from this source throughout the year": "adequate_water_supply",
+    # "Type of toilet?": "Sanitation_Type",
+    # "While de-sludging where the sludge be disposed -": "sludge_be_disposed_type",
 }
 
 COMMERCIAL_MAPPING = {
@@ -833,7 +833,7 @@ PRA_MAIN_MAPPING = {
     'Access to fair price input supplies': 'access_to_fair_price_input_supplies',
     'Access to high technology farming practices': 'access_to_high_technology_farming_practices',
     'Access to scientific methods of farming practices': 'access_to_scientific_methods_of_farming_practices',
-      'Sericulture insurance': 'sericulture_insurance',
+    'Sericulture insurance': 'sericulture_insurance',
     'Weaving equipment insurance': 'weaving_equipment_insurance',
     'Access to credit': 'access_to_credit',
     'Access to flood resilient seed': 'access_to_flood_resilient_seed',
