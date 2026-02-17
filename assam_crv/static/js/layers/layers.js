@@ -78,9 +78,11 @@ async function getAllTheLayers() {
                 if (isDefaultLayer) {
                     addLayerToMap(layer);
                     const accordionBtn = document.getElementById(`accordion-btn-${layer.uuid}`);
-                    const zoomBtn = document.getElementById(`zoom-btn-${layer.uuid}`);
                     accordionBtn.classList.add('show');
-                    zoomBtn.classList.add('show');
+                    const zoomBtn = document.getElementById(`zoom-btn-${layer.uuid}`);
+                    if (zoomBtn) {
+                        zoomBtn.classList.add('show');
+                    }
                     addLayerToPrintSelection(`${layer.id}_${layer.layer_name}_${layer.workspace}`);
                 }
             });
@@ -110,12 +112,16 @@ function toggleLayer(value, layerIndex) {
     if (value) {
         addLayerToMap(layer);
         accordionBtn.classList.add('show');
-        zoomBtn.classList.add('show');
+        if (zoomBtn) {
+            zoomBtn.classList.add('show');
+        }
         addLayerToPrintSelection(`${layer.id}_${layer.layer_name}_${layer.workspace}`);
     } else {
         removeLayerFromMap(`${layer.id}_${layer.layer_name}_${layer.workspace}`);
         accordionBtn.classList.remove('show');
-        zoomBtn.classList.remove('show');
+        if (zoomBtn) {
+            zoomBtn.classList.remove('show');
+        }
 
         // collapse if open
         let collapseElement = document.getElementById(`collapse${layer.uuid}`);

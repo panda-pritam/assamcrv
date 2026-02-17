@@ -61,6 +61,28 @@
     return [...new Set(values.filter((value) => value))];
   }
 
+  function normalizeValue(value) {
+    if (!value) {
+      return "";
+    }
+    return String(value).trim().toLowerCase();
+  }
+
+  function filterInterventions() {
+    const selectedComponent = normalizeValue($component.val());
+    const selectedOperation = normalizeValue($operations.val());
+
+    return currentInterventions.filter((item) => {
+      const componentMatch = selectedComponent
+        ? normalizeValue(item.vulnerable_asset) === selectedComponent
+        : true;
+      const operationMatch = selectedOperation
+        ? normalizeValue(item.intervention_type) === selectedOperation
+        : true;
+      return componentMatch && operationMatch;
+    });
+  }
+
   async function fetchJson(url) {
     const response = await fetch(url);
     if (!response.ok) {
@@ -110,8 +132,16 @@
   }
 
   function updateOperationsOptions() {
+    const selectedComponent = normalizeValue($component.val());
     const operations = getUnique(
-      currentInterventions.map((item) => item.intervention_type).filter(Boolean)
+      currentInterventions
+        .filter((item) =>
+          selectedComponent
+            ? normalizeValue(item.vulnerable_asset) === selectedComponent
+            : true
+        )
+        .map((item) => item.intervention_type)
+        .filter(Boolean)
     );
     const selected = $operations.val();
     setSelectOptions($operations, operations, gettext("Select Operation"));
@@ -121,13 +151,7 @@
   }
 
   function updateMitigationOptions() {
-    const selectedOperation = $operations.val();
-    const interventions = currentInterventions.filter((item) => {
-      if (!selectedOperation) {
-        return true;
-      }
-      return item.intervention_type === selectedOperation;
-    });
+    const interventions = filterInterventions();
 
     $mitigationIntervention.empty();
     $mitigationIntervention.append(
@@ -154,7 +178,6 @@
     const query = buildQuery({
       theme: themeValue,
       subtheme: $subtheme.val(),
-      vulnerable_asset: $component.val(),
       status: statusFilter,
     });
     currentInterventions = await fetchJson(
