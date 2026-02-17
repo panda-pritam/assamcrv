@@ -1,5 +1,7 @@
 (() => {
-  const apiBase = "/api/mitigation";
+  const langMatch = window.location.pathname.match(/^\/([a-z]{2})(\/|$)/);
+  const langPrefix = langMatch ? `/${langMatch[1]}` : "";
+  const apiBase = `${langPrefix}/api/mitigation`;
   const statusFilter = "active";
   const currencySymbol = "\u20b9";
   const addedInterventions = [];
@@ -223,11 +225,40 @@
     const quantity = parseNumber($quantity.val());
     const unitCost = parseNumber($unitCost.val());
     if (quantity <= 0 || unitCost <= 0) {
-      showError(gettext("Please enter quantity and unit cost."));
+      $estimatedCost.val("");
       return;
     }
     const estimated = quantity * unitCost;
     $estimatedCost.val(formatCurrency(estimated));
+  }
+
+  async function savePlanItem(payload) {
+    const headers = { "Content-Type": "application/json" };
+    if (typeof getCSRFToken === "function") {
+      const token = getCSRFToken();
+      if (token) {
+        headers["X-CSRFToken"] = token;
+      }
+    }
+
+    const response = await fetch(`${apiBase}/plan-items/`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      let detail = "";
+      try {
+        const data = await response.json();
+        detail = data.detail || JSON.stringify(data);
+      } catch (error) {
+        detail = "";
+      }
+      throw new Error(detail || `Request failed: ${response.status}`);
+    }
+
+    return response.json();
   }
 
   function renderAddedInterventions() {
@@ -314,13 +345,53 @@
     $("#review-total-cost").text(formatCurrency(totalCost));
   }
 
-  function addIntervention() {
+  function buildAddedInterventionsFromPlanItems(items) {
+    return items.map((item) => {
+      const master = item.master_data || {};
+      const unitCost = parseNumber(item.unit_cost_rs);
+      const quantity = parseNumber(item.quantity);
+      const estimatedCost =
+        parseNumber(item.estimated_cost_rs) || unitCost * quantity;
+
+      return {
+        component: master.vulnerable_asset || "-",
+        operation: master.intervention_type || "-",
+        intervention: master.intervention_name || "-",
+        unit: master.unit || "",
+        quantity,
+        unitCost,
+        estimatedCost,
+        lumpsum: unitCost,
+      };
+    });
+  }
+
+  async function loadPlanItems(villageId) {
+    if (!villageId) {
+      addedInterventions.length = 0;
+      renderAddedInterventions();
+      updateTotals();
+      return;
+    }
+
+    const query = buildQuery({ village_id: villageId, status: "draft" });
+    const items = await fetchJson(`${apiBase}/plan-items/?${query}`);
+    addedInterventions.length = 0;
+    addedInterventions.push(...buildAddedInterventionsFromPlanItems(items));
+    renderAddedInterventions();
+    updateTotals();
+  }
+
+  async function addIntervention() {
     const component = $component.val();
     const operation = $operations.val();
     const interventionId = $mitigationIntervention.val();
+    const villageId = $("#village").val();
 
-    if (!component || !operation || !interventionId) {
-      showError(gettext("Please select component, operation, and intervention."));
+    if (!component || !operation || !interventionId || !villageId) {
+      showError(
+        gettext("Please select village, component, operation, and intervention.")
+      );
       return;
     }
 
@@ -335,21 +406,28 @@
     const quantity = parseNumber($quantity.val());
     const unitCost = parseNumber($unitCost.val());
     const estimatedCost = quantity * unitCost;
-    const lumpsum = parseNumber($lumpsum.val());
-
-    addedInterventions.push({
-      component,
-      operation,
-      intervention: selected.intervention_name,
-      unit: selected.unit || "",
+    const payload = {
+      master: selected.id,
       quantity,
-      unitCost,
-      estimatedCost,
-      lumpsum: lumpsum || unitCost,
-    });
+      unit_cost_rs: unitCost,
+      estimated_cost_rs: estimatedCost,
+      status: "draft",
+    };
+    payload.village = villageId;
 
-    renderAddedInterventions();
-    updateTotals();
+    try {
+      await savePlanItem(payload);
+    } catch (error) {
+      showError(error.message || gettext("Unable to save intervention."));
+      return;
+    }
+
+    await loadPlanItems(villageId);
+  }
+
+  function resetInterventionFields() {
+    $mitigationIntervention.val("").trigger("change.select2");
+    resetCostFields();
   }
 
   async function initMitigationForm() {
@@ -432,9 +510,18 @@
       updateEstimatedCost();
     });
 
-    $("#addInterventionBtn").on("click", (event) => {
+    $("#addInterventionBtn").on("click", async (event) => {
       event.preventDefault();
-      addIntervention();
+      await addIntervention();
+    });
+
+    $(".add-intervention-btn").on("click", (event) => {
+      event.preventDefault();
+      resetInterventionFields();
+    });
+
+    $("#village").on("change", async () => {
+      await loadPlanItems($("#village").val());
     });
 
     $("#reviewModal").on("show.bs.modal", () => {
