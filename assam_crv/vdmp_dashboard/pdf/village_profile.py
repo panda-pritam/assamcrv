@@ -823,29 +823,29 @@ def getAverageExpenditureBreakdownData(village_id):
         ])
 
         return [
-            ["S. No.", Paragraph("Expenditure Category", normal_style), "%"],
-            ["1", Paragraph("Agriculture", normal_style), agri_pct],
-            ["2", Paragraph("Festival and marriage", normal_style), festival_pct],
-            ["3", Paragraph("House repair", normal_style), repair_pct],
-            ["4", Paragraph("Tobacco and liquor", normal_style), tobacco_pct],
-            ["5", Paragraph("Education", normal_style), education_pct],
-            ["6", Paragraph("Health", normal_style), health_pct],
-            ["7", Paragraph("Food", normal_style), food_pct],
+            ["S. No.", "Expenditure Category", "%"],
+            ["1", "Agriculture", agri_pct],
+            ["2", "Festival and marriage", festival_pct],
+            ["3", "House repair", repair_pct],
+            ["4", "Tobacco and liquor", tobacco_pct],
+            ["5", "Education", education_pct],
+            ["6", "Health", health_pct],
+            ["7", "Food", food_pct],
             ["8", "Total", f"{total_pct}%" if grand_total > 0 else "0"]
         ]
 
     except Exception as e:
         print(f"Error in getAverageExpenditureBreakdownData: {e}")
         return [
-            ["S. No.", Paragraph("Expenditure Category", normal_style), "%"],
-            ["1", Paragraph("Agriculture", normal_style), "N/A"],
-            ["2", Paragraph("Festival and marriage", normal_style), "N/A"],
-            ["3", Paragraph("House repair", normal_style), "N/A"],
-            ["4", Paragraph("Tobacco and liquor", normal_style), "N/A"],
-            ["5", Paragraph("Education", normal_style), "N/A"],
-            ["6", Paragraph("Health", normal_style), "N/A"],
-            ["7", Paragraph("Food", normal_style), "N/A"],
-            ["8", Paragraph("Total", normal_style), "N/A"]
+            ["S. No.", "Expenditure Category", "%"],
+            ["1", "Agriculture", "N/A"],
+            ["2", "Festival and marriage", "N/A"],
+            ["3", "House repair", "N/A"],
+            ["4", "Tobacco and liquor", "N/A"],
+            ["5", "Education", "N/A"],
+            ["6", "Health", "N/A"],
+            ["7", "Food", "N/A"],
+            ["8", "Total", "N/A"]
         ]
         
 def getHouseholdDebtLiabilityData(village_id):
@@ -914,103 +914,77 @@ def getHouseholdDebtLiabilityData(village_id):
         ]
 
 
+from django.db.models import Q
+
 def getPrimaryLivelihoodDistributionData(village_id, type='primary'):
-    """
-    Get livelihood distribution data for primary or secondary economic activities.
-    
-    Args:
-        village_id: ID of the village
-        type: 'primary' or 'secondary'
-    
-    Returns:
-        List of lists containing the table data
-    """
     try:
-        households = HouseholdSurvey.objects.select_related('village').filter(village_id=village_id)
+        households = HouseholdSurvey.objects.filter(village_id=village_id)
         total_households = households.count()
-        
+
         field_name = 'livelihood_primary' if type == 'primary' else 'livelihood_secondary'
         activity_type = 'Primary economic activity' if type == 'primary' else 'Secondary economic activity'
-        
+
         if total_households == 0:
             return [
-                ['S. No.', 'Livelihood', activity_type], 
-                ["", "", "No. of Household", "%"], 
-                ["1", "Agriculture", "0", "0.00%"], 
-                ["2", "Fishing", "0", "0.00%"], 
-                ["3", "Livestock", "0", "0.00%"], 
-                ["4", "Manual labour", "0", "0.00%"], 
-                ["5", "No job", "0", "0.00%"], 
-                ["6", "Service", "0", "0.00%"], 
-                ["7", "Shop", "0", "0.00%"], 
-                ["8", "Total", "0", "0%"]
+                ['S. No.', 'Livelihood', activity_type],
+                ["", "", "No. of Household", "%"],
+                ["1", "Agriculture", "0", "0.00%"],
+                ["2", "Fishing", "0", "0.00%"],
+                ["3", "Livestock", "0", "0.00%"],
+                ["4", "Manual labour", "0", "0.00%"],
+                ["5", "Weaving", "0", "0.00%"],
+                ["6", "No job", "0", "0.00%"],
+                ["7", "Service", "0", "0.00%"],
+                ["8", "Shop", "0", "0.00%"],
+                ["9", "Not Specified", "0", "0.00%"],
+                ["10", "Total", "0", "0%"]
             ]
-        
-        # Count households by livelihood
+
         agriculture = households.filter(**{f"{field_name}__iexact": "Agriculture"}).count()
         fishing = households.filter(**{f"{field_name}__iexact": "Fishing"}).count()
         livestock = households.filter(**{f"{field_name}__iexact": "Livestock"}).count()
         manual_labour = households.filter(**{f"{field_name}__iexact": "Manual Labour"}).count()
-        no_job = households.filter(
-            Q(**{f"{field_name}__icontains": "no"}) |
-            Q(**{f"{field_name}__icontains": "none"}) |
-            Q(**{f"{field_name}__icontains": "No Job"})
-        ).count()
+        weaving = households.filter(**{f"{field_name}__iexact": "Weaving"}).count()
         service = households.filter(**{f"{field_name}__iexact": "Service"}).count()
         shop = households.filter(**{f"{field_name}__iexact": "Shop"}).count()
-                
-        # Find max occupation for primary livelihood only
-        if type == 'primary':
-            counts = {
-                'Agriculture': agriculture, 
-                'Fishing': fishing, 
-                'Livestock': livestock, 
-                'Manual Labour': manual_labour, 
-                'No Job': no_job, 
-                'Service': service, 
-                'Shop': shop
-            }
-            max_occupation = max(counts, key=counts.get)
-            # VILLAGE_SUMMARY_DATA['occupational_category'] = max_occupation
-        
-        # Calculate percentages with 2 decimal places for individual items
-        agriculture_pct = f"{(agriculture/total_households*100):.2f}%"
-        fishing_pct = f"{(fishing/total_households*100):.2f}%"
-        livestock_pct = f"{(livestock/total_households*100):.2f}%"
-        manual_labour_pct = f"{(manual_labour/total_households*100):.2f}%"
-        no_job_pct = f"{(no_job/total_households*100):.2f}%"
-        service_pct = f"{(service/total_households*100):.2f}%"
-        shop_pct = f"{(shop/total_households*100):.2f}%"
-        
-        # Calculate total count
-        total_count = agriculture + fishing + livestock + manual_labour + no_job + service + shop
-        
-        # Calculate total percentage:
-        # Sum up the individual percentages and round to integer, capped at 100%
-        total_pct_sum = (
-            (agriculture/total_households*100) + 
-            (fishing/total_households*100) + 
-            (livestock/total_households*100) + 
-            (manual_labour/total_households*100) + 
-            (no_job/total_households*100) + 
-            (service/total_households*100) + 
-            (shop/total_households*100)
+
+        no_job = households.filter(
+            Q(**{f"{field_name}__icontains": "no job"}) |
+            Q(**{f"{field_name}__icontains": "none"})
+        ).count()
+
+        not_specified = households.filter(
+            Q(**{f"{field_name}__isnull": True}) |
+            Q(**{f"{field_name}__exact": ""})
+        ).count()
+
+        def pct(val):
+            if total_households == 0:
+                return "N/A"
+            return f"{(val / total_households * 100):.2f}%"
+
+        total_count = (
+            agriculture + fishing + livestock + manual_labour +
+            weaving + no_job + service + shop + not_specified
         )
-        total_pct_rounded = min(round(total_pct_sum), 100)
-        
+
+        total_pct = f"{(total_count / total_households * 100):.0f}%"
+
         return [
             ['S. No.', 'Livelihood', activity_type],
             ["", "", "No. of Household", "%"],
-            ["1", "Agriculture", str(agriculture), agriculture_pct],
-            ["2", "Fishing", str(fishing), fishing_pct],
-            ["3", "Livestock", str(livestock), livestock_pct],
-            ["4", "Manual labour", str(manual_labour), manual_labour_pct],
-            ["5", "No job", str(no_job), no_job_pct],
-            ["6", "Service", str(service), service_pct],
-            ["7", "Shop", str(shop), shop_pct],
-            ["8", "Total", str(total_count), f"{total_pct_rounded}%"]
+            ["1", "Agriculture", str(agriculture), pct(agriculture)],
+            ["2", "Fishing", str(fishing), pct(fishing)],
+            ["3", "Livestock", str(livestock), pct(livestock)],
+            ["4", "Manual labour", str(manual_labour), pct(manual_labour)],
+            ["5", "Weaving", str(weaving), pct(weaving)],
+            ["6", "No job", str(no_job), pct(no_job)],
+            ["7", "Service", str(service), pct(service)],
+            ["8", "Shop", str(shop), pct(shop)],
+            ["9", "Not Specified", str(not_specified), pct(not_specified)],
+            ["10", "Total", str(total_count), total_pct]
         ]
-        
+
     except Exception as e:
         print(f"Error in getPrimaryLivelihoodDistributionData: {e}")
         activity_type = 'Primary economic activity' if type == 'primary' else 'Secondary economic activity'
@@ -1021,12 +995,13 @@ def getPrimaryLivelihoodDistributionData(village_id, type='primary'):
             ["2", "Fishing", "N/A", "N/A"],
             ["3", "Livestock", "N/A", "N/A"],
             ["4", "Manual labour", "N/A", "N/A"],
-            ["5", "No job", "N/A", "N/A"],
-            ["6", "Service", "N/A", "N/A"],
-            ["7", "Shop", "N/A", "N/A"],
-            ["8", "Total", "N/A", "N/A"]
+            ["5", "Weaving", "N/A", "N/A"],
+            ["6", "No job", "N/A", "N/A"],
+            ["7", "Service", "N/A", "N/A"],
+            ["8", "Shop", "N/A", "N/A"],
+            ["9", "Not Specified", "N/A", "N/A"],
+            ["10", "Total", "N/A", "N/A"]
         ]
-
 
 
 
@@ -1319,35 +1294,81 @@ def getDigitalAccessData(village_id):
             ["7", "Total", "N/A", "N/A"]
         ]
 
+from django.db.models import Q
+from django.db.models.functions import Lower, Trim
+
 def getPublicAssetsData(village_id):
     try:
-        
-        facilities = Critical_Facility.objects.select_related('village').filter(village_id=village_id)
-        
-        if facilities.count() == 0:
-            return [["Presence of facilities"], ["S. No.", "Type", "Number", "Electricity", "Drinking Water", "Sanitation", "Good Road Access", "Building Condition (Good)"], ["1", "Anganwadi", "-", "-", "-", "-", "-", "-"], ["2", "LP School", "-", "-", "-", "-", "-", "-"], ["3", "Middle School", "-", "-", "-", "-", "-", "-"], ["4", "Religious Place", "-", "-", "-", "-", "-", "-"], ["5", "Total", "-", "-", "-", "-", "-", "-"]]
-        
-        facility_types = ['Anganwadi', 'School', 'Govt Office', 'Religious Place']
-        result = [["Presence of facilities"], ["S. No.", "Type", "Number", "Electricity", "Drinking Water", "Sanitation", "Good Road Access", "Building Condition (Good)"]]
-        
-        # Initialize totals
+        facilities = Critical_Facility.objects.filter(
+            village_id=village_id
+        ).annotate(
+            clean_type=Lower(Trim('occupancy_type'))
+        )
+
+        if not facilities.exists():
+            return [
+                ["Presence of facilities"],
+                ["S. No.", "Type", "Number", "Electricity", "Drinking Water", "Sanitation", "Good Road Access", "Building Condition (Good)"],
+                ["1", "Anganwadi", "-", "-", "-", "-", "-", "-"],
+                ["2", "School", "-", "-", "-", "-", "-", "-"],
+                ["3", "Govt Office", "-", "-", "-", "-", "-", "-"],
+                ["4", "Religious Place", "-", "-", "-", "-", "-", "-"],
+                ["5", "Total", "-", "-", "-", "-", "-", "-"]
+            ]
+
+        # Define clean matching keywords
+        facility_map = {
+            "Anganwadi": ["anganwadi"],
+            "School": ["school"],
+            "Govt Office": ["govt office", "government office"],
+            "Religious Place": ["religious place", "temple", "mosque", "church"]
+        }
+
+        result = [
+            ["Presence of facilities"],
+            ["S. No.", "Type", "Number", "Electricity", "Drinking Water", "Sanitation", "Good Road Access", "Building Condition (Good)"]
+        ]
+
         total_facilities = 0
         total_electricity = 0
         total_drinking_water = 0
         total_sanitation = 0
         total_good_road = 0
         total_good_building = 0
-        
-        for i, facility_type in enumerate(facility_types, 1):
-            type_facilities = facilities.filter(occupancy_type=facility_type)
+
+        for i, (label, keywords) in enumerate(facility_map.items(), 1):
+
+            # Match using icontains on cleaned field
+            type_facilities = facilities.filter(
+                Q(clean_type__icontains=keywords[0])
+            )
+
             total_count = type_facilities.count()
-            
-            electricity_count = type_facilities.filter(house_has_electric_connection='Yes').count()
-            drinking_water_count = type_facilities.exclude(drinking_water_source__isnull=True).exclude(drinking_water_source='yes').count()
-            sanitation_count = type_facilities.exclude(toilet_facility__isnull=True).exclude(toilet_facility='yes').count()
-            good_road_count = type_facilities.filter(access_road_during_flood='Good Road').count()
-            good_building_count = type_facilities.filter(building_quality__icontains='good').count()
-            
+
+            electricity_count = type_facilities.filter(
+                house_has_electric_connection__iexact='yes'
+            ).count()
+
+            drinking_water_count = type_facilities.exclude(
+                drinking_water_source__isnull=True
+            ).exclude(
+                drinking_water_source__exact=''
+            ).count()
+
+            sanitation_count = type_facilities.exclude(
+                toilet_facility__isnull=True
+            ).exclude(
+                toilet_facility__exact=''
+            ).count()
+
+            good_road_count = type_facilities.filter(
+                access_road_during_flood__iexact='good road'
+            ).count()
+
+            good_building_count = type_facilities.filter(
+                building_quality__icontains='good'
+            ).count()
+
             # Add to totals
             total_facilities += total_count
             total_electricity += electricity_count
@@ -1355,10 +1376,10 @@ def getPublicAssetsData(village_id):
             total_sanitation += sanitation_count
             total_good_road += good_road_count
             total_good_building += good_building_count
-            
+
             result.append([
                 str(i),
-                facility_type,
+                label,
                 str(total_count),
                 str(electricity_count),
                 str(drinking_water_count),
@@ -1366,10 +1387,10 @@ def getPublicAssetsData(village_id):
                 str(good_road_count),
                 str(good_building_count)
             ])
-        
-        # Add total row
+
+        # Total row
         result.append([
-            "5",
+            str(len(facility_map) + 1),
             "Total",
             str(total_facilities),
             str(total_electricity),
@@ -1378,18 +1399,21 @@ def getPublicAssetsData(village_id):
             str(total_good_road),
             str(total_good_building)
         ])
-        
+
         return result
-    except Exception:
+
+    except Exception as e:
+        print(f"Error in getPublicAssetsData: {e}")
         return [
             ["Presence of facilities"],
             ["S. No.", "Type", "Number", "Electricity", "Drinking Water", "Sanitation", "Good Road Access", "Building Condition (Good)"],
             ["1", "Anganwadi", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A"],
-            ["2", "LP School", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A"],
-            ["3", "Middle School", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A"],
+            ["2", "School", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A"],
+            ["3", "Govt Office", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A"],
             ["4", "Religious Place", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A"],
             ["5", "Total", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A"]
         ]
+
 
 
 from collections import defaultdict
@@ -2027,7 +2051,7 @@ def normalize_toilet_type(value):
     - No Toilet
     """
     if not value:
-        return "No Toilet"
+        return "None"
 
     v = str(value).strip().lower()
 
@@ -2035,9 +2059,9 @@ def normalize_toilet_type(value):
         return 'Single Pit'
 
     if ('twin' in v or 'double' in v) and 'pit' in v:
-        return 'Twin Pit'
+        return 'Double Pit'
 
-    return "No Toilet"
+    return "None"
 
 
 
