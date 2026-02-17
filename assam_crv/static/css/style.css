@@ -418,7 +418,9 @@ footer {
     border-radius: 10px;
     width: 500px;
 }
-
+h5.secondary__heading.task_heading {
+    padding-left: 0px;
+}
 .form-title {
     text-align: center;
     margin-bottom: 20px;
@@ -972,7 +974,7 @@ select.drpdwn_slct {
     width: 100%;
     padding: 0px 5px;
     margin-bottom: 0;
-    border: 1px solid #0072ae;
+    border:1px solid #caddf8;
     outline: none;
     border-radius: 3px;
 }
@@ -2612,6 +2614,9 @@ h6.interventions-heading{
 .added-interventions-table {
    
     padding-top: 0px;
+}
+input#fileInput1 {
+    border: 1px solid #caddf8;
 }
 .total-quantity-wrap {
     display: flex;

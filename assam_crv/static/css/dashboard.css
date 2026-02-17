@@ -194,12 +194,15 @@ button#printDashboardBtn {
   font-weight: 400;
 }
 .updateInfo {
-  position: relative;
-  top: 30%;
-  right: 3%;
-  font-size: 14px;
-  color: #cd0303;
-  text-align: right;
+    position: absolute;
+    top: 0%;
+    right: 3%;
+    font-size: 14px;
+    color: #245fae;
+    text-align: right;
+}
+.dashboard-tabs {
+    position: relative;
 }
 /* Breadcrumb Section Styles */
 #breadcrumb-section {

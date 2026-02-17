@@ -17,7 +17,7 @@
 <section id="filter">
     <div class="container-fluid">
         <div class="d-flex justify-content-between align-items-center">
-            <h5 class="secondary__heading">{% trans "Task Force Members" %}</h5>
+            <h5 class="secondary__heading task_heading">{% trans "Task Force Members" %}</h5>
             <div class="d-flex gap-2">
                 <button type="button" class="btn btn-primary custom-purple d-flex align-items-center justify-content-center gap-1 csvBtn" data-bs-toggle="modal" data-bs-target="#uploadTaskForceModal">
                     <i class="fa fa-upload"></i> {% trans "Upload Excel" %}
@@ -34,31 +34,31 @@
 <section id="filter">
     <div class="container-fluid">
         <div class="row">
-            <div class="col-md-4 col-xl-2 col-sm-6 d-flex flex-column">
+            <div class="col-md-4 col-1-5 col-sm-6 d-flex flex-column">
                  <label class="form-label fw-medium" for="district">{% trans "District" %}</label>
                 <select name="district" id="district" class="form-select select2">
                     <option value="" selected disabled>{% trans "Select Districts" %}</option>
                 </select>
             </div>
-            <div class="col-md-4 col-xl-2 col-sm-6 d-flex flex-column">
+            <div class="col-md-4 col-1-5 col-sm-6 d-flex flex-column">
                  <label class="form-label fw-medium" for="circle">{% trans "Circle" %}</label>
                 <select name="circle" id="circle" class="form-select select2">
                     <option value="" selected disabled>{% trans "Select Circle" %}</option>
                 </select>
             </div>
-            <div class="col-md-4 col-xl-2 col-sm-6 d-flex flex-column">
+            <div class="col-md-4 col-1-5 col-sm-6 d-flex flex-column">
                  <label class="form-label fw-medium" for="gram_panchayat">{% trans "Gram Panchayat" %}</label>
                 <select name="gram_panchayat" id="gram_panchayat" class="form-select select2">
                     <option value="" selected disabled>{% trans "Select Gram Panchayat" %}</option>
                 </select>
             </div>
-            <div class="col-md-4 col-xl-2 col-sm-6 d-flex flex-column">
+            <div class="col-md-4 col-1-5 col-sm-6 d-flex flex-column">
                 <label class="form-label fw-medium" for="village">{% trans "Village" %}</label> 
                 <select name="village" id="village" class="form-select select2">
                     <option value="" selected disabled>{% trans "Select Villages" %}</option>
                 </select>
             </div>
-            <div class="col-md-4 col-xl-2 col-sm-6 d-flex flex-column">
+            <div class="col-md-4 col-1-5 col-sm-6 d-flex flex-column">
                 <label class="form-label fw-medium" for="village">{% trans "Select Team Type" %}</label> 
                 <select name="team_type" id="team_type" class="form-select select2">
                     <option value="" selected disabled>{% trans "Select Team Type" %}</option>
