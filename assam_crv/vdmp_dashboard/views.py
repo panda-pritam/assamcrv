@@ -1003,7 +1003,10 @@ def get_max_wind_speed():
 
 
 def get_total_road_length(district_id=None, circle_id=None, gram_panchayat_id=None, village_id=None):
-    """Get total road length based on location filters"""
+    """Get total road length from PostGIS based on location filters"""
+    import psycopg2
+    from django.conf import settings
+    
     try:
         # Get village codes based on filters
         villages = tblVillage.objects.all()
@@ -1019,40 +1022,68 @@ def get_total_road_length(district_id=None, circle_id=None, gram_panchayat_id=No
         
         village_codes = list(villages.values_list('code', flat=True))
         
-        if not village_codes:
-            return 0
-            
-        # Build CQL filter for multiple villages
-        if len(village_codes) == 1:
-            cql_filter = f"vill_id='{village_codes[0]}'"
-        else:
-            codes_str = "','".join(village_codes)
-            cql_filter = f"vill_id IN ('{codes_str}')"
+        # Connect to PostGIS
+        db = settings.DATABASES['default']
+        conn = psycopg2.connect(
+            dbname=db['NAME'],
+            user=db['USER'],
+            password=db['PASSWORD'],
+            host=db['HOST'],
+            port=db['PORT']
+        )
         
-        wfs_url = f"{settings.GEOSERVER_URL.rstrip('/')}/assam/ows"
-        params = {
-            "service": "WFS",
-            "version": "1.0.0",
-            "request": "GetFeature",
-            "typeName": "assam:road_network",
-            "outputFormat": "application/json",
-            "CQL_FILTER": cql_filter
-        }
+        # Try lowercase columns first
+        sql_lower = """
+            SELECT SUM(ST_Length(ST_Transform(ST_SetSRID(geom, 4326), 32646))) AS total_length_m
+            FROM public.road_network
+            WHERE geom IS NOT NULL
+        """
         
-        response = requests.get(wfs_url, params=params)
-        if response.status_code != 200:
-            return 0
-            
-        geojson = response.json()
-        features = geojson.get("features", [])
+        # Try uppercase columns
+        sql_upper = """
+            SELECT SUM(ST_Length(ST_Transform(ST_SetSRID(geom, 4326), 32646))) AS total_length_m
+            FROM public.road_network
+            WHERE geom IS NOT NULL
+        """
+        
+        # Add village filter if codes exist
+        if village_codes:
+            if len(village_codes) == 1:
+                sql_lower += f" AND TRIM(vill_id) = '{village_codes[0]}'"
+                sql_upper += f" AND TRIM(\"Vill_ID\") = '{village_codes[0]}'"
+            else:
+                codes_str = "','".join(village_codes)
+                sql_lower += f" AND TRIM(vill_id) IN ('{codes_str}')"
+                sql_upper += f" AND TRIM(\"Vill_ID\") IN ('{codes_str}')"
         
         total_length_m = 0
-        for feature in features:
-            props = feature.get("properties", {})
-            length_m = props.get("length", 0.0) or 0.0
-            total_length_m += float(length_m)
-            
-        return round(total_length_m / 1000, 2)  # Convert to km
+        
+        # Try lowercase first
+        try:
+            with conn.cursor() as cur:
+                cur.execute(sql_lower)
+                result = cur.fetchone()
+                if result and result[0]:
+                    total_length_m = float(result[0])
+                    print(f"✅ Total road length (lowercase): {total_length_m}m")
+        except Exception as e:
+            print(f"⚠️ Lowercase query failed, trying uppercase: {e}")
+            conn.rollback()
+            try:
+                with conn.cursor() as cur:
+                    cur.execute(sql_upper)
+                    result = cur.fetchone()
+                    if result and result[0]:
+                        total_length_m = float(result[0])
+                        print(f"✅ Total road length (uppercase): {total_length_m}m")
+            except Exception as e2:
+                print(f"❌ Road length query failed: {e2}")
+                conn.rollback()
+        
+        conn.close()
+        
+        # Convert to km and round
+        return round(total_length_m / 1000, 2) if total_length_m > 0 else 0
         
     except Exception as e:
         print(f"Error getting road length: {e}")
