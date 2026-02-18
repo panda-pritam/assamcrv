@@ -50,7 +50,7 @@ list_of_table_heading= ParagraphStyle(
         name='ListofTableHeading',
         parent=styles['Heading2'],
         textColor=heading_color,
-        # leftIndent=heading_left_indent,
+        leftIndent=heading_left_indent,
         underline=1
     )
 
@@ -200,7 +200,8 @@ srNoStyle=[
 normal_style = styles['Normal']
 bold_style = ParagraphStyle('Bold', parent=normal_style, fontName='Helvetica-Bold')
 center_style = ParagraphStyle('Bold', parent=normal_style,alignment=1,)
-bold_center_style = ParagraphStyle('Bold', parent=normal_style,alignment=1,fontName='Helvetica-Bold')
+bold_center_style = ParagraphStyle('Bold', parent=normal_style,alignment=1,fontName='Helvetica-Bold',)
+bold_center_style_9 = ParagraphStyle('Bold', parent=normal_style,alignment=1,fontName='Helvetica-Bold',fontSize=9)
 # table header bg #e1edff
 # table border bg #96b9e7
 
@@ -209,6 +210,14 @@ bold_12 = ParagraphStyle(
     parent=styles['Normal'],
     fontName='Helvetica-Bold',
     fontSize=9
+)
+
+bold_12_center = ParagraphStyle(
+    'Bold12',
+    parent=styles['Normal'],
+    fontName='Helvetica-Bold',
+    fontSize=9,
+    alignment=1
 )
 
 left_indent_paragraph_sec = ParagraphStyle(
@@ -222,5 +231,9 @@ left_indent_paragraph = ParagraphStyle(
     parent=styles['Normal'],
     leftIndent=heading_left_indent,
 )
+
+right_align_text = ParagraphStyle ( name='RightAlign', parent=styles['Normal'], alignment=2)
+
+bold_right_align_text = ParagraphStyle (name='BoldRightAlign', parent=styles['Normal'], alignment=2, fontName='Helvetica-Bold',fontSize=9,)
 
 

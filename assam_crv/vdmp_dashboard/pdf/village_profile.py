@@ -17,7 +17,7 @@ def format_indian_number(num):
         return locale.format_string('%d', int(num), grouping=True)
     except:
         return str(num)
-from .global_styles import blue_level3_heading, blue_heading,table_sub_title,blue_sub_heading,image_title,notes_style,tb_header_bg,Legend_heading,indented_style,bold_style,normal_style, bold_center_style,srNoStyle, heading_box_color
+from .global_styles import blue_level3_heading, blue_heading,table_sub_title,blue_sub_heading,image_title,notes_style,tb_header_bg,Legend_heading,indented_style,bold_style,normal_style, bold_center_style_9,srNoStyle, heading_box_color,bold_center_style
 from .utils.table import create_styled_table
 from .utils.geoserverLayerImage import  get_geoserver_legend_path,get_geoserver_image_as_rl_image
 
@@ -89,7 +89,7 @@ def getFacilityAccessData(village_id):
         # Return actual data
         # -----------------------------
         return [
-            ["S. No.", "Asset Type", "Distance from Village"],
+            [Paragraph("S. No.",bold_center_style_9), Paragraph("Asset Type",bold_center_style_9), Paragraph("Distance from Village",bold_center_style_9)],
 
             ["1", "Higher secondary school",
              format_distance(pra_data.nearest_higher_secondary_km)],
@@ -156,9 +156,9 @@ def getPowerInfrastructureData_Total(village_id):
         village_code = village.code
     except tblVillage.DoesNotExist:
         return [
-            [Paragraph("S. No.", bold_center_style),
-             Paragraph("Type", bold_center_style),
-             Paragraph("Number", bold_center_style)],
+            [Paragraph("S. No.", bold_center_style_9),
+             Paragraph("Type", bold_center_style_9),
+             Paragraph("Number", bold_center_style_9)],
             ["1", Paragraph("Electric post and network", normal_style), "N/A"],
             ["2", Paragraph("Transformer", normal_style), "N/A"],
         ]
@@ -216,9 +216,9 @@ def getPowerInfrastructureData_Total(village_id):
     # RETURN TABLE
     # =========================
     return [
-        [Paragraph("S. No.", bold_center_style),
-         Paragraph("Type", bold_center_style),
-         Paragraph("Number", bold_center_style)],
+        [Paragraph("S. No.", bold_center_style_9),
+         Paragraph("Type", bold_center_style_9),
+         Paragraph("Number", bold_center_style_9)],
         ["1", Paragraph("Electric post and network", normal_style),
          Paragraph(str(electric_data_total))],
         ["2", Paragraph("Transformer", normal_style),
@@ -318,26 +318,26 @@ def getVillageLocationDetails(village_id):
                 pass
         
         return [
-            [Paragraph("Village", bold_style), Paragraph(village_name, normal_style)],
+            [Paragraph("Revenue Village", bold_style), Paragraph(village_name, normal_style)],
             [Paragraph("Block", bold_style), Paragraph(block_name, normal_style)],
-            [Paragraph("Circle", bold_style), Paragraph(circle_name, normal_style)],
+            [Paragraph("Revenue Circle", bold_style), Paragraph(circle_name, normal_style)],
             [Paragraph("District", bold_style), Paragraph(district_name, normal_style)],
             [Paragraph("Distance from district headquarter (km)", bold_style), Paragraph(distance_hq, normal_style)],
             [Paragraph("Total area (sq km)", bold_style), Paragraph(total_area, normal_style)],
             [Paragraph("Average elevation (above MSL)", bold_style), Paragraph(avg_elevation, normal_style)],
-            [Paragraph("Topography", bold_style), Paragraph(topography, normal_style)],
+            # [Paragraph("Topography", bold_style), Paragraph(topography, normal_style)],
         ]
         
     except tblVillage.DoesNotExist:
         return [
-            [Paragraph("Village", bold_style), Paragraph("N/A", normal_style)],
+            [Paragraph("Revenue Village", bold_style), Paragraph("N/A", normal_style)],
             [Paragraph("Block", bold_style), Paragraph("N/A", normal_style)],
-            [Paragraph("Circle", bold_style), Paragraph("N/A", normal_style)],
+            [Paragraph("Revenue Circle", bold_style), Paragraph("N/A", normal_style)],
             [Paragraph("District", bold_style), Paragraph("N/A", normal_style)],
             [Paragraph("Distance from district headquarter (km)", bold_style), Paragraph("N/A", normal_style)],
             [Paragraph("Total area (sq km)", bold_style), Paragraph("N/A", normal_style)],
             [Paragraph("Average elevation (above MSL)", bold_style), Paragraph("N/A", normal_style)],
-            [Paragraph("Topography", bold_style), Paragraph("N/A", normal_style)],
+            # [Paragraph("Topography", bold_style), Paragraph("N/A", normal_style)],
         ]
 
 
@@ -384,24 +384,24 @@ def getVillageDemographic(village_id):
         avg_family_size = int(round(total_population / total_households)) if total_households > 0 else 0
         
 
-        male_female_ratio = round((total_males / total_females) * 1000) if total_females > 0 else 0
+        male_female_ratio = round((total_females / total_males) * 1000) if total_females > 0 else 0
         
         # VILLAGE_SUMMARY_DATA['total_population']=total_population
         # VILLAGE_SUMMARY_DATA['total_households']=total_households
         
         return [
-            ['S. No.',"Household Characteristic", "Total"],
+            [Paragraph('S. No.',bold_center_style_9),Paragraph("Household Characteristic",bold_center_style_9), Paragraph("Total", bold_center_style_9)],
             ['1',"No of Males", format_indian_number(total_males)],
             ['2',"No of Females", format_indian_number(total_females)],
             ['3',"Total Population", format_indian_number(total_population)],
             ["4","Number of Households", format_indian_number(total_households)],
-            ['5',"Absentee House", "N/A"],
+            ['5',"Absentee House", "None"],
             ['6',"Average Family Size", str(avg_family_size)],
-            ['7',"Male-Female Ratio", str(male_female_ratio)]
+            ['7',Paragraph("Number of females per 1,000 males"), str(male_female_ratio)]
         ]
     except Exception:
         return [
-            ['S. No.',"Household Characteristic", "Total"],
+            [Paragraph('S. No.',bold_center_style_9),Paragraph("Household Characteristic",bold_center_style_9), Paragraph("Total", bold_center_style_9)],
             ["1","No of Males", "N/A"],
             ["2","No of Females", "N/A"],
             ["3","Total Population", "N/A"],
@@ -488,11 +488,11 @@ def getSocialEconomicStatusData(village_id):
         # BUILD TABLE
         # -----------------------------
         result = [[
-            "S. No.",
-            "Social/Economic Status Household",
-            "AAY", "APL", "AY", "BPL", "PHH",
-            "Total",
-            "%"
+            Paragraph("S. No.", bold_center_style_9),
+            Paragraph("Social/Economic Status Household", bold_center_style_9),
+            Paragraph("AAY",bold_center_style_9), Paragraph("APL", bold_center_style_9,), Paragraph("AY", bold_center_style_9,), Paragraph("BPL", bold_center_style_9,), Paragraph("PHH", bold_center_style_9),
+            Paragraph("Total", bold_center_style_9),
+            Paragraph("%", bold_center_style_9)
         ]]
 
         col_totals = {'AAY': 0, 'APL': 0, 'AY': 0, 'BPL': 0, 'PHH': 0}
@@ -642,10 +642,10 @@ def getIncomeGroupData(village_id):
 
 
     table_data = [
-        ["Sr. No.", "Income Group", "No. of Household", "%"],
-        ["1", "Upto 50,000", upto_50k, pct(upto_50k)],
-        ["2", "Upto 1,50,000", upto_150k, pct(upto_150k)],
-        ["3", "Upto 2,50,000", upto_250k, pct(upto_250k)],
+        [Paragraph("S. No.", bold_center_style_9), Paragraph("Income Group (INR)", bold_center_style_9), Paragraph("No. of Household",bold_center_style_9), Paragraph("%", bold_center_style_9)],
+        ["1", "INR 50,000", upto_50k, pct(upto_50k)],
+        ["2", Paragraph("INR 50,000 to 1,50,000"), upto_150k, pct(upto_150k)],
+        ["3", Paragraph( "INR 150,000 to 2,50,000"), upto_250k, pct(upto_250k)],
         ["4", "> 2,50,000", above_250k, pct(above_250k)],
         ["5", "Income Not Reported", unknown, pct(unknown)],
         ["6", "Total", total, f"{total_pct}%"]
@@ -745,8 +745,8 @@ def getAgricultureLandHoldingData(village_id):
         # Table
         # ---------------------------
         table_data = [
-            ["S. No.", "Agricultural land ownership (in bigha)",
-             "< 0.5", "0.5-1.5", "1.5-2.5", ">2.5", "Total"],
+            [Paragraph("S. No.", bold_center_style_9), Paragraph("Agricultural land ownership (in bigha)", bold_center_style_9),
+             Paragraph("< 0.5", bold_center_style_9), Paragraph("0.5-1.5", bold_center_style_9), Paragraph("1.5-2.5",bold_center_style_9), Paragraph(">2.5", bold_center_style_9), Paragraph("Total", bold_center_style_9)],
 
             ["1", "Leased",
              leased['u05'], leased['0515'],
@@ -785,8 +785,8 @@ def getAgricultureLandHoldingData(village_id):
     except Exception as e:
         print(f"Error in getAgricultureLandHoldingData: {e}")
         return [
-            ["S. No.", "Agricultural land ownership (in bigha)",
-             "< 0.5", "0.5-1.5", "1.5-2.5", ">2.5", "Total"],
+           [Paragraph("S. No.", bold_center_style_9), Paragraph("Agricultural land ownership (in bigha)", bold_center_style_9),
+             Paragraph("< 0.5", bold_center_style_9), Paragraph("0.5-1.5", bold_center_style_9), Paragraph("1.5-2.5",bold_center_style_9), Paragraph(">2.5", bold_center_style_9), Paragraph("Total", bold_center_style_9)],
             ["1", "Leased", "N/A", "N/A", "N/A", "N/A", "N/A"],
             ["2", "% leased to total leased", "N/A", "N/A", "N/A", "N/A", "N/A"],
             ["3", "Owned", "N/A", "N/A", "N/A", "N/A", "N/A"],
@@ -803,7 +803,7 @@ def getAverageExpenditureBreakdownData(village_id):
         
         if not households.exists():
             return [
-                ["S. No.", "Expenditure Category", "%"],
+                 [Paragraph("S. No.", bold_center_style_9), Paragraph("Expenditure Category", bold_center_style_9), Paragraph("%", bold_center_style_9)],
                 ["1", "Agriculture", "-"],
                 ["2", "Festival and marriage", "-"],
                 ["3", "House repair", "-"],
@@ -860,7 +860,7 @@ def getAverageExpenditureBreakdownData(village_id):
         ])
 
         return [
-            ["S. No.", "Expenditure Category", "%"],
+            [Paragraph("S. No.", bold_center_style_9), Paragraph("Expenditure Category", bold_center_style_9), Paragraph("%", bold_center_style_9)],
             ["1", "Agriculture", agri_pct],
             ["2", "Festival and marriage", festival_pct],
             ["3", "House repair", repair_pct],
@@ -874,7 +874,7 @@ def getAverageExpenditureBreakdownData(village_id):
     except Exception as e:
         print(f"Error in getAverageExpenditureBreakdownData: {e}")
         return [
-            ["S. No.", "Expenditure Category", "%"],
+             [Paragraph("S. No.", bold_center_style_9), Paragraph("Expenditure Category", bold_center_style_9), Paragraph("%", bold_center_style_9)],
             ["1", "Agriculture", "N/A"],
             ["2", "Festival and marriage", "N/A"],
             ["3", "House repair", "N/A"],
@@ -892,7 +892,7 @@ def getHouseholdDebtLiabilityData(village_id):
 
         if total_households == 0:
             return [
-                ["S. No.", "Loan Amount (INR)", "Number of households", "%"],
+                [Paragraph("S. No.", bold_center_style_9), Paragraph("Loan Amount (INR)",bold_center_style_9), Paragraph("Number of households",bold_center_style_9), Paragraph("%", bold_center_style_9)],
                 ["1", "No Loan", "0", "0.00%"],
                 ["2", "Upto 10K", "0", "0.00%"],
                 ["3", "Upto 50K", "0", "0.00%"],
@@ -929,7 +929,7 @@ def getHouseholdDebtLiabilityData(village_id):
         total_pct = round((total_count / total_households) * 100)
 
         return [
-            ["S. No.", "Loan Amount (INR)", "Number of HH", "%"],
+            [Paragraph("S. No.", bold_center_style_9), Paragraph("Loan Amount (INR)",bold_center_style_9), Paragraph("Number of households",bold_center_style_9), Paragraph("%", bold_center_style_9)],
             ["1", "No Loan", str(no_loan), f"{pct(no_loan)}%"],
             ["2", "Upto 10K", str(upto_10k), f"{pct(upto_10k)}%"],
             ["3", "Upto 50K", str(upto_50k), f"{pct(upto_50k)}%"],
@@ -941,7 +941,7 @@ def getHouseholdDebtLiabilityData(village_id):
     except Exception as e:
         print("Debt Liability Error:", e)
         return [
-            ["S. No.", "Loan Amount (INR)", "Number of HH", "%"],
+             [Paragraph("S. No.", bold_center_style_9), Paragraph("Loan Amount (INR)",bold_center_style_9), Paragraph("Number of households",bold_center_style_9), Paragraph("%", bold_center_style_9)],
             ["1", "No Loan", "N/A", "N/A"],
             ["2", "Upto 10K", "N/A", "N/A"],
             ["3", "Upto 50K", "N/A", "N/A"],
@@ -963,7 +963,7 @@ def getPrimaryLivelihoodDistributionData(village_id, type='primary'):
 
         if total_households == 0:
             return [
-                ['S. No.', 'Livelihood', activity_type],
+                [Paragraph("S. No.", bold_center_style_9), Paragraph('Livelihood',bold_center_style_9), Paragraph(f"{activity_type}",bold_center_style_9)],
                 ["", "", "No. of Household", "%"],
                 ["1", "Agriculture", "0", "0.00%"],
                 ["2", "Fishing", "0", "0.00%"],
@@ -1008,8 +1008,8 @@ def getPrimaryLivelihoodDistributionData(village_id, type='primary'):
         total_pct = f"{(total_count / total_households * 100):.0f}%"
 
         return [
-            ['S. No.', 'Livelihood', activity_type],
-            ["", "", "No. of Household", "%"],
+           [Paragraph("S. No.", bold_center_style_9), Paragraph('Livelihood',bold_center_style_9), Paragraph(f"{activity_type}",bold_center_style_9)],
+            ["", "", Paragraph("No. of Household", bold_center_style_9), Paragraph("%", bold_center_style_9)],
             ["1", "Agriculture", str(agriculture), pct(agriculture)],
             ["2", "Fishing", str(fishing), pct(fishing)],
             ["3", "Livestock", str(livestock), pct(livestock)],
@@ -1026,7 +1026,7 @@ def getPrimaryLivelihoodDistributionData(village_id, type='primary'):
         print(f"Error in getPrimaryLivelihoodDistributionData: {e}")
         activity_type = 'Primary economic activity' if type == 'primary' else 'Secondary economic activity'
         return [
-            ['S. No.', 'Livelihood', activity_type],
+            [Paragraph("S. No.", bold_center_style_9), Paragraph('Livelihood',bold_center_style_9), Paragraph(f"{activity_type}",bold_center_style_9)],
             ["", "", "No. of Household", "%"],
             ["1", "Agriculture", "N/A", "N/A"],
             ["2", "Fishing", "N/A", "N/A"],
@@ -1049,7 +1049,7 @@ def getCropCultivationData(village_id):
         total_households = households.count()
         
         if total_households == 0:
-            return [['S. No.',"Number of crops", "No. of Household", "%"], ["1", "One crop", "0", "0%"], ["2", "Two crops", "0", "0%"], ["3", "More than 2 crops", "0", "0%"], ["4", "No agriculture", "0", "0%"], ["5", "Total", "0", "0%"]]
+            return [[Paragraph('S. No.',bold_center_style_9),Paragraph("Number of crops", bold_center_style_9), Paragraph("No. of Household", bold_center_style_9), Paragraph("%", bold_center_style_9)], ["1", "One crop", "0", "0%"], ["2", "Two crops", "0", "0%"], ["3", "More than 2 crops", "0", "0%"], ["4", "No agriculture", "0", "0%"], ["5", "Total", "0", "0%"]]
         
         one_crop = 0
         two_crops = 0
@@ -1096,7 +1096,7 @@ def getCropCultivationData(village_id):
 
         
         return [
-            ["S. No.", "Number of crops", "No. of Household", "%"],
+            [Paragraph('S. No.',bold_center_style_9),Paragraph("Number of crops", bold_center_style_9), Paragraph("No. of Household", bold_center_style_9), Paragraph("%", bold_center_style_9)],
             ["1", "One crop", str(one_crop), one_crop_pct],
             ["2", "Two crops", str(two_crops), two_crops_pct],
             ["3", "More than 2 crops", str(more_than_two), more_than_two_pct],
@@ -1105,7 +1105,7 @@ def getCropCultivationData(village_id):
         ]
     except Exception:
         return [
-            ["S. No.", "Number of crops", "No. of Household", "%"],
+            [Paragraph('S. No.',bold_center_style_9),Paragraph("Number of crops", bold_center_style_9), Paragraph("No. of Household", bold_center_style_9), Paragraph("%", bold_center_style_9)],
             ["1", "One crop", "N/A", "N/A"],
             ["2", "Two crops", "N/A", "N/A"],
             ["3", "More than 2 crops", "N/A", "N/A"],
@@ -1145,8 +1145,8 @@ def getLivestockOwnershipData(village_id):
         # ================= ZERO DATA =================
         if total_households == 0:
             return [
-                ['S. No.', "Count", "Livestock","","Small cattle"],
-                ["", "", "Household with big Cattle", "%", "HH with small cattle", "%"],
+                [Paragraph('S. No.',bold_center_style_9), Paragraph("Count",bold_center_style_9), Paragraph("Livestock",bold_center_style_9),"",Paragraph("Small cattle",bold_center_style_9)],
+                ["", "", Paragraph("Household with big Cattle",bold_center_style_9), Paragraph("%",bold_center_style_9), Paragraph("HH with small cattle",bold_center_style_9), Paragraph("%",bold_center_style_9)],
 
                 ["1", "0", "0", "-", "0", "-"],
                 ["2", "< 3", "0", "-", "0", "-"],
@@ -1190,8 +1190,8 @@ def getLivestockOwnershipData(village_id):
         total_small_pct = f"{(100 * total_small / total_households):.2f}%" if total_households > 0 else "-"
 
         return [
-            ['S. No.', "Count", "Livestock","","Small cattle"],
-            ["", "", "HH with Big Cattle", "%", "HH with Small Cattle", "%"],
+            [Paragraph('S. No.',bold_center_style_9), Paragraph("Count",bold_center_style_9), Paragraph("Livestock",bold_center_style_9),"",Paragraph("Small cattle",bold_center_style_9)],
+                ["", "", Paragraph("Household with big Cattle",bold_center_style_9), Paragraph("%",bold_center_style_9), Paragraph("HH with small cattle",bold_center_style_9), Paragraph("%",bold_center_style_9)],
 
             ["1", "0", str(big_counts[0]), big_pcts[0], str(small_counts[0]), small_pcts[0]],
             ["2", "< 3", str(big_counts[1]), big_pcts[1], str(small_counts[1]), small_pcts[1]],
@@ -1204,8 +1204,8 @@ def getLivestockOwnershipData(village_id):
     except Exception as e:
         print("Livestock Ownership Error:", e)
         return [
-            ['S. No.', "Count", "Livestock","","Small cattle"],
-            ["", "", "HH with Big Cattle", "%", "HH with Small Cattle", "%"],
+           [Paragraph('S. No.',bold_center_style_9), Paragraph("Count",bold_center_style_9), Paragraph("Livestock",bold_center_style_9),"",Paragraph("Small cattle",bold_center_style_9)],
+                ["", "", Paragraph("Household with big Cattle",bold_center_style_9), Paragraph("%",bold_center_style_9), Paragraph("HH with small cattle",bold_center_style_9), Paragraph("%",bold_center_style_9)],
 
             ["1", "0", "N/A", "N/A", "N/A", "N/A"],
             ["2", "< 3", "N/A", "N/A", "N/A", "N/A"],
@@ -1248,14 +1248,14 @@ def getHousingTypologyData(village_id):
         total_pct = f"{total_pct_val}%"
 
         return [
-            ["S. No.", "Typology", "Kachcha", "Semi Pucca", "Pucca", "Total"],
+            [Paragraph("S. No.", bold_center_style_9), Paragraph("Typology", bold_center_style_9), Paragraph("Kachcha", bold_center_style_9), Paragraph("Semi Pucca",bold_center_style_9), Paragraph("Pucca", bold_center_style_9), Paragraph("Total", bold_center_style_9)],
             ["1", "No. of Household", str(kachcha), str(semi_pucca), str(pucca), str(total_households)],
             ["2", "Percentage %", kachcha_pct, semi_pucca_pct, pucca_pct, total_pct]
         ]
 
     except Exception:
         return [
-            ["S. No.", "Typology", "Kachcha", "Semi Pucca", "Pucca", "Total"],
+             [Paragraph("S. No.", bold_center_style_9), Paragraph("Typology", bold_center_style_9), Paragraph("Kachcha", bold_center_style_9), Paragraph("Semi Pucca",bold_center_style_9), Paragraph("Pucca", bold_center_style_9), Paragraph("Total", bold_center_style_9)],
             ["1", "No. of Household", "N/A", "N/A", "N/A", "N/A"],
             ["2", "Percentage %", "N/A", "N/A", "N/A", ""]
         ]
@@ -1266,7 +1266,7 @@ def getDigitalAccessData(village_id):
         total_households = households.count()
         
         if total_households == 0:
-            return [['S. No.',"Digital Media Owned", "No of households", "%"], ["1", "Mobile Phone", "-", "-"], ["2", "TV", "-", "-"], ["3", "Radio", "-", "-"], ["4", "Radio and Mobile Phone", "-", "-"], ["5", "TV and Mobile Phone", "-", "-"], ["6", "None", "-", "-"], ["7", "Total", "-", "-"]]
+            return [ [Paragraph("S. No.", bold_center_style_9), Paragraph("Digital Media Owned", bold_center_style_9), Paragraph("No of households", bold_center_style_9), Paragraph("%", bold_center_style_9)], ["1", "Mobile Phone", "-", "-"], ["2", "TV", "-", "-"], ["3", "Radio", "-", "-"], ["4", "Radio and Mobile Phone", "-", "-"], ["5", "TV and Mobile Phone", "-", "-"], ["6", "None", "-", "-"], ["7", "Total", "-", "-"]]
         
         mobile_only = 0
         tv_only = 0
@@ -1289,7 +1289,10 @@ def getDigitalAccessData(village_id):
                 tv_mobile += 1
             elif has_mobile and not has_tv and not has_radio:
                 mobile_only += 1
-            elif has_tv and not has_mobile and not has_radio:
+            # elif has_tv and not has_mobile and not has_radio:
+            #     tv_only += 1
+
+            elif has_tv:
                 tv_only += 1
             elif has_radio and not has_mobile and not has_tv:
                 radio_only += 1
@@ -1310,7 +1313,7 @@ def getDigitalAccessData(village_id):
         total_pct = round(mobile_only/total_households*100) + round(tv_only/total_households*100) + round(radio_only/total_households*100) + round(radio_mobile/total_households*100) + round(tv_mobile/total_households*100) + round(none_count/total_households*100)
         
         return [
-            ["S. No.", "Digital Media Owned", "No of households", "%"],
+            [Paragraph("S. No.", bold_center_style_9), Paragraph("Digital Media Owned", bold_center_style_9), Paragraph("No of households", bold_center_style_9), Paragraph("%", bold_center_style_9)],
             ["1", "Mobile Phone", str(mobile_only), mobile_pct],
             ["2", "TV", str(tv_only), tv_pct],
             ["3", "Radio", str(radio_only), radio_pct],
@@ -1321,7 +1324,7 @@ def getDigitalAccessData(village_id):
         ]
     except Exception:
         return [
-            ["S. No.", "Digital Media Owned", "No of households", "%"],
+             [Paragraph("S. No.", bold_center_style_9), Paragraph("Digital Media Owned", bold_center_style_9), Paragraph("No of households", bold_center_style_9), Paragraph("%", bold_center_style_9)],
             ["1", "Mobile Phone", "N/A", "N/A"],
             ["2", "TV", "N/A", "N/A"],
             ["3", "Radio", "N/A", "N/A"],
@@ -1345,7 +1348,7 @@ def getPublicAssetsData(village_id):
         if not facilities.exists():
             return [
                 ["Presence of facilities"],
-                ["S. No.", "Type", "Number", "Electricity", "Drinking Water", "Sanitation", "Good Road Access", "Building Condition (Good)"],
+                ["S. No.", "Type", "Number", "Electricity", "Drinking water", "Sanitation", "Good road access", "Building condition (Good)"],
                 ["1", "Anganwadi", "-", "-", "-", "-", "-", "-"],
                 ["2", "School", "-", "-", "-", "-", "-", "-"],
                 ["3", "Govt Office", "-", "-", "-", "-", "-", "-"],
@@ -1362,8 +1365,8 @@ def getPublicAssetsData(village_id):
         }
 
         result = [
-            ["Presence of facilities"],
-            ["S. No.", "Type", "Number", "Electricity", "Drinking Water", "Sanitation", "Good Road Access", "Building Condition (Good)"]
+            [Paragraph("Presence of facilities", bold_center_style_9)],
+            [Paragraph("S. No.", bold_center_style_9), Paragraph("Type", bold_center_style_9), Paragraph("Number", bold_center_style_9), Paragraph("Electricity", bold_center_style_9), Paragraph("Drinking Water", bold_center_style_9), Paragraph("Sanitation", bold_center_style_9), Paragraph("Good Road Access", bold_center_style_9), Paragraph("Building Condition (Good)", bold_center_style_9)]
         ]
 
         total_facilities = 0
@@ -1442,8 +1445,8 @@ def getPublicAssetsData(village_id):
     except Exception as e:
         print(f"Error in getPublicAssetsData: {e}")
         return [
-            ["Presence of facilities"],
-            ["S. No.", "Type", "Number", "Electricity", "Drinking Water", "Sanitation", "Good Road Access", "Building Condition (Good)"],
+         [Paragraph("Presence of facilities", bold_center_style_9)],
+            [Paragraph("S. No.", bold_center_style_9), Paragraph("Type", bold_center_style_9), Paragraph("Number", bold_center_style_9), Paragraph("Electricity", bold_center_style_9), Paragraph("Drinking Water", bold_center_style_9), Paragraph("Sanitation", bold_center_style_9), Paragraph("Good Road Access", bold_center_style_9), Paragraph("Building Condition (Good)", bold_center_style_9)],
             ["1", "Anganwadi", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A"],
             ["2", "School", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A"],
             ["3", "Govt Office", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A"],
@@ -1516,7 +1519,7 @@ def getRoadLengthByTypologyData(village_id, workspace, layer):
                     total_length_km = total_length_m / 1000 if total_length_m else 0
 
                     result = [
-                        ["S. No.", "Surface Type", "Length (km)", "% to Total Road Length"]
+                        [Paragraph("S. No.", bold_center_style_9), Paragraph("Surface type", bold_center_style_9), Paragraph("Length (km)", bold_center_style_9), Paragraph("% to Total road length", bold_center_style_9 )]
                     ]
 
                     for idx, (surface, length_m) in enumerate(rows, 1):
@@ -1572,7 +1575,7 @@ def getRoadLengthByTypologyData(village_id, workspace, layer):
         total_length_km = sum(surface_lengths.values()) / 1000
 
         result = [
-            ["S. No.", "Surface Type", "Length (km)", "% to Total Road Length"]
+            [Paragraph("S. No.", bold_center_style_9), Paragraph("Surface type", bold_center_style_9), Paragraph("Length (km)", bold_center_style_9), Paragraph("% to Total road length", bold_center_style_9 )]
         ]
 
         for idx, (surface, length_m) in enumerate(surface_lengths.items(), 1):
@@ -1707,7 +1710,7 @@ def getLULCData(village_id, workspace, layer, onlymax=False):
         if onlymax:
             return "N/A"
         return [
-            ["S. No.", "Landuse", "Area (sqm)", "%"],
+            [Paragraph("S. No.", bold_center_style_9), Paragraph("Landuse", bold_center_style_9), Paragraph("Area (sqm)", bold_center_style_9), Paragraph("%", bold_center_style_9)],
             ["", "Village not found", "0", "0%"]
         ]
 
@@ -1749,8 +1752,7 @@ def getLULCData(village_id, workspace, layer, onlymax=False):
                         if onlymax:
                             return "N/A"
                         return [
-                            ["S. No.", "Landuse", "Area (sqm)", "%"],
-                            ["", "No data available", "0", "0%"]
+                           [Paragraph("S. No.", bold_center_style_9), Paragraph("Landuse", bold_center_style_9), Paragraph("Area (sqm)", bold_center_style_9), Paragraph("%", bold_center_style_9)],
                         ]
 
                     # ----------------------------------
@@ -1765,7 +1767,7 @@ def getLULCData(village_id, workspace, layer, onlymax=False):
                     # ----------------------------------
                     # NORMAL TABLE MODE
                     # ----------------------------------
-                    result = [["S. No.", "Landuse", "Area (sqm)", "%"]]
+                    result = [[Paragraph("S. No.", bold_center_style_9), Paragraph("Landuse", bold_center_style_9), Paragraph("Area (sqm)", bold_center_style_9), Paragraph("%", bold_center_style_9)]]
 
                     # Sort by descending area
                     sorted_classes = sorted(
@@ -1865,7 +1867,7 @@ def getLULCData(village_id, workspace, layer, onlymax=False):
             percentage = round((max_area / total_area) * 100)
             return f"{max_land_use} - {percentage}%"
 
-        result = [["S. No.", "Landuse", "Area (sqm)", "%"]]
+        result = [[Paragraph("S. No.", bold_center_style_9), Paragraph("Landuse", bold_center_style_9), Paragraph("Area (sqm)", bold_center_style_9), Paragraph("%", bold_center_style_9)]]
 
         sorted_classes = sorted(
             class_area.items(),
@@ -1920,7 +1922,7 @@ def getDrinkingWaterSourceData(village_id):
 
         # Header (added S. No.)
         table_data = [
-            ["S. No.", "Drinking Water Source", "No of households", "%"]
+            [Paragraph("S. No.", bold_center_style_9), Paragraph("Drinking Water Source", bold_center_style_9), Paragraph("No. of households",bold_center_style_9), Paragraph("%", bold_center_style_9)]
         ]
 
         water_sources = (
@@ -1969,7 +1971,7 @@ def getDrinkingWaterSourceData(village_id):
 
     except Exception:
         return [
-            ["S. No.", "Drinking Water Source", "No of households", "%"],
+             [Paragraph("S. No.", bold_center_style_9), Paragraph("Drinking Water Source", bold_center_style_9), Paragraph("No. of households",bold_center_style_9), Paragraph("%", bold_center_style_9)],
             ["", "No data available", "N/A", "N/A"],
             ["", "Total", "N/A", "N/A"]
         ]
@@ -1980,7 +1982,7 @@ def getJJMHouseConnect(village_id):
     try:
         households = HouseholdSurvey.objects.filter(village_id=village_id)
 
-        table_data = [["S. No.", "JJM house connection", "No of households", "%"]]
+        table_data = [[Paragraph("S. No.", bold_center_style_9), Paragraph("JJM house connection", bold_center_style_9), Paragraph("No. of households", bold_center_style_9), Paragraph("%", bold_center_style_9)]]
 
         yes_count = 0
         no_count = 0
@@ -2023,7 +2025,7 @@ def getJJMHouseConnect(village_id):
     except Exception as e:
         print("JJM error:", e)
         return [
-            ["S. No.", "JJM house connection", "No of households", "%"],
+            [Paragraph("S. No.", bold_center_style_9), Paragraph("JJM house connection", bold_center_style_9), Paragraph("No. of households", bold_center_style_9), Paragraph("%", bold_center_style_9)],
             ["", "No data available", "N/A", "N/A"],
             ["", "Total", "N/A", "N/A"]
         ]
@@ -2039,7 +2041,7 @@ def getAdequacyOfDrinkingWaterData(village_id):
         households = HouseholdSurvey.objects.filter(village_id=village_id)
 
         table_data = [
-            ["S. No.", "Adequacy of drinking water", "No of HHs", "%"]
+            [Paragraph("S. No.", bold_center_style_9), Paragraph("Adequacy of drinking water", bold_center_style_9), Paragraph("No. of households", bold_center_style_9), Paragraph("%", bold_center_style_9)]
         ]
 
         total_households = households.count()
@@ -2091,7 +2093,7 @@ def getAdequacyOfDrinkingWaterData(village_id):
 
     except Exception:
         return [
-            ["S. No.", "Adequacy of drinking water", "No of HHs", "%"],
+            [Paragraph("S. No.", bold_center_style_9), Paragraph("Adequacy of drinking water", bold_center_style_9), Paragraph("No. of households", bold_center_style_9), Paragraph("%", bold_center_style_9)],
             ["", "No data available", "N/A", "N/A"],
             ["", "Total", "N/A", "N/A"]
         ]
@@ -2103,7 +2105,7 @@ def getSanitationFacilities(village_id):
         households = HouseholdSurvey.objects.filter(village_id=village_id)
 
         table_data = [
-            ["S. No.", "Sanitation Facility", "No of households", "%"]
+            [Paragraph("S. No.", bold_center_style_9), Paragraph("Sanitation Facility", bold_center_style_9), Paragraph("No. of households", bold_center_style_9), Paragraph("%", bold_center_style_9)]
         ]
 
         own_count = 0
@@ -2189,7 +2191,7 @@ def getHouseholdToiletsType(village_id):
         households = HouseholdSurvey.objects.filter(village_id=village_id)
 
         table_data = [
-            ["S. No.", "Type of Household Toilet", "No of households", "%"]
+            [Paragraph("S. No.", bold_center_style_9), Paragraph("Toilet type", bold_center_style_9), Paragraph("No. of households", bold_center_style_9), Paragraph("%", bold_center_style_9)]
         ]
 
         toilet_counts = {
@@ -2243,7 +2245,7 @@ def getHouseholdToiletsType(village_id):
     except Exception as e:
         print("❌ Toilet table error:", e)
         return [
-            ["S. No.", "Type of Household Toilet", "No of households", "%"],
+            [Paragraph("S. No.", bold_center_style_9), Paragraph("Type of Household Toilet", bold_center_style_9), Paragraph("No. of households", bold_center_style_9), Paragraph("%", bold_center_style_9)],
             ["", "No data available", "N/A", "N/A"],
             ["", "Total", "N/A", "N/A"]
         ]
@@ -2274,7 +2276,7 @@ def getDe_sludgeMaterial(village_id):
         total_households = households.count()
 
         table_data = [
-            ["S. No.", "De-sludge Material Disposal Method", "No of households", "%"]
+            [Paragraph("S. No.", bold_center_style_9), Paragraph("De-sludge material disposal method", bold_center_style_9), Paragraph("No. of households", bold_center_style_9), Paragraph("%", bold_center_style_9)]
         ]
 
         # ✅ ALL options declared upfront
@@ -2310,7 +2312,7 @@ def getDe_sludgeMaterial(village_id):
 
             table_data.append([
                 str(sr_no),
-                method,
+                method.title(),
                 str(count),
                 f"{percent}%"
             ])
@@ -2328,7 +2330,7 @@ def getDe_sludgeMaterial(village_id):
     except Exception as e:
         print("❌ De-sludge error:", e)
         return [
-            ["S. No.", "De-sludge Material Disposal Method", "No of households", "%"],
+            [Paragraph("S. No.", bold_center_style_9), Paragraph("De-sludge Material Disposal Method", bold_center_style_9), Paragraph("No. of households", bold_center_style_9), Paragraph("%", bold_center_style_9)],
             ["1", "Nearby open area", "N/A", "N/A"],
             ["2", "Agriculture Land", "N/A", "N/A"],
             ["3", "Collected by tanker", "N/A", "N/A"],
@@ -2343,7 +2345,7 @@ def getElectricityconnection(vilage_id):
 
         # Header (added S. No.)
         table_data = [
-            ["S. No.", "Electricity Connection", "No of households", "%"]
+            [Paragraph("S. No.", bold_center_style_9), Paragraph("Electricity connection", bold_center_style_9), Paragraph("No. of households", bold_center_style_9), Paragraph("%", bold_center_style_9)]
         ]
 
         electricity_qs = (
@@ -2392,7 +2394,7 @@ def getElectricityconnection(vilage_id):
 
     except Exception:
         return [
-            ["S. No.", "Electricity Connection", "No of households", "%"],
+            [Paragraph("S. No.", bold_center_style_9), Paragraph("Electricity connection", bold_center_style_9), Paragraph("No. of households", bold_center_style_9), Paragraph("%", bold_center_style_9)],
             ["", "No data available", "N/A", "N/A"],
             ["", "Total", "N/A", "N/A"]
         ]
@@ -2435,7 +2437,7 @@ def getElectricitySource(village_id):
         total_households = households.count()
 
         table_data = [
-            ["S. No.", "Source of Electricity", "No of households", "%"]
+            [Paragraph("S. No.", bold_center_style_9), Paragraph("Source of electricity", bold_center_style_9), Paragraph("No. of households", bold_center_style_9), Paragraph("%", bold_center_style_9)]
         ]
 
         # Fixed categories (always shown)
@@ -2494,7 +2496,7 @@ def getElectricitySource(village_id):
     except Exception as e:
         print("Electricity source error:", e)
         return [
-            ["S. No.", "Source of Electricity", "No of households", "%"],
+            [Paragraph("S. No.", bold_center_style_9), Paragraph("Source of electricity", bold_center_style_9), Paragraph("No. of households", bold_center_style_9), Paragraph("%", bold_center_style_9)],
             ["1", "Grid", "N/A", "N/A"],
             ["2", "Solar", "N/A", "N/A"],
             ["3", "Grid & Solar", "N/A", "N/A"],
@@ -2532,7 +2534,7 @@ def draw_village_profile(elements,village_id):
     heading = Paragraph("<a name='village_profile'/><b>3 Village Profile</b>", blue_heading)
     # add_heading_with_toc("Village Profile", blue_heading, level=1, elements=elements)
     elements.append(heading)
-    elements.append(Spacer(1, 3))
+    # elements.append(Spacer(1, 3))
 
 
     heading = Paragraph("<b>3.1 Location details</b>", blue_sub_heading)
@@ -2551,7 +2553,7 @@ def draw_village_profile(elements,village_id):
         ('ALIGN', (2, 1), (-1, -1), 'RIGHT'),
         # ('FONTNAME', (1, -2), (-1, -1), 'Helvetica-Bold'),
     ]
-    heading = Paragraph("<b>3.2	Socio economic profile</b>", blue_sub_heading) 
+    heading = Paragraph("<b>3.2	Socio-economic profile</b>", blue_sub_heading) 
     # add_heading_with_toc("Socio economic profile", blue_sub_heading, level=2, elements=elements)
     elements.append(heading)
     elements.append(Spacer(1, 6))
@@ -2570,7 +2572,7 @@ def draw_village_profile(elements,village_id):
         ('FONTNAME', (0, -2), (-1, -1), 'Helvetica-Bold'),
     ]
     elements.append(Spacer(1, 6))
-    sub_title=Paragraph("Table 3-2: Socio economic status of Head of Household", table_sub_title) 
+    sub_title=Paragraph("Table 3-2: Socio-economic status of Head of Household", table_sub_title) 
     elements.append(sub_title)
     elements.append(Spacer(1, 6))
     data, summary = getSocialEconomicStatusData(village_id)
@@ -2581,7 +2583,7 @@ def draw_village_profile(elements,village_id):
     elements.append(para)
     elements.append(Spacer(1, 6))
     points = [
-        f"Majority ({summary['bpl_percent']}%) are Below Poverty Line (BPL) followed by Priority Household (PHH-{summary['phh_percent']}%), and {summary['aay_percent']}% under Antyodaya Anna Yojana (AAY).",
+        f"Below Poverty Line (BPL {summary['bpl_percent']}%) followed by Priority Household (PHH-{summary['phh_percent']}%), and Antyodaya Anna Yojana (AAY {summary['aay_percent']}%).",
         f"{summary['widow_percent']}% of households are headed by widows.",
         f"{summary['married_male_percent']}% of households are headed by married males."
     ]
@@ -3192,11 +3194,11 @@ def draw_village_profile(elements,village_id):
         elements.append(Paragraph("Image is not available for this village", notes_style))
 
     # --------------------
-    elements.append(Spacer(1, 12))
+    # elements.append(Spacer(1, 12))
 
     heading = Paragraph("<b>3.5	Infrastructure</b>", blue_sub_heading)
     elements.append(heading)
-    elements.append(Spacer(1, 6))
+    # elements.append(Spacer(1, 6))
     heading = Paragraph("<b>3.5.1 Road Infrastructure</b>", blue_level3_heading)
     elements.append(heading)
     elements.append(Spacer(1, 6))

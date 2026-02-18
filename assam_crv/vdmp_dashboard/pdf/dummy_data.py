@@ -43,10 +43,10 @@ abbreviations={
       "abbreviation": "DDMA",
       "expanded_form": "District Disaster Management Authority"
     },
-    {
-      "abbreviation": "DEM",
-      "expanded_form": "Digital Elevation Model"
-    },
+    # {
+    #   "abbreviation": "DEM",
+    #   "expanded_form": "Digital Elevation Model"
+    # },
     {
       "abbreviation": "DEOC",
       "expanded_form": "District Emergency Operation Centre"
@@ -92,13 +92,17 @@ abbreviations={
       "expanded_form": "Krishi Vigyan Kendra"
     },
     {
-      "abbreviation": "L.P. School",
+      "abbreviation": "L P School",
       "expanded_form": "Lower Primary School"
     },
     {
-      "abbreviation": "LULC",
-      "expanded_form": "Land Use Land Cover"
+      "abbreviation": "M E School",
+      "expanded_form": "Middle English School"
     },
+    # {
+    #   "abbreviation": "LULC",
+    #   "expanded_form": "Land Use Land Cover"
+    # },
     {
       "abbreviation": "LVI",
       "expanded_form": "Livelihood Vulnerability Index"
@@ -784,7 +788,7 @@ def getMitigationIntervention(village_id):
         ['Sluice gate', '-'],
         
         [Paragraph('Resilient essential service (educational facilities)',bold_12), '-'],
-        [Paragraph('Resilient essential service (Public WASH facilities and drinking water)',bold_12), '-'],
+        [Paragraph('Resilient essential service (public WASH facilities and drinking water)',bold_12), '-'],
         [Paragraph('Resilient essential services (electric infrastructure)',bold_12), '-'],
         [Paragraph('Resilient livelihood & economic security ',bold_12), '-'],
        

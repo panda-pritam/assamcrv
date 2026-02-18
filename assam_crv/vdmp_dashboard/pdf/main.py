@@ -204,7 +204,7 @@ def generate_pdf(village_id=None, village=None):
     
     draw_abbreviations(elements)
    
-    draw_about_this_document(elements)
+    draw_about_this_document(elements,village_id)
    
     village_summary(elements,village_id)
    
@@ -240,7 +240,7 @@ def generate_pdf(village_id=None, village=None):
     
     draw_abbreviations(elements)
     
-    draw_about_this_document(elements)
+    draw_about_this_document(elements,village_id)
     
     village_summary(elements,village_id)
     draw_village_profile(elements,village_id)

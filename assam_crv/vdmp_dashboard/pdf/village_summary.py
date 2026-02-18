@@ -28,7 +28,7 @@ from django.core.exceptions import FieldDoesNotExist
 
 from .dummy_data import  getMitigationIntervention
 
-from .global_styles import blue_heading, underline_heading, notes_style, bold_center_style,normal_style,bold_12,bold_12,blue_sub_heading
+from .global_styles import blue_heading, underline_heading, notes_style, bold_center_style,normal_style,bold_12,blue_sub_heading,right_align_text,bold_12_center
 
 from .utils.table import create_styled_table
 
@@ -67,7 +67,7 @@ def get_lvi_score(village_id):
         elif lvi_score <= 0.80:
             lvi_class = "High"
         else:
-            lvi_class = "Very High"
+            lvi_class = "Very high"
         
         return f"{lvi_score} ({lvi_class})"
     except Exception as e:
@@ -140,7 +140,7 @@ def getEmergencyTollFreeContactData(village_id):
             official_number__iexact='no'
         ).select_related('section_master')
         
-        data = [["S. No.", "Important Contact", "Contact Number"]]
+        data = [[Paragraph("S. No.",bold_12_center), Paragraph("Important Contact",bold_12_center), Paragraph("Contact Number", bold_12_center)]]
 
         if not emergency_officials.exists():
             # ✅ one blank row
@@ -208,7 +208,7 @@ def getDistrictLevelOfficialsData(village_id):
             official_number__iexact='yes'
         ).select_related('section_master')
         
-        data = [["S. No.", "Name", "Phone Number", "Position/Responsibility"]]
+        data = [[Paragraph("S. No.",bold_12_center), Paragraph("Name/designation",bold_12_center), Paragraph("Phone Number",bold_12_center), Paragraph("Position/Responsibility",bold_12_center)]]
 
         if not officials.exists():
             # ✅ one blank row
@@ -281,8 +281,8 @@ def generate_general_summary_table(village_id=None):
         
         return [
             ['General Summary'],
-            ['Date of baseline data collection', datetime.now().strftime('%B %Y')],
-            ['Village', village.name],
+            ['Date of baseline data collection', "Feb 2025"],
+            ['Revenue village', village.name],
             ['Geographic area', area_text],
             ['Block', village.gram_panchayat.name],
             ['Revenue circle', village.gram_panchayat.circle.name],
@@ -344,9 +344,15 @@ def get_major_land_use(village_id):
                 """, [village_code])
                 
                 total_area = cursor.fetchone()[0]
+                formatted_class_name = (
+                    class_name.replace("_", " ")
+                    .strip()
+                    .lower()
+                    .capitalize()
+                )
                 if total_area and total_area > 0:
                     percentage = round((max_area / total_area) * 100, 2)
-                    return f"{class_name} {percentage}% of the total area"
+                    return f"{formatted_class_name} {percentage}% of the total area"
                 else:
                     return class_name
             else:
@@ -403,8 +409,8 @@ def generate_socio_economic_summary_table(village_id):
             max_percentage = round((toilet_counts[max_toilet_type] / own_total) * 100)
 
             sanitation_text = (
-                f"Predominantly {max_toilet_type.lower()} toilets "
-                f"({max_percentage}% of households with own sanitation facilities)"
+                # f"Predominantly {max_toilet_type.lower()} toilets "
+                f"{max_percentage}% own {max_toilet_type.lower()}"
             )
         else:
             sanitation_text = (
@@ -431,8 +437,8 @@ def generate_socio_economic_summary_table(village_id):
             )
 
             dominant_house_type = (
-                f"Majority of households reside in {max_house_type.lower()} houses "
-                f"({max_percentage}%)"
+                # f"Majority of households reside in {max_house_type.lower()} houses "
+                f"{max_percentage}% {max_house_type.capitalize()} houses"
             )
         else:
             dominant_house_type = "Housing information not available"
@@ -455,7 +461,7 @@ def generate_socio_economic_summary_table(village_id):
             percentage = round((top_count / total_households_count) * 100)
 
             occupational_category = (
-                f"{percentage}% of households primarily depend on {top_livelihood.lower()}"
+                f"{percentage}% {top_livelihood.lower()}"
             )
         else:
             occupational_category = (
@@ -477,12 +483,12 @@ def generate_socio_economic_summary_table(village_id):
         # =========================
         return [
             ['Socio-Economic Summary'],
-            ['Total population', f"{format_indian_number(total_population)} persons (as reported)"],
+            ['Total population', f"{format_indian_number(total_population)} persons (As per baseline survey)"],
             ['Total households', f"{format_indian_number(total_households_count)} households surveyed"],
             ['Dominant house type', dominant_house_type],
             ['Major landuse', major_land_use],
-            ['Occupational category', occupational_category],
-            ['Sanitation facilities', Paragraph(sanitation_text, normal_style)],
+            ['Dominant occupational category', occupational_category],
+            ['Sanitation facilities', sanitation_text],
         ]
 
     except Exception as e:
@@ -512,13 +518,41 @@ def getRiskAssessment(village_id):
         return [
             ['Risk Assessment (excluding content loss)'],
             ['Sector', Paragraph('Flood'), 'Earthquake 475 RP', 'Strong wind 100 RP'],
-            [Paragraph('Potential average loss (residential)', bold_12), 'No data', 'No data', 'No data'],
-            [Paragraph('Potential average loss (commercial)', bold_12), 'No data', 'No data', 'No data'],
-            [Paragraph('Potential average loss (critical facilities – Health facilities, educational facilities, flood shelter)', bold_12), 'No data', 'No data', 'No data'],
-            [Paragraph('Potential average loss (road)',bold_12 ), '-', '-', '-'],
-            [Paragraph('Potential average loss (agriculture) '  ,bold_12), '-', '-', '-'],
+            [Paragraph('Potential maximum loss (residential)', bold_12), 'No data', 'No data', 'No data'],
+            [Paragraph('Potential maximum loss (commercial)', bold_12), 'No data', 'No data', 'No data'],
+            [Paragraph('Potential maximum loss (critical facilities – Health facilities, educational facilities, flood shelter)', bold_12), 'No data', 'No data', 'No data'],
+            [Paragraph('Potential maximum loss (road)',bold_12 ), '-', '-', '-'],
+            [Paragraph('Potential maximum loss (agriculture) '  ,bold_12), '-', '-', '-'],
             
         ]
+    
+    # ---------------- DOMINANT FLOOD YEAR ----------------
+    dominant_year_obj = (
+        HouseholdSurvey.objects
+        .filter(
+            village_id=village_id,
+            year_in_which_max_flood_experience_in_your_agriculture_land__isnull=False
+        )
+        .exclude(year_in_which_max_flood_experience_in_your_agriculture_land='')
+        .values('year_in_which_max_flood_experience_in_your_agriculture_land')
+        .annotate(count=Count('id'))
+        .order_by('-count')
+        .first()
+    )
+
+    dominant_year = None
+
+    if dominant_year_obj:
+        raw_year = dominant_year_obj[
+            'year_in_which_max_flood_experience_in_your_agriculture_land'
+        ]
+
+        try:
+            # Convert to float → then int → removes .0
+            dominant_year = str(int(float(raw_year)))
+        except (ValueError, TypeError):
+            # If conversion fails, keep original string
+            dominant_year = str(raw_year).strip()
     
     # Calculate losses by asset type (convert to crores)
     household_flood = (risk_data.filter(asset_type='household').aggregate(Sum('flood_loss'))['flood_loss__sum'] or 0) / 10000000
@@ -572,17 +606,62 @@ def getRiskAssessment(village_id):
         .aggregate(total=Sum('wind_loss'))['total'] or 0
     ) / 10000000
 
+
+    if dominant_year:
+        flood_header = f'Flood ({dominant_year})'
+    else:
+        flood_header = 'Flood'
+
     
     return [
-        ['Risk Assessment (excluding content loss)'],
-        ['Sector', Paragraph('Flood'), 'Earthquake 475 RP', 'Strong wind 100 RP'],
-        [Paragraph('Potential average loss (residential)', bold_12), f'INR {format_indian_number(int(household_flood * 10000000))}', f'INR {format_indian_number(int(household_eq * 10000000))}', f'INR {format_indian_number(int(household_wind * 10000000))}'],
-        [Paragraph('Potential average loss (commercial)',bold_12), f'INR {format_indian_number(int(commercial_flood * 10000000))}', f'INR {format_indian_number(int(commercial_eq * 10000000))}', f'INR {format_indian_number(int(commercial_wind * 10000000))}'],
-        [Paragraph('Potential average loss (critical facilities – Health facilities, educational facilities, flood shelter)', bold_12), f'INR {format_indian_number(int(critical_flood * 10000000))}', f'INR {format_indian_number(int(critical_eq * 10000000))}', f'INR {format_indian_number(int(critical_wind * 10000000))}'],
-        [Paragraph('Potential average loss (road)', bold_12), f'INR {format_indian_number(int(road_risk_flood * 10000000))}', '-', '-'],
-        [Paragraph('Potential average loss (agriculture)',bold_12), f'INR {format_indian_number(int(agriculture_flood * 10000000))}', '-', '-'],
-      
+        [Paragraph('Risk Assessment (excluding content loss)', bold_12)],
+        
+        [
+            Paragraph('Sector', bold_12_center),
+            Paragraph(flood_header, bold_12_center),
+            Paragraph('Earthquake 475 RP', bold_12_center),
+            Paragraph('Strong wind 100 RP', bold_12_center),
+        ],
+
+        [
+            Paragraph('Potential maximum loss (residential)', bold_12),
+            Paragraph(f'INR {format_indian_number(int(household_flood * 10000000))}', right_align_text),
+            Paragraph(f'INR {format_indian_number(int(household_eq * 10000000))}', right_align_text),
+            Paragraph(f'INR {format_indian_number(int(household_wind * 10000000))}', right_align_text),
+        ],
+
+        [
+            Paragraph('Potential maximum loss (commercial)', bold_12),
+            Paragraph(f'INR {format_indian_number(int(commercial_flood * 10000000))}', right_align_text),
+            Paragraph(f'INR {format_indian_number(int(commercial_eq * 10000000))}', right_align_text),
+            Paragraph(f'INR {format_indian_number(int(commercial_wind * 10000000))}', right_align_text),
+        ],
+
+        [
+            Paragraph(
+                'Potential maximum loss (critical facilities – Health facilities, educational facilities, flood shelter)',
+                bold_12
+            ),
+            Paragraph(f'INR {format_indian_number(int(critical_flood * 10000000))}', right_align_text),
+            Paragraph(f'INR {format_indian_number(int(critical_eq * 10000000))}', right_align_text),
+            Paragraph(f'INR {format_indian_number(int(critical_wind * 10000000))}', right_align_text),
+        ],
+
+        [
+            Paragraph('Potential maximum loss (road)', bold_12),
+            Paragraph(f'INR {format_indian_number(int(road_risk_flood * 10000000))}', right_align_text),
+            Paragraph('-', right_align_text),
+            Paragraph('-', right_align_text),
+        ],
+
+        [
+            Paragraph('Potential maximum loss (agriculture)', bold_12),
+            Paragraph(f'INR {format_indian_number(int(agriculture_flood * 10000000))}', right_align_text),
+            Paragraph('-', right_align_text),
+            Paragraph('-', right_align_text),
+        ],
     ]
+
 
 
 import requests
@@ -708,10 +787,10 @@ def getVulnerabilityAssessment(village_id):
                 ['Economic status', 'No data'],
                 ['Vulnerable population', 'No data'],
                 ['Eroding river bank', 'No data'],
-                ['Flood vulnerable Houses', 'No data'],
-                ['Erosion vulnerable Houses', 'No data'],
-                ['Flood vulnerable Road', 'No data'],
-                ['Erosion vulnerable Road', 'No data'],
+                ['Flood vulnerable houses', 'No data'],
+                ['Erosion vulnerable houses', 'No data'],
+                ['Flood vulnerable road', 'No data'],
+                ['Erosion vulnerable road', 'No data'],
                 ['School', 'No data'],
                 ['Livelihood vulnerability Index', get_lvi_score(village_id)],
             ]
@@ -733,7 +812,7 @@ def getVulnerabilityAssessment(village_id):
 
         economic_status = (
             f"BPL - {round((bpl_count / total_households) * 100)}%, "
-            f"Priority Household - {round((phh_count / total_households) * 100)}%"
+            f"Priority household - {round((phh_count / total_households) * 100)}%"
         )
 
         # -----------------------------
@@ -889,12 +968,12 @@ def getVulnerabilityAssessment(village_id):
             ['Economic status', economic_status],
             ['Vulnerable population', vulnerable_population],
             ['Eroding river bank', erosion_text],
-            ['Flood vulnerable Houses', flood_vulnerable_houses],
-            ['Erosion vulnerable Houses', erosion_vulnerable_houses],
-            ['Flood vulnerable Road', flood_road_text],
-            ['Erosion vulnerable Road', erosion_road_text],
+            ['Flood vulnerable houses', flood_vulnerable_houses],
+            ['Erosion vulnerable houses', erosion_vulnerable_houses],
+            ['Flood vulnerable road', flood_road_text],
+            ['Erosion vulnerable road', erosion_road_text],
             ['School', schools_text],
-            ['Livelihood vulnerability Index', get_lvi_score(village_id)],
+            ['Livelihood vulnerability index', get_lvi_score(village_id)],
         ]
 
     except Exception as e:
@@ -904,12 +983,12 @@ def getVulnerabilityAssessment(village_id):
             ['Economic status', 'N/A'],
             ['Vulnerable population', 'N/A'],
             ['Eroding river bank', 'N/A'],
-            ['Flood vulnerable Houses', 'N/A'],
-            ['Erosion vulnerable Houses', 'N/A'],
-            ['Flood vulnerable Road', 'N/A'],
-            ['Erosion vulnerable Road', 'N/A'],
+            ['Flood vulnerable houses', 'N/A'],
+            ['Erosion vulnerable houses', 'N/A'],
+            ['Flood vulnerable road', 'N/A'],
+            ['Erosion vulnerable road', 'N/A'],
             ['School', 'N/A'],
-            ['Livelihood vulnerability Index', 'N/A'],
+            ['Livelihood vulnerability index', 'N/A'],
         ]
 
 def village_summary(elements,village_id):
@@ -1023,7 +1102,7 @@ def draw_Village_summery_tables(elements,table_sections,village_id):
     elements.append(Paragraph("<b>2.1 Important contact details</b>", blue_sub_heading))
     elements.append(Spacer(1, 6))
     imp_contact_details=getDistrictLevelOfficialsData(village_id)
-    table=create_styled_table(imp_contact_details, [40,150,160,150], False, True, [('ALIGN', (0, 1), (0, -1), 'RIGHT'),('ALIGN', (3, 1), (3, -1), 'RIGHT'),('FONTNAME', (0, 1), (0, -1), 'Helvetica-Bold')], "Village Contacts")
+    table=create_styled_table(imp_contact_details, [40,150,160,150], False, True, [('ALIGN', (0, 1), (0, -1), 'RIGHT'),('ALIGN', (3, 1), (3, -1), 'LEFT'),('FONTNAME', (0, 1), (0, -1), 'Helvetica-Bold')], "Village Contacts")
     elements.append(table)
     elements.append(Spacer(1, 12))
     
@@ -1031,7 +1110,7 @@ def draw_Village_summery_tables(elements,table_sections,village_id):
     
     elements.append(Paragraph('<b>2.2 Emergency Toll Free Contact Information</b>', blue_sub_heading))
 
-    custom_style=[   ('ALIGN', (0, 1), (0, -1), 'RIGHT'),('ALIGN', (2, 1), (2, -1), 'RIGHT'),('FONTNAME', (0, 1), (0, -1), 'Helvetica-Bold')]
+    custom_style=[   ('ALIGN', (0, 1), (0, -1), 'RIGHT'),('ALIGN', (2, 1), (2, -1), 'LEFT'),('FONTNAME', (0, 1), (0, -1), 'Helvetica-Bold')]
     
     elements.append(Spacer(1, 6))
     emergency_contact_details=getEmergencyTollFreeContactData(village_id)

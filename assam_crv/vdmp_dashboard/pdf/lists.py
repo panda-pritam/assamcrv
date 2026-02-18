@@ -2,7 +2,7 @@ from reportlab.platypus import Paragraph, Spacer, Table, TableStyle, PageBreak
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib import colors
 from .dummy_data import abbreviations
-from .global_styles import common_table_style, blue_heading, list_of_table_heading
+from .global_styles import common_table_style, blue_heading, list_of_table_heading,bold_12_center,bold_right_align_text
 from reportlab.lib.colors import HexColor
 
 
@@ -24,7 +24,7 @@ def draw_list_of_figures(elements, doc):
     elements.append(Spacer(1, 12))
 
     # Create table data - header + rows
-    data = [["S. No.", "Figure Number and Title", "Page"]]
+    data = [[Paragraph("S. No.",bold_12_center), Paragraph("Figure Number and Title", bold_12_center), Paragraph("Page", bold_12_center)]]
     
     # Sort figures by page number
     sorted_figures = sorted(doc.figure_list, key=lambda x: x['page'])
@@ -43,7 +43,7 @@ def draw_list_of_figures(elements, doc):
         else:
             figure_title_text = Paragraph(title, normal)
 
-        data.append([str(i), figure_title_text, str(page)])
+        data.append([Paragraph(str(i),bold_right_align_text), figure_title_text, str(page)])
 
     # Create the table
     table = Table(data, colWidths=[50, 350, 100])
@@ -84,7 +84,7 @@ def draw_list_of_tables(elements, doc):
     # ]))
 
     # Create table data - header + rows
-    data = [["S. No.", "Table Number and Title", "Page"]]
+    data = [[Paragraph("S. No.",bold_12_center), Paragraph("Table Number and Title",bold_12_center), Paragraph("Page",bold_12_center)]]
     
     # Sort tables by page number
     sorted_tables = sorted(doc.table_list, key=lambda x: x['page'])
@@ -103,7 +103,7 @@ def draw_list_of_tables(elements, doc):
         else:
             table_title_text = Paragraph(title, normal)
 
-        data.append([str(i), table_title_text, str(page)])
+        data.append([Paragraph(str(i),bold_right_align_text), table_title_text, str(page)])
 
     # Create the table
     table = Table(data, colWidths=[50, 350, 100])
@@ -125,18 +125,18 @@ def draw_abbreviations(elements):
     elements.append(Spacer(1, 12))
 
     # Table header
-    table_data = [["S. No.","Abbreviation", "Full Form"]]
+    table_data = [[Paragraph("Abbreviation", bold_12_center), Paragraph("Full Form",bold_12_center)]]
 
     # Convert JSON list to table format
     for i, entry in enumerate(abbreviations["abbreviations"], 1):
         table_data.append([
-            str(i),
+            # str(i),
             Paragraph(entry["abbreviation"], styles["Normal"]),
             Paragraph(entry["expanded_form"], styles["Normal"])
         ])
 
     # Define table layout and styles
-    table = Table(table_data, colWidths=[50, 120, 330])
+    table = Table(table_data, colWidths=[150, 350])
     table.setStyle(common_table_style)
 
     elements.append(table)
