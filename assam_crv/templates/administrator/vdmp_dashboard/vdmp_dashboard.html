@@ -56,7 +56,7 @@
                         <div class="card-body">
 
                             <div class="mb-3">
-                                <label for="uploadCategory" class="form-label fw-semibold">{% trans "Category" %}</label>
+                                <label for="uploadCategory" class="form-label ">{% trans "Category" %}</label>
                                 <select class="form-select" id="uploadCategory" name="upload_category"
                                     data-catalog-url="{% url 'get_upload_data_catalog' %}" required>
                                     <option value="" selected disabled>{% trans "Choose Category" %}</option>
@@ -64,32 +64,32 @@
                             </div>
 
                             <div class="mb-3">
-                                <label for="dataType" class="form-label fw-semibold">{% trans "Type of Data" %}</label>
+                                <label for="dataType" class="form-label ">{% trans "Type of Data" %}</label>
                                 <select class="form-select" id="dataType" name="data_type" required>
                                     <option value="" selected disabled>{% trans "Choose Data Type" %}</option>
                                 </select>
                             </div>
                             <div id="uploadLocationFilters" class="row d-none">
                                 <div class="col-md-6 mb-3">
-                                    <label for="upload_district" class="form-label fw-bold">{% trans "District" %}</label>
+                                    <label for="upload_district" class="form-label ">{% trans "District" %}</label>
                                     <select id="upload_district" class="form-select drpdwn_slct">
                                         <option value="" selected disabled>{% trans "Select District" %}</option>
                                     </select>
                                 </div>
                                 <div class="col-md-6 mb-3">
-                                    <label for="upload_circle" class="form-label fw-bold">{% trans "Circle" %}</label>
+                                    <label for="upload_circle" class="form-label ">{% trans "Circle" %}</label>
                                     <select id="upload_circle" class="form-select drpdwn_slct">
                                         <option value="" selected disabled>{% trans "Select Circle" %}</option>
                                     </select>
                                 </div>
                                 <div class="col-md-6 mb-3">
-                                    <label for="upload_gram_panchayat" class="form-label fw-bold">{% trans "Gram Panchayat" %}</label>
+                                    <label for="upload_gram_panchayat" class="form-label">{% trans "Gram Panchayat" %}</label>
                                     <select id="upload_gram_panchayat" class="form-select drpdwn_slct">
                                         <option value="" selected disabled>{% trans "Select Gram Panchayat" %}</option>
                                     </select>
                                 </div>
                                 <div class="col-md-6 mb-3">
-                                    <label for="upload_village" class="form-label fw-bold">{% trans "Village" %}</label>
+                                    <label for="upload_village" class="form-label ">{% trans "Village" %}</label>
                                     <select id="upload_village" class="form-select drpdwn_slct">
                                         <option value="" selected disabled>{% trans "Select Village" %}</option>
                                     </select>
@@ -97,14 +97,14 @@
                             </div>
 
                             <div class="mb-3">
-                                <label for="fileInput1" class="form-label fw-semibold">{% trans "Select File" %}</label>
+                                <label for="fileInput1" class="form-label ">{% trans "Select File" %}</label>
                                 <div id="fileInputs">
-                                    <label for="fileInput1" class="form-label fw-semibold">{% trans "File 1" %}</label>
+                                    <label for="fileInput1" class="form-label ">{% trans "File 1" %}</label>
                                     <input type="file" class="form-control mb-2" id="fileInput1" accept=".csv,.xlsx,.xls"
                                         required>
-                                    <label for="fileInput2" class="form-label fw-semibold d-none">{% trans "File 2" %}</label>
+                                    <label for="fileInput2" class="form-label  d-none">{% trans "File 2" %}</label>
                                     <input type="file" class="form-control mb-2 d-none" id="fileInput2" accept=".csv,.xlsx,.xls">
-                                    <label for="fileInput3" class="form-label fw-semibold d-none">{% trans "File 3" %}</label>
+                                    <label for="fileInput3" class="form-label  d-none">{% trans "File 3" %}</label>
                                     <input type="file" class="form-control d-none" id="fileInput3" accept=".csv,.xlsx,.xls">
                                 </div>
                                 <div class="form-text">{% trans "Please upload only CSV or Excel files." %}</div>
@@ -140,7 +140,7 @@
 
                         <div class="row p-3">
                             <div class="col-12 mb-3">
-                                <label for="deletedataType" class="form-label fw-bold">{% trans "Select Data Type" %}</label>
+                                <label for="deletedataType" class="form-label ">{% trans "Select Data Type" %}</label>
                                 <select class="form-select" id="deletedataType" name="data_type" required>
                                     <option value="" selected disabled>{% trans "Choose Data Type" %}</option>
                                     <option value="household">{% trans "Household" %}</option>
@@ -157,28 +157,28 @@
                             </div>
 
                             <div class="col-md-6 mb-3">
-                                <label for="district" class="form-label fw-bold">{% trans "District" %}</label>
+                                <label for="district" class="form-label ">{% trans "District" %}</label>
                                 <select id="district" class="form-select drpdwn_slct" required>
                                     <option value="" selected disabled>{% trans "Select District" %}</option>
                                 </select>
                             </div>
 
                             <div class="col-md-6 mb-3">
-                                <label for="circle" class="form-label fw-bold">{% trans "Circle" %}</label>
+                                <label for="circle" class="form-label ">{% trans "Circle" %}</label>
                                 <select id="circle" class="form-select drpdwn_slct" required>
                                     <option value="" selected disabled>{% trans "Select Circle" %}</option>
                                 </select>
                             </div>
 
                             <div class="col-md-6 mb-3">
-                                <label for="gram_panchayat" class="form-label fw-bold">{% trans "Gram Panchayat" %}</label>
+                                <label for="gram_panchayat" class="form-label ">{% trans "Gram Panchayat" %}</label>
                                 <select id="gram_panchayat" class="form-select drpdwn_slct" required>
                                     <option value="" selected disabled>{% trans "Select Gram Panchayat" %}</option>
                                 </select>
                             </div>
 
                             <div class="col-md-6 mb-3">
-                                <label for="village" class="form-label fw-bold">{% trans "Village" %}</label>
+                                <label for="village" class="form-label ">{% trans "Village" %}</label>
                                 <select id="village" class="form-select drpdwn_slct" required>
                                     <option value="" selected disabled>{% trans "Select Village" %}</option>
                                 </select>
