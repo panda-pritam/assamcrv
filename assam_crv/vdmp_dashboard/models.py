@@ -635,3 +635,44 @@ class Upload_data_vdmp(models.Model):
 
     def __str__(self):
         return self.category
+
+
+class OtherData(models.Model):
+    village_id = models.CharField(max_length=100, null=True, blank=True)
+    district_name = models.CharField(max_length=255, null=True, blank=True)
+    village_name = models.CharField(max_length=255, null=True, blank=True)
+
+    latitude = models.DecimalField(max_digits=12, decimal_places=8, null=True, blank=True)
+    longitude = models.DecimalField(max_digits=12, decimal_places=8, null=True, blank=True)
+
+    point_id = models.CharField(max_length=100, null=True, blank=True)
+    date = models.DateField(null=True, blank=True)
+
+    under_id = models.CharField(max_length=100, null=True, blank=True)
+    unique_id = models.CharField(max_length=100, null=True, blank=True)
+    form_id = models.CharField(max_length=100, null=True, blank=True)
+
+    assets_type = models.CharField(max_length=255, null=True, blank=True)
+    category = models.CharField(max_length=255, null=True, blank=True)
+    type_of_occupancy = models.CharField(max_length=255, null=True, blank=True)
+
+    photo_with_coordinates = models.TextField(null=True, blank=True)
+
+    fencing = models.CharField(max_length=255, null=True, blank=True)
+    height_of_asset_above_ground_ft = models.FloatField(null=True, blank=True)
+    plinth_height_in_ft = models.FloatField(null=True, blank=True)
+
+    building_condition = models.CharField(max_length=255, null=True, blank=True)
+    condition = models.CharField(max_length=255, null=True, blank=True)
+    material = models.CharField(max_length=255, null=True, blank=True)
+
+    water_tank_structure_type = models.CharField(max_length=255, null=True, blank=True)
+    observation = models.TextField(null=True, blank=True)
+
+    status_working = models.CharField(max_length=255, null=True, blank=True)
+    asset_name = models.CharField(max_length=255, null=True, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.village_name} - {self.asset_name}"

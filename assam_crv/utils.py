@@ -911,6 +911,34 @@ FGD_LIVELIHOOD_SUMMARY_MAPPING = {
 }
 
 
+OTHER_DATA_MAPPING = {
+    'Village Id': 'village_id',
+    'District Name': 'district_name',
+    'Village Name': 'village_name',
+    'Latitude': 'latitude',
+    'Longitude': 'longitude',
+    'Point Id': 'point_id',
+    'Date': 'date',
+    'Underid': 'under_id',
+    'Unique Id': 'unique_id',
+    'Form Id': 'form_id',
+    'Assets Type': 'assets_type',
+    'Category': 'category',
+    'Type Of Occupancy': 'type_of_occupancy',
+    'Photo With Coordinates Of The Building': 'photo_with_coordinates',
+    'Fencing': 'fencing',
+    'Height Of Asset Above Ground In Feet': 'height_of_asset_above_ground_ft',
+    'Plinth Height In Feet': 'plinth_height_in_ft',
+    'Building Condition': 'building_condition',
+    'Condition': 'condition',
+    'Material': 'material',
+    'Water Tank Structure Type': 'water_tank_structure_type',
+    'Observation': 'observation',
+    'Status Working': 'status_working',
+    'Asset Name': 'asset_name',
+}
+
+
 
 import requests
 
