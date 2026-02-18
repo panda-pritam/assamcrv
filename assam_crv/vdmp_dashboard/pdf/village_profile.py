@@ -17,7 +17,7 @@ def format_indian_number(num):
         return locale.format_string('%d', int(num), grouping=True)
     except:
         return str(num)
-from .global_styles import blue_level3_heading, blue_heading,table_sub_title,blue_sub_heading,image_title,notes_style,tb_header_bg,Legend_heading,indented_style,bold_style,normal_style, bold_center_style_9,srNoStyle, heading_box_color,bold_center_style
+from .global_styles import blue_level3_heading, blue_heading,table_sub_title,blue_sub_heading,image_title,notes_style,tb_header_bg,Legend_heading,indented_style,bold_style,normal_style, bold_center_style_9,srNoStyle, heading_box_color,bold_center_style,right_align_text
 from .utils.table import create_styled_table
 from .utils.geoserverLayerImage import  get_geoserver_legend_path,get_geoserver_image_as_rl_image
 
@@ -220,9 +220,9 @@ def getPowerInfrastructureData_Total(village_id):
          Paragraph("Type", bold_center_style_9),
          Paragraph("Number", bold_center_style_9)],
         ["1", Paragraph("Electric post and network", normal_style),
-         Paragraph(str(electric_data_total))],
+         Paragraph(str(electric_data_total),right_align_text)],
         ["2", Paragraph("Transformer", normal_style),
-         Paragraph(str(transformer_data_total))],
+         Paragraph(str(transformer_data_total),right_align_text)],
     ]
 
 
@@ -3205,8 +3205,14 @@ def draw_village_profile(elements,village_id):
     sub_title=Paragraph("Table 3-22: Road length by typology ", table_sub_title)
     elements.append(sub_title)
     elements.append(Spacer(1, 6))
+    custom_styles4=[
+      
+        ('ALIGN', (2, 1), (2, -1), 'RIGHT'),
+          ('ALIGN', (3, 1), (3, -1), 'RIGHT'),
+          
+    ]
     data=getRoadLengthByTypologyData(village_id,'assam','road_network')
-    table = create_styled_table(data, [40,160,150,150], False, True, custom_styles, "Road Length by Typology")
+    table = create_styled_table(data, [40,160,150,150], False, True, custom_styles4, "Road Length by Typology")
     elements.append(table)
     elements.append(Spacer(1, 12))
     # Add geoserver image with border
@@ -3286,8 +3292,10 @@ def draw_village_profile(elements,village_id):
     sub_title=Paragraph("Table 3-23: Power infrastructure ", table_sub_title)
     elements.append(sub_title)
     elements.append(Spacer(1, 6))
+
+    
     data=getPowerInfrastructureData_Total(village_id)
-    table = create_styled_table(data, [40,360,100], False, True, custom_styles, "Power Infrastructure")
+    table = create_styled_table(data, [40,360,100], False, True, custom_styles4, "Power Infrastructure")
     elements.append(table)
     elements.append(Spacer(1, 12))
 
@@ -3327,7 +3335,7 @@ def draw_village_profile(elements,village_id):
     elements.append(sub_title)
     elements.append(Spacer(1, 6))
     data=getFacilityAccessData(village_id)
-    table = create_styled_table(data, [40,230, 230], False, True, [('ALIGN', (0, 1), (0, -1), 'RIGHT')], "Facility Access")
+    table = create_styled_table(data, [40,230, 230], False, True, None, "Facility Access")
     elements.append(table)
 
     # ------------------------
