@@ -38,6 +38,42 @@ def format_indian_number(num):
     except:
         return str(num)
 
+def get_lvi_score(village_id):
+    """Calculate LVI score from exposure, sensitivity, and adaptive capacity"""
+    try:
+        print("---------------- Getting LVI score for village ----------------> ")
+        from .hazard_Vulnerability_risk import getLivelihoodExposureData, getLivelihoodSensitivityData, getLivelihoodAdaptiveCapacityData
+        
+        # Get data from each component
+        exposure_data = getLivelihoodExposureData(village_id)
+        sensitivity_data = getLivelihoodSensitivityData(village_id)
+        adaptive_data = getLivelihoodAdaptiveCapacityData(village_id)
+        
+        # Extract scores from last row
+        exposure_score = int(exposure_data[-1][-1].text if hasattr(exposure_data[-1][-1], 'text') else str(exposure_data[-1][-1]))
+        sensitivity_score = int(sensitivity_data[-1][-1].text if hasattr(sensitivity_data[-1][-1], 'text') else str(sensitivity_data[-1][-1]))
+        adaptive_score = int(adaptive_data[-1][-1].text if hasattr(adaptive_data[-1][-1], 'text') else str(adaptive_data[-1][-1]))
+        
+        # Calculate LVI score
+        lvi_score = round((exposure_score + sensitivity_score + adaptive_score) / 3, 2)
+        
+        # Classify LVI
+        if lvi_score <= 0.20:
+            lvi_class = "Very Low"
+        elif lvi_score <= 0.40:
+            lvi_class = "Low"
+        elif lvi_score <= 0.60:
+            lvi_class = "Medium"
+        elif lvi_score <= 0.80:
+            lvi_class = "High"
+        else:
+            lvi_class = "Very High"
+        
+        return f"{lvi_score} ({lvi_class})"
+    except Exception as e:
+        print(f"--------- Error calculating LVI score -------: {e}")
+        return "No data"
+
 # Global dictionary for village summary data
 VILLAGE_SUMMARY_DATA = {
     'total_population': 0,
@@ -677,7 +713,7 @@ def getVulnerabilityAssessment(village_id):
                 ['Flood vulnerable Road', 'No data'],
                 ['Erosion vulnerable Road', 'No data'],
                 ['School', 'No data'],
-                ['Livelihood vulnerability Index', 'No data'],
+                ['Livelihood vulnerability Index', get_lvi_score(village_id)],
             ]
 
         # -----------------------------
@@ -858,7 +894,7 @@ def getVulnerabilityAssessment(village_id):
             ['Flood vulnerable Road', flood_road_text],
             ['Erosion vulnerable Road', erosion_road_text],
             ['School', schools_text],
-            ['Livelihood vulnerability Index', '-'],
+            ['Livelihood vulnerability Index', get_lvi_score(village_id)],
         ]
 
     except Exception as e:

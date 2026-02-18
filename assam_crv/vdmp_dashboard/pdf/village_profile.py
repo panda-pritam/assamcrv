@@ -1266,7 +1266,7 @@ def getDigitalAccessData(village_id):
         total_households = households.count()
         
         if total_households == 0:
-            return [['S. No.',"Digital Media Owned", "Number of households", "%"], ["1", "Mobile Phone", "-", "-"], ["2", "TV", "-", "-"], ["3", "Radio", "-", "-"], ["4", "Radio and Mobile Phone", "-", "-"], ["5", "TV and Mobile Phone", "-", "-"], ["6", "None", "-", "-"], ["7", "Total", "-", "-"]]
+            return [['S. No.',"Digital Media Owned", "No of households", "%"], ["1", "Mobile Phone", "-", "-"], ["2", "TV", "-", "-"], ["3", "Radio", "-", "-"], ["4", "Radio and Mobile Phone", "-", "-"], ["5", "TV and Mobile Phone", "-", "-"], ["6", "None", "-", "-"], ["7", "Total", "-", "-"]]
         
         mobile_only = 0
         tv_only = 0
@@ -1310,7 +1310,7 @@ def getDigitalAccessData(village_id):
         total_pct = round(mobile_only/total_households*100) + round(tv_only/total_households*100) + round(radio_only/total_households*100) + round(radio_mobile/total_households*100) + round(tv_mobile/total_households*100) + round(none_count/total_households*100)
         
         return [
-            ["S. No.", "Digital Media Owned", "Number of households", "%"],
+            ["S. No.", "Digital Media Owned", "No of households", "%"],
             ["1", "Mobile Phone", str(mobile_only), mobile_pct],
             ["2", "TV", str(tv_only), tv_pct],
             ["3", "Radio", str(radio_only), radio_pct],
@@ -1321,7 +1321,7 @@ def getDigitalAccessData(village_id):
         ]
     except Exception:
         return [
-            ["S. No.", "Digital Media Owned", "Number of households", "%"],
+            ["S. No.", "Digital Media Owned", "No of households", "%"],
             ["1", "Mobile Phone", "N/A", "N/A"],
             ["2", "TV", "N/A", "N/A"],
             ["3", "Radio", "N/A", "N/A"],
@@ -2946,7 +2946,7 @@ def draw_village_profile(elements,village_id):
     
     # Add geoserver image with border
    
-    image_height = page_height * 0.77
+    image_height = page_height * 0.8
 
     #img from geoserver
     # layers = ['assam:building_footprint']
@@ -3123,7 +3123,7 @@ def draw_village_profile(elements,village_id):
     elements.append(Spacer(1, 6))
     data=getElectricityconnection(village_id)
 
-    table = create_styled_table(data,  [50,90,180, 180], False, True, custom_styles, "Digital Access")
+    table = create_styled_table(data,  [50,250,100, 100], False, True, custom_styles, "Digital Access")
     elements.append(table)
     elements.append(Spacer(1, 12))
 
@@ -3132,7 +3132,7 @@ def draw_village_profile(elements,village_id):
     elements.append(Spacer(1, 6))
     data=getElectricitySource(village_id)
 
-    table = create_styled_table(data,  [50,90,180, 180], False, True, custom_styles, "Digital Access")
+    table = create_styled_table(data,  [50,250,100, 100], False, True, custom_styles, "Digital Access")
     elements.append(table)
     elements.append(Spacer(1, 12))
 
