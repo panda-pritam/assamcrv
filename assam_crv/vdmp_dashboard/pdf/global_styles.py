@@ -99,6 +99,14 @@ blue_sub_heading_sub = ParagraphStyle(
 
 blue_level3_heading= ParagraphStyle(
         name='BlueLevel3Heading',
+        parent=styles['Heading2'],
+        textColor=heading_color,
+        leftIndent=heading_left_indent,
+        fontSize=10
+    )
+
+blue_level4_heading= ParagraphStyle(
+        name='BlueLevel4Heading',
         parent=styles['Heading3'],
         textColor=heading_color,
         leftIndent=heading_left_indent,
@@ -139,13 +147,17 @@ image_title = ParagraphStyle(
 non_toc_heading = ParagraphStyle(
     name='NonTOCHeading',
     parent=getSampleStyleSheet()['Heading1'],
-    fontSize=14,
-    leading=16,
+    fontSize=12,
+    # leading=16,
     textColor=colors.black,
-    spaceAfter=12,
+    # spaceAfter=6,
     # These properties help ensure it's not picked up by TOC
     outlineLevel=0,  # 0 means not a heading level
-    keepWithNext=0
+    keepWithNext=0,
+    leftIndent=heading_left_indent + 4    ,
+    # IMPORTANT
+    spaceBefore=6,
+    spaceAfter=0,
 )
 
 
@@ -163,7 +175,7 @@ notes_style=ParagraphStyle(
         fontSize=10,
         textColor=colors.black,
         leftIndent=-30,
-        spaceBefore=10,
+        spaceBefore=8,
         fontName='Helvetica-Oblique'
     )
 
@@ -194,6 +206,7 @@ non_indented_style = ParagraphStyle(
 
 srNoStyle=[
       ('ALIGN', (0, 1), (0, -1), 'RIGHT'),
+       ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
         ('FONTNAME', (0, 1), (0, -1), 'Helvetica-Bold'),
 ]
 

@@ -1,5 +1,219 @@
-from reportlab.platypus import Paragraph, Spacer,  ListFlowable, ListItem, Image
-from reportlab.platypus import Table, TableStyle
+# from reportlab.platypus import Paragraph, Spacer,  ListFlowable, ListItem, Image
+# from reportlab.platypus import Table, TableStyle
+# from reportlab.lib import colors
+# from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+# from reportlab.lib import colors
+# from reportlab.lib.units import inch
+
+# import os
+# from .global_styles import  blue_heading,table_sub_title,blue_sub_heading,image_title,notes_style,tb_header_bg,Legend_heading,indented_style,bold_style,normal_style,srNoStyle,non_toc_heading,blue_level3_heading,non_indented_style
+# from .utils.table import create_styled_table
+# # from .utils.geoserverLayerImage import get_geoserver_image_path, get_geoserver_legend_path
+# from task_force.models import *
+# from village_profile.models import tblVillage
+
+# from django.db.models import Sum, Count
+# import requests
+# from collections import defaultdict
+# from decimal import Decimal, ROUND_HALF_UP
+# from field_images.models import FieldImage
+# from reportlab.lib.pagesizes import A4
+# from PIL import Image as PILImage
+# from PIL import ImageOps
+# from io import BytesIO
+# from django.conf import settings
+# page_width, page_height = A4
+# max_width = page_width - 2*inch   # leave 1 inch margin left/right
+# max_height = page_height - 3*inch  # leave space for header/footer
+
+# # max_height = page_height * 0.4  # leave space for header/footer
+
+# # http://127.0.0.1:8000/en/administrator/field_images
+
+# def get_scaled_image(img_path):
+#     # get original size and normalize orientation from EXIF
+#     with PILImage.open(img_path) as im:
+#         im = ImageOps.exif_transpose(im)
+#         iw, ih = im.size
+#         aspect = ih / float(iw)
+#         img_buffer = BytesIO()
+#         im.save(img_buffer, format=im.format or "JPEG")
+#         img_buffer.seek(0)
+
+#     # fit to max width
+#     width = min(max_width, iw)
+#     height = width * aspect
+
+#     # if still too tall, scale by height
+#     if height > max_height:
+#         height = max_height
+#         width = height / aspect
+
+#     return Image(img_buffer, width=width, height=height)
+
+
+# def resolve_image_path(img_obj):
+#     try:
+#         direct_path = img_obj.image.path
+#         if os.path.exists(direct_path):
+#             return direct_path
+#     except Exception:
+#         direct_path = None
+
+#     name = getattr(img_obj.image, "name", "")
+#     if not name:
+#         return direct_path
+
+#     rel = name.replace("/", os.sep).replace("\\", os.sep)
+#     base = settings.MEDIA_ROOT
+#     candidate = os.path.join(base, rel)
+#     if os.path.exists(candidate):
+#         return candidate
+
+#     # Build expected paths from model data to handle legacy vs current layouts
+#     filename = os.path.basename(rel)
+#     category = (img_obj.category or "uncategorized").strip().lower()
+#     category = category.replace(" ", "_").replace("/", "_")
+#     village_id = str(getattr(img_obj, "village_id", "") or "")
+
+#     if filename and village_id:
+#         expected = os.path.join(base, "field_images", category, village_id, filename)
+#         if os.path.exists(expected):
+#             return expected
+
+#         legacy = os.path.join(base, "field_images", category, f"village_id_{village_id}", filename)
+#         if os.path.exists(legacy):
+#             return legacy
+
+#         legacy_swapped = os.path.join(base, "field_images", f"village_id_{village_id}", category, filename)
+#         if os.path.exists(legacy_swapped):
+#             return legacy_swapped
+
+#     parts = [p for p in rel.split(os.sep) if p]
+#     if len(parts) >= 4 and parts[0] == "field_images" and parts[1].startswith("village_id_"):
+#         field_images, village_id_part, category_part = parts[0], parts[1], parts[2]
+#         rest = parts[3:]
+#         swapped = os.path.join(base, field_images, category_part, village_id_part, *rest)
+#         if os.path.exists(swapped):
+#             return swapped
+
+#     return candidate
+
+
+# def draw_PRA_map_and_field_photos(elements,village_id):
+#     """
+#     Generate PRA map and field photos section for the report
+#     """
+#     # Main heading
+#     heading = Paragraph("<a name='draw_PRA_map_and_field_photos'/><b>7	PRA map and Field Photos </b>", blue_heading)
+#     elements.append(heading)
+#     # elements.append(Spacer(1, 12))
+    
+#     # Define the sections mapping
+#     sections_map = {
+#         'PRA Map': {
+#             'heading': "PRA Map",
+#             'DB_field': "PRA Map"
+#         },
+#         'PRA and field consultations': {
+#             'heading': "Field photographs – PRA and field consultations",
+#             'DB_field': "PRA and field consultations"
+#         },
+#         'housing': {
+#             'heading': "Field photographs – housing",
+#             'DB_field': "housing"
+#         },
+#         "Infrastructure": {
+#             'heading': "Field photographs – Infrastructure",
+#             'DB_field': 'Infrastructure'
+#         },
+#         "River bank protection/erosion": {
+#             'heading': "Field photographs – River bank protection/erosion",
+#             'DB_field': 'River bank protection/erosion'
+#         },
+#         "Educational facilities": {
+#             'heading': "Field photographs – Educational facilities",
+#             'DB_field': 'Educational facilities'
+#         },
+#         "Livelihood": {
+#             'heading': "Field photographs – Livelihood",
+#             'DB_field': 'Livelihood'
+#         }
+#     }
+    
+#     # Counter for sub-section numbering
+#     sub_section_counter = 1
+    
+#     # Iterate through each section
+#     for key, section_info in sections_map.items():
+#         try:
+#             # Check if images exist for this category and village
+#             field_images = FieldImage.objects.filter(
+#                 village_id=village_id,
+#                 category=section_info['DB_field']
+#             ).order_by('upload_datetime')
+            
+#             if field_images.exists():
+#                 # Add sub-section heading
+#                 sub_heading = Paragraph(
+#                     f"<b>7.{sub_section_counter} {section_info['heading']}</b>", 
+#                     blue_sub_heading
+#                 )
+#                 elements.append(sub_heading)
+#                 elements.append(Spacer(1, 6))
+                
+#                 # Get images (max 2 per category)
+#                 images = list(field_images[:2])
+                
+#                 # Process all images (1 or 2) - display them one below the other
+#                 for img_obj in images:
+#                     try:
+#                         # Calculate 80% of page width (letter size is 8.5 inches, so 80% ≈ 6.8 inches)
+#                         img_width = 2*inch
+                        
+#                         # Create image with 80% page width, maintain aspect ratio
+#                         # img = Image(img_obj.image.path, width=500)
+#                         img_path = resolve_image_path(img_obj)
+#                         img = get_scaled_image(img_path)
+#                         img.hAlign = 'CENTER'
+#                         elements.append(img)
+                        
+#                         # # Add image caption if name exists
+#                         # if img_obj.name:
+#                         #     caption = Paragraph(f"<i>{img_obj.name}</i>", image_title)
+#                         #     caption.alignment = 1  # Center alignment
+#                         #     elements.append(caption)
+                        
+#                         # Add spacing between images
+#                         # elements.append(Spacer(1, 6))
+                            
+#                     except Exception as e:
+#                         error_text = Paragraph(f"Error loading image: {str(e)}", normal_style)
+#                         elements.append(error_text)
+#                         elements.append(Spacer(1, 8))
+                
+#                 # elements.append(Spacer(1, 6))
+#                 sub_section_counter += 1
+                
+#         except Exception as e:
+#             # Log error but continue with next section
+#             print(f"Error processing section {key}: {str(e)}")
+#             continue
+    
+#     # If no sections were added, add a note
+#     if sub_section_counter == 1:
+#         no_data_text = Paragraph(
+#             "No field photographs or PRA maps are available for this village.", 
+#             normal_style
+#         )
+#         elements.append(no_data_text)
+#         elements.append(Spacer(1, 12))
+
+
+
+# --------------- new code maintaing the 
+
+from reportlab.platypus import Paragraph, Spacer, Image, PageBreak
 from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib import colors
@@ -23,33 +237,40 @@ from PIL import ImageOps
 from io import BytesIO
 from django.conf import settings
 page_width, page_height = A4
-max_width = page_width - 2*inch   # leave 1 inch margin left/right
-max_height = page_height - 3*inch  # leave space for header/footer
-
-# max_height = page_height * 0.4  # leave space for header/footer
+max_width = page_width    # increased width (smaller margins)
+max_height = 4.2*inch  # fixed height to fit 2 images per page
 
 # http://127.0.0.1:8000/en/administrator/field_images
 
 def get_scaled_image(img_path):
-    # get original size and normalize orientation from EXIF
     with PILImage.open(img_path) as im:
-        im = ImageOps.exif_transpose(im)
+        im = ImageOps.exif_transpose(im).convert("RGB")
+
         iw, ih = im.size
         aspect = ih / float(iw)
+
+        # adaptive height
+        if aspect > 1.2:
+            local_max_height = 4.5 * inch
+        else:
+            local_max_height = 3.8 * inch
+
+        width = min(max_width, iw)
+        height = width * aspect
+
+        if height > local_max_height:
+            height = local_max_height
+            width = height / aspect
+
         img_buffer = BytesIO()
-        im.save(img_buffer, format=im.format or "JPEG")
+        im.save(img_buffer, format="JPEG", quality=75, optimize=True)
         img_buffer.seek(0)
 
-    # fit to max width
-    width = min(max_width, iw)
-    height = width * aspect
+    img = Image(img_buffer, width=width, height=height)
+    img.hAlign = "CENTER"
+    return img
 
-    # if still too tall, scale by height
-    if height > max_height:
-        height = max_height
-        width = height / aspect
 
-    return Image(img_buffer, width=width, height=height)
 
 
 def resolve_image_path(img_obj):
@@ -58,45 +279,19 @@ def resolve_image_path(img_obj):
         if os.path.exists(direct_path):
             return direct_path
     except Exception:
-        direct_path = None
+        pass
 
     name = getattr(img_obj.image, "name", "")
     if not name:
-        return direct_path
+        return None
 
     rel = name.replace("/", os.sep).replace("\\", os.sep)
     base = settings.MEDIA_ROOT
     candidate = os.path.join(base, rel)
+    
     if os.path.exists(candidate):
         return candidate
-
-    # Build expected paths from model data to handle legacy vs current layouts
-    filename = os.path.basename(rel)
-    category = (img_obj.category or "uncategorized").strip().lower()
-    category = category.replace(" ", "_").replace("/", "_")
-    village_id = str(getattr(img_obj, "village_id", "") or "")
-
-    if filename and village_id:
-        expected = os.path.join(base, "field_images", category, village_id, filename)
-        if os.path.exists(expected):
-            return expected
-
-        legacy = os.path.join(base, "field_images", category, f"village_id_{village_id}", filename)
-        if os.path.exists(legacy):
-            return legacy
-
-        legacy_swapped = os.path.join(base, "field_images", f"village_id_{village_id}", category, filename)
-        if os.path.exists(legacy_swapped):
-            return legacy_swapped
-
-    parts = [p for p in rel.split(os.sep) if p]
-    if len(parts) >= 4 and parts[0] == "field_images" and parts[1].startswith("village_id_"):
-        field_images, village_id_part, category_part = parts[0], parts[1], parts[2]
-        rest = parts[3:]
-        swapped = os.path.join(base, field_images, category_part, village_id_part, *rest)
-        if os.path.exists(swapped):
-            return swapped
-
+    
     return candidate
 
 
@@ -107,96 +302,63 @@ def draw_PRA_map_and_field_photos(elements,village_id):
     # Main heading
     heading = Paragraph("<a name='draw_PRA_map_and_field_photos'/><b>7	PRA map and Field Photos </b>", blue_heading)
     elements.append(heading)
-    elements.append(Spacer(1, 12))
+    # elements.append(Spacer(1, 12))
     
-    # Define the sections mapping
     sections_map = {
-        'PRA Map': {
-            'heading': "PRA Map",
-            'DB_field': "PRA Map"
-        },
-        'PRA and field consultations': {
-            'heading': "Field photographs – PRA and field consultations",
-            'DB_field': "PRA and field consultations"
-        },
-        'housing': {
-            'heading': "Field photographs – housing",
-            'DB_field': "housing"
-        },
-        "Infrastructure": {
-            'heading': "Field photographs – Infrastructure",
-            'DB_field': 'Infrastructure'
-        },
-        "River bank protection/erosion": {
-            'heading': "Field photographs – River bank protection/erosion",
-            'DB_field': 'River bank protection/erosion'
-        },
-        "Educational facilities": {
-            'heading': "Field photographs – Educational facilities",
-            'DB_field': 'Educational facilities'
-        },
-        "Livelihood": {
-            'heading': "Field photographs – Livelihood",
-            'DB_field': 'Livelihood'
-        }
+        'PRA Map': "PRA Map",
+        'PRA and field consultations': "PRA and field consultations",
+        'housing': "housing",
+        "Infrastructure": "Infrastructure",
+        "River bank protection/erosion": "River bank protection/erosion",
+        "Educational facilities": "Educational facilities",
+        "Livelihood": "Livelihood"
     }
     
     # Counter for sub-section numbering
     sub_section_counter = 1
     
-    # Iterate through each section
-    for key, section_info in sections_map.items():
+    for key, db_field in sections_map.items():
         try:
-            # Check if images exist for this category and village
             field_images = FieldImage.objects.filter(
                 village_id=village_id,
-                category=section_info['DB_field']
+                category=db_field
             ).order_by('upload_datetime')
             
-            if field_images.exists():
-                # Add sub-section heading
-                sub_heading = Paragraph(
-                    f"<b>7.{sub_section_counter} {section_info['heading']}</b>", 
-                    blue_sub_heading
-                )
-                elements.append(sub_heading)
-                elements.append(Spacer(1, 8))
-                
-                # Get images (max 2 per category)
-                images = list(field_images[:2])
-                
-                # Process all images (1 or 2) - display them one below the other
-                for img_obj in images:
-                    try:
-                        # Calculate 80% of page width (letter size is 8.5 inches, so 80% ≈ 6.8 inches)
-                        img_width = 2*inch
-                        
-                        # Create image with 80% page width, maintain aspect ratio
-                        # img = Image(img_obj.image.path, width=500)
-                        img_path = resolve_image_path(img_obj)
-                        img = get_scaled_image(img_path)
-                        img.hAlign = 'CENTER'
-                        elements.append(img)
-                        
-                        # Add image caption if name exists
-                        if img_obj.name:
-                            caption = Paragraph(f"<i>{img_obj.name}</i>", image_title)
-                            caption.alignment = 1  # Center alignment
-                            elements.append(caption)
-                        
-                        # Add spacing between images
+            if not field_images.exists():
+                continue
+            
+            sub_heading = Paragraph(
+                f"<b>7.{sub_section_counter} Field photographs – {key}</b>", 
+                blue_sub_heading
+            )
+            elements.append(sub_heading)
+            elements.append(Spacer(1, 6))
+            
+            image_counter = 0
+            
+            for img_obj in field_images:
+                try:
+                    img_path = resolve_image_path(img_obj)
+                    if not img_path:
+                        continue
+                    
+                    img = get_scaled_image(img_path)
+                    elements.append(img)
+                    
+                    image_counter += 1
+                    
+                    if image_counter % 2 == 0:
+                        # elements.append(PageBreak())
+                        pass
+                    else:
                         elements.append(Spacer(1, 8))
-                            
-                    except Exception as e:
-                        error_text = Paragraph(f"Error loading image: {str(e)}", normal_style)
-                        elements.append(error_text)
-                        elements.append(Spacer(1, 8))
-                
-                elements.append(Spacer(1, 12))
-                sub_section_counter += 1
+                        
+                except Exception as e:
+                    elements.append(Paragraph(f"Image error: {str(e)}", normal_style))
+            
+            sub_section_counter += 1
                 
         except Exception as e:
-            # Log error but continue with next section
             print(f"Error processing section {key}: {str(e)}")
             continue
     

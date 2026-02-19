@@ -18,13 +18,15 @@ from reportlab.platypus.doctemplate import BaseDocTemplate, PageTemplate
 from reportlab.lib.units import cm
 from reportlab.platypus.frames import Frame
 from reportlab.lib.styles import ParagraphStyle as PS
-from reportlab.pdfbase.ttfonts import TTFont
-from reportlab.pdfbase import pdfmetrics
+from reportlab.platypus import NextPageTemplate
+
+
 
 # Style
 from .global_styles import non_toc_heading,blue_heading,list_of_table_heading,toc_main_heading
 
 from .cover import add_cover_page
+from .back_cover import add_back_cover_page
 from .client_info import draw_client_info_table
 
 from .lists import draw_list_of_figures, draw_list_of_tables, draw_abbreviations
@@ -41,6 +43,7 @@ from .PRA_map_and_Field_Photos import draw_PRA_map_and_field_photos
 
 h1 = PS(name='Heading1', fontSize=14, leading=16)
 h2 = PS(name='Heading2', fontSize=12, leading=14, leftIndent=10)
+h3 = PS(name='Heading3', fontSize=12, leading=14, leftIndent=10)
 
 from reportlab.platypus.flowables import Flowable
 
@@ -57,6 +60,21 @@ class ListOfFiguresPlaceholder(Flowable):
 
     def draw(self):
         pass  # It's just a placeholder
+
+class BackCoverFlowable(Flowable):
+    def __init__(self):
+        super().__init__()
+        self.width = 0
+        self.height = 0
+
+    def draw(self):
+        pass
+
+    def getSpaceBefore(self):
+        return 0
+
+    def getSpaceAfter(self):
+        return 0
  
 class MyDocTemplate(BaseDocTemplate):
     def __init__(self, filename, village=None, **kw):
@@ -66,6 +84,7 @@ class MyDocTemplate(BaseDocTemplate):
         self.figure_list = []  # Stores (title, page_number)
         self.table_list = []   # Stores (title, page_number)
         self.village = village or "RUPAKUCHI"
+        self._is_back_cover = False
         # Add page templates
         self.addPageTemplates([
             PageTemplate(id='Cover', frames=[Frame(2.5*cm, 2.5*cm, 15*cm, 25*cm)], onPage=self.cover_page),
@@ -79,7 +98,7 @@ class MyDocTemplate(BaseDocTemplate):
                 )],
                 onPage=self.normal_page
             ),
-            PageTemplate(id='Last', frames=[Frame(2.5*cm, 2.5*cm, 15*cm, 25*cm)], onPage=self.last_page)
+            PageTemplate(id='Last', frames=[Frame(2.5*cm, 2.5*cm, 15*cm, 25*cm)], onPage=self.back_cover_page)
         ])
    
     def cover_page(self, canvas, doc):
@@ -91,21 +110,41 @@ class MyDocTemplate(BaseDocTemplate):
     def normal_page(self, canvas, doc):
         """All content pages except last"""
         canvas.saveState()
-        if doc.page >= 4:  # Start from 3rd page (after cover and TOC)
-            add_common_header_footer(canvas, doc,self.village)
+        # Skip header/footer on pages 1-3 (cover, TOC area) and the back cover
+        if doc.page >= 4 and doc.pageTemplate.id != 'Last':
+            add_common_header_footer(canvas, doc, self.village)
         canvas.restoreState()
    
-    def last_page(self, canvas, doc):
-        """Last page only"""
-        canvas.saveState()
-        canvas.setFont('Helvetica', 8)
-        canvas.drawString(2.5*cm, 28*cm, f"Page {doc.page}")
-        canvas.setFont('Helvetica', 10)
-        canvas.drawString(2.5*cm, 2*cm, f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-        canvas.restoreState()
+    def back_cover_page(self, canvas, doc):
+        page_width, page_height = canvas._pagesize
+        image_path = os.path.join(settings.BASE_DIR, "static", "images", "VDMP_back_cover_page.jpg")
+        
+        # Debug: print to console to confirm path
+        print(f"---------Back cover image path------------: {image_path}")
+        print(f"---------- Image exists----------: {os.path.exists(image_path)}")
+        
+        if os.path.exists(image_path):
+            canvas.drawImage(
+                image_path, 0, 0,
+                width=page_width,
+                height=page_height,
+                preserveAspectRatio=False,
+                mask='auto'
+            )
+        else:
+            # Fallback: red background so you can see the page IS being created
+            canvas.setFillColorRGB(1, 0, 0)
+            canvas.rect(0, 0, page_width, page_height, fill=1)
    
     def afterFlowable(self, flowable):
         """Register TOC entries and add destinations for linking"""
+        # Switch to back cover template when BackCoverFlowable is encountered
+        
+        
+        if isinstance(flowable, BackCoverFlowable):
+            self.handle_nextPageTemplate('Last')
+            return
+            
         if isinstance(flowable, Paragraph):
             text = flowable.getPlainText()
             style = flowable.style.name
@@ -143,6 +182,11 @@ class MyDocTemplate(BaseDocTemplate):
                 key = f'h2_{hash(text)}'
                 self.canv.bookmarkPage(key)
                 self.notify('TOCEntry', (2, text, self.page, key))
+
+            elif style in ['Heading3', 'BlueLevel4Heading']:
+                key = f'h3_{hash(text)}'
+                self.canv.bookmarkPage(key)
+                self.notify('TOCEntry', (3, text, self.page, key))
                 
             # Handle table titles
             if style in ['table_sub_title','TableTitle']:
@@ -161,6 +205,10 @@ class MyDocTemplate(BaseDocTemplate):
                 if not any(entry['title'] == text for entry in self.figure_list):
                     self.figure_list.append({'title': text, 'page': self.page})
                     # print(f"Added figure to list: {style} on page {self.page}------{text}")
+    
+    def afterPage(self):
+        """Called after each page - add back cover on last page"""
+        pass  # Back cover will be added manually at the end
                 
 def generate_pdf(village_id=None, village=None):
     buffer = BytesIO()
@@ -171,7 +219,8 @@ def generate_pdf(village_id=None, village=None):
         'Heading2': ParagraphStyle(name='Heading2', fontSize=12, leftIndent=-20),
         'TOCHeading1': ParagraphStyle(name='TOCHeading1', fontSize=12, textColor=HexColor('#0066CC'), fontName='Helvetica-Bold',leftIndent=-45),
         'TOCHeading2': ParagraphStyle(name='TOCHeading2', fontSize=10, textColor=HexColor('#0066CC'), leftIndent=-25),
-        'TOCHeading3': ParagraphStyle(name='TOCHeading3', fontSize=10, textColor=HexColor('#0066CC'), leftIndent=-10)
+        'TOCHeading3': ParagraphStyle(name='TOCHeading3', fontSize=10, textColor=HexColor('#0066CC'), leftIndent=-10),
+        'TOCHeading4': ParagraphStyle(name='TOCHeading4', fontSize=10, textColor=HexColor('#0066CC'), leftIndent=5),
     }
  
     # Create document
@@ -179,7 +228,7 @@ def generate_pdf(village_id=None, village=None):
    
     # Configure TOC
     toc = TableOfContents()
-    toc.levelStyles = [styles['TOCHeading1'], styles['TOCHeading2'],styles['TOCHeading3']]
+    toc.levelStyles = [styles['TOCHeading1'], styles['TOCHeading2'],styles['TOCHeading3'],styles['TOCHeading4']]
    
     # FIRST PASS: Build document to collect table and figure information
     elements = []
@@ -252,9 +301,16 @@ def generate_pdf(village_id=None, village=None):
     draw_mitigation_intervention_and_investment_plan(elements, village_id)
     elements.append(PageBreak())
     draw_PRA_map_and_field_photos(elements, village_id)
+    elements.append(Spacer(1, 12))
+    # Add back cover
+    elements.append(NextPageTemplate('Last'))
+    elements.append(PageBreak()) 
+    elements.append(Spacer(1, 12))
     
     # Final build with complete lists
     doc.multiBuild(elements)
+
+    
     
     buffer.seek(0)
     return buffer

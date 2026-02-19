@@ -258,17 +258,16 @@ def getVillageLocationDetails(village_id):
                     SELECT EXISTS (
                         SELECT FROM information_schema.tables 
                         WHERE table_schema = 'public' 
-                        AND table_name = 'village_boundary'
+                        AND table_name = 'lulc'
                     )
                 """)
                 
                 if cursor.fetchone()[0]:
                     cursor.execute("""
-                        SELECT 
-                            ST_Area(ST_Transform(geom, 32646)) / 1000000.0 as area_sqkm
-                        FROM public.village_boundary
-                        WHERE "Vill_ID" = %s
-                    """, [village_code])
+                            SELECT COALESCE(SUM(ST_Area(ST_Transform(geom, 32646))) / 10000,0)
+                            FROM public.lulc
+                            WHERE "Vill_ID" = %s
+                        """, [village_code])
                     
                     row = cursor.fetchone()
                     if row and row[0]:
@@ -277,31 +276,31 @@ def getVillageLocationDetails(village_id):
             print("Village area query error:", e)
             pass
         
-        # Try to get additional data from village_boundary table
-        try:
-            with connection.cursor() as cursor:
-                cursor.execute("""
-                    SELECT EXISTS (
-                        SELECT FROM information_schema.tables 
-                        WHERE table_schema = 'public' 
-                        AND table_name = 'village_boundary'
-                    )
-                """)
+        # # Try to get additional data from village_boundary table
+        # try:
+        #     with connection.cursor() as cursor:
+        #         cursor.execute("""
+        #             SELECT EXISTS (
+        #                 SELECT FROM information_schema.tables 
+        #                 WHERE table_schema = 'public' 
+        #                 AND table_name = 'village_boundary'
+        #             )
+        #         """)
                 
-                if cursor.fetchone()[0]:
-                    cursor.execute("""
-                        SELECT hq_distckm, avg_elev_m, topography
-                        FROM public.village_boundary
-                        WHERE "Vill_ID" = %s
-                    """, [village_code])
+        #         if cursor.fetchone()[0]:
+        #             cursor.execute("""
+        #                 SELECT hq_distckm, avg_elev_m, topography
+        #                 FROM public.village_boundary
+        #                 WHERE "Vill_ID" = %s
+        #             """, [village_code])
                     
-                    row = cursor.fetchone()
-                    if row:
-                        distance_hq = str(row[0]) if row[0] else "N/A"
-                        avg_elevation = str(row[1]) if row[1] else "N/A"
-                        topography = row[2] or "N/A"
-        except Exception:
-            pass
+        #             row = cursor.fetchone()
+        #             if row:
+        #                 distance_hq = str(row[0]) if row[0] else "N/A"
+        #                 avg_elevation = str(row[1]) if row[1] else "N/A"
+        #                 topography = row[2] or "N/A"
+        # except Exception:
+        #     pass
         
         # Fallback to PRA_main if data not found
         if avg_elevation == "N/A" or topography == "N/A" or distance_hq == "N/A":

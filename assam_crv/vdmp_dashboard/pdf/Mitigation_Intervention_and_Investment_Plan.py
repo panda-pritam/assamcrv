@@ -6,7 +6,7 @@ from reportlab.lib import colors
 from reportlab.lib.units import inch
 from reportlab.lib.pagesizes import letter
 import os
-from .global_styles import  blue_heading,table_sub_title,blue_sub_heading,image_title,notes_style,tb_header_bg,Legend_heading,indented_style,bold_style,normal_style,srNoStyle,non_toc_heading,blue_level3_heading,non_indented_style
+from .global_styles import  blue_heading,table_sub_title,blue_sub_heading,image_title,notes_style,tb_header_bg,Legend_heading,indented_style,bold_style,normal_style,srNoStyle,non_toc_heading,blue_level3_heading,non_indented_style,blue_level4_heading
 from .utils.table import create_styled_table
 # from .utils.geoserverLayerImage import get_geoserver_image_path, get_geoserver_legend_path
 from task_force.models import *
@@ -28,7 +28,7 @@ def draw_mitigation_intervention_and_investment_plan(elements, village_id):
     styles = getSampleStyleSheet()
     heading = Paragraph("<a name='draw_mitigation_intervention_and_investment_plan'/><b>6	Mitigation Intervention and Investment Plan</b>", blue_heading)
     elements.append(heading)
-    elements.append(Spacer(1, 12))
+    # elements.append(Spacer(1, 12))
     
     # 6.1 Developmental Issues and Needs
     heading = Paragraph("<b>6.1 Developmental Issues and Needs</b>", blue_sub_heading)
@@ -64,7 +64,7 @@ def draw_mitigation_intervention_and_investment_plan(elements, village_id):
     elements.append(Spacer(1, 12))
     
     # 6.2.1.1 Mitigation intervention
-    sub_heading = Paragraph("<b>6.2.1.1 Mitigation intervention</b>", non_toc_heading)
+    sub_heading = Paragraph("<b>6.2.1.1 Mitigation intervention</b>", blue_level4_heading)
     elements.append(sub_heading)
     elements.append(Spacer(1, 6))
     
@@ -187,7 +187,7 @@ def draw_mitigation_intervention_and_investment_plan(elements, village_id):
     elements.append(Spacer(1, 6))
     
     # 6.2.6.1 Mitigation intervention
-    sub_heading = Paragraph("<b>6.2.6.1 Mitigation intervention</b>", non_toc_heading)
+    sub_heading = Paragraph("<b>6.2.6.1 Mitigation intervention</b>", blue_level4_heading)
     elements.append(sub_heading)
     elements.append(Spacer(1, 6))
     
@@ -202,7 +202,7 @@ def draw_mitigation_intervention_and_investment_plan(elements, village_id):
     elements.append(Spacer(1, 6))
     
     # 6.2.7.1 Mitigation intervention
-    sub_heading = Paragraph("<b>6.2.7.1 Mitigation intervention</b>", non_toc_heading)
+    sub_heading = Paragraph("<b>6.2.7.1 Mitigation intervention</b>", blue_level4_heading)
     elements.append(sub_heading)
     elements.append(Spacer(1, 6))
     
@@ -217,7 +217,7 @@ def draw_mitigation_intervention_and_investment_plan(elements, village_id):
     elements.append(Spacer(1, 6))
     
     # 6.2.8.1 Mitigation intervention
-    sub_heading = Paragraph("<b>6.2.8.1 Mitigation intervention</b>", non_toc_heading)
+    sub_heading = Paragraph("<b>6.2.8.1 Mitigation intervention</b>", blue_level4_heading)
     elements.append(sub_heading)
     elements.append(Spacer(1, 6))
     

@@ -6,7 +6,7 @@ from reportlab.lib import colors
 from reportlab.lib.units import inch
 from reportlab.lib.pagesizes import letter
 import os
-from .global_styles import  blue_heading,table_sub_title,blue_sub_heading,image_title,notes_style,tb_header_bg,Legend_heading,indented_style,bold_style,normal_style,srNoStyle,non_toc_heading,blue_level3_heading,non_indented_style
+from .global_styles import  blue_heading,table_sub_title,blue_sub_heading,image_title,notes_style,tb_header_bg,Legend_heading,indented_style,bold_style,normal_style,srNoStyle,non_toc_heading,blue_level3_heading,non_indented_style,bold_center_style
 from .utils.table import create_styled_table
 # from .utils.geoserverLayerImage import get_geoserver_image_path, get_geoserver_legend_path
 from task_force.models import *
@@ -24,8 +24,8 @@ def getTeamMemberList(village_id, team_type):
     try:
         members = TaskForce.objects.filter(village_id=village_id, team_type__iexact=team_type)
         data = [
-            [Paragraph("S. No.", bold_style), Paragraph("Name", bold_style), Paragraph("Father's Name", bold_style), 
-             Paragraph("Gender", bold_style), Paragraph("Phone number", bold_style), Paragraph("Position/Responsibility", bold_style)]
+            [Paragraph("S. No.", bold_center_style), Paragraph("Name", bold_center_style), Paragraph("Father's Name", bold_center_style), 
+             Paragraph("Gender", bold_center_style), Paragraph("Phone number", bold_center_style), Paragraph("Position/Responsibility", bold_center_style)]
         ]
         
         for i, member in enumerate(members, 1):
@@ -41,8 +41,8 @@ def getTeamMemberList(village_id, team_type):
         return data
     except Exception:
         return [
-            [Paragraph("S. No.", bold_style), Paragraph("Name", bold_style), Paragraph("Father's Name", bold_style), 
-             Paragraph("Gender", bold_style), Paragraph("Phone number", bold_style), Paragraph("Position/Responsibility", bold_style)],
+            [Paragraph("S. No.", bold_center_style), Paragraph("Name", bold_center_style), Paragraph("Father's Name", bold_center_style), 
+             Paragraph("Gender", bold_center_style), Paragraph("Phone number", bold_center_style), Paragraph("Position/Responsibility", bold_center_style)],
             ['1', Paragraph("Sample Name", normal_style), Paragraph("Sample Father", normal_style),
              Paragraph("Male", normal_style), Paragraph("9876543210", normal_style), Paragraph("Team Leader", normal_style)]
         ]
@@ -51,9 +51,9 @@ def getVLCDMCMemberList(village_id):
     try:
         members = TaskForce.objects.filter(village_id=village_id, team_type='VLCDMC')
         data = [
-            [Paragraph("S. No.", bold_style), Paragraph("Designation", bold_style), Paragraph("Name", bold_style),
-             Paragraph("Name of Father", bold_style), Paragraph("Gender", bold_style),
-             Paragraph("Contact No", bold_style)]
+            [Paragraph("S. No.", bold_center_style), Paragraph("Designation", bold_center_style), Paragraph("Name", bold_center_style),
+             Paragraph("Name of Father", bold_center_style), Paragraph("Gender", bold_center_style),
+             Paragraph("Contact No", bold_center_style)]
         ]
         
         for i, member in enumerate(members, 1):
@@ -70,9 +70,9 @@ def getVLCDMCMemberList(village_id):
         return data
     except Exception:
         return [
-            [Paragraph("S. No.", bold_style), Paragraph("Designation", bold_style), Paragraph("Name", bold_style),
-             Paragraph("Name of Father", bold_style), Paragraph("Gender", bold_style),
-             Paragraph("Contact No", bold_style)],
+            [Paragraph("S. No.", bold_center_style), Paragraph("Designation", bold_center_style), Paragraph("Name", bold_center_style),
+             Paragraph("Name of Father", bold_center_style), Paragraph("Gender", bold_center_style),
+             Paragraph("Contact No", bold_center_style)],
             ['1', Paragraph("Chairperson", normal_style), Paragraph("Rafiqul Islam", normal_style),
              Paragraph("Kabel Uddin", normal_style), Paragraph("Male", normal_style), 
              Paragraph("8822987100", normal_style)],
@@ -87,9 +87,9 @@ def getSafeShelterData(village_id):
         shelters = PRA_shelter.objects.filter(village_id=village_id)
         
         data = [
-            [Paragraph("Type of Shelter", bold_style), Paragraph("Rooms", bold_style), 
-             Paragraph("Capacity", bold_style), Paragraph("Contact Persons and Phone No.", bold_style), 
-             Paragraph("Remarks", bold_style)]
+            [Paragraph("Type of Shelter", bold_center_style), Paragraph("Rooms", bold_center_style), 
+             Paragraph("Capacity", bold_center_style), Paragraph("Contact Persons and Phone No.", bold_center_style), 
+             Paragraph("Remarks", bold_center_style)]
         ]
         
         for shelter in shelters:
@@ -108,9 +108,9 @@ def getSafeShelterData(village_id):
     except Exception:
         # Fallback data if model doesn't exist or error occurs
         return [
-            [Paragraph("Type of Shelter", bold_style), Paragraph("Rooms", bold_style), 
-             Paragraph("Capacity", bold_style), Paragraph("Contact Persons and Phone No.", bold_style), 
-             Paragraph("Remarks", bold_style)],
+            [Paragraph("Type of Shelter", bold_center_style), Paragraph("Rooms", bold_center_style), 
+             Paragraph("Capacity", bold_center_style), Paragraph("Contact Persons and Phone No.", bold_center_style), 
+             Paragraph("Remarks", bold_center_style)],
             [Paragraph("940 LPS School, Rupakuchi", normal_style), Paragraph("04 & Campus Ground", normal_style), 
              Paragraph("50 HH", normal_style), Paragraph("Mr. Tutu Das<br/>Principal,<br/>Mobile: 7002698428", normal_style),
              Paragraph("Village head should coordinate with School in-charge to make sure the school is open in case of any emergency. Has two toilet, handpump for drinking and grid supply for electricity. Suitable only for moderate flood only.", normal_style)]
@@ -122,9 +122,9 @@ def get_pra_shelter_data(village_id):
         shelters = PRA_shelter.objects.filter(village_id=village_id)
 
         data = [
-            [Paragraph("Shelter", bold_style), Paragraph("Single/Multi stories/Room", bold_style),
-             Paragraph("Capacity", bold_style), Paragraph("Contact Persons and Phone No.", bold_style),
-             Paragraph("Remarks", bold_style)]
+            [Paragraph("Shelter", bold_center_style), Paragraph("Single/Multi stories/Room", bold_center_style),
+             Paragraph("Capacity", bold_center_style), Paragraph("Contact Persons and Phone No.", bold_center_style),
+             Paragraph("Remarks", bold_center_style)]
         ]
 
         for shelter in shelters:
@@ -156,9 +156,9 @@ def get_pra_shelter_data(village_id):
         return data
     except Exception:
         return [
-            [Paragraph("Shelter", bold_style), Paragraph("Single/Multi stories/Room", bold_style),
-             Paragraph("Capacity", bold_style), Paragraph("Contact Persons and Phone No.", bold_style),
-             Paragraph("Remarks", bold_style)],
+            [Paragraph("Shelter", bold_center_style), Paragraph("Single/Multi stories/Room", bold_center_style),
+             Paragraph("Capacity", bold_center_style), Paragraph("Contact Persons and Phone No.", bold_center_style),
+             Paragraph("Remarks", bold_center_style)],
             [Paragraph("N/A", normal_style), Paragraph("N/A", normal_style),
              Paragraph("N/A", normal_style), Paragraph("N/A", normal_style),
              Paragraph("N/A", normal_style)]
@@ -168,7 +168,7 @@ def draw_disaster_preparedness_and_response_plan(elements, village_id):
     styles = getSampleStyleSheet()
     heading = Paragraph("<a name='draw_disaster_preparedness_and_response_plan'/><b>5   Disaster Preparedness and Response Plan</b>", blue_heading)
     elements.append(heading)
-    elements.append(Spacer(1, 6))
+    # elements.append(Spacer(1, 6))
     
     # 5.1 Existing Preparedness Plan
     heading = Paragraph("<b>5.1 Existing Preparedness Plan</b>", blue_sub_heading)
@@ -177,7 +177,7 @@ def draw_disaster_preparedness_and_response_plan(elements, village_id):
     
     # Early warning table
     early_warning_data = [
-        [Paragraph("S. No.", bold_style), Paragraph("Nature of early warning", bold_style), Paragraph("Source", bold_style), Paragraph("Lead time", bold_style)],
+        [Paragraph("S. No.", bold_center_style), Paragraph("Nature of early warning", bold_center_style), Paragraph("Source", bold_center_style), Paragraph("Lead time", bold_center_style)],
         [Paragraph("1", normal_style), Paragraph("Location based service of IMD on heavy rainfall/cloud burst/strong wind forecast", normal_style), Paragraph("IMD to all cell phones in the potential impact location (if registered in SACHET App)", normal_style), Paragraph("3 hours", normal_style)],
         [Paragraph("2", normal_style), Paragraph("Flood forecast", normal_style), Paragraph("DDMA to Circle Officers, Field Officers and Village head", normal_style), Paragraph("24 hours", normal_style)]
     ]
@@ -212,7 +212,7 @@ def draw_disaster_preparedness_and_response_plan(elements, village_id):
     
     # Mitigation plan table
     mitigation_data = [
-        [Paragraph("S. No.", bold_style), Paragraph("Work needs to done before the onset of the rainy season", bold_style), Paragraph("Responsibility", bold_style)],
+        [Paragraph("S. No.", bold_center_style), Paragraph("Work needs to done before the onset of the rainy season", bold_center_style), Paragraph("Responsibility", bold_center_style)],
         [Paragraph("1", normal_style), Paragraph("Repair village roads and arrange contact numbers of boat owners", normal_style), Paragraph("Panchayat Office", normal_style)],
         [Paragraph("2", normal_style), Paragraph("Pruning of tree branches that are growing across electric lines", normal_style), Paragraph("Assam Power Generation Corporation Ltd (APGCL)", normal_style)],
         [Paragraph("3", normal_style), Paragraph("Inspect river banks and vulnerable locations and coordinate with DDMA to take protection measures", normal_style), Paragraph("VDMC", normal_style)],
@@ -235,21 +235,21 @@ def draw_disaster_preparedness_and_response_plan(elements, village_id):
     
     # VDMC Members table
     vlcdmc_data = getVLCDMCMemberList(village_id)
-    table = create_styled_table(vlcdmc_data, [40, 90, 90, 90, 60, 90], False, True, srNoStyle, "VDMC Members")
+    table = create_styled_table(vlcdmc_data, [40, 100, 100, 100, 60, 100], False, True, srNoStyle, "VDMC Members")
     table.repeatRows = 1
     table.splitByRow = 1
     table.setStyle(TableStyle([("NOSPLIT", (0, 0), (-1, 1))]))
     elements.append(table)
-    elements.append(Spacer(1, 12))
+    # elements.append(Spacer(1, 12))
     
     source_text = "Source: VDMC and task force member database"
     elements.append(Paragraph(source_text, notes_style))
-    elements.append(Spacer(1, 12))
+    # elements.append(Spacer(1, 12))
     
     # Roles and Responsibilities
     heading = Paragraph("<b>Roles and Responsibilities:</b>", non_toc_heading)
     elements.append(heading)
-    elements.append(Spacer(1, 6))
+    # elements.append(Spacer(1, 6))
     
     # Normal condition
     normal_heading = Paragraph("<b>Normal condition</b>", bold_style)
@@ -359,12 +359,12 @@ def draw_disaster_preparedness_and_response_plan(elements, village_id):
     # Identified safe shelter
     shelter_heading = Paragraph("<b>Identified safe shelter </b>", non_toc_heading)
     elements.append(shelter_heading)
-    elements.append(Spacer(1, 6))
+    # elements.append(Spacer(1, 6))
     
     shelter_data = getSafeShelterData(village_id)
     table = create_styled_table(shelter_data, [100, 60, 50, 120, 170], False, True, srNoStyle, "Identified Safe Shelter")
     elements.append(table)
-    elements.append(Spacer(1, 12))
+    # elements.append(Spacer(1, 12))
     
     source_text = "Source: Other database community tab - PRA and community related data"
     elements.append(Paragraph(source_text, notes_style))
@@ -387,16 +387,16 @@ def draw_disaster_preparedness_and_response_plan(elements, village_id):
     search_rescue_data = getTeamMemberList(village_id, 'Search & rescue')
     table = create_styled_table(search_rescue_data, [40, 100, 100, 60, 100, 100], False, True, srNoStyle, "Search and Rescue Team")
     elements.append(table)
-    elements.append(Spacer(1, 12))
+    # elements.append(Spacer(1, 12))
     
     source_text = "Source: VDMC and task force member database"
     elements.append(Paragraph(source_text, notes_style))
-    elements.append(Spacer(1, 12))
+    # elements.append(Spacer(1, 12))
     
     # Roles and Responsibilities for Search and Rescue Team
     roles_heading = Paragraph("<b>Roles and Responsibilities :</b>", non_toc_heading)
     elements.append(roles_heading)
-    elements.append(Spacer(1, 6))
+    # elements.append(Spacer(1, 6))
     
     # Normal condition
     normal_heading = Paragraph("<b>Normal condition</b>", bold_style)
@@ -504,7 +504,7 @@ def draw_disaster_preparedness_and_response_plan(elements, village_id):
     relief_data = getTeamMemberList(village_id, 'Relief management team')
     table = create_styled_table(relief_data, [40, 100, 100, 60, 100, 100], False, True, srNoStyle, "Relief Management Team")
     elements.append(table)
-    elements.append(Spacer(1, 12))
+    # elements.append(Spacer(1, 12))
     
     source_text = "Source: VDMC and task force member database"
     elements.append(Paragraph(source_text, notes_style))
@@ -513,12 +513,12 @@ def draw_disaster_preparedness_and_response_plan(elements, village_id):
     # Relief Management Team Description
     relief_desc = "The Relief Management team comprises both men and women. The team collect relief materials including food supplies, utensils, clothes, kerosene, and diesel. Women team members should inquire about the specific needs of the affected women. Gender-sensitive clothes and materials should be distributed to women only by women member in the team. Team should keep track of all government provisions related to gratuitous relief efforts to prevent starvation, deterioration, and migration. The team should also ensure health and sanitation measures for both people and livestock. Ensures that people do not miss out on their relief entitlements."
     elements.append(Paragraph(relief_desc, normal_style))
-    elements.append(Spacer(1, 12))
+    # elements.append(Spacer(1, 12))
     
     # Roles and Responsibilities for Relief Management Team
     roles_heading = Paragraph("<b>Roles and Responsibilities</b>", non_toc_heading)
     elements.append(roles_heading)
-    elements.append(Spacer(1, 6))
+    # elements.append(Spacer(1, 6))
     
     # Normal condition
     normal_heading = Paragraph("<b>Normal condition</b>", bold_style)
@@ -626,16 +626,16 @@ def draw_disaster_preparedness_and_response_plan(elements, village_id):
     shelter_mgmt_data = getTeamMemberList(village_id, 'Shelter Management team')
     table = create_styled_table(shelter_mgmt_data, [40, 100, 100, 60, 100, 100], False, True, srNoStyle, "Shelter Management Team")
     elements.append(table)
-    elements.append(Spacer(1, 12))
+    # elements.append(Spacer(1, 12))
     
     source_text = "Source: VDMC and task force member database"
     elements.append(Paragraph(source_text, notes_style))
-    elements.append(Spacer(1, 12))
+    # elements.append(Spacer(1, 12))
     
     # Roles and Responsibilities for Shelter Management Team
     roles_heading = Paragraph("<b>Roles and Responsibilities</b>", non_toc_heading)
     elements.append(roles_heading)
-    elements.append(Spacer(1, 6))
+    # elements.append(Spacer(1, 6))
     
     # Normal condition
     normal_heading = Paragraph("<b>Normal condition</b>", bold_style)
@@ -752,16 +752,16 @@ def draw_disaster_preparedness_and_response_plan(elements, village_id):
     first_aid_data = getTeamMemberList(village_id, 'First Aid team')
     table = create_styled_table(first_aid_data, [40, 100, 100, 60, 100, 100], False, True, srNoStyle, "First Aid Team")
     elements.append(table)
-    elements.append(Spacer(1, 12))
+    # elements.append(Spacer(1, 12))
     
     source_text = "Source: VDMC and task force member database"
     elements.append(Paragraph(source_text, notes_style))
-    elements.append(Spacer(1, 12))
+    # elements.append(Spacer(1, 12))
     
     # Roles and Responsibilities for First Aid Team
     roles_heading = Paragraph("<b>Roles and Responsibilities</b>", non_toc_heading)
     elements.append(roles_heading)
-    elements.append(Spacer(1, 6))
+    # elements.append(Spacer(1, 6))
     
     # Normal condition
     normal_heading = Paragraph("<b>Normal condition</b>", bold_style)
