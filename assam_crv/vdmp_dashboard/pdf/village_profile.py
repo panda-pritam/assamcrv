@@ -264,7 +264,7 @@ def getVillageLocationDetails(village_id):
                 
                 if cursor.fetchone()[0]:
                     cursor.execute("""
-                            SELECT COALESCE(SUM(ST_Area(ST_Transform(geom, 32646))) / 10000,0)
+                            SELECT COALESCE(SUM(ST_Area(ST_Transform(geom, 32646))) / 1000000,0)
                             FROM public.lulc
                             WHERE "Vill_ID" = %s
                         """, [village_code])
@@ -2736,7 +2736,7 @@ def draw_village_profile(elements,village_id):
     table = create_styled_table(data, [40,240, 100, 120], True, True, custom_styles, "Secondary Livelihood Distribution (secondary economic activity)")
     elements.append(table)
     elements.append(Spacer(1, 12))
-    elements.append(PageBreak())
+    # elements.append(PageBreak())
     
     # ------------------------
     custom_styles=[

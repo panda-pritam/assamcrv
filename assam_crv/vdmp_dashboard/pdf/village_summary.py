@@ -233,30 +233,49 @@ def getDistrictLevelOfficialsData(village_id):
 
 
 
+
+
 def get_village_area(village_id):
-    """Get village area from village_boundary table"""
+    """Get village area from lulc table using geometry area"""
+    
     try:
         village = tblVillage.objects.get(id=village_id)
         village_code = village.code
     except tblVillage.DoesNotExist:
         return 0
-    
+
     try:
         with connection.cursor() as cursor:
+            # ✅ Check if lulc table exists
             cursor.execute("""
-                SELECT 
-                    ST_Area(ST_Transform(geom, 32646)) / 1000000.0 as area_sqkm
-                        FROM public.village_boundary
-                        WHERE "Vill_ID" = %s
-            """, [village_code])
+                SELECT EXISTS (
+                    SELECT FROM information_schema.tables 
+                    WHERE table_schema = 'public' 
+                    AND table_name = 'lulc'
+                )
+            """)
             
-            row = cursor.fetchone()
-            if row and row[0]:
-                return float(row[0])
-            else:
+            table_exists = cursor.fetchone()[0]
+
+            if not table_exists:
                 return 0
+
+            # ✅ Calculate area from lulc geometry
+            cursor.execute("""
+                SELECT COALESCE(
+                    SUM(ST_Area(ST_Transform(geom, 32646))) / 1000000.0,
+                    0
+                ) AS area_sqkm
+                FROM public.lulc
+                WHERE "Vill_ID" = %s
+            """, [village_code])
+
+            row = cursor.fetchone()
+            return float(row[0]) if row and row[0] else 0
+
     except Exception:
         return 0
+
 
 # Get village related data from the database
 def generate_general_summary_table(village_id=None):
