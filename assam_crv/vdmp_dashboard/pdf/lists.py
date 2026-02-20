@@ -24,7 +24,7 @@ def draw_list_of_figures(elements, doc):
     elements.append(Spacer(1, 12))
 
     # Create table data - header + rows
-    data = [[Paragraph("S. No.",bold_12_center), Paragraph("Figure Number and Title", bold_12_center), Paragraph("Page", bold_12_center)]]
+    data = [[ Paragraph("Figure Number and Title", bold_12_center), Paragraph("Page", bold_12_center)]]
     
     # Sort figures by page number
     sorted_figures = sorted(doc.figure_list, key=lambda x: x['page'])
@@ -43,10 +43,10 @@ def draw_list_of_figures(elements, doc):
         else:
             figure_title_text = Paragraph(title, normal)
 
-        data.append([Paragraph(str(i),bold_right_align_text), figure_title_text, str(page)])
+        data.append([ figure_title_text, str(page)])
 
     # Create the table
-    table = Table(data, colWidths=[50, 350, 100])
+    table = Table(data, colWidths=[ 350, 150])
     table.setStyle(common_table_style)
     
     elements.append(table)
@@ -84,7 +84,7 @@ def draw_list_of_tables(elements, doc):
     # ]))
 
     # Create table data - header + rows
-    data = [[Paragraph("S. No.",bold_12_center), Paragraph("Table Number and Title",bold_12_center), Paragraph("Page",bold_12_center)]]
+    data = [[ Paragraph("Table Number and Title",bold_12_center), Paragraph("Page",bold_12_center)]]
     
     # Sort tables by page number
     sorted_tables = sorted(doc.table_list, key=lambda x: x['page'])
@@ -103,10 +103,10 @@ def draw_list_of_tables(elements, doc):
         else:
             table_title_text = Paragraph(title, normal)
 
-        data.append([Paragraph(str(i),bold_right_align_text), table_title_text, str(page)])
+        data.append([ table_title_text, str(page)])
 
     # Create the table
-    table = Table(data, colWidths=[50, 350, 100])
+    table = Table(data, colWidths=[ 350, 150])
     table.setStyle(common_table_style)
     
     elements.append(table)

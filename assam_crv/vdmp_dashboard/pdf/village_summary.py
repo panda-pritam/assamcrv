@@ -44,18 +44,15 @@ def get_lvi_score(village_id):
         print("---------------- Getting LVI score for village ----------------> ")
         from .hazard_Vulnerability_risk import getLivelihoodExposureData, getLivelihoodSensitivityData, getLivelihoodAdaptiveCapacityData
         
-        # Get data from each component
-        exposure_data = getLivelihoodExposureData(village_id)
-        sensitivity_data = getLivelihoodSensitivityData(village_id)
-        adaptive_data = getLivelihoodAdaptiveCapacityData(village_id)
-        
-        # Extract scores from last row
-        exposure_score = int(exposure_data[-1][-1].text if hasattr(exposure_data[-1][-1], 'text') else str(exposure_data[-1][-1]))
-        sensitivity_score = int(sensitivity_data[-1][-1].text if hasattr(sensitivity_data[-1][-1], 'text') else str(sensitivity_data[-1][-1]))
-        adaptive_score = int(adaptive_data[-1][-1].text if hasattr(adaptive_data[-1][-1], 'text') else str(adaptive_data[-1][-1]))
+        # Get data and scores from each component
+        exposure_data, exposure_score = getLivelihoodExposureData(village_id)
+        sensitivity_data, sensitivity_score = getLivelihoodSensitivityData(village_id)
+        adaptive_data, adaptive_score = getLivelihoodAdaptiveCapacityData(village_id)
         
         # Calculate LVI score
         lvi_score = round((exposure_score + sensitivity_score + adaptive_score) / 3, 2)
+        # Ensure LVI score doesn't exceed 1.0
+        lvi_score = min(lvi_score, 1.0)
         
         # Classify LVI
         if lvi_score <= 0.20:

@@ -1848,11 +1848,35 @@ def save_grid_results(result_df, village_obj, village_code):
         # -----------------------------
         for _, row in result_df.iterrows():
 
-            flood_depth_m = (
+
+            # -----------------------------
+            # OLD logic (kept commented)
+            # -----------------------------
+            # flood_depth_m = (
+            #     float(row["flood_depth_m"])
+            #     if row["flood_depth_m"] is not None
+            #     else None
+            # )
+            
+            # -----------------------------
+            # NEW forceful logic
+            # -----------------------------
+            raw_depth = (
                 float(row["flood_depth_m"])
                 if row["flood_depth_m"] is not None
                 else None
             )
+
+            if raw_depth is not None:
+                adjusted_depth = raw_depth - 1
+
+                # if negative → treat as no flood
+                flood_depth_m = adjusted_depth if adjusted_depth > 0 else 0
+                # OR use 0 instead of None:
+                # flood_depth_m = adjusted_depth if adjusted_depth > 0 else 0
+            else:
+                flood_depth_m = None
+
             road_length_m = float(row["road_length_m"] or 0.0)
 
             asset_typology = row["rsur_type"] or "Unknown"

@@ -9,7 +9,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         static_dir = os.path.join(settings.BASE_DIR, 'static', 'csv_exports')
-        road_file = os.path.join(static_dir, 'Correct_road_MDR.xlsx')
+        road_file = os.path.join(static_dir, 'Correct_road_MDR.csv')
         
         if os.path.exists(road_file):
             self.import_road_mdr(road_file)
@@ -18,7 +18,7 @@ class Command(BaseCommand):
 
     def import_road_mdr(self, file_path):
         self.stdout.write('Importing road MDR data...')
-        df = pd.read_excel(file_path)
+        df = pd.read_csv(file_path)
         
         roadFloodMDRMapping.objects.all().delete()
         

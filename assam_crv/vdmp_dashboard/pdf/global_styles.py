@@ -239,6 +239,8 @@ left_indent_paragraph_sec = ParagraphStyle(
     leftIndent=-28,
 )
 
+bold_style_left_indent = ParagraphStyle('Bold', parent=normal_style, fontName='Helvetica-Bold',leftIndent=-28,  )
+
 left_indent_paragraph = ParagraphStyle(
     'LeftIndent',
     parent=styles['Normal'],
