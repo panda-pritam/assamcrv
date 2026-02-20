@@ -3363,7 +3363,7 @@ def draw_village_profile(elements,village_id):
     #     elements.append(img_table)
     
     #img from the model
-    image_height = page_height * 0.75
+    image_height = page_height * 0.7
 
     img_field = map_file_fields.get('landuse')
     if img_field:
