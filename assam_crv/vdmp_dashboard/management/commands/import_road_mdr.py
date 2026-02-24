@@ -19,8 +19,10 @@ class Command(BaseCommand):
     def import_road_mdr(self, file_path):
         self.stdout.write('Importing road MDR data...')
         df = pd.read_csv(file_path)
+        self.stdout.write('File imported')
         
         roadFloodMDRMapping.objects.all().delete()
+        self.stdout.write(self.style.SUCCESS(f'Successfully Deleted road MDR records'))
         
         for _, row in df.iterrows():
             roadFloodMDRMapping.objects.create(
