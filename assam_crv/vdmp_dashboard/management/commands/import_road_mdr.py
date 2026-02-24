@@ -5,20 +5,33 @@ from django.conf import settings
 from vdmp_dashboard.models import roadFloodMDRMapping
 
 class Command(BaseCommand):
-    help = 'Import road MDR data from Correct_road_MDR.xlsx'
+    help = 'Import road MDR data from Correct_road_MDR.(csv|xlsx)'
 
     def handle(self, *args, **options):
         static_dir = os.path.join(settings.BASE_DIR, 'static', 'csv_exports')
-        road_file = os.path.join(static_dir, 'Correct_road_MDR.csv')
-        
-        if os.path.exists(road_file):
-            self.import_road_mdr(road_file)
-        else:
-            self.stdout.write(self.style.WARNING(f'Road file not found: {road_file}'))
+        csv_file = os.path.join(static_dir, 'Correct_road_MDR.csv')
+        xlsx_file = os.path.join(static_dir, 'Correct_road_MDR.xlsx')
+
+        if os.path.exists(xlsx_file):
+            self.import_road_mdr(xlsx_file)
+            return
+
+        if os.path.exists(csv_file):
+            self.import_road_mdr(csv_file)
+            return
+
+        self.stdout.write(
+            self.style.WARNING(
+                f'Road file not found: {xlsx_file} or {csv_file}'
+            )
+        )
 
     def import_road_mdr(self, file_path):
         self.stdout.write('Importing road MDR data...')
-        df = pd.read_csv(file_path)
+        if file_path.lower().endswith(".xlsx"):
+            df = pd.read_excel(file_path)
+        else:
+            df = pd.read_csv(file_path)
         self.stdout.write('File imported')
         
         roadFloodMDRMapping.objects.all().delete()
