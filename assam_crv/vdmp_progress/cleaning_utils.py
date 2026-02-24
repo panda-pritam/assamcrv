@@ -1650,7 +1650,7 @@ def load_village_roads(village_code):
             geom,
             rd_surface,
             rsur_type,
-            type_r AS rsurtypeid,
+            rsurtypeid AS rsurtypeid,
             width,
             length,
             unitrpcost AS unit_cost
@@ -1666,7 +1666,7 @@ def load_village_roads(village_code):
             geom,
             "Rd_Surface" AS rd_surface,
             "RSur_Type" AS rsur_type,
-            "Type_R" AS rsurtypeid,
+            "RSurTypeId" AS rsurtypeid,
             "Width" AS width,
             "Length" AS length,
             "UnitRpCost" AS unit_cost
@@ -3532,63 +3532,63 @@ def run_gis_risk_assessment_pipeline(village_obj, village_code):
     
     village_id = village_obj.id
     
-    # Step 1: Process all models to extract flood depth and erosion values
-    print("🌊 Step 1: Extracting flood depth and erosion values for all models...")
+    # # Step 1: Process all models to extract flood depth and erosion values
+    # print("🌊 Step 1: Extracting flood depth and erosion values for all models...")
     
-    # Process HouseholdSurvey
-    household_records = HouseholdSurvey.objects.filter(village=village_obj)
-    if household_records.exists():
-        print(f"Processing {household_records.count()} household records...")
-        _process_model_flood_erosion(household_records, village_id, 'household')
+    # # Process HouseholdSurvey
+    # household_records = HouseholdSurvey.objects.filter(village=village_obj)
+    # if household_records.exists():
+    #     print(f"Processing {household_records.count()} household records...")
+    #     _process_model_flood_erosion(household_records, village_id, 'household')
     
-    print(f"Processing {household_records.count()} household records...")
+    # print(f"Processing {household_records.count()} household records...")
 
-    print("-------------------- Commercial Records --------------------")
-    # Process Commercial
-    commercial_records = Commercial.objects.filter(village=village_obj)
-    if commercial_records.exists():
-        print(f"Processing {commercial_records.count()} commercial records...")
-        _process_model_flood_erosion(commercial_records, village_id, 'commercial')
+    # print("-------------------- Commercial Records --------------------")
+    # # Process Commercial
+    # commercial_records = Commercial.objects.filter(village=village_obj)
+    # if commercial_records.exists():
+    #     print(f"Processing {commercial_records.count()} commercial records...")
+    #     _process_model_flood_erosion(commercial_records, village_id, 'commercial')
     
-    print("-------------------- Critical_Facility --------------------")
-    # Process Critical_Facility
-    critical_records = Critical_Facility.objects.filter(village=village_obj)
-    if critical_records.exists():
-        print(f"Processing {critical_records.count()} critical facility records...")
-        _process_model_flood_erosion(critical_records, village_id, 'critical')
+    # print("-------------------- Critical_Facility --------------------")
+    # # Process Critical_Facility
+    # critical_records = Critical_Facility.objects.filter(village=village_obj)
+    # if critical_records.exists():
+    #     print(f"Processing {critical_records.count()} critical facility records...")
+    #     _process_model_flood_erosion(critical_records, village_id, 'critical')
     
-    # Process Transformer
-    transformer_records = Transformer.objects.filter(village=village_obj)
-    if transformer_records.exists():
-        print(f"Processing {transformer_records.count()} transformer records...")
-        _process_model_flood_erosion(transformer_records, village_id, 'transformer')
+    # # Process Transformer
+    # transformer_records = Transformer.objects.filter(village=village_obj)
+    # if transformer_records.exists():
+    #     print(f"Processing {transformer_records.count()} transformer records...")
+    #     _process_model_flood_erosion(transformer_records, village_id, 'transformer')
     
-    # Process ElectricPole
-    electric_pole_records = ElectricPole.objects.filter(village=village_obj)
-    if electric_pole_records.exists():
-        print(f"Processing {electric_pole_records.count()} electric pole records...")
-        _process_model_flood_erosion(electric_pole_records, village_id, 'electric_pole')
+    # # Process ElectricPole
+    # electric_pole_records = ElectricPole.objects.filter(village=village_obj)
+    # if electric_pole_records.exists():
+    #     print(f"Processing {electric_pole_records.count()} electric pole records...")
+    #     _process_model_flood_erosion(electric_pole_records, village_id, 'electric_pole')
     
-    # Step 2: Run risk assessment pipelines
-    print("🏠 Step 2: Running household risk assessment pipeline...")
-    try:
-        run_risk_assessment_pipeline(village_id, 'household')
-    except Exception as e:
-        print(f"Household processing failed: {e}")
+    # # Step 2: Run risk assessment pipelines
+    # print("🏠 Step 2: Running household risk assessment pipeline...")
+    # try:
+    #     run_risk_assessment_pipeline(village_id, 'household')
+    # except Exception as e:
+    #     print(f"Household processing failed: {e}")
     
-    print("🏢 Step 3: Running commercial risk assessment pipeline...")
-    try:
-        run_risk_assessment_pipeline(village_id, 'commercial')
-    except Exception as e:
-        print(f"Commercial processing failed: {e}")
+    # print("🏢 Step 3: Running commercial risk assessment pipeline...")
+    # try:
+    #     run_risk_assessment_pipeline(village_id, 'commercial')
+    # except Exception as e:
+    #     print(f"Commercial processing failed: {e}")
     
-    print("🏥 Step 4: Running critical facilities risk assessment pipeline...")
-    try:
-        run_risk_assessment_pipeline(village_id, 'critical')
-    except Exception as e:
-        print(f"Critical facilities processing failed: {e}")
+    # print("🏥 Step 4: Running critical facilities risk assessment pipeline...")
+    # try:
+    #     run_risk_assessment_pipeline(village_id, 'critical')
+    # except Exception as e:
+    #     print(f"Critical facilities processing failed: {e}")
     
-    # Step 3: Process road assessments
+    # # Step 3: Process road assessments
     print("🛣️ Step 5: Processing road risk assessments...")
     # Process road flood analysis
     process_road_flood_zonal_length(village_obj, village_code, flood_raster_path)
@@ -3609,16 +3609,16 @@ def run_gis_risk_assessment_pipeline(village_obj, village_code):
     except Exception as e:
         print(f"Road erosion processing failed: {e}")
     
-    # Step 5: Process agriculture assessments
-    print("🌾 Step 6: Processing agriculture risk assessments...")
-    try:
-        district_name, district_code = get_district_from_village(village_obj)
-        process_all_agriculture_hazards(
-            village_obj.id, village_code, district_name, 
-            district_code, village_obj.name
-        )
-    except Exception as e:
-        print(f"Agriculture processing failed: {e}")
+    # # Step 5: Process agriculture assessments
+    # print("🌾 Step 6: Processing agriculture risk assessments...")
+    # try:
+    #     district_name, district_code = get_district_from_village(village_obj)
+    #     process_all_agriculture_hazards(
+    #         village_obj.id, village_code, district_name, 
+    #         district_code, village_obj.name
+    #     )
+    # except Exception as e:
+    #     print(f"Agriculture processing failed: {e}")
     
     print(f"✅ GIS risk assessment pipeline completed for village {village_obj.name}")
 
