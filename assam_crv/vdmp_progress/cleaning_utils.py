@@ -576,89 +576,146 @@ def get_agriculture_unit_cost(land_type="Agriculture Land"):
     return 0.0
 
 
+# def get_agriculture_flood_mdr(flood_depth_m, crop_type):
+#     """
+#     Get MDR value for agriculture flood:
+#     - default crop_type
+#     - round depth
+#     - nearest lower match
+#     - cap at max MDR
+#     """
+#     from vdmp_dashboard.models import agricultureLandFloodMDRMapping
+
+#     # Default crop type
+#     crop_type = crop_type or "Agriculture Land"
+
+#     # No flood → no damage
+#     if flood_depth_m is None or flood_depth_m <= 0:
+#         return 0.0
+
+#     # Round flood depth
+#     flood_depth = round(float(flood_depth_m), 2)
+
+#     base_qs = agricultureLandFloodMDRMapping.objects.filter(
+#         crop_type=crop_type
+#     )
+
+#     if not base_qs.exists():
+#         return 0.0
+
+#     # Nearest LOWER depth
+#     record = (
+#         base_qs
+#         .filter(flood_depth_m__lte=flood_depth)
+#         .order_by("-flood_depth_m")
+#         .first()
+#     )
+
+#     # Cap at max MDR if depth exceeds table
+#     if not record:
+#         record = base_qs.order_by("-flood_depth_m").first()
+
+#     return float(record.mdr) if record else 0.0
+
+
 def get_agriculture_flood_mdr(flood_depth_m, crop_type):
-    """
-    Get MDR value for agriculture flood:
-    - default crop_type
-    - round depth
-    - nearest lower match
-    - cap at max MDR
-    """
     from vdmp_dashboard.models import agricultureLandFloodMDRMapping
 
-    # Default crop type
     crop_type = crop_type or "Agriculture Land"
 
-    # No flood → no damage
     if flood_depth_m is None or flood_depth_m <= 0:
         return 0.0
 
-    # Round flood depth
     flood_depth = round(float(flood_depth_m), 2)
 
-    base_qs = agricultureLandFloodMDRMapping.objects.filter(
+    qs = agricultureLandFloodMDRMapping.objects.filter(
         crop_type=crop_type
     )
 
-    if not base_qs.exists():
+    if not qs.exists():
         return 0.0
 
-    # Nearest LOWER depth
     record = (
-        base_qs
-        .filter(flood_depth_m__lte=flood_depth)
+        qs.filter(flood_depth_m__lte=flood_depth)
         .order_by("-flood_depth_m")
         .first()
     )
 
-    # Cap at max MDR if depth exceeds table
     if not record:
-        record = base_qs.order_by("-flood_depth_m").first()
+        return 0.0
 
-    return float(record.mdr) if record else 0.0
+    return float(record.mdr)
 
+# def get_agriculture_wind_mdr(wind_hazard, crop_type):
+#     """
+#     Get MDR value for agriculture wind:
+#     - default crop_type
+#     - round hazard
+#     - nearest lower match
+#     - cap at max MDR
+#     """
+#     from vdmp_dashboard.models import agricultureLandWindMDRMapping
+
+#     # Default crop type
+#     crop_type = crop_type or "Agriculture Land"
+
+#     # No wind → no damage
+#     if wind_hazard is None or wind_hazard <= 0:
+#         return 0.0
+
+#     # Round wind hazard
+#     wind_hazard = round(float(wind_hazard), 2)
+
+#     base_qs = agricultureLandWindMDRMapping.objects.filter(
+#         crop_type=crop_type
+#     )
+
+#     if not base_qs.exists():
+#         return 0.0
+
+#     # Nearest LOWER hazard
+#     record = (
+#         base_qs
+#         .filter(wind_hazard__lte=wind_hazard)
+#         .order_by("-wind_hazard")
+#         .first()
+#     )
+
+#     # Cap at max MDR if hazard exceeds table
+#     if not record:
+#         record = base_qs.order_by("-wind_hazard").first()
+
+#     return float(record.mdr) if record else 0.0
 
 
 def get_agriculture_wind_mdr(wind_hazard, crop_type):
-    """
-    Get MDR value for agriculture wind:
-    - default crop_type
-    - round hazard
-    - nearest lower match
-    - cap at max MDR
-    """
     from vdmp_dashboard.models import agricultureLandWindMDRMapping
 
-    # Default crop type
     crop_type = crop_type or "Agriculture Land"
 
-    # No wind → no damage
     if wind_hazard is None or wind_hazard <= 0:
         return 0.0
 
-    # Round wind hazard
     wind_hazard = round(float(wind_hazard), 2)
 
-    base_qs = agricultureLandWindMDRMapping.objects.filter(
+    qs = agricultureLandWindMDRMapping.objects.filter(
         crop_type=crop_type
     )
 
-    if not base_qs.exists():
+    if not qs.exists():
         return 0.0
 
-    # Nearest LOWER hazard
     record = (
-        base_qs
-        .filter(wind_hazard__lte=wind_hazard)
+        qs.filter(wind_hazard__lte=wind_hazard)
         .order_by("-wind_hazard")
         .first()
     )
 
-    # Cap at max MDR if hazard exceeds table
     if not record:
-        record = base_qs.order_by("-wind_hazard").first()
+        return 0.0
 
-    return float(record.mdr) if record else 0.0
+    return float(record.mdr)
+
 
 
 def get_agriculture_eq_mdr(eq_hazard, crop_type):
@@ -1794,38 +1851,67 @@ def aggregate_by_grid_and_road(intersections):
 
 
 
+# def get_road_flood_mdr(flood_depth_m, road_type_id):
+#     from vdmp_dashboard.models import roadFloodMDRMapping
+
+#     # No flood → no damage
+#     if flood_depth_m is None or flood_depth_m <= 0:
+#         return 0.0
+
+#     # 1️⃣ Round depth
+#     flood_depth = round(float(flood_depth_m), 2)
+
+#     # 2️⃣ Pick MDR curve dynamically (no hardcoding)
+#     # Assumes only ONE curve exists (current data reality)
+#     base_qs = roadFloodMDRMapping.objects.all()
+
+#     if not base_qs.exists():
+#         return 0.0
+
+#     # 3️⃣ Nearest LOWER depth
+#     record = (
+#         base_qs
+#         .filter(flood_depth_m__lte=flood_depth)
+#         .order_by("-flood_depth_m")
+#         .first()
+#     )
+
+#     # 4️⃣ If depth > max available → cap to max MDR
+#     if not record:
+#         record = base_qs.order_by("-flood_depth_m").first()
+
+#     return float(record.mdr) if record else 0.0
+
 def get_road_flood_mdr(flood_depth_m, road_type_id):
     from vdmp_dashboard.models import roadFloodMDRMapping
+    from django.db.models import FloatField
+    from django.db.models.functions import Cast
 
-    # No flood → no damage
-    if flood_depth_m is None or flood_depth_m <= 0:
-        return 0.0
+    if flood_depth_m is None:
+        return None
 
-    # 1️⃣ Round depth
-    flood_depth = round(float(flood_depth_m), 2)
+    depth = round(float(flood_depth_m), 2)
 
-    # 2️⃣ Pick MDR curve dynamically (no hardcoding)
-    # Assumes only ONE curve exists (current data reality)
-    base_qs = roadFloodMDRMapping.objects.all()
+    # normalize DB side (IMPORTANT FIX)
+    qs = roadFloodMDRMapping.objects.annotate(
+        road_type_num=Cast("road_surface_type", FloatField())
+    ).filter(
+        road_type_num=float(road_type_id)
+    )
 
-    if not base_qs.exists():
-        return 0.0
+    if not qs.exists():
+        return None
 
-    # 3️⃣ Nearest LOWER depth
     record = (
-        base_qs
-        .filter(flood_depth_m__lte=flood_depth)
+        qs.filter(flood_depth_m__lte=depth)
         .order_by("-flood_depth_m")
         .first()
     )
 
-    # 4️⃣ If depth > max available → cap to max MDR
     if not record:
-        record = base_qs.order_by("-flood_depth_m").first()
+        return None
 
-    return float(record.mdr) if record else 0.0
-
-
+    return float(record.mdr)
 
 def save_grid_results(result_df, village_obj, village_code):
     from vdmp_dashboard.models import VillageRoadInfo
@@ -1896,7 +1982,14 @@ def save_grid_results(result_df, village_obj, village_code):
 
             replacement_cost = road_length_m * unit_cost * road_width_m
             flood_mdr = get_road_flood_mdr(flood_depth_m, road_type_id)
-            flood_loss = replacement_cost * flood_mdr
+            if flood_mdr is None:
+                # print(
+                #     f"⚠️ No MDR found for depth {flood_depth_m}m "
+                #     f"and road type {road_type_id}. Setting loss = None."
+                # )
+                flood_loss = None
+            else:
+                flood_loss = replacement_cost * flood_mdr
 
             records.append(
                 VillageRoadInfo(
@@ -1934,12 +2027,7 @@ def save_grid_results(result_df, village_obj, village_code):
             print(f"✅ Inserted {len(records)} new road records for village {village_obj.name}")
 
 
-def get_road_unit_cost(asset_typology):
-    from vdmp_dashboard.models import RoadUnitCost
-    rec = RoadUnitCost.objects.filter(
-        asset_typology__iexact=asset_typology
-    ).first()
-    return float(rec.unit_cost) if rec and rec.unit_cost else 0.0
+
 
 def calculate_replacement_cost_road(
     road_length_m,
@@ -3598,36 +3686,36 @@ def run_gis_risk_assessment_pipeline(village_obj, village_code):
         print(f"Critical facilities processing failed: {e}")
     
     # # # Step 3: Process road assessments
-    # print("🛣️ Step 5: Processing road risk assessments...")
-    # # Process road flood analysis
-    # process_road_flood_zonal_length(village_obj, village_code, flood_raster_path)
+    print("🛣️ Step 5: Processing road risk assessments...")
+    # Process road flood analysis
+    process_road_flood_zonal_length(village_obj, village_code, flood_raster_path)
     
    
     
-    # #Process road erosion analysis
-    # try:
-    #     import psycopg2
-    #     conn = psycopg2.connect(**_get_db_config())
+    #Process road erosion analysis
+    try:
+        import psycopg2
+        conn = psycopg2.connect(**_get_db_config())
         
-    #     district_name, district_code = get_district_from_village(village_obj)
-    #     _process_road_erosion_data(
-    #         conn, village_obj, village_code, district_code,
-    #         district_name, village_obj.name
-    #     )
-    #     conn.close()
-    # except Exception as e:
-    #     print(f"Road erosion processing failed: {e}")
+        district_name, district_code = get_district_from_village(village_obj)
+        _process_road_erosion_data(
+            conn, village_obj, village_code, district_code,
+            district_name, village_obj.name
+        )
+        conn.close()
+    except Exception as e:
+        print(f"Road erosion processing failed: {e}")
     
-    # # # Step 5: Process agriculture assessments
-    # print("🌾 Step 6: Processing agriculture risk assessments...")
-    # try:
-    #     district_name, district_code = get_district_from_village(village_obj)
-    #     process_all_agriculture_hazards(
-    #         village_obj.id, village_code, district_name, 
-    #         district_code, village_obj.name
-    #     )
-    # except Exception as e:
-    #     print(f"Agriculture processing failed: {e}")
+    # # Step 5: Process agriculture assessments
+    print("🌾 Step 6: Processing agriculture risk assessments...")
+    try:
+        district_name, district_code = get_district_from_village(village_obj)
+        process_all_agriculture_hazards(
+            village_obj.id, village_code, district_name, 
+            district_code, village_obj.name
+        )
+    except Exception as e:
+        print(f"Agriculture processing failed: {e}")
     
     print(f"✅ GIS risk assessment pipeline completed for village {village_obj.name}")
 
