@@ -61,6 +61,7 @@ class house_type_combination_mapping(models.Model):
     combo_key = models.CharField(max_length=300)
     house_type = models.ForeignKey(house_type, on_delete=models.CASCADE,blank=True, null=True)
     is_New = models.BooleanField(default=False)
+    plinth_or_stilt = models.CharField(max_length=100, null=True, blank=True)
     
     def __str__(self):
         return f"{self.combo_key} - {self.house_type}"

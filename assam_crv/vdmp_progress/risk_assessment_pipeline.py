@@ -374,6 +374,44 @@ def validate_building_dimensions(length, width, area):
     
     return length, width, area
 
+def save_unmapped_combinations(unmapped_df, asset_type):
+    """Save unmapped combinations to database with is_New=True"""
+    from .models import house_type_combination_mapping
+    
+    unique_combos = unmapped_df[['wall_type', 'roof_type', 'floor_type']].drop_duplicates()
+    for idx, row in unique_combos.iterrows():
+        combo_key = f"{row['wall_type']}|{row['roof_type']}|{row['floor_type']}"
+        
+        # Check if combination already exists (case insensitive)
+        existing = house_type_combination_mapping.objects.filter(
+            wall_type__iexact=row['wall_type'],
+            roof_type__iexact=row['roof_type'],
+            floor_type__iexact=row['floor_type']
+        ).first()
+        
+        if not existing:
+            # Get plinth_or_stilt value from the first matching row, keep as null if not available
+            plinth_value = None
+            matching_rows = unmapped_df[
+                (unmapped_df['wall_type'] == row['wall_type']) & 
+                (unmapped_df['roof_type'] == row['roof_type']) & 
+                (unmapped_df['floor_type'] == row['floor_type'])
+            ]
+            if len(matching_rows) > 0 and 'plinth_or_stilt' in unmapped_df.columns:
+                first_plinth = matching_rows['plinth_or_stilt'].iloc[0]
+                if pd.notna(first_plinth):
+                    plinth_value = first_plinth
+            
+            house_type_combination_mapping.objects.create(
+                wall_type=row['wall_type'],
+                roof_type=row['roof_type'],
+                floor_type=row['floor_type'],
+                combo_key=combo_key,
+                is_New=True,
+                plinth_or_stilt=plinth_value
+            )
+            print(f"Saved new {asset_type} combination: {combo_key}")
+
 def get_house_type_id(house_type_name):
     """Get house type ID from house type name"""
     try:
@@ -445,7 +483,7 @@ def process_household_data(village_id):
     district_id = district.id
     households = HouseholdSurvey.objects.filter(village_id=village_id).values(
         'id', 'wall_type', 'roof_type', 'floor_type', 'building_area_sqft','building_length_feet', 'building_width_feet', 'erosion_class',
-        'flood_class', 'flood_depth_m', 'point_id', 'latitude', 'longitude'
+        'flood_class', 'flood_depth_m', 'point_id', 'latitude', 'longitude','plinth_or_stilt'
     )
     
     df = pd.DataFrame(households)
@@ -456,17 +494,18 @@ def process_household_data(village_id):
     df['village_code'] = village.code
     df['asset_type'] = 'household'
     df['erosion_class'] = df['erosion_class'].fillna('Unknown')
+    # Keep plinth_or_stilt as original values without filling
     
     # Map house types and rates
     df[['mapped_house_type', 'unit_rate_inr']] = df.apply(
         lambda x: pd.Series(get_house_type_mapping(x['wall_type'], x['roof_type'], x['floor_type'])), axis=1
     )
     
-    # DEBUG: Print combinations that didn't get house type mapping
+    # Save unmapped combinations to database
     unmapped = df[df['mapped_house_type'] == 'Other / Unknown']
     if len(unmapped) > 0:
-        # print(f"\nDEBUG: Found {len(unmapped)} records with unmapped house types")
-        # print("DEBUG: Material combinations that failed to map:")
+        save_unmapped_combinations(unmapped[['wall_type', 'roof_type', 'floor_type', 'plinth_or_stilt']], 'household')
+        print("DEBUG: Material combinations that failed to map:")
         unique_combos = unmapped[['wall_type', 'roof_type', 'floor_type']].drop_duplicates()
         for idx, row in unique_combos.iterrows():
             count = len(unmapped[(unmapped['wall_type'] == row['wall_type']) & 
@@ -504,7 +543,7 @@ def process_commercial_data(village_id):
     district_id = district.id
     commercial = Commercial.objects.filter(village_id=village_id).values(
         'id', 'wall_type', 'roof_type', 'floor_type', 'flood_depth_m', 'erosion_class',
-        'point_id', 'latitude', 'longitude', 'average_room_length_ft', 'average_room_width_ft'
+        'point_id', 'latitude', 'longitude', 'average_room_length_ft', 'average_room_width_ft', 'plinth_above_ground'
     )
     
     df = pd.DataFrame(commercial)
@@ -513,6 +552,7 @@ def process_commercial_data(village_id):
     df['village_code'] = village.code
     df['asset_type'] = 'commercial'
     df['erosion_class'] = df['erosion_class'].fillna('Unknown')
+    df['plinth_or_stilt'] = df['plinth_above_ground']
     
     # Calculate area from room dimensions with validation
     length = pd.to_numeric(df['average_room_length_ft'], errors='coerce').fillna(0)
@@ -533,9 +573,10 @@ def process_commercial_data(village_id):
         lambda x: pd.Series(get_house_type_mapping(x['wall_type'], x['roof_type'], x['floor_type'])), axis=1
     )
     
-    # DEBUG: Print combinations that didn't get house type mapping
+    # Save unmapped combinations to database
     unmapped = df[df['mapped_house_type'] == 'Other / Unknown']
     if len(unmapped) > 0:
+        save_unmapped_combinations(unmapped[['wall_type', 'roof_type', 'floor_type', 'plinth_or_stilt']], 'commercial')
         print(f"\nDEBUG: Found {len(unmapped)} commercial records with unmapped house types")
         print("DEBUG: Material combinations that failed to map:")
         unique_combos = unmapped[['wall_type', 'roof_type', 'floor_type']].drop_duplicates()
@@ -564,7 +605,7 @@ def process_critical_facility_data(village_id):
     district = village.gram_panchayat.circle.district
     district_id = district.id
     facilities = Critical_Facility.objects.filter(village_id=village_id).values(
-        'id', 'wall_type', 'roof_type', 'floor_type', 'flood_depth_m', 'flood_class', 'erosion_class',
+        'id', 'wall_type', 'roof_type', 'floor_type', 'flood_depth_m', 'flood_class', 'erosion_class', 'plinth_or_stilt',
         'point_id', 'latitude', 'longitude', 'average_room_length_ft', 'average_room_width_ft'
     )
     
@@ -574,6 +615,7 @@ def process_critical_facility_data(village_id):
     df['village_code'] = village.code
     df['asset_type'] = 'critical_facility'
     df['erosion_class'] = df['erosion_class'].fillna('Unknown')
+    # Keep plinth_or_stilt as original values without filling
     
     # Calculate area with validation
     df[['building_length_ft', 'building_width_ft', 'building_area_sqft']] = df.apply(
@@ -589,9 +631,10 @@ def process_critical_facility_data(village_id):
         lambda x: pd.Series(get_house_type_mapping(x['wall_type'], x['roof_type'], x['floor_type'])), axis=1
     )
     
-    # DEBUG: Print combinations that didn't get house type mapping
+    # Save unmapped combinations to database
     unmapped = df[df['mapped_house_type'] == 'Other / Unknown']
     if len(unmapped) > 0:
+        save_unmapped_combinations(unmapped[['wall_type', 'roof_type', 'floor_type', 'plinth_or_stilt']], 'critical_facility')
         print(f"\nDEBUG: Found {len(unmapped)} critical facility records with unmapped house types")
         print("DEBUG: Material combinations that failed to map:")
         unique_combos = unmapped[['wall_type', 'roof_type', 'floor_type']].drop_duplicates()
