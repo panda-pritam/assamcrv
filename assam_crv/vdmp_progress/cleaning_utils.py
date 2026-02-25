@@ -1650,6 +1650,7 @@ def load_village_roads(village_code):
             geom,
             rd_surface,
             rsur_type,
+            ast_typo AS asset_type,
             rsurtypeid AS rsurtypeid,
             width,
             length,
@@ -1666,6 +1667,7 @@ def load_village_roads(village_code):
             geom,
             "Rd_Surface" AS rd_surface,
             "RSur_Type" AS rsur_type,
+            "Ast_Typo" AS asset_type,
             "RSurTypeId" AS rsurtypeid,
             "Width" AS width,
             "Length" AS length,
@@ -1774,6 +1776,7 @@ def aggregate_by_grid_and_road(intersections):
                 "flood_depth_m",
                 "rd_surface",
                 "rsur_type",
+                "asset_type",
                 "rsurtypeid",
                 "width",
                 "unit_cost",
@@ -1880,6 +1883,11 @@ def save_grid_results(result_df, village_obj, village_code):
             road_length_m = float(row["road_length_m"] or 0.0)
 
             asset_typology = row["rsur_type"] or "Unknown"
+            asset_type = row.get("asset_type")
+            if asset_type is not None and hasattr(asset_type, "strip"):
+                asset_type = asset_type.strip() or None
+            elif pd.isna(asset_type):
+                asset_type = None
             road_type_id = row["rsurtypeid"]
             road_width_m = row["width"]
             unit_cost = float(row["unit_cost"] or 0.0)
@@ -1898,6 +1906,7 @@ def save_grid_results(result_df, village_obj, village_code):
                     district_name=district_name,
                     district_code=district_code,
 
+                    asset_type=asset_type,
                     road_surface_type=asset_typology,
                     road_width_m=road_width_m,
                     road_type_id=road_type_id,
