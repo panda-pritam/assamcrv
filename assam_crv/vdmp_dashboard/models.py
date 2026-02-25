@@ -316,6 +316,7 @@ class VillageRoadInfo(models.Model):
     district_code = models.CharField(max_length=20)
     village_name = models.CharField(max_length=100)
     village_code = models.CharField(max_length=20) 
+    asset_type = models.CharField(max_length=100, null=True, blank=True)
     road_surface_type = models.CharField(max_length=100)
     road_constructed_by = models.CharField(max_length=100)
     road_length_m = models.FloatField()
