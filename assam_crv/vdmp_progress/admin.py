@@ -21,4 +21,4 @@ class HouseTypeAdmin(admin.ModelAdmin):
 
 @admin.register(house_type_combination_mapping)
 class HouseTypeCombinationMappingAdmin(admin.ModelAdmin):
-    list_display = ('id', 'wall_type', 'roof_type', 'floor_type', 'combo_key', 'house_type')
+    list_display = ('id', 'wall_type', 'roof_type', 'floor_type', 'combo_key', 'house_type',"is_New")

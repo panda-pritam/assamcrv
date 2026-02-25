@@ -13,17 +13,17 @@ from layers.models import district_eq_raster_file, district_wind_raster_file
 # Import GDAL instead of rasterio
 try:
     import sys
-    print(f"DEBUG: Python path: {sys.path[:3]}")
-    print(f"DEBUG: Attempting GDAL import...")
+    # print(f"DEBUG: Python path: {sys.path[:3]}")
+    # print(f"DEBUG: Attempting GDAL import...")
     from osgeo import gdal, osr
-    print(f"DEBUG: GDAL imported successfully, version: {gdal.__version__}")
+    # print(f"DEBUG: GDAL imported successfully, version: {gdal.__version__}")
 except ImportError as e:
     import sys
     import os
-    print(f"DEBUG: GDAL import failed")
-    print(f"DEBUG: Python executable: {sys.executable}")
-    print(f"DEBUG: PATH environment: {os.environ.get('PATH', '')[:500]}")
-    print(f"DEBUG: sys.path: {sys.path}")
+    # print(f"DEBUG: GDAL import failed")
+    # print(f"DEBUG: Python executable: {sys.executable}")
+    # print(f"DEBUG: PATH environment: {os.environ.get('PATH', '')[:500]}")
+    # print(f"DEBUG: sys.path: {sys.path}")
     raise ImportError(f"CRITICAL: GDAL required for raster value extraction: {e}")
 
 def get_raster_paths(district_id):
@@ -77,8 +77,8 @@ def sample_raster_values_gdal(path, lats, lons, default_value=0.1):
     lats = np.array(lats, dtype=float).flatten()
     values = np.full(len(lats), np.nan)
     
-    print(f"DEBUG: Extracting EXACT values from {os.path.basename(path)}")
-    print(f"DEBUG: Coordinates - Lat: {lats.min():.4f} to {lats.max():.4f}, Lon: {lons.min():.4f} to {lons.max():.4f}")
+    # print(f"DEBUG: Extracting EXACT values from {os.path.basename(path)}")
+    # print(f"DEBUG: Coordinates - Lat: {lats.min():.4f} to {lats.max():.4f}, Lon: {lons.min():.4f} to {lons.max():.4f}")
     
     # Open raster dataset
     ds = gdal.Open(path, gdal.GA_ReadOnly)
@@ -170,8 +170,8 @@ def sample_raster_values_gdal(path, lats, lons, default_value=0.1):
         valid_values = values[~np.isnan(values)]
         if len(valid_values) > 0:
             print(f"DEBUG: SUCCESS - Extracted {valid_samples}/{len(lats)} exact values")
-            print(f"DEBUG: Value range: {valid_values.min():.4f} to {valid_values.max():.4f}")
-            print(f"DEBUG: Sample values: {valid_values[:5]}")
+            # print(f"DEBUG: Value range: {valid_values.min():.4f} to {valid_values.max():.4f}")
+            # print(f"DEBUG: Sample values: {valid_values[:5]}")
         else:
             print(f"WARNING: Failed to extract any values from {path}")
             # Use default value for all points
@@ -200,17 +200,17 @@ def map_mdr_from_db(df, hazard_col, mdr_model, hazard_field):
         DataFrame with new MDR column (e.g., 'flood_hazard_mdr')
     """
     try:
-        print(f"DEBUG: Starting MDR mapping for {hazard_col}")
-        print(f"DEBUG: Total records before MDR mapping: {len(df)}")
-        print(f"DEBUG: Records with valid house_type_id: {df['house_type_id'].notna().sum()}")
-        print(f"DEBUG: Records with NULL house_type_id: {df['house_type_id'].isna().sum()}")
+        # print(f"DEBUG: Starting MDR mapping for {hazard_col}")
+        # print(f"DEBUG: Total records before MDR mapping: {len(df)}")
+        # print(f"DEBUG: Records with valid house_type_id: {df['house_type_id'].notna().sum()}")
+        # print(f"DEBUG: Records with NULL house_type_id: {df['house_type_id'].isna().sum()}")
         
         out = []
         # Process each house type separately (R1, R2A, R3B, etc. have different vulnerability)
         for h_type_id in df["house_type_id"].dropna().unique():
             # Get all buildings of this house type
             sub = df[df["house_type_id"] == h_type_id].copy()
-            print(f"DEBUG: Processing house type {h_type_id} with {len(sub)} records")
+            # print(f"DEBUG: Processing house type {h_type_id} with {len(sub)} records")
             
             # Get MDR lookup table from database for this house type
             # Example: For R1 + Flood, get all flood_depth_m -> MDR_value pairs
@@ -222,7 +222,7 @@ def map_mdr_from_db(df, hazard_col, mdr_model, hazard_field):
             
             # If no MDR data exists for this house type, set MDR to NaN
             if not mdr_data:
-                print(f"DEBUG: No MDR data for house type {h_type_id}, setting to NaN")
+                # print(f"DEBUG: No MDR data for house type {h_type_id}, setting to NaN")
                 sub[f"{hazard_col}_mdr"] = np.nan
                 out.append(sub)
                 continue
@@ -233,12 +233,12 @@ def map_mdr_from_db(df, hazard_col, mdr_model, hazard_field):
             hazard_values = [float(d[hazard_field]) for d in mdr_data if d[hazard_field] is not None]
             mdr_values = [float(d['MDR_value']) for d in mdr_data if d['MDR_value'] is not None]
             
-            print(f"DEBUG: Hazard range: {min(hazard_values) if hazard_values else 'None'} to {max(hazard_values) if hazard_values else 'None'}")
-            print(f"DEBUG: MDR range: {min(mdr_values) if mdr_values else 'None':.6f} to {max(mdr_values) if mdr_values else 'None':.6f}")
+            # print(f"DEBUG: Hazard range: {min(hazard_values) if hazard_values else 'None'} to {max(hazard_values) if hazard_values else 'None'}")
+            # print(f"DEBUG: MDR range: {min(mdr_values) if mdr_values else 'None':.6f} to {max(mdr_values) if mdr_values else 'None':.6f}")
             
             # Skip if no valid data points
             if not hazard_values or not mdr_values:
-                print(f"DEBUG: No valid hazard/MDR data for house type {h_type_id}")
+                # print(f"DEBUG: No valid hazard/MDR data for house type {h_type_id}")
                 sub[f"{hazard_col}_mdr"] = np.nan
                 out.append(sub)
                 continue
@@ -250,7 +250,7 @@ def map_mdr_from_db(df, hazard_col, mdr_model, hazard_field):
             sub = sub.sort_values(hazard_col)
             hazard_input = sub[hazard_col].fillna(0)  # Replace NaN hazards with 0
             
-            print(f"DEBUG: Input hazard range: {hazard_input.min():.4f} to {hazard_input.max():.4f}")
+            # print(f"DEBUG: Input hazard range: {hazard_input.min():.4f} to {hazard_input.max():.4f}")
             
             # Check for extrapolation (values outside known range)
             min_hazard, max_hazard = min(hazard_values), max(hazard_values)
@@ -271,12 +271,12 @@ def map_mdr_from_db(df, hazard_col, mdr_model, hazard_field):
             )
             
             sub[f"{hazard_col}_mdr"] = interpolated_mdr
-            print(f"DEBUG: Interpolated MDR range: {interpolated_mdr.min():.6f} to {interpolated_mdr.max():.6f}")
-            print(f"DEBUG: Sample interpolated MDRs: {interpolated_mdr[:5]}")
+            # print(f"DEBUG: Interpolated MDR range: {interpolated_mdr.min():.6f} to {interpolated_mdr.max():.6f}")
+            # print(f"DEBUG: Sample interpolated MDRs: {interpolated_mdr[:5]}")
             out.append(sub)
         
         result_df = pd.concat(out) if out else df
-        print(f"DEBUG: Final {hazard_col}_mdr range: {result_df[f'{hazard_col}_mdr'].min():.6f} to {result_df[f'{hazard_col}_mdr'].max():.6f}")
+        # print(f"DEBUG: Final {hazard_col}_mdr range: {result_df[f'{hazard_col}_mdr'].min():.6f} to {result_df[f'{hazard_col}_mdr'].max():.6f}")
         return result_df
     except Exception as e:
         print(f"Error processing MDR for {hazard_col}: {e}")
@@ -465,8 +465,8 @@ def process_household_data(village_id):
     # DEBUG: Print combinations that didn't get house type mapping
     unmapped = df[df['mapped_house_type'] == 'Other / Unknown']
     if len(unmapped) > 0:
-        print(f"\nDEBUG: Found {len(unmapped)} records with unmapped house types")
-        print("DEBUG: Material combinations that failed to map:")
+        # print(f"\nDEBUG: Found {len(unmapped)} records with unmapped house types")
+        # print("DEBUG: Material combinations that failed to map:")
         unique_combos = unmapped[['wall_type', 'roof_type', 'floor_type']].drop_duplicates()
         for idx, row in unique_combos.iterrows():
             count = len(unmapped[(unmapped['wall_type'] == row['wall_type']) & 
@@ -610,6 +610,9 @@ def process_critical_facility_data(village_id):
     save_risk_results(df, village_id, 'critical_facility')
     
     return df, None
+
+
+
 
 def save_risk_results(df, village_id, asset_type):
     """Save risk assessment results to database with optimized batch processing"""

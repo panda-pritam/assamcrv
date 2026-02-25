@@ -3597,37 +3597,37 @@ def run_gis_risk_assessment_pipeline(village_obj, village_code):
     except Exception as e:
         print(f"Critical facilities processing failed: {e}")
     
-    # Step 3: Process road assessments
-    print("🛣️ Step 5: Processing road risk assessments...")
-    # Process road flood analysis
-    process_road_flood_zonal_length(village_obj, village_code, flood_raster_path)
+    # # # Step 3: Process road assessments
+    # print("🛣️ Step 5: Processing road risk assessments...")
+    # # Process road flood analysis
+    # process_road_flood_zonal_length(village_obj, village_code, flood_raster_path)
     
    
     
-    #Process road erosion analysis
-    try:
-        import psycopg2
-        conn = psycopg2.connect(**_get_db_config())
+    # #Process road erosion analysis
+    # try:
+    #     import psycopg2
+    #     conn = psycopg2.connect(**_get_db_config())
         
-        district_name, district_code = get_district_from_village(village_obj)
-        _process_road_erosion_data(
-            conn, village_obj, village_code, district_code,
-            district_name, village_obj.name
-        )
-        conn.close()
-    except Exception as e:
-        print(f"Road erosion processing failed: {e}")
+    #     district_name, district_code = get_district_from_village(village_obj)
+    #     _process_road_erosion_data(
+    #         conn, village_obj, village_code, district_code,
+    #         district_name, village_obj.name
+    #     )
+    #     conn.close()
+    # except Exception as e:
+    #     print(f"Road erosion processing failed: {e}")
     
-    # Step 5: Process agriculture assessments
-    print("🌾 Step 6: Processing agriculture risk assessments...")
-    try:
-        district_name, district_code = get_district_from_village(village_obj)
-        process_all_agriculture_hazards(
-            village_obj.id, village_code, district_name, 
-            district_code, village_obj.name
-        )
-    except Exception as e:
-        print(f"Agriculture processing failed: {e}")
+    # # # Step 5: Process agriculture assessments
+    # print("🌾 Step 6: Processing agriculture risk assessments...")
+    # try:
+    #     district_name, district_code = get_district_from_village(village_obj)
+    #     process_all_agriculture_hazards(
+    #         village_obj.id, village_code, district_name, 
+    #         district_code, village_obj.name
+    #     )
+    # except Exception as e:
+    #     print(f"Agriculture processing failed: {e}")
     
     print(f"✅ GIS risk assessment pipeline completed for village {village_obj.name}")
 
