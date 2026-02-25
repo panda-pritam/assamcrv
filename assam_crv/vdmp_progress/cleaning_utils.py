@@ -1651,7 +1651,7 @@ def load_village_roads(village_code):
             rd_surface,
             rsur_type,
             ast_typo AS asset_type,
-            type_r AS rsurtypeid,
+            rsurtypeid AS rsurtypeid,
             width,
             length,
             unitrpcost AS unit_cost
