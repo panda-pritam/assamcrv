@@ -18,6 +18,7 @@
   const $lumpsum = $("#lumpsum");
   const $estimatedCost = $("#estimated_cost");
   const $addedBody = $("#addedInterventionsBody");
+  const $formSection = $(".mitigation-measures-section").first();
 
   function showError(message) {
     if (window.Swal) {
@@ -25,6 +26,17 @@
     } else {
       alert(message);
     }
+  }
+
+  function getCsrfHeaders() {
+    const headers = {};
+    if (typeof getCSRFToken === "function") {
+      const token = getCSRFToken();
+      if (token) {
+        headers["X-CSRFToken"] = token;
+      }
+    }
+    return headers;
   }
 
   function formatNumber(value) {
@@ -233,13 +245,10 @@
   }
 
   async function savePlanItem(payload) {
-    const headers = { "Content-Type": "application/json" };
-    if (typeof getCSRFToken === "function") {
-      const token = getCSRFToken();
-      if (token) {
-        headers["X-CSRFToken"] = token;
-      }
-    }
+    const headers = {
+      "Content-Type": "application/json",
+      ...getCsrfHeaders(),
+    };
 
     const response = await fetch(`${apiBase}/plan-items/`, {
       method: "POST",
@@ -261,19 +270,50 @@
     return response.json();
   }
 
+  async function deletePlanItem(planItemId) {
+    if (!planItemId) {
+      return;
+    }
+
+    const response = await fetch(`${apiBase}/plan-items/${planItemId}/`, {
+      method: "DELETE",
+      headers: getCsrfHeaders(),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Request failed: ${response.status}`);
+    }
+  }
+
   function renderAddedInterventions() {
     $addedBody.empty();
     addedInterventions.forEach((item, index) => {
       const row = document.createElement("tr");
+      const component = item.component || "-";
+      const operation = item.operation || "-";
+      const intervention = item.intervention || "-";
+      const unit = item.unit || "-";
       row.innerHTML = `
         <td>${index + 1}</td>
-        <td>${item.component}</td>
-        <td>${item.operation}</td>
-        <td>${item.intervention}</td>
-        <td>${item.unit}</td>
+        <td>${component}</td>
+        <td>${operation}</td>
+        <td>${intervention}</td>
+        <td>${unit}</td>
         <td>${formatNumber(item.quantity)}</td>
         <td>${formatNumber(item.unitCost)}</td>
         <td>${formatNumber(item.lumpsum)}</td>
+        <td>
+          <button type="button" class="btn btn-link p-0 edit-intervention" data-index="${index}" aria-label="${gettext(
+            "Edit intervention"
+          )}">
+            <i class="fas fa-edit"></i>
+          </button>
+          <button type="button" class="btn btn-link p-0 ms-2 text-danger delete-intervention" data-index="${index}" aria-label="${gettext(
+            "Delete intervention"
+          )}">
+            <i class="fas fa-trash-alt"></i>
+          </button>
+        </td>
       `;
       $addedBody.append(row);
     });
@@ -354,9 +394,13 @@
         parseNumber(item.estimated_cost_rs) || unitCost * quantity;
 
       return {
-        component: master.vulnerable_asset || "-",
-        operation: master.intervention_type || "-",
-        intervention: master.intervention_name || "-",
+        planItemId: item.id,
+        masterId: master.id,
+        theme: master.theme || "",
+        subtheme: master.subtheme || "",
+        component: master.vulnerable_asset || "",
+        operation: master.intervention_type || "",
+        intervention: master.intervention_name || "",
         unit: master.unit || "",
         quantity,
         unitCost,
@@ -364,6 +408,67 @@
         lumpsum: unitCost,
       };
     });
+  }
+
+  async function populateFormFromItem(item) {
+    if (!item) {
+      return;
+    }
+
+    const themeValue = item.theme || "";
+    const subthemeValue = item.subtheme || "";
+
+    $theme.val(themeValue).trigger("change.select2");
+    await loadSubthemes(themeValue);
+    $subtheme.val(subthemeValue).trigger("change.select2");
+    await loadComponents(themeValue, subthemeValue);
+    await refreshInterventions();
+
+    if (item.component) {
+      $component.val(item.component).trigger("change.select2");
+    }
+    updateOperationsOptions();
+    if (item.operation) {
+      $operations.val(item.operation).trigger("change.select2");
+    }
+    updateMitigationOptions();
+
+    if (item.masterId) {
+      $mitigationIntervention
+        .val(String(item.masterId))
+        .trigger("change.select2");
+    }
+    applyInterventionDetails();
+
+    if (item.unit) {
+      $unit.val(item.unit);
+    }
+    if (Number.isFinite(item.quantity)) {
+      $quantity.val(item.quantity);
+    }
+    if (Number.isFinite(item.unitCost)) {
+      $unitCost.val(formatNumber(item.unitCost));
+    }
+    if (Number.isFinite(item.lumpsum)) {
+      $lumpsum.val(formatNumber(item.lumpsum));
+    }
+    updateEstimatedCost();
+  }
+
+  function scrollToForm() {
+    if (!$formSection.length) {
+      return;
+    }
+    const element = $formSection.get(0);
+    if (!element) {
+      return;
+    }
+    if (typeof element.scrollIntoView === "function") {
+      element.scrollIntoView({ behavior: "smooth", block: "start" });
+      return;
+    }
+    const offsetTop = $formSection.offset().top;
+    window.scrollTo({ top: Math.max(offsetTop - 20, 0), behavior: "smooth" });
   }
 
   async function loadPlanItems(villageId) {
@@ -526,6 +631,56 @@
 
     $("#reviewModal").on("show.bs.modal", () => {
       updateReviewModal();
+    });
+
+    $addedBody.on("click", ".edit-intervention", async (event) => {
+      event.preventDefault();
+      const index = Number($(event.currentTarget).data("index"));
+      if (!Number.isFinite(index)) {
+        return;
+      }
+      await populateFormFromItem(addedInterventions[index]);
+      scrollToForm();
+    });
+
+    $addedBody.on("click", ".delete-intervention", async (event) => {
+      event.preventDefault();
+      const index = Number($(event.currentTarget).data("index"));
+      if (!Number.isFinite(index)) {
+        return;
+      }
+
+      const confirmed = window.Swal
+        ? await Swal.fire({
+            icon: "warning",
+            text: gettext("Delete this intervention?"),
+            showCancelButton: true,
+            confirmButtonText: gettext("Delete"),
+            cancelButtonText: gettext("Cancel"),
+          }).then((result) => result.isConfirmed)
+        : confirm(gettext("Delete this intervention?"));
+
+      if (!confirmed) {
+        return;
+      }
+
+      const selectedItem = addedInterventions[index];
+      const villageId = $("#village").val();
+
+      if (selectedItem && selectedItem.planItemId) {
+        try {
+          await deletePlanItem(selectedItem.planItemId);
+        } catch (error) {
+          showError(error.message || gettext("Unable to delete intervention."));
+          return;
+        }
+        await loadPlanItems(villageId);
+        return;
+      }
+
+      addedInterventions.splice(index, 1);
+      renderAddedInterventions();
+      updateTotals();
     });
   });
 })();
