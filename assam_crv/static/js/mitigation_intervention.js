@@ -19,6 +19,8 @@
   const $estimatedCost = $("#estimated_cost");
   const $addedBody = $("#addedInterventionsBody");
   const $formSection = $(".mitigation-measures-section").first();
+  const $submitBtn = $("#addInterventionBtn");
+  let editState = { index: null, planItemId: null };
 
   function showError(message) {
     if (window.Swal) {
@@ -229,13 +231,20 @@
     $unit.val(selected.unit || "");
     $quantity.val(defaultQuantity);
     $unitCost.val(formatNumber(unitCost));
-    $lumpsum.val(formatNumber(unitCost));
+    if (!$lumpsum.val()) {
+      $lumpsum.val(formatNumber(unitCost));
+    }
     updateEstimatedCost();
   }
 
   function updateEstimatedCost() {
     const quantity = parseNumber($quantity.val());
     const unitCost = parseNumber($unitCost.val());
+    const lumpsumValue = parseNumber($lumpsum.val());
+    if (lumpsumValue > 0) {
+      $estimatedCost.val(formatCurrency(lumpsumValue));
+      return;
+    }
     if (quantity <= 0 || unitCost <= 0) {
       $estimatedCost.val("");
       return;
@@ -252,6 +261,36 @@
 
     const response = await fetch(`${apiBase}/plan-items/`, {
       method: "POST",
+      headers,
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      let detail = "";
+      try {
+        const data = await response.json();
+        detail = data.detail || JSON.stringify(data);
+      } catch (error) {
+        detail = "";
+      }
+      throw new Error(detail || `Request failed: ${response.status}`);
+    }
+
+    return response.json();
+  }
+
+  async function updatePlanItem(planItemId, payload) {
+    if (!planItemId) {
+      throw new Error(gettext("Missing plan item id for update."));
+    }
+
+    const headers = {
+      "Content-Type": "application/json",
+      ...getCsrfHeaders(),
+    };
+
+    const response = await fetch(`${apiBase}/plan-items/${planItemId}/`, {
+      method: "PATCH",
       headers,
       body: JSON.stringify(payload),
     });
@@ -405,7 +444,7 @@
         quantity,
         unitCost,
         estimatedCost,
-        lumpsum: unitCost,
+        lumpsum: estimatedCost,
       };
     });
   }
@@ -471,11 +510,29 @@
     window.scrollTo({ top: Math.max(offsetTop - 20, 0), behavior: "smooth" });
   }
 
+  function scrollToListing() {
+    const $listing = $(".added-interventions-table").first();
+    if (!$listing.length) {
+      return;
+    }
+    const element = $listing.get(0);
+    if (!element) {
+      return;
+    }
+    if (typeof element.scrollIntoView === "function") {
+      element.scrollIntoView({ behavior: "smooth", block: "start" });
+      return;
+    }
+    const offsetTop = $listing.offset().top;
+    window.scrollTo({ top: Math.max(offsetTop - 20, 0), behavior: "smooth" });
+  }
   async function loadPlanItems(villageId) {
     if (!villageId) {
       addedInterventions.length = 0;
       renderAddedInterventions();
       updateTotals();
+      setSubmitMode(false);
+      resetEditState();
       return;
     }
 
@@ -485,6 +542,8 @@
     addedInterventions.push(...buildAddedInterventionsFromPlanItems(items));
     renderAddedInterventions();
     updateTotals();
+    setSubmitMode(false);
+    resetEditState();
   }
 
   async function addIntervention() {
@@ -510,7 +569,8 @@
 
     const quantity = parseNumber($quantity.val());
     const unitCost = parseNumber($unitCost.val());
-    const estimatedCost = quantity * unitCost;
+    const lumpsumValue = parseNumber($lumpsum.val());
+    const estimatedCost = lumpsumValue > 0 ? lumpsumValue : quantity * unitCost;
     const payload = {
       master: selected.id,
       quantity,
@@ -521,18 +581,43 @@
     payload.village = villageId;
 
     try {
-      await savePlanItem(payload);
+      if (editState.planItemId) {
+        await updatePlanItem(editState.planItemId, payload);
+      } else {
+        await savePlanItem(payload);
+      }
     } catch (error) {
       showError(error.message || gettext("Unable to save intervention."));
       return;
     }
 
     await loadPlanItems(villageId);
+    resetInterventionFields();
+    setSubmitMode(false);
+    resetEditState();
+    scrollToListing();
   }
 
   function resetInterventionFields() {
     $mitigationIntervention.val("").trigger("change.select2");
     resetCostFields();
+  }
+
+  function resetEditState() {
+    editState = { index: null, planItemId: null };
+  }
+
+  function setSubmitMode(isEdit) {
+    if (!$submitBtn.length) {
+      return;
+    }
+    if (isEdit) {
+      $submitBtn.text(gettext("Update"));
+      $submitBtn.addClass("mitigation-update-btn");
+    } else {
+      $submitBtn.text(gettext("Save"));
+      $submitBtn.removeClass("mitigation-update-btn");
+    }
   }
 
   async function initMitigationForm() {
@@ -614,6 +699,9 @@
     $quantity.on("input", () => {
       updateEstimatedCost();
     });
+    $lumpsum.on("input", () => {
+      updateEstimatedCost();
+    });
 
     $("#addInterventionBtn").on("click", async (event) => {
       event.preventDefault();
@@ -623,6 +711,8 @@
     $(".add-intervention-btn").on("click", (event) => {
       event.preventDefault();
       resetInterventionFields();
+      setSubmitMode(false);
+      resetEditState();
     });
 
     $("#village").on("change", async () => {
@@ -639,7 +729,17 @@
       if (!Number.isFinite(index)) {
         return;
       }
-      await populateFormFromItem(addedInterventions[index]);
+      const selectedItem = addedInterventions[index];
+      if (!selectedItem) {
+        return;
+      }
+      if (!selectedItem.planItemId) {
+        showError(gettext("This item cannot be updated yet."));
+        return;
+      }
+      editState = { index, planItemId: selectedItem.planItemId };
+      setSubmitMode(true);
+      await populateFormFromItem(selectedItem);
       scrollToForm();
     });
 

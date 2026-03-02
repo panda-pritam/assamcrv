@@ -2519,6 +2519,42 @@ button#activityDropdown i {
   .add-intervention-btn:hover {
     text-decoration: underline;
   }
+  #addInterventionBtn {
+    background: #245FAE;
+    color: #fff;
+    border: none;
+  }
+  .added-interventions-table .edit-intervention,
+  .added-interventions-table .delete-intervention {
+    color: inherit;
+    background: transparent;
+    border: none;
+    padding: 0;
+    line-height: 1;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+  }
+  .added-interventions-table .edit-intervention {
+    color: #245FAE;
+  }
+  .added-interventions-table .delete-intervention {
+    color: #dc3545;
+  }
+  .added-interventions-table .edit-intervention:hover,
+  .added-interventions-table .delete-intervention:hover {
+    opacity: 1;
+    text-decoration: none;
+  }
+  .added-interventions-table .edit-intervention i,
+  .added-interventions-table .delete-intervention i {
+    display: block;
+  }
+  .mitigation-update-btn {
+    background: #FCB831;
+    color: #222222;
+    border: none;
+  }
   .dummy-table-section {
     background: #fff;
     border-radius: 4px;
