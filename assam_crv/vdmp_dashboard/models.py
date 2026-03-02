@@ -215,6 +215,9 @@ class Transformer(models.Model):
     flood_class = models.CharField(max_length=255, null=True, blank=True)
     erosion_class = models.CharField(max_length=255, null=True, blank=True)
     erosion_value=models.CharField(max_length=255, null=True, blank=True)
+    unique_id=models.CharField(max_length=255, null=True, blank=True, unique=True)
+    form_id=models.CharField(max_length=255, null=True, blank=True, unique=True)
+    height_above_ground_ft = models.CharField(max_length=255, null=True, blank=True)
 
     def __str__(self):
         return f"{self.district_code} - {self.village_name}"
@@ -642,12 +645,13 @@ class OtherData(models.Model):
     village_id = models.CharField(max_length=100, null=True, blank=True)
     district_name = models.CharField(max_length=255, null=True, blank=True)
     village_name = models.CharField(max_length=255, null=True, blank=True)
+    village_code = models.CharField(max_length=100, null=True, blank=True)
 
     latitude = models.DecimalField(max_digits=12, decimal_places=8, null=True, blank=True)
     longitude = models.DecimalField(max_digits=12, decimal_places=8, null=True, blank=True)
 
     point_id = models.CharField(max_length=100, null=True, blank=True)
-    date = models.DateField(null=True, blank=True)
+    date = models.CharField(max_length=255, null=True, blank=True)
 
     under_id = models.CharField(max_length=100, null=True, blank=True)
     unique_id = models.CharField(max_length=100, null=True, blank=True)
@@ -660,8 +664,8 @@ class OtherData(models.Model):
     photo_with_coordinates = models.TextField(null=True, blank=True)
 
     fencing = models.CharField(max_length=255, null=True, blank=True)
-    height_of_asset_above_ground_ft = models.FloatField(null=True, blank=True)
-    plinth_height_in_ft = models.FloatField(null=True, blank=True)
+    height_of_asset_above_ground_ft = models.CharField(max_length=255, null=True, blank=True)
+    plinth_height_in_ft = models.CharField(max_length=255, null=True, blank=True)
 
     building_condition = models.CharField(max_length=255, null=True, blank=True)
     condition = models.CharField(max_length=255, null=True, blank=True)

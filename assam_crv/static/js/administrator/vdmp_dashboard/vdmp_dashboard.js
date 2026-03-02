@@ -23,7 +23,8 @@ const allowedUploadTypes = new Set([
     "fgd_livelihood_summary",
     "line_department",
     "photos",
-    "hazard"
+    "hazard",
+    "other_assets",
 ]);
 
 const uploadTypeMap = {
@@ -48,7 +49,8 @@ const uploadTypeMap = {
     "fgd wash summary": "fgd_wash_summary",
     "fgd on livelihood": "fgd_livelihood_summary",
     "fgd livelihood summary": "fgd_livelihood_summary",
-    "line department": "line_department"
+    "line department": "line_department",
+    "other assets": "other_assets",
 };
 
 function normalizeTypeValue(value) {
@@ -72,6 +74,7 @@ function resolveUploadDataType(value) {
     }
     const normalized = normalizeTypeValue(value);
     const mapped = uploadTypeMap[normalized];
+    console.log("Normalized type value:", normalized, "Mapped type:", mapped);
     if (mapped && allowedUploadTypes.has(mapped)) {
         return mapped;
     }
@@ -288,7 +291,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const fileInputs = getFileInputElements();
         const rawType = document.getElementById("dataType").value;
+        console.log("Selected raw type:", rawType);
         const dataType = resolveUploadDataType(rawType);
+        console.log("Selected data type:", dataType);
         const button = this;
         const originalText = button.innerHTML;
         const expectedCount = getExpectedFileCount(rawType);

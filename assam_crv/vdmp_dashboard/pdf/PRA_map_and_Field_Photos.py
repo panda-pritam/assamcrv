@@ -220,7 +220,7 @@ from reportlab.lib import colors
 from reportlab.lib.units import inch
 
 import os
-from .global_styles import  blue_heading,table_sub_title,blue_sub_heading,image_title,notes_style,tb_header_bg,Legend_heading,indented_style,bold_style,normal_style,srNoStyle,non_toc_heading,blue_level3_heading,non_indented_style
+from .global_styles import blue_heading, table_sub_title, blue_sub_heading, image_title, notes_style, tb_header_bg, Legend_heading, indented_style, bold_style, normal_style, srNoStyle, non_toc_heading, blue_level3_heading, non_indented_style
 from .utils.table import create_styled_table
 # from .utils.geoserverLayerImage import get_geoserver_image_path, get_geoserver_legend_path
 from task_force.models import *
@@ -236,11 +236,13 @@ from PIL import Image as PILImage
 from PIL import ImageOps
 from io import BytesIO
 from django.conf import settings
+
 page_width, page_height = A4
 max_width = page_width    # increased width (smaller margins)
-max_height = 4.2*inch  # fixed height to fit 2 images per page
+max_height = 4.2 * inch   # fixed height to fit 2 images per page
 
 # http://127.0.0.1:8000/en/administrator/field_images
+
 
 def get_scaled_image(img_path):
     with PILImage.open(img_path) as im:
@@ -271,6 +273,26 @@ def get_scaled_image(img_path):
     return img
 
 
+def get_fullpage_image(img_path):
+    """Scale image to fill A4 page width, preserving aspect ratio. No rotation."""
+    usable_w = page_width - 0.6 * inch
+    usable_h = page_height - 3 * inch  # leave room for heading + footer
+
+    with PILImage.open(img_path) as im:
+        im = ImageOps.exif_transpose(im).convert("RGB")
+        iw, ih = im.size
+
+        scale = min(usable_w / iw, usable_h / ih)
+        draw_w = iw * scale
+        draw_h = ih * scale
+
+        img_buffer = BytesIO()
+        im.save(img_buffer, format="JPEG", quality=85, optimize=True)
+        img_buffer.seek(0)
+
+    img = Image(img_buffer, width=draw_w, height=draw_h)
+    img.hAlign = "CENTER"
+    return img
 
 
 def resolve_image_path(img_obj):
@@ -288,22 +310,24 @@ def resolve_image_path(img_obj):
     rel = name.replace("/", os.sep).replace("\\", os.sep)
     base = settings.MEDIA_ROOT
     candidate = os.path.join(base, rel)
-    
+
     if os.path.exists(candidate):
         return candidate
-    
+
     return candidate
 
 
-def draw_PRA_map_and_field_photos(elements,village_id):
+def draw_PRA_map_and_field_photos(elements, village_id):
     """
-    Generate PRA map and field photos section for the report
+    Generate PRA map and field photos section for the report.
+    - Each sub-section always appears with its heading on a new page.
+    - If no images exist for a category, a note is shown instead.
+    - PRA Map image is scaled to fill the page without rotation.
     """
     # Main heading
-    heading = Paragraph("<a name='draw_PRA_map_and_field_photos'/><b>7	PRA map and Field Photos </b>", blue_heading)
+    heading = Paragraph("<a name='draw_PRA_map_and_field_photos'/><b>7\tPRA map and Field Photos </b>", blue_heading)
     elements.append(heading)
-    # elements.append(Spacer(1, 12))
-    
+
     sections_map = {
         'PRA Map': "PRA Map",
         'PRA and field consultations': "PRA and field consultations",
@@ -313,60 +337,76 @@ def draw_PRA_map_and_field_photos(elements,village_id):
         "Educational facilities": "Educational facilities",
         "Livelihood": "Livelihood"
     }
-    
+
     # Counter for sub-section numbering
     sub_section_counter = 1
-    
+    is_first_section = True  # first section doesn't need a leading PageBreak
+
     for key, db_field in sections_map.items():
         try:
             field_images = FieldImage.objects.filter(
                 village_id=village_id,
                 category=db_field
             ).order_by('upload_datetime')
-            
-            if not field_images.exists():
-                continue
-            
+
+            # ── Each section always starts on its own page ──
+            if not is_first_section:
+                elements.append(PageBreak())
+            is_first_section = False
+
+            # Always render the sub-section heading
             sub_heading = Paragraph(
-                f"<b>7.{sub_section_counter} Field photographs – {key}</b>", 
+                f"<b>7.{sub_section_counter} Field photographs – {key}</b>",
                 blue_sub_heading
             )
             elements.append(sub_heading)
             elements.append(Spacer(1, 6))
-            
-            image_counter = 0
-            
+
+            # If no images, show a polite note and move on
+            if not field_images.exists():
+                elements.append(Paragraph(
+                    f"No photographs have been recorded for the <b>{key}</b> category.",
+                    normal_style
+                ))
+                elements.append(Spacer(1, 8))
+                sub_section_counter += 1
+                continue
+
+            is_pra_map = (db_field == "PRA Map")
+
             for img_obj in field_images:
                 try:
                     img_path = resolve_image_path(img_obj)
                     if not img_path:
                         continue
-                    
-                    img = get_scaled_image(img_path)
-                    elements.append(img)
-                    
-                    image_counter += 1
-                    
-                    if image_counter % 2 == 0:
-                        # elements.append(PageBreak())
-                        pass
+
+                    if is_pra_map:
+                        # Scale to fill page, no rotation
+                        img = get_fullpage_image(img_path)
                     else:
-                        elements.append(Spacer(1, 8))
-                        
+                        img = get_scaled_image(img_path)
+
+                    elements.append(img)
+                    elements.append(Spacer(1, 8))
+
                 except Exception as e:
                     elements.append(Paragraph(f"Image error: {str(e)}", normal_style))
-            
+
             sub_section_counter += 1
-                
+
         except Exception as e:
             print(f"Error processing section {key}: {str(e)}")
             continue
-    
-    # If no sections were added, add a note
+
+    # If no sections were processed at all, add a global note
     if sub_section_counter == 1:
         no_data_text = Paragraph(
-            "No field photographs or PRA maps are available for this village.", 
+            "No field photographs or PRA maps are available for this village.",
             normal_style
         )
         elements.append(no_data_text)
         elements.append(Spacer(1, 12))
+
+
+
+

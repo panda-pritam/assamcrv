@@ -18,7 +18,7 @@ def delete_village_data(request):
         
         from vdmp_dashboard.models import (HouseholdSurvey, Transformer, Commercial, Critical_Facility, 
                                          ElectricPole, VillageListOfAllTheDistricts, VillageRoadInfo, 
-                                         VillageRoadInfoErosion, BridgeSurvey, Risk_Assesment)
+                                         VillageRoadInfoErosion, BridgeSurvey, Risk_Assesment, OtherData)
         from administrator.models import PRA_main, PRA_assets, PRA_shelter, FGD_wash_summary, FGD_livelihood_summary
         
         MODEL_MAP = {
@@ -38,6 +38,27 @@ def delete_village_data(request):
             "fgd_wash_summary": FGD_wash_summary,
             "fgd_livelihood_summary": FGD_livelihood_summary,
         }
+        
+        if data_type == "other_assets":
+            deleted_count = 0
+            for vill_code in village_codes:
+                try:
+                    village = tblVillage.objects.get(code=vill_code)
+                    # Delete from all 3 tables
+                    count1, _ = Transformer.objects.filter(village=village).delete()
+                    count2, _ = ElectricPole.objects.filter(village=village).delete()
+                    deleted_count += count1 + count2
+                except ObjectDoesNotExist:
+                    continue
+            # Delete from OtherData (no village relationship)
+            count3, _ = OtherData.objects.filter(village_code__in=village_codes).delete()
+            deleted_count += count3
+            
+            return JsonResponse({
+                "status": "success",
+                "deleted_count": deleted_count,
+                "message": f"Deleted {deleted_count} other assets records for {len(village_codes)} villages"
+            })
         
         if data_type not in MODEL_MAP:
             return JsonResponse({"status": "error", "error": "Invalid data_type"}, status=400)

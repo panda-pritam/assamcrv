@@ -787,10 +787,10 @@ def getMitigationIntervention(village_id):
         ['River bank protection', '-'],
         ['Sluice gate', '-'],
         
-        [Paragraph('Resilient essential service (educational facilities)',bold_center_style_9), '-'],
-        [Paragraph('Resilient essential service (public WASH facilities and drinking water)',bold_center_style_9), '-'],
-        [Paragraph('Resilient essential services (electric infrastructure)',bold_center_style_9), '-'],
-        [Paragraph('Resilient livelihood & economic security ',bold_center_style_9), '-'],
+        [Paragraph('Resilient essential service (educational facilities)'), '-'],
+        [Paragraph('Resilient essential service (public WASH facilities and drinking water)'), '-'],
+        [Paragraph('Resilient essential services (electric infrastructure)'), '-'],
+        [Paragraph('Resilient livelihood & economic security '), '-'],
        
     ]
 
