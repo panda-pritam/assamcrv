@@ -376,6 +376,6 @@ def get_others_sql_script(village_id, model_name):
     """
 
     print("---- Generated SQL for others ----")
-    print(sql[:500] + "...")
+    print(sql)
 
     return sql, None

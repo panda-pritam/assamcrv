@@ -95,10 +95,10 @@ def process_survey_data(activity_name, village_id, district_id, mobile_village_i
     cleaned_df = clean_survey_data(df, district_code, village_code, activity_type=activity_type, village_id=village_id)
     
     # Save CSV for verification
-    with tempfile.NamedTemporaryFile(mode='w', suffix=f'_village_{village_id}.csv', delete=False) as tmp_file:
-        csv_path = tmp_file.name
-    cleaned_df.to_csv(csv_path, index=False)
-    print(f"CSV saved for verification: {csv_path}")
+    # with tempfile.NamedTemporaryFile(mode='w', suffix=f'_village_{village_id}.csv', delete=False) as tmp_file:
+    #     csv_path = tmp_file.name
+    # cleaned_df.to_csv(csv_path, index=False)
+    # print(f"CSV saved for verification: {csv_path}")
     
     # Save to Django model dynamically
     print(f"Saving cleaned data to {model_name} model")
@@ -199,10 +199,10 @@ def process_others_data(activity_name, village_id, district_id, mobile_village_i
         print("erosion_class column not found!")
     
     # Save CSV for verification
-    with tempfile.NamedTemporaryFile(mode='w', suffix=f'_others_village_{village_id}.csv', delete=False) as tmp_file:
-        csv_path = tmp_file.name
-    cleaned_df.to_csv(csv_path, index=False)
-    print(f"Others CSV saved for verification: {csv_path}")
+    # with tempfile.NamedTemporaryFile(mode='w', suffix=f'_others_village_{village_id}.csv', delete=False) as tmp_file:
+    #     csv_path = tmp_file.name
+    # cleaned_df.to_csv(csv_path, index=False)
+    # print(f"Others CSV saved for verification: {csv_path}")
     
     # Save to models by asset type
     try:
@@ -343,8 +343,8 @@ def save_to_model_dynamic(df, village_id, district_code, model_name):
     return created_count + updated_count
 
 def save_others_to_models(df, village_id, district_code):
-    """Save others data to Transformer and ElectricPole models based on asset type"""
-    from vdmp_dashboard.models import Transformer, ElectricPole
+    """Save others data to Transformer, ElectricPole, and OtherData models based on asset type"""
+    from vdmp_dashboard.models import Transformer, ElectricPole, OtherData
     
     print(f"Saving {len(df)} others records to appropriate models")
     
@@ -366,7 +366,69 @@ def save_others_to_models(df, village_id, district_code):
         total_saved += electric_pole_saved
         print(f"Saved {electric_pole_saved} electric pole records")
     
+    # Filter other assets (excluding transformer and electric pole)
+    other_assets_df = df[~df['assets_type'].str.contains('transformer|electric pole', case=False, na=False)]
+    if not other_assets_df.empty:
+        print(f"Processing {len(other_assets_df)} other asset records")
+        other_saved = save_other_assets_data(other_assets_df, village_id, district_code)
+        total_saved += other_saved
+        print(f"Saved {other_saved} other asset records")
+    
     return total_saved
+
+def save_other_assets_data(df, village_id, district_code):
+    """Save other assets data to OtherData model"""
+    from vdmp_dashboard.models import OtherData
+    
+    created_count = 0
+    updated_count = 0
+    
+    for idx, row in df.iterrows():
+        if idx % 50 == 0:
+            print(f"Processing other asset record {idx + 1}/{len(df)}")
+        
+        defaults = {
+            'village_id': row.get('spatial_id', ''),
+            'district_name': row.get('district_name', ''),
+            'village_name': row.get('village_name', ''),
+            'village_code': row.get('village_code', ''),
+            'latitude': row.get('latitude', ''),
+            'longitude': row.get('longitude', ''),
+            'point_id': row.get('point_id', ''),
+            'date': row.get('date', ''),
+            'unique_id': row.get('unique_id', ''),
+            'form_id': row.get('form_id', ''),
+            'assets_type': row.get('assets_type', ''),
+            'type_of_occupancy': row.get('type_of_occupancy', ''),
+            'photo_with_coordinates': row.get('photo_with_coordinates_of_the_building', ''),
+            'fencing': row.get('fencing', ''),
+            'height_of_asset_above_ground_ft': row.get('height_of_asset_above_ground', ''),
+            'plinth_height_in_ft': row.get('plinth_height', ''),
+            'building_condition': row.get('building_condition', ''),
+            'condition': row.get('condition', ''),
+            'material': row.get('material', ''),
+            'water_tank_structure_type': row.get('water_tank_structure_type', ''),
+            'observation': row.get('observation', ''),
+            'status_working': row.get('status__working_', ''),
+            'asset_name': row.get('asset_name', '')
+        }
+        
+        try:
+            obj, created = OtherData.objects.update_or_create(
+                unique_id=row.get('unique_id', ''),
+                form_id=str(row.get('form_id', '')),
+                defaults=defaults
+            )
+            if created:
+                created_count += 1
+            else:
+                updated_count += 1
+        except Exception as e:
+            logger.error(f"Error processing other asset record {idx}: {str(e)}")
+            continue
+    
+    print(f"OtherData - Created: {created_count}, Updated: {updated_count}")
+    return created_count + updated_count
 
 def save_transformer_data(df, village_id, district_code):
     """Save cleaned data to Transformer model"""
@@ -399,7 +461,11 @@ def save_transformer_data(df, village_id, district_code):
             'longitude': row.get('longitude', ''),
             'flood_depth_m': str(row.get('flood_depth_m', '')),
             'flood_class': row.get('flood_class', ''),
-            'erosion_class': str(erosion_val) if pd.notna(erosion_val) else ''
+            'erosion_class': str(erosion_val) if pd.notna(erosion_val) else '',
+            'height_above_ground_ft': str(row.get('height_of_asset_above_ground', '')),
+
+            'unique_id': row.get('unique_id', ''),
+            'form_id': row.get('form_id', ''),
         }
         
         try:
