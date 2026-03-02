@@ -3,7 +3,7 @@ from reportlab.lib.styles import getSampleStyleSheet
 
 styles = getSampleStyleSheet()
 normal_style = styles['Normal']
-from .global_styles import  bold_12,normal_style,bold_center_style_9,bold_center_style_9
+from .global_styles import  bold_12,normal_style,bold_center_style_9,bold_center_style_9,bold_style,bold_right_align_text
 
 abbreviations={
   "abbreviations": [
@@ -787,10 +787,10 @@ def getMitigationIntervention(village_id):
         ['River bank protection', '-'],
         ['Sluice gate', '-'],
         
-        [Paragraph('Resilient essential service (educational facilities)'), '-'],
-        [Paragraph('Resilient essential service (public WASH facilities and drinking water)'), '-'],
-        [Paragraph('Resilient essential services (electric infrastructure)'), '-'],
-        [Paragraph('Resilient livelihood & economic security '), '-'],
+        [Paragraph('Resilient essential service (educational facilities)',bold_12), '-'],
+        [Paragraph('Resilient essential service (public WASH facilities and drinking water)',bold_12), '-'],
+        [Paragraph('Resilient essential services (electric infrastructure)',bold_12), '-'],
+        [Paragraph('Resilient livelihood & economic security ',bold_12), '-'],
        
     ]
 

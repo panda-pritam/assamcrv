@@ -164,6 +164,9 @@ def get_pra_shelter_data(village_id):
              Paragraph("N/A", normal_style)]
         ]
 
+
+
+
 def draw_disaster_preparedness_and_response_plan(elements, village_id):
     styles = getSampleStyleSheet()
     heading = Paragraph("<a name='draw_disaster_preparedness_and_response_plan'/><b>5   Disaster Preparedness and Response Plan</b>", blue_heading)

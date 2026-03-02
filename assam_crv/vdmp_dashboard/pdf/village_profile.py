@@ -227,7 +227,7 @@ def getPowerInfrastructureData_Total(village_id):
 
 
 
-
+from vdmp_dashboard.models import OtherData
 
 def getVillageLocationDetails(village_id):
     from django.db import connection
@@ -379,6 +379,14 @@ def getVillageDemographic(village_id):
         # total_females = sum(safe_int(h.number_of_females_including_children) for h in households)
         total_population = total_males + total_females
         total_households = households.count()
+
+        # --------------------------------
+        # ✅ Absentee Building Count Logic
+        # --------------------------------
+        absentee_buildings = OtherData.objects.filter(
+            village_id=village_id,
+            assets_type__iexact="Absentee Building"
+        ).count()
         
         avg_family_size = int(round(total_population / total_households)) if total_households > 0 else 0
         
@@ -390,13 +398,14 @@ def getVillageDemographic(village_id):
         
         return [
             [Paragraph('S. No.',bold_center_style_9),Paragraph("Household Characteristic",bold_center_style_9), Paragraph("Total", bold_center_style_9)],
-            ['1',"No of Males", format_indian_number(total_males)],
-            ['2',"No of Females", format_indian_number(total_females)],
+            ['1',"No. of Males", format_indian_number(total_males)],
+            ['2',"No. of Females", format_indian_number(total_females)],
             ['3',"Total Population", format_indian_number(total_population)],
-            ["4","Number of Households", format_indian_number(total_households)],
-            ['5',"Absentee House", "None"],
+            ["4","No. of Households", format_indian_number(total_households)],
+            ['5', "Absentee House",
+            format_indian_number(absentee_buildings) if absentee_buildings > 0 else "None"],
             ['6',"Average Family Size", str(avg_family_size)],
-            ['7',Paragraph("Number of females per 1,000 males"), str(male_female_ratio)]
+            ['7',Paragraph("No. of females per 1,000 males"), str(male_female_ratio)]
         ]
     except Exception:
         return [
@@ -1145,7 +1154,7 @@ def getLivestockOwnershipData(village_id):
         if total_households == 0:
             return [
                 [Paragraph('S. No.',bold_center_style_9), Paragraph("Count",bold_center_style_9), Paragraph("Livestock",bold_center_style_9),"",Paragraph("Small cattle",bold_center_style_9)],
-                ["", "", Paragraph("Household with big Cattle",bold_center_style_9), Paragraph("%",bold_center_style_9), Paragraph("HH with small cattle",bold_center_style_9), Paragraph("%",bold_center_style_9)],
+                ["", "", Paragraph("HH with big Cattle",bold_center_style_9), Paragraph("%",bold_center_style_9), Paragraph("HH with small cattle",bold_center_style_9), Paragraph("%",bold_center_style_9)],
 
                 ["1", "0", "0", "-", "0", "-"],
                 ["2", "< 3", "0", "-", "0", "-"],
