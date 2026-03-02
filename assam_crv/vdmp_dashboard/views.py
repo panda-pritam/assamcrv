@@ -8,7 +8,8 @@ from .serializers import  HouseholdSurveySerializer
 from utils import (
     HOUSEHOLD_MAPPING, apply_location_filters, get_village_codes, BRIDGE_SURVEY_INFO, TRANSFORMER_MAPPING, 
     CRITICAL_FACILITY, COMMERCIAL_MAPPING, ELECTRIC_POLES,VILLAGES_OF_ALL_THE_DISTRICTS,VILLAGE_ROAD_INFO_MAPPING,VILLAGE_ROAD_INFO_EROSION
-    ,RISK_ASSESMENT_MAPPING, PRA_MAIN_MAPPING, PRA_ASSETS_MAPPING, PRA_SHELTER_MAPPING, FGD_WASH_SUMMARY_MAPPING, FGD_LIVELIHOOD_SUMMARY_MAPPING, check_existing_village_data)
+    ,RISK_ASSESMENT_MAPPING, PRA_MAIN_MAPPING, PRA_ASSETS_MAPPING, PRA_SHELTER_MAPPING, FGD_WASH_SUMMARY_MAPPING, FGD_LIVELIHOOD_SUMMARY_MAPPING, 
+    check_existing_village_data, OTHER_DATA_MAPPING, ELECTRIC_POLES_OTHERS, TRANSFORMER_MAPPING_OTHERS)
 import pandas as pd
 from django.http import JsonResponse, HttpResponse, FileResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -16,7 +17,7 @@ from django.views.decorators.http import require_POST
 from django.core.exceptions import ObjectDoesNotExist
 from .models import (HouseholdSurvey, tblVillage, Transformer, Commercial, Critical_Facility, ElectricPole, VillageListOfAllTheDistricts,
                      VillageRoadInfo, VillageRoadInfoErosion, BridgeSurvey, Risk_Assesment, Upload_data_vdmp,
-                     VdmpVillageMapData, VdmDistrictMapData)
+                     VdmpVillageMapData, VdmDistrictMapData, OtherData)
 from administrator.models import PRA_main, PRA_assets, PRA_shelter, FGD_wash_summary, FGD_livelihood_summary
 from layers.models import village_flood_raster_Files, district_wind_raster_file, district_eq_raster_file
 from village_profile.models import tblDistrict
@@ -177,6 +178,153 @@ def get_upload_rules(type_name):
             expected_files = number_of_files
     return expected_files, allowed_exts
 
+def handle_other_assets_import(df, start_time):
+    """Handle import of other_assets data type with filtering based on Assets Type"""
+    try:
+        # Check for existing data in all 3 tables
+        existing_villages = []
+        for model_class in [Transformer, ElectricPole, OtherData]:
+            existing = check_existing_village_data(df, model_class)
+            existing_villages.extend(existing)
+        
+        if existing_villages:
+            return JsonResponse({
+                "status": "error",
+                "error": "Data already exists for some villages",
+                "existing_villages": list(set(existing_villages)),
+                "total_existing": len(set(existing_villages))
+            }, status=400)
+        
+        created = 0
+        updated = 0
+        failed = []
+        village_cache = {}
+        
+        # Check if 'assets type' column exists
+        assets_type_col = None
+        for col in df.columns:
+            if 'assets type' in col.lower():
+                assets_type_col = col
+                break
+        
+        if not assets_type_col:
+            return JsonResponse({
+                "status": "error",
+                "error": "Assets Type column not found in the data"
+            }, status=400)
+        
+        for index, row in df.iterrows():
+            try:
+                assets_type = str(row.get(assets_type_col, '')).strip().lower()
+                
+                # Get village code
+                vill_code = None
+                for key in ['village id', 'village_code', 'vill_code', 'vill_id']:
+                    col_lower = key.lower()
+                    if col_lower in [c.lower() for c in df.columns]:
+                        # Find the actual column name with correct case
+                        actual_col = next((c for c in df.columns if c.lower() == col_lower), None)
+                        if actual_col:
+                            vill_code = str(row.get(actual_col, '')).strip()
+                            if vill_code and vill_code.lower() != 'nan':
+                                break
+                
+                if not vill_code:
+                    failed.append(f"Row {index+2}: Missing village_code")
+                    continue
+                
+                # Get village from cache or database
+                if vill_code in village_cache:
+                    village = village_cache[vill_code]
+                else:
+                    try:
+                        village = tblVillage.objects.get(code=vill_code)
+                        village_cache[vill_code] = village
+                    except ObjectDoesNotExist:
+                        failed.append(f"Row {index+2}: Village not found for code {vill_code}")
+                        continue
+                
+                # Filter based on assets type
+                if 'transformer' in assets_type:
+                    # Save to Transformer model
+                    data = {}
+                    model_fields = {f.name: f for f in Transformer._meta.get_fields() if isinstance(f, models.Field)}
+                    
+                    for excel_field, model_field in TRANSFORMER_MAPPING_OTHERS.items():
+                        excel_field_lower = excel_field.lower()
+                        # Find actual column name
+                        actual_col = next((c for c in df.columns if c.lower() == excel_field_lower), None)
+                        if actual_col:
+                            raw_value = row.get(actual_col)
+                            field = model_fields.get(model_field)
+                            if field:
+                                data[model_field] = normalize_value(raw_value, field)
+                    
+                    data['village'] = village
+                    data['district_name'] = village.gram_panchayat.circle.district.name
+                    data['district_code'] = village.gram_panchayat.circle.district.code
+                    data['village_name'] = village.name
+                    Transformer.objects.create(**data)
+                    created += 1
+                    
+                elif 'electric' in assets_type and 'pole' in assets_type:
+                    # Save to ElectricPole model
+                    data = {}
+                    model_fields = {f.name: f for f in ElectricPole._meta.get_fields() if isinstance(f, models.Field)}
+                    
+                    for excel_field, model_field in ELECTRIC_POLES_OTHERS.items():
+                        excel_field_lower = excel_field.lower()
+                        # Find actual column name
+                        actual_col = next((c for c in df.columns if c.lower() == excel_field_lower), None)
+                        if actual_col:
+                            raw_value = row.get(actual_col)
+                            field = model_fields.get(model_field)
+                            if field:
+                                data[model_field] = normalize_value(raw_value, field)
+                    
+                    data['village'] = village
+                    data['district_name'] = village.gram_panchayat.circle.district.name
+                    data['district_code'] = village.gram_panchayat.circle.district.code
+                    data['village_name'] = village.name
+                    ElectricPole.objects.create(**data)
+                    created += 1
+                    
+                else:
+                    # Save to OtherData model
+                    data = {}
+                    model_fields = {f.name: f for f in OtherData._meta.get_fields() if isinstance(f, models.Field)}
+                    
+                    for excel_field, model_field in OTHER_DATA_MAPPING.items():
+                        excel_field_lower = excel_field.lower()
+                        # Find actual column name
+                        actual_col = next((c for c in df.columns if c.lower() == excel_field_lower), None)
+                        if actual_col:
+                            raw_value = row.get(actual_col)
+                            field = model_fields.get(model_field)
+                            if field:
+                                data[model_field] = normalize_value(raw_value, field)
+                    
+                    OtherData.objects.create(**data)
+                    created += 1
+                    
+            except Exception as e:
+                failed.append(f"Row {index+2}: {str(e)}")
+        
+        print(f"===== Other Assets Upload completed in {time.time() - start_time:.2f} seconds =====")
+        return JsonResponse({
+            "status": "success",
+            "records_created": created,
+            "records_updated": updated,
+            "errors": failed
+        })
+        
+    except Exception as e:
+        print("Unexpected error in handle_other_assets_import:", e)
+        return JsonResponse({
+            "status": "error",
+            "error": f"Unexpected error: {str(e)}"
+        }, status=500)
+
 @csrf_exempt
 @require_POST
 def upload_data_vdmp(request):
@@ -196,7 +344,7 @@ def upload_data_vdmp(request):
             print("No file uploaded")
             return JsonResponse({"status": "error", "error": "No file uploaded"}, status=400)
         if data_type not in ["household", "transformer", "critical_facility", "commercial", "electric_poles", "villagesOfAllTheDistricts", 
-                             "VillageRoadInfo","VillageRoadInfoErosion", "bridge_survey", "risk_assesment", "pra_main", "pra_assets", "pra_shelter", "fgd_wash_summary", "fgd_livelihood_summary", "photos", "hazard"]:
+                             "VillageRoadInfo","VillageRoadInfoErosion", "bridge_survey", "risk_assesment", "pra_main", "pra_assets", "pra_shelter", "fgd_wash_summary", "fgd_livelihood_summary", "photos", "hazard","other_assets"]:
             print("Invalid data type")
             return JsonResponse({"status": "error", "error": "Invalid data_type"}, status=400)
 
@@ -432,6 +580,9 @@ def upload_data_vdmp(request):
             "fgd_wash_summary": (FGD_WASH_SUMMARY_MAPPING, FGD_wash_summary),
             "fgd_livelihood_summary": (FGD_LIVELIHOOD_SUMMARY_MAPPING, FGD_livelihood_summary),
         }
+
+        if data_type == "other_assets":
+            return handle_other_assets_import(df, start_time)
 
         mapping, model_class = MODEL_MAP[data_type]
         

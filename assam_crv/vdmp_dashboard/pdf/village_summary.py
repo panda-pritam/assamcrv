@@ -904,7 +904,7 @@ def getVulnerabilityAssessment(village_id):
 
         # Erosion vulnerable houses
         erosion_vulnerable_houses = households.filter(
-            house_vulnerable_to_erosion__iexact='yes'
+            erosion_class__in=['Severe', 'High','Medium']
         ).count()
 
         erosion_house_percent = (

@@ -21,6 +21,6 @@ class DistrictEqRasterFileAdmin(admin.ModelAdmin):
 
 @admin.register(village_flood_raster_Files)
 class VillageFloodRasterFilesAdmin(admin.ModelAdmin):
-    list_display = ('village', 'layer_name', 'workspace', 'created_at')
-    search_fields = ('village__village_name', 'layer_name', 'workspace')
+    list_display = ('village','raster_file', 'layer_name', 'workspace', 'created_at')
+    search_fields = ('village__village_name', 'raster_file', 'layer_name', 'workspace')
     readonly_fields = ('created_at',)

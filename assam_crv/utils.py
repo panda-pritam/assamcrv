@@ -915,6 +915,7 @@ OTHER_DATA_MAPPING = {
     'Village Id': 'village_id',
     'District Name': 'district_name',
     'Village Name': 'village_name',
+    'village_code': 'village_code',
     'Latitude': 'latitude',
     'Longitude': 'longitude',
     'Point Id': 'point_id',
@@ -936,6 +937,42 @@ OTHER_DATA_MAPPING = {
     'Observation': 'observation',
     'Status Working': 'status_working',
     'Asset Name': 'asset_name',
+}
+
+ELECTRIC_POLES_OTHERS = {
+    'Village_Name': 'village_name',
+    'District_Name': 'district_name',
+    'village_code': 'village_code', 
+    # 'Uid': 'uid',
+    'Latitude': 'latitude',
+    'Longitude': 'longitude',
+    # 'Electric_Pole_Name': 'electric_pole_name',
+    'Material': 'electric_pole_material',
+    'Condition': 'remarks_on_pole_condition',
+    # 'Remarks_On_Pole_Condition': 'remarks_on_pole_condition',
+    'Photo With Coordinates Of The Building': 'photo',
+    'Unique Id': 'unique_id',
+    'Form Id': 'form_id',
+    # 'Flood_Depth(m)': 'flood_depth_m',
+    # 'Flood_Class': 'flood_class',
+    # 'Erosion_Class': 'erosion_class',
+}
+
+TRANSFORMER_MAPPING_OTHERS = {
+    'Village_Name': 'village_name',
+    'District_Name': 'district_name',
+    'village_code': 'village_code',
+    'Transformer_Site_Address': 'transformer_site_address',
+    'Latitude': 'latitude',
+    'Longitude': 'longitude',
+    'Photo With Coordinates Of The Building': 'photo',
+    'Fencing': 'fencing',
+    'Material': 'material',
+    'Condition': 'condition',
+    'Unique Id': 'unique_id',
+    'Form Id': 'form_id',
+    'Height Of Asset Above Ground In Feet': 'height_above_ground_ft',
+    
 }
 
 
