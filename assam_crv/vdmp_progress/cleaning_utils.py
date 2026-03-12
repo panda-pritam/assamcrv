@@ -3640,31 +3640,31 @@ def run_gis_risk_assessment_pipeline(village_obj, village_code):
     
     print(f"Processing {household_records.count()} household records...")
 
-    # print("-------------------- Commercial Records --------------------")
-    # # Process Commercial
-    # commercial_records = Commercial.objects.filter(village=village_obj)
-    # if commercial_records.exists():
-    #     print(f"Processing {commercial_records.count()} commercial records...")
-    #     _process_model_flood_erosion(commercial_records, village_id, 'commercial')
+    print("-------------------- Commercial Records --------------------")
+    # Process Commercial
+    commercial_records = Commercial.objects.filter(village=village_obj)
+    if commercial_records.exists():
+        print(f"Processing {commercial_records.count()} commercial records...")
+        _process_model_flood_erosion(commercial_records, village_id, 'commercial')
     
-    # print("-------------------- Critical_Facility --------------------")
-    # # Process Critical_Facility
-    # critical_records = Critical_Facility.objects.filter(village=village_obj)
-    # if critical_records.exists():
-    #     print(f"Processing {critical_records.count()} critical facility records...")
-    #     _process_model_flood_erosion(critical_records, village_id, 'critical')
+    print("-------------------- Critical_Facility --------------------")
+    # Process Critical_Facility
+    critical_records = Critical_Facility.objects.filter(village=village_obj)
+    if critical_records.exists():
+        print(f"Processing {critical_records.count()} critical facility records...")
+        _process_model_flood_erosion(critical_records, village_id, 'critical')
     
-    # # Process Transformer
-    # transformer_records = Transformer.objects.filter(village=village_obj)
-    # if transformer_records.exists():
-    #     print(f"Processing {transformer_records.count()} transformer records...")
-    #     _process_model_flood_erosion(transformer_records, village_id, 'transformer')
+    # Process Transformer
+    transformer_records = Transformer.objects.filter(village=village_obj)
+    if transformer_records.exists():
+        print(f"Processing {transformer_records.count()} transformer records...")
+        _process_model_flood_erosion(transformer_records, village_id, 'transformer')
     
-    # # Process ElectricPole
-    # electric_pole_records = ElectricPole.objects.filter(village=village_obj)
-    # if electric_pole_records.exists():
-    #     print(f"Processing {electric_pole_records.count()} electric pole records...")
-    #     _process_model_flood_erosion(electric_pole_records, village_id, 'electric_pole')
+    # Process ElectricPole
+    electric_pole_records = ElectricPole.objects.filter(village=village_obj)
+    if electric_pole_records.exists():
+        print(f"Processing {electric_pole_records.count()} electric pole records...")
+        _process_model_flood_erosion(electric_pole_records, village_id, 'electric_pole')
     
     # Step 2: Run risk assessment pipelines
     print("🏠 Step 2: Running household risk assessment pipeline...")
@@ -3673,49 +3673,49 @@ def run_gis_risk_assessment_pipeline(village_obj, village_code):
     except Exception as e:
         print(f"Household processing failed: {e}")
     
-    # print("🏢 Step 3: Running commercial risk assessment pipeline...")
-    # try:
-    #     run_risk_assessment_pipeline(village_id, 'commercial')
-    # except Exception as e:
-    #     print(f"Commercial processing failed: {e}")
+    print("🏢 Step 3: Running commercial risk assessment pipeline...")
+    try:
+        run_risk_assessment_pipeline(village_id, 'commercial')
+    except Exception as e:
+        print(f"Commercial processing failed: {e}")
     
-    # print("🏥 Step 4: Running critical facilities risk assessment pipeline...")
-    # try:
-    #     run_risk_assessment_pipeline(village_id, 'critical')
-    # except Exception as e:
-    #     print(f"Critical facilities processing failed: {e}")
+    print("🏥 Step 4: Running critical facilities risk assessment pipeline...")
+    try:
+        run_risk_assessment_pipeline(village_id, 'critical')
+    except Exception as e:
+        print(f"Critical facilities processing failed: {e}")
     
-    # # # # Step 3: Process road assessments
-    # print("🛣️ Step 5: Processing road risk assessments...")
-    # # Process road flood analysis
-    # process_road_flood_zonal_length(village_obj, village_code, flood_raster_path)
+    # # # Step 3: Process road assessments
+    print("🛣️ Step 5: Processing road risk assessments...")
+    # Process road flood analysis
+    process_road_flood_zonal_length(village_obj, village_code, flood_raster_path)
     
    
     
-    # #Process road erosion analysis
-    # try:
-    #     import psycopg2
-    #     conn = psycopg2.connect(**_get_db_config())
+    #Process road erosion analysis
+    try:
+        import psycopg2
+        conn = psycopg2.connect(**_get_db_config())
         
-    #     district_name, district_code = get_district_from_village(village_obj)
-    #     _process_road_erosion_data(
-    #         conn, village_obj, village_code, district_code,
-    #         district_name, village_obj.name
-    #     )
-    #     conn.close()
-    # except Exception as e:
-    #     print(f"Road erosion processing failed: {e}")
+        district_name, district_code = get_district_from_village(village_obj)
+        _process_road_erosion_data(
+            conn, village_obj, village_code, district_code,
+            district_name, village_obj.name
+        )
+        conn.close()
+    except Exception as e:
+        print(f"Road erosion processing failed: {e}")
     
-    # # # Step 5: Process agriculture assessments
-    # print("🌾 Step 6: Processing agriculture risk assessments...")
-    # try:
-    #     district_name, district_code = get_district_from_village(village_obj)
-    #     process_all_agriculture_hazards(
-    #         village_obj.id, village_code, district_name, 
-    #         district_code, village_obj.name
-    #     )
-    # except Exception as e:
-    #     print(f"Agriculture processing failed: {e}")
+    # Step 5: Process agriculture assessments
+    print("🌾 Step 6: Processing agriculture risk assessments...")
+    try:
+        district_name, district_code = get_district_from_village(village_obj)
+        process_all_agriculture_hazards(
+            village_obj.id, village_code, district_name, 
+            district_code, village_obj.name
+        )
+    except Exception as e:
+        print(f"Agriculture processing failed: {e}")
     
     print(f"✅ GIS risk assessment pipeline completed for village {village_obj.name}")
 
