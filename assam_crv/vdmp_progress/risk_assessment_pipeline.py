@@ -525,8 +525,6 @@ def process_household_data(village_id):
         lambda x: pd.Series(get_house_type_mapping(x['wall_type'], x['roof_type'], x['floor_type'])), axis=1
     )
 
-    df = apply_critical_facility_typology_and_costs(df)
-    
     # Save unmapped combinations to database
     unmapped = df[df['mapped_house_type'] == 'Other / Unknown']
     if len(unmapped) > 0:
