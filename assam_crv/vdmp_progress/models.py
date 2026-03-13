@@ -54,6 +54,13 @@ class house_type(models.Model):
         return self.house_type
 
 
+class CriticalFacilityUnitCost(models.Model):
+    house_type = models.ForeignKey(house_type, on_delete=models.CASCADE)
+    unit_cost_inr = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+
+    def __str__(self):
+        return f"{self.house_type} - {self.unit_cost_inr}"
+
 class house_type_combination_mapping(models.Model):
     wall_type = models.CharField(max_length=100)
     roof_type = models.CharField(max_length=100)

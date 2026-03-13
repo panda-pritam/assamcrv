@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import tblVDMP_Activity, tblVDMP_Activity_Status,house_type_combination_mapping,house_type,flood_MDR_table,EQ_MDR_table,wind_MDR_table,Risk_Assessment_Result
+from .models import tblVDMP_Activity, tblVDMP_Activity_Status,house_type_combination_mapping,house_type,flood_MDR_table,EQ_MDR_table,wind_MDR_table,Risk_Assessment_Result, CriticalFacilityUnitCost
 
 @admin.register(tblVDMP_Activity_Status)
 class VDMPActivityStatusAdmin(admin.ModelAdmin):
@@ -18,6 +18,12 @@ class VDMPActivityAdmin(admin.ModelAdmin):
 class HouseTypeAdmin(admin.ModelAdmin):
     list_display = ('house_type_id', 'house_type', 'per_unit_cost')
     
+
+
+
+@admin.register(CriticalFacilityUnitCost)
+class CriticalFacilityUnitCostAdmin(admin.ModelAdmin):
+    list_display = ('id', 'house_type', 'unit_cost_inr')
 
 @admin.register(house_type_combination_mapping)
 class HouseTypeCombinationMappingAdmin(admin.ModelAdmin):

@@ -3545,6 +3545,7 @@ def _process_model_flood_erosion(queryset, village_id, model_type):
     print("Length-----------------> ", len(df))
     
     # Apply classifications only for valid values
+    df['flood_depth_m'] = pd.to_numeric(df['flood_depth_m'], errors='coerce')
     df['flood_class'] = df['flood_depth_m'].apply(lambda x: _classify_flood(x) if pd.notna(x) and x > 0 else None)
     df['erosion_class'] = df['erosion_value'].apply(lambda x: _classify_erosion_buffer(x) if pd.notna(x) and x != '' else None)
     

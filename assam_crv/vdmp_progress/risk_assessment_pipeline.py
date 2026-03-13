@@ -4,7 +4,7 @@ import numpy as np
 from django.conf import settings
 from vdmp_dashboard.models import HouseholdSurvey, Commercial, Critical_Facility
 from vdmp_progress.models import (house_type_combination_mapping, house_type, Risk_Assessment_Result,
-                                 flood_MDR_table, EQ_MDR_table, wind_MDR_table)
+                                 flood_MDR_table, EQ_MDR_table, wind_MDR_table, CriticalFacilityUnitCost)
 from village_profile.models import tblVillage
 
 
@@ -472,6 +472,30 @@ def get_house_type_mapping(wall, roof, floor):
     except:
         return "Other / Unknown", 0.0
 
+
+
+def apply_critical_facility_typology_and_costs(df):
+    # Apply govt unit costs and split R7 into R7A/R7B based on roof type.
+    if df.empty or 'mapped_house_type' not in df.columns:
+        return df
+
+    df = df.copy()
+    roof_values = df['roof_type'].fillna('').astype(str)
+    is_r7 = df['mapped_house_type'].eq('R7 (Pucca House)')
+
+    tin_mask = is_r7 & roof_values.str.contains('tin', case=False, na=False)
+    rcc_mask = is_r7 & roof_values.str.contains('rcc|concrete|cement|stone', case=False, na=False)
+
+    df.loc[tin_mask, 'mapped_house_type'] = 'R7A (Pucca House - tin roof)'
+    df.loc[rcc_mask, 'mapped_house_type'] = 'R7B (Pucca House - RCC roof)'
+
+    cost_map = {
+        row.house_type.house_type: float(row.unit_cost_inr)
+        for row in CriticalFacilityUnitCost.objects.select_related('house_type').all()
+    }
+    df['unit_rate_inr'] = df['mapped_house_type'].map(cost_map).fillna(df['unit_rate_inr'])
+    return df
+
 def process_household_data(village_id):
     """Process household survey data for risk assessment"""
     if not HouseholdSurvey.objects.filter(village_id=village_id).exists():
@@ -500,6 +524,8 @@ def process_household_data(village_id):
     df[['mapped_house_type', 'unit_rate_inr']] = df.apply(
         lambda x: pd.Series(get_house_type_mapping(x['wall_type'], x['roof_type'], x['floor_type'])), axis=1
     )
+
+    df = apply_critical_facility_typology_and_costs(df)
     
     # Save unmapped combinations to database
     unmapped = df[df['mapped_house_type'] == 'Other / Unknown']
@@ -630,6 +656,8 @@ def process_critical_facility_data(village_id):
     df[['mapped_house_type', 'unit_rate_inr']] = df.apply(
         lambda x: pd.Series(get_house_type_mapping(x['wall_type'], x['roof_type'], x['floor_type'])), axis=1
     )
+
+    df = apply_critical_facility_typology_and_costs(df)
     
     # Save unmapped combinations to database
     unmapped = df[df['mapped_house_type'] == 'Other / Unknown']
