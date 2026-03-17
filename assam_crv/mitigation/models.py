@@ -11,6 +11,9 @@ class MitigationInterventionMaster(models.Model):
     intervention_name = models.TextField()
     display_note = models.TextField(blank=True)
     unit = models.CharField(max_length=50, blank=True)
+    area = models.DecimalField(
+        max_digits=12, decimal_places=2, default=450.00
+    )
     default_quantity = models.DecimalField(
         max_digits=12, decimal_places=2, null=True, blank=True
     )

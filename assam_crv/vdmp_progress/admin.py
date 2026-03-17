@@ -16,7 +16,7 @@ class VDMPActivityAdmin(admin.ModelAdmin):
 
 @admin.register(house_type)
 class HouseTypeAdmin(admin.ModelAdmin):
-    list_display = ('house_type_id', 'house_type', 'per_unit_cost')
+    list_display = ('house_type_id', 'house_type', 'per_unit_cost', 'building_type')
     
 
 

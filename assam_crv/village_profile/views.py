@@ -8,7 +8,7 @@ from .serializers import (DistrictSerializer, CircleSerializer, GramPanchayatSer
 from rest_framework.decorators import api_view, parser_classes
 from rest_framework.parsers import MultiPartParser, FormParser
 import tempfile, os
-from utils import import_location_data, is_admin_or_superuser,store_lat_lon
+from utils import import_location_data, is_admin_or_superuser,store_lat_lon, translated
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.db import connections
 from django.db import transaction
@@ -170,6 +170,25 @@ def get_village_by_id(request, village_id):
         return Response(serializer.data, status=status.HTTP_200_OK)
     except tblVillage.DoesNotExist:
         return Response({"error": "Village not found"}, status=status.HTTP_404_NOT_FOUND)
+
+
+@api_view(['GET'])
+def get_all_villages_public(request):
+    villages = tblVillage.objects.select_related(
+        "gram_panchayat", "gram_panchayat__circle", "gram_panchayat__circle__district"
+    ).order_by("name")
+    data = []
+    for village in villages:
+        data.append(
+            {
+                "id": village.id,
+                "name": translated(village, "name"),
+                "gram_panchayat_id": village.gram_panchayat_id,
+                "circle_id": village.gram_panchayat.circle_id,
+                "district_id": village.gram_panchayat.circle.district_id,
+            }
+        )
+    return Response(data, status=status.HTTP_200_OK)
 
 
 

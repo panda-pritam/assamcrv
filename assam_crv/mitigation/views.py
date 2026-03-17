@@ -4,6 +4,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
 from .models import MitigationInterventionMaster, MitigationPlanItem
+from vdmp_progress.models import Risk_Assessment_Result, house_type
 from .serializers import (
     MitigationInterventionMasterSerializer,
     MitigationPlanItemSerializer,
@@ -129,3 +130,52 @@ def get_interventions(request):
 
     serializer = MitigationInterventionMasterSerializer(queryset, many=True)
     return Response(serializer.data)
+
+
+@api_view(["GET"])
+def get_vulnerable_assets_summary(request):
+    village_id = request.query_params.get("village_id")
+    base_queryset = Risk_Assessment_Result.objects.filter(
+        asset_type="household"
+    )
+    if village_id:
+        base_queryset = base_queryset.filter(village_id=village_id)
+
+    results = []
+    for house in (
+        house_type.objects.exclude(building_type__iexact="critical").order_by(
+            "house_type"
+        )
+    ):
+        house_qs = base_queryset.filter(house_type_id=house)
+        count = house_qs.count()
+        flood_gt_zero = house_qs.filter(flood_hazard__gt=0).exists()
+        flood_gt_one = house_qs.filter(flood_hazard__gt=1).exists()
+        erosion_valid = (
+            house_qs.filter(erosion_class__isnull=False)
+            .exclude(erosion_class__iexact="")
+            .exclude(erosion_class__iexact="low")
+            .exclude(erosion_class__iexact="Unknown")
+            .exclude(erosion_class__iexact="nan")
+            .exclude(erosion_class__iexact="null")
+            .exists()
+        )
+
+        if flood_gt_one and erosion_valid:
+            hazard_type = "Both"
+        elif flood_gt_zero:
+            hazard_type = "Flood"
+        elif erosion_valid:
+            hazard_type = "Erosion"
+        else:
+            hazard_type = "-"
+
+        results.append(
+            {
+                "house_type": house.house_type,
+                "hazard_type": hazard_type,
+                "count": count,
+            }
+        )
+
+    return Response(results)

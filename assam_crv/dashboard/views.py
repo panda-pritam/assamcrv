@@ -14,6 +14,9 @@ def home(request):
 def mitigation_intervention(request):
     return render(request, 'mitigation/mitigation_intervention.html')
 
+def mitigation_intervention_1(request):
+    return render(request, 'mitigation/mitigation_intervention_1.html')
+
 def other_data(request):
     return render(request, 'other_data/other_data.html')
 

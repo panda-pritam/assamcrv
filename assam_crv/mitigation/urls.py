@@ -8,6 +8,7 @@ from .views import (
     get_subthemes,
     get_themes,
     get_vulnerable_assets,
+    get_vulnerable_assets_summary,
 )
 
 router = DefaultRouter()
@@ -19,5 +20,10 @@ urlpatterns = [
     path("themes/", get_themes, name="mitigation-themes"),
     path("subthemes/", get_subthemes, name="mitigation-subthemes"),
     path("vulnerable-assets/", get_vulnerable_assets, name="mitigation-vulnerable-assets"),
+    path(
+        "vulnerable-assets-summary/",
+        get_vulnerable_assets_summary,
+        name="mitigation-vulnerable-assets-summary",
+    ),
     path("interventions/", get_interventions, name="mitigation-interventions"),
 ]

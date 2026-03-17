@@ -45,10 +45,18 @@ class tblVDMP_Activity_Import_Status(models.Model):
 
 
 class house_type(models.Model):
+    BUILDING_TYPE_CHOICES = [
+        ("household", "Household"),
+        ("commercial", "Commercial"),
+        ("critical", "Critical"),
+    ]
     house_type_id = models.AutoField(primary_key=True)
     house_type = models.CharField(max_length=100)
     per_unit_cost = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     discription = models.TextField(null=True, blank=True)
+    building_type = models.CharField(
+        max_length=20, choices=BUILDING_TYPE_CHOICES, null=True, blank=True
+    )
     
     def __str__(self):
         return self.house_type
