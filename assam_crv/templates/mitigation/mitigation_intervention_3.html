@@ -1,0 +1,265 @@
+{% extends "base.html" %}
+{% load static %}
+{% load i18n %}
+{% block title %}{% trans "Mitigation Intervention" %} {% endblock %}
+
+{% block extraheader %}
+
+{% endblock %}
+
+{% block content %}
+<!-- Breadcrumb Section -->
+<section id="broadcrump">
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-md-12">
+        <div class="broadcrump__wrapper">
+          <ul>
+            <li>
+              <span class="me-2"><i class="fa-solid fa-house mr-2" style="color: #0b0b0b;"></i> <i class="fa-solid fa-angle-right" style="color: #000;"></i></span><span
+                class="BrdCrmb">{% trans "Mitigation Intervention" %}</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Hidden User Location Data -->
+<div class="visually-hidden">
+  {% csrf_token %}
+  <input type="hidden" id="userDistrictId" value="{{ user_location.district_id|default:'' }}">
+  <input type="hidden" id="userCircleId" value="{{ user_location.circle_id|default:'' }}">
+  <input type="hidden" id="userGramPanchayatId" value="{{ user_location.gram_panchayat_id|default:'' }}">
+  <input type="hidden" id="userVillageId" value="{{ user_location.village_id|default:'' }}">
+</div>
+
+<!-- Filter Section -->
+<section id="filter" class="mt-3">
+  <div class="container-fluid">
+    <div class="row g-3">
+      <div class="col-md-3 col-xl-3 col-sm-6 d-flex flex-column">
+        <label class="form-label fw-medium" for="district">{% trans "Select District" %}</label>
+        <select name="district" id="district" class="form-select select2">
+          <option value="" selected disabled>{% trans "Select Districts" %}</option>
+        </select>
+      </div>
+      <div class="col-md-3 col-xl-3 col-sm-6 d-flex flex-column">
+        <label class="form-label fw-medium" for="circle">{% trans "Select Circle" %}</label>
+        <select name="circle" id="circle" class="form-select select2">
+          <option value="" selected disabled>{% trans "Select Circle" %}</option>
+        </select>
+      </div>
+      <div class="col-md-3 col-xl-3 col-sm-6 d-flex flex-column">
+        <label class="form-label fw-medium" for="gram_panchayat">{% trans "Select Gram Panchayat" %}</label>
+        <select name="gram_panchayat" id="gram_panchayat" class="form-select select2">
+          <option value="" selected disabled>{% trans "Select Gram Panchayat" %}</option>
+        </select>
+      </div>
+      <div class="col-md-3 col-xl-3 col-sm-6 d-flex flex-column">
+        <label class="form-label fw-medium" for="village">{% trans "Select Village" %}</label>
+        <select name="village" id="village" class="form-select select2">
+          <option value="" selected disabled>{% trans "Select Villages" %}</option>
+        </select>
+      </div>
+    </div>
+  </div>
+</section>
+<div class="container-fluid d-flex flex-column">
+<!-- Summary Section -->
+<div class="summary-line">
+    <svg class="svg-inline--fa fa-circle-info" aria-hidden="true" focusable="false" data-prefix="fas" data-icon="circle-info" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" data-fa-i2svg=""><path fill="currentColor" d="M256 512A256 256 0 1 0 256 0a256 256 0 1 0 0 512zM216 336h24V272H216c-13.3 0-24-10.7-24-24s10.7-24 24-24h48c13.3 0 24 10.7 24 24v88h8c13.3 0 24 10.7 24 24s-10.7 24-24 24H216c-13.3 0-24-10.7-24-24s10.7-24 24-24zm40-208a32 32 0 1 1 0 64 32 32 0 1 1 0-64z"></path></svg>
+    <span id="summary-text">{% trans "Summary: District:" %} <strong>1</strong> | {% trans "Villages :" %} <strong>6</strong></span>
+  </div>
+
+<!-- Selection Criteria and Mitigation Intervention Section -->
+<section class="mb-5">
+  <div class="mitigation-form-section">
+    <!-- Selection Criteria -->
+    <h6 class="mitigation-form-heading">{% trans "Selection Criteria" %}</h6>
+    <div class="mitigation-form-wrap">
+    <div class="form-row-inline">
+      <div>
+        <label class="form-label" for="theme">{% trans "Theme/Sector" %}</label>
+        <select name="theme" id="theme" class="form-select select2">
+          <option value="" selected disabled>{% trans "Select Theme" %}</option>
+        </select>
+      </div>
+      <div>
+        <label class="form-label" for="subtheme">{% trans "Sub-theme" %}</label>
+        <select name="subtheme" id="subtheme" class="form-select select2">
+          <option value="" selected disabled>{% trans "Select Sub-theme" %}</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Vulnerable Assets -->
+    <div class="dummy-table-section">
+      <h6>{% trans "Vulnerable Assets" %}</h6>
+      <div class="dummy_wrapper">
+      <table class="dummy-table">
+        <thead id="vulnerableAssetsHead"></thead>
+        <tbody id="vulnerableAssetsBody"></tbody>
+      </table></div>
+    </div>
+
+    <!-- Mitigation Measures -->
+    <div class="mitigation-measures-section">
+      <h6>{% trans "Mitigation Measures" %}</h6>
+       <div class="mitigation-measures-wrapper">
+      <div class="form-row-inline">
+        <div>
+          <label class="form-label" for="component">{% trans "Component" %} *</label>
+          <select name="component" id="component" class="form-select select2">
+            <option value="" selected disabled>{% trans "Select Component" %}</option>
+          </select>
+        </div>
+        <div>
+          <label class="form-label" for="operations">{% trans "Operations" %} *</label>
+          <select name="operations" id="operations" class="form-select select2">
+            <option value="" selected disabled>{% trans "Select Operation" %}</option>
+          </select>
+        </div>
+        <div>
+          <label class="form-label" for="mitigation_intervention">{% trans "Mitigation Intervention" %} *</label>
+          <select name="mitigation_intervention" id="mitigation_intervention" class="form-select select2">
+            <option value="" selected disabled>{% trans "Select Intervention" %}</option>
+          </select>
+        </div>
+      </div>
+      <div class="mt-2 text-muted small" id="intervention-note"></div>
+<div class="mitigation-cost-wrapper">
+      <div class="unit-cost-row">
+        <div>
+          <label class="form-label" for="unit">{% trans "Unit" %} *</label>
+          <input type="text" name="unit" id="unit" class="form-control" placeholder="Sq. ft." value="Sq. ft." readonly style="background-color: #F2F4F6;">
+        </div>
+        <div>
+          <label class="form-label" for="quantity">{% trans "Quantity" %} *</label>
+          <input type="number" name="quantity" id="quantity" class="form-control" value="">
+          <small id="quantity-remaining" class="text-muted"></small>
+        </div>
+        <div>
+          <label class="form-label" for="unit_cost">{% trans "Unit Cost (ƒ,1)" %} <i class="fas fa-info-circle text-muted"></i></label>
+          <input type="text" name="unit_cost" id="unit_cost" class="form-control" value="50,000" readonly style="background-color: #F2F4F6;">
+        </div>
+      </div>
+
+      <div class="estimated-cost-row">
+        <div>
+          <label class="form-label" for="estimated_cost">{% trans "Estimated Cost (ƒ,1)" %}</label>
+          <input type="text" name="estimated_cost" id="estimated_cost" class="form-control" value="" readonly>
+        </div>
+      </div>
+    </div>
+      <div class="d-flex justify-content-between align-items-center mt-3">
+        <!-- <a href="#" class="add-intervention-btn">
+          <i class="fas fa-plus"></i> {% trans "Add Another Intervention" %}
+        </a> -->
+        <button type="button" class="btn" id="addInterventionBtn">
+          {% trans "Save" %}
+        </button>
+      </div>
+    </div></div>
+
+    <!-- Added Interventions Table -->
+    <div class="added-interventions-table">
+      <h6 class="interventions-heading">{% trans "Added Interventions" %} (<span id="added-interventions-count">0</span>)</h6>
+      <div class="interventions_wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>{% trans "S. No." %}</th>
+            <th>{% trans "Component" %}</th>
+            <th>{% trans "Operation" %}</th>
+            <th>{% trans "Mitigation Intervention" %}</th>
+            <th>{% trans "Unit" %}</th>
+            <th>{% trans "Quantity" %}</th>
+            <th>{% trans "Unit Cost (ƒ,1)" %}</th>
+            <th>{% trans "Action" %}</th>
+          </tr>
+        </thead>
+        <tbody id="addedInterventionsBody"></tbody>
+      </table>
+      </div>
+    </div>
+
+    <!-- Total Summary -->
+    <div class="total-summary">
+       <div class="total-quantity-wrap">
+      <div class="total-quantity-box">
+        <p>{% trans "Total Quantity" %}</p>
+        <h5 id="total-quantity">0</h5>
+      </div>
+      <div class="total-cost-box">
+        <p>{% trans "Total Estimated Cost" %}</p>
+        <h5 id="total-estimated-cost">ƒ,1 0</h5>
+      </div> </div>
+       <div class="submit-btn-wrapper">
+      <button class="btn" data-bs-toggle="modal" data-bs-target="#reviewModal">{% trans "Submit" %}</button>
+    </div>
+    </div>
+
+    <!-- Submit Button -->
+   
+  </div></div>
+</section>
+</div>
+
+<!-- Review and Confirm Modal -->
+<div class="modal fade" id="reviewModal" tabindex="-1" aria-labelledby="reviewModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="card_header">
+        <h6 class="modal-title" id="reviewModalLabel">{% trans "Review and Confirm" %}</h6>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <!-- Selection Summary -->
+        <div class="bg-blue p-3 mb-3">
+          <h6 class="mb-3">{% trans "Selection Summary" %}</h6>
+          <div class="row">
+            <div class="col-md-6">
+              <p class="mb-2"><strong>{% trans "Theme/Sector:" %}</strong><br><span id="review-theme">-</span></p>
+              <p class="mb-0"><strong>{% trans "Component:" %}</strong><br><span id="review-component">-</span></p>
+            </div>
+            <div class="col-md-6">
+              <p class="mb-2"><strong>{% trans "Sub-theme:" %}</strong><br><span id="review-subtheme">-</span></p>
+              <p class="mb-0"><strong>{% trans "Vulnerable Asset:" %}</strong><br><span id="review-vulnerable-asset">-</span></p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Planned Interventions -->
+        <h6 class="mb-3">{% trans "Planned Interventions" %}</h6>
+        
+        <div id="review-interventions"></div>
+
+        <!-- Total -->
+        <div class="bg-darkgray p-3 rounded">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <p class="mb-0 fw-bold">{% trans "Total Quantity" %}</p>
+              <p class="mb-0" id="review-total-quantity">0</p>
+            </div>
+            <div class="text-end">
+              <p class="mb-0 ">{% trans "Total Estimated Cost" %}</p>
+              <h4 class="mb-0 " id="review-total-cost">ƒ,1 0</h4>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer border-0">
+        <button type="button" class="btn  edit_btn" data-bs-dismiss="modal">{% trans "Edit" %}</button>
+        <button type="button" class="btn confirm_btn">{% trans "Confirm & Submit" %}</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extrajs %}
+<script src="{% static 'js/utils/summery.js' %}"></script>
+<script src="{% static 'js/mitigation_intervention_3.js' %}?v=20260319"></script>
+{% endblock %}

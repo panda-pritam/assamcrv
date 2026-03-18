@@ -4,7 +4,10 @@ from rest_framework.routers import DefaultRouter
 from .views import (
     MitigationInterventionMasterViewSet,
     MitigationPlanItemViewSet,
+    get_critical_risk_list,
+    get_housing_risk_summary,
     get_interventions,
+    get_road_risk_summary,
     get_subthemes,
     get_themes,
     get_vulnerable_assets,
@@ -26,4 +29,19 @@ urlpatterns = [
         name="mitigation-vulnerable-assets-summary",
     ),
     path("interventions/", get_interventions, name="mitigation-interventions"),
+    path(
+        "housing-risk-summary/",
+        get_housing_risk_summary,
+        name="mitigation-housing-risk-summary",
+    ),
+    path(
+        "critical-risk-list/",
+        get_critical_risk_list,
+        name="mitigation-critical-risk-list",
+    ),
+    path(
+        "road-risk-summary/",
+        get_road_risk_summary,
+        name="mitigation-road-risk-summary",
+    ),
 ]

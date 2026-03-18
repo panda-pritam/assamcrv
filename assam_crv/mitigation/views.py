@@ -2,9 +2,12 @@ from rest_framework import viewsets
 from rest_framework.decorators import api_view
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
+from django.db.models import Case, IntegerField, Q, Sum, Value, When
+from django.db.models.functions import Coalesce, Lower, Trim
 
 from .models import MitigationInterventionMaster, MitigationPlanItem
 from vdmp_progress.models import Risk_Assessment_Result, house_type
+from vdmp_dashboard.models import Critical_Facility, VillageRoadInfo, VillageRoadInfoErosion
 from .serializers import (
     MitigationInterventionMasterSerializer,
     MitigationPlanItemSerializer,
@@ -175,6 +178,162 @@ def get_vulnerable_assets_summary(request):
                 "house_type": house.house_type,
                 "hazard_type": hazard_type,
                 "count": count,
+            }
+        )
+
+    return Response(results)
+
+
+def _normalize_risk_category(flood_hazard, erosion_class):
+    flood_value = float(flood_hazard or 0)
+    flood_high = flood_value >= 0.5
+    erosion_value = str(erosion_class or "").strip().lower()
+    erosion_high = erosion_value in {"high", "severe"}
+    if erosion_high:
+        return "Relocate and reconstruct"
+    if flood_high:
+        return "Renovate/Reconstruct"
+    return "Safe"
+
+
+@api_view(["GET"])
+def get_housing_risk_summary(request):
+    village_id = request.query_params.get("village_id")
+    base_queryset = Risk_Assessment_Result.objects.filter(
+        asset_type="household"
+    )
+    if village_id:
+        base_queryset = base_queryset.filter(village_id=village_id)
+
+    summary = (
+        base_queryset.annotate(
+            erosion_norm=Lower(Trim(Coalesce("erosion_class", Value(""))))
+        )
+        .values("house_type_name")
+        .annotate(
+            erosion_flood_mitigation=Sum(
+                Case(
+                    When(erosion_norm__in=["high", "severe"], then=Value(1)),
+                    default=Value(0),
+                    output_field=IntegerField(),
+                )
+            ),
+            flood_mitigation=Sum(
+                Case(
+                    When(
+                        ~Q(erosion_norm__in=["high", "severe"])
+                        & Q(flood_hazard__gte=0.5),
+                        then=Value(1),
+                    ),
+                    default=Value(0),
+                    output_field=IntegerField(),
+                )
+            ),
+        )
+        .order_by("house_type_name")
+    )
+
+    results = []
+    for row in summary:
+        results.append(
+            {
+                "house_type": row["house_type_name"] or "-",
+                "flood_mitigation": int(row["flood_mitigation"] or 0),
+                "erosion_flood_mitigation": int(
+                    row["erosion_flood_mitigation"] or 0
+                ),
+            }
+        )
+
+    return Response(results)
+
+
+@api_view(["GET"])
+def get_critical_risk_list(request):
+    village_id = request.query_params.get("village_id")
+    base_queryset = Risk_Assessment_Result.objects.filter(
+        asset_type="critical_facility"
+    )
+    if village_id:
+        base_queryset = base_queryset.filter(village_id=village_id)
+
+    records = list(
+        base_queryset.values(
+            "reference_id",
+            "building_area_sqft",
+            "flood_hazard",
+            "erosion_class",
+        )
+    )
+
+    reference_ids = [
+        int(ref_id)
+        for ref_id in (row.get("reference_id") for row in records)
+        if str(ref_id or "").isdigit()
+    ]
+    facility_map = {
+        str(facility.id): facility
+        for facility in Critical_Facility.objects.filter(id__in=reference_ids)
+    }
+
+    results = []
+    for row in records:
+        reference_id = str(row.get("reference_id") or "")
+        facility = facility_map.get(reference_id)
+        name = "-"
+        occupancy_type = "-"
+        if facility:
+            name = facility.name_of_building or "-"
+            occupancy_type = facility.occupancy_type or "-"
+
+        results.append(
+            {
+                "reference_id": reference_id or "-",
+                "facility_name": name,
+                "occupancy_type": occupancy_type,
+                "area_sqft": row.get("building_area_sqft") or 0,
+                "risk_category": _normalize_risk_category(
+                    row.get("flood_hazard"), row.get("erosion_class")
+                ),
+            }
+        )
+
+    return Response(results)
+
+
+@api_view(["GET"])
+def get_road_risk_summary(request):
+    village_id = request.query_params.get("village_id")
+    flood_qs = VillageRoadInfo.objects.all()
+    erosion_qs = VillageRoadInfoErosion.objects.all()
+    if village_id:
+        flood_qs = flood_qs.filter(village_id=village_id)
+        erosion_qs = erosion_qs.filter(village_id=village_id)
+
+    flood_qs = flood_qs.exclude(road_surface_type__istartswith="WRD")
+    erosion_qs = erosion_qs.exclude(road_surface_type__istartswith="WRD")
+
+    flood_summary = {
+        row["road_surface_type"]: float(row["total_length"] or 0)
+        for row in flood_qs.values("road_surface_type").annotate(
+            total_length=Sum("road_length_m")
+        )
+    }
+    erosion_summary = {
+        row["road_surface_type"]: float(row["total_length"] or 0)
+        for row in erosion_qs.values("road_surface_type").annotate(
+            total_length=Sum("road_length_m")
+        )
+    }
+
+    road_types = sorted(set(flood_summary) | set(erosion_summary))
+    results = []
+    for road_type in road_types:
+        results.append(
+            {
+                "road_type": road_type or "-",
+                "flood_length_m": flood_summary.get(road_type, 0),
+                "erosion_length_m": erosion_summary.get(road_type, 0),
             }
         )
 
