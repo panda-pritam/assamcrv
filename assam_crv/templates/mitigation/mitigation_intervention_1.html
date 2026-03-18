@@ -94,15 +94,18 @@
       </div>
     </div>
 
-    <!-- Vulnerable Assets Table -->
-    <div class="dummy-table-section">
-      <h6>{% trans "Vulnerable Assets" %}</h6>
-      <div class="mb-2">
+    <div class="form-row-inline">
+      <div>
         <label class="form-label" for="house_type_filter">{% trans "House Type" %}</label>
         <select name="house_type_filter" id="house_type_filter" class="form-select select2">
           <option value="">{% trans "All House Types" %}</option>
         </select>
       </div>
+    </div>
+
+    <!-- Vulnerable Assets Table -->
+    <div class="dummy-table-section">
+      <h6>{% trans "Vulnerable Assets" %}</h6>
       <div class="dummy_wrapper">
       <table class="dummy-table">
         <thead>
