@@ -937,6 +937,10 @@
     villagesIndex = new Map(
       villageData.map((village) => [String(village.id), village])
     );
+    populateVillageOptions(villageData);
+  }
+
+  function populateVillageOptions(villageData) {
     const $village = $("#village");
     $village.empty();
     $village.append(
@@ -948,6 +952,18 @@
       );
     });
     $village.trigger("change.select2");
+  }
+
+  async function loadVillages(gramPanchayatId) {
+    if (!gramPanchayatId) {
+      await loadAllVillages();
+      return;
+    }
+    const villageRes = await fetch(
+      `/api/get_villages?gram_panchayat_id=${gramPanchayatId}`
+    );
+    const villageData = await villageRes.json();
+    populateVillageOptions(villageData);
   }
 
   async function applyVillageSelection(villageId) {
@@ -996,6 +1012,24 @@
         }
       }
     );
+
+    $("#district").on("change", async () => {
+      const districtId = $("#district").val();
+      await loadCircles(districtId);
+      $("#gram_panchayat").val("").trigger("change.select2");
+      await loadVillages("");
+    });
+
+    $("#circle").on("change", async () => {
+      const circleId = $("#circle").val();
+      await loadGramPanchayats(circleId);
+      await loadVillages("");
+    });
+
+    $("#gram_panchayat").on("change", async () => {
+      const gpId = $("#gram_panchayat").val();
+      await loadVillages(gpId);
+    });
   }
 
   $(async () => {
