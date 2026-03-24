@@ -1,7 +1,10 @@
 from rest_framework import viewsets
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
 from rest_framework.decorators import api_view
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
+from rest_framework import status
 from django.db.models import Case, IntegerField, Q, Sum, Value, When
 from django.db.models.functions import Coalesce, Lower, Trim
 
@@ -19,7 +22,14 @@ class MitigationInterventionMasterViewSet(viewsets.ModelViewSet):
     serializer_class = MitigationInterventionMasterSerializer
 
     def get_permissions(self):
-        if self.action in ["list", "retrieve"]:
+        if self.action in [
+            "list",
+            "retrieve",
+            "create",
+            "update",
+            "partial_update",
+            "destroy",
+        ]:
             return [AllowAny()]
         return [IsAuthenticated()]
 
@@ -42,12 +52,21 @@ class MitigationInterventionMasterViewSet(viewsets.ModelViewSet):
         return queryset
 
 
+@method_decorator(csrf_exempt, name="dispatch")
 class MitigationPlanItemViewSet(viewsets.ModelViewSet):
     queryset = MitigationPlanItem.objects.select_related("master", "village")
     serializer_class = MitigationPlanItemSerializer
+    authentication_classes = []
 
     def get_permissions(self):
-        if self.action in ["list", "retrieve"]:
+        if self.action in [
+            "list",
+            "retrieve",
+            "create",
+            "update",
+            "partial_update",
+            "destroy",
+        ]:
             return [AllowAny()]
         return [IsAuthenticated()]
 
@@ -65,6 +84,32 @@ class MitigationPlanItemViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(status=status)
 
         return queryset
+
+    def create(self, request, *args, **kwargs):
+        village_id = request.data.get("village")
+        master_id = request.data.get("master")
+        typology = request.data.get("typology")
+        vulnerability_type = request.data.get("vulnerability_type")
+        item_status = request.data.get("status") or "draft"
+        if village_id and master_id:
+            exists = MitigationPlanItem.objects.filter(
+                village_id=village_id,
+                master_id=master_id,
+                typology=typology or "",
+                vulnerability_type=vulnerability_type or "",
+                status=item_status,
+            ).exists()
+            if exists:
+                return Response(
+                    {
+                        "detail": (
+                            "This intervention already exists for the selected "
+                            "village. Please edit the existing entry."
+                        )
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+        return super().create(request, *args, **kwargs)
 
 
 @api_view(["GET"])
@@ -184,9 +229,20 @@ def get_vulnerable_assets_summary(request):
     return Response(results)
 
 
-def _normalize_risk_category(flood_hazard, erosion_class):
+def _classify_flood_category(flood_hazard):
     flood_value = float(flood_hazard or 0)
-    flood_high = flood_value >= 0.5
+    if flood_value >= 1.0:
+        return "severe"
+    if flood_value >= 0.5:
+        return "high"
+    if flood_value >= 0.3:
+        return "medium"
+    return "low"
+
+
+def _normalize_risk_category(flood_hazard, erosion_class):
+    flood_category = _classify_flood_category(flood_hazard)
+    flood_high = flood_category in {"high", "severe"}
     erosion_value = str(erosion_class or "").strip().lower()
     erosion_high = erosion_value in {"high", "severe"}
     if erosion_high:
@@ -211,18 +267,28 @@ def get_housing_risk_summary(request):
         )
         .values("house_type_name")
         .annotate(
-            erosion_flood_mitigation=Sum(
+            flood_vulnerable=Sum(
                 Case(
-                    When(erosion_norm__in=["high", "severe"], then=Value(1)),
+                    When(Q(flood_hazard__gte=0.5), then=Value(1)),
                     default=Value(0),
                     output_field=IntegerField(),
                 )
             ),
-            flood_mitigation=Sum(
+            erosion_vulnerable=Sum(
                 Case(
                     When(
-                        ~Q(erosion_norm__in=["high", "severe"])
-                        & Q(flood_hazard__gte=0.5),
+                        Q(erosion_norm__in=["high", "severe"]),
+                        then=Value(1),
+                    ),
+                    default=Value(0),
+                    output_field=IntegerField(),
+                )
+            ),
+            flood_erosion_vulnerable=Sum(
+                Case(
+                    When(
+                        Q(flood_hazard__gte=0.5)
+                        & Q(erosion_norm__in=["high", "severe"]),
                         then=Value(1),
                     ),
                     default=Value(0),
@@ -238,9 +304,10 @@ def get_housing_risk_summary(request):
         results.append(
             {
                 "house_type": row["house_type_name"] or "-",
-                "flood_mitigation": int(row["flood_mitigation"] or 0),
-                "erosion_flood_mitigation": int(
-                    row["erosion_flood_mitigation"] or 0
+                "flood_vulnerable": int(row["flood_vulnerable"] or 0),
+                "erosion_vulnerable": int(row["erosion_vulnerable"] or 0),
+                "flood_erosion_vulnerable": int(
+                    row["flood_erosion_vulnerable"] or 0
                 ),
             }
         )

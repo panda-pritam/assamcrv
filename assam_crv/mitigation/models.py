@@ -30,6 +30,8 @@ class MitigationPlanItem(models.Model):
     village = models.ForeignKey(
         tblVillage, on_delete=models.PROTECT, null=True, blank=True
     )
+    typology = models.CharField(max_length=200, blank=True)
+    vulnerability_type = models.CharField(max_length=50, blank=True)
     master = models.ForeignKey(
         MitigationInterventionMaster, on_delete=models.PROTECT
     )

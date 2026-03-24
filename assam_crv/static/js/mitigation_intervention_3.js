@@ -4,6 +4,7 @@
   const apiBase = `${langPrefix}/api/mitigation`;
   const statusFilter = "active";
   const currencySymbol = "\u20b9";
+  const housingUnitSqft = 450;
   const addedInterventions = [];
   let currentInterventions = [];
   let totalAvailableCount = null;
@@ -14,6 +15,7 @@
   const $theme = $("#theme");
   const $subtheme = $("#subtheme");
   const $component = $("#component");
+  const $vulnerabilityType = $("#vulnerability_type");
   const $operations = $("#operations");
   const $mitigationIntervention = $("#mitigation_intervention");
   const $unit = $("#unit");
@@ -26,10 +28,13 @@
   const $vulnerableAssetsHead = $("#vulnerableAssetsHead");
   const $vulnerableAssetsBody = $("#vulnerableAssetsBody");
   const $quantityRemaining = $("#quantity-remaining");
+  const $quantityError = $("#quantity-error");
   const $unitLabel = $("label[for='unit']");
-  const $interventionNote = $("#intervention-note");
+  const $interventionNoteBox = $("#intervention-note-box");
   const defaultUnitLabel = $unitLabel.text();
   let editState = { index: null, planItemId: null };
+  let currentAreaValue = 0;
+  let housingSummaryRows = [];
 
   function showError(message) {
     if (window.Swal) {
@@ -82,6 +87,18 @@
     $select.trigger("change.select2");
   }
 
+  function setSelectOptionsWithLabels($select, options, placeholder) {
+    $select.empty();
+    $select.append(`<option value="" selected disabled>${placeholder}</option>`);
+    options.forEach((optionValue) => {
+      const option = document.createElement("option");
+      option.value = optionValue.value;
+      option.textContent = optionValue.label;
+      $select.append(option);
+    });
+    $select.trigger("change.select2");
+  }
+
   function getUnique(values) {
     return [...new Set(values.filter((value) => value))];
   }
@@ -101,6 +118,18 @@
     return normalized;
   }
 
+  function normalizeHouseType(value) {
+    return normalizeValue(value).replace(/\s+/g, " ");
+  }
+
+  function parseAreaValue(value) {
+    if (!value) {
+      return 0;
+    }
+    const match = String(value).match(/[\d,.]+/);
+    return match ? parseNumber(match[0]) : 0;
+  }
+
   function getAssetMode() {
     const subthemeValue = normalizeValue($subtheme.val());
     if (subthemeValue.includes("housing") || subthemeValue.includes("house")) {
@@ -118,18 +147,43 @@
     return "";
   }
 
+  function getSelectedVulnerabilityType() {
+    return normalizeValue($vulnerabilityType.val());
+  }
+
+  function loadVulnerabilityOptions() {
+    const options = [
+      { value: "flood", label: gettext("Flood") },
+      { value: "erosion", label: gettext("Erosion") },
+      { value: "flood_erosion", label: gettext("Flood and Erosion") },
+    ];
+    setSelectOptionsWithLabels(
+      $vulnerabilityType,
+      options,
+      gettext("Select Vulnerability Type")
+    );
+  }
+
   function filterInterventions() {
-    const selectedComponent = normalizeValue($component.val());
+    const selectedComponent = normalizeHouseType($component.val());
     const selectedOperation = normalizeValue($operations.val());
+    const vulnerabilityType = getSelectedVulnerabilityType();
 
     return currentInterventions.filter((item) => {
-      const componentMatch = selectedComponent
-        ? normalizeValue(item.vulnerable_asset) === selectedComponent
-        : true;
+      const componentMatch =
+        currentAssetMode === "housing"
+          ? true
+          : selectedComponent
+          ? normalizeValue(item.vulnerable_asset) === selectedComponent
+          : true;
       const operationMatch = selectedOperation
         ? normalizeValue(item.intervention_type) === selectedOperation
         : true;
-      return componentMatch && operationMatch;
+      const vulnerabilityMatch =
+        !vulnerabilityType || vulnerabilityType === "flood"
+          ? true
+          : normalizeValue(item.intervention_type).includes("relocat");
+      return componentMatch && operationMatch && vulnerabilityMatch;
     });
   }
 
@@ -160,16 +214,43 @@
   async function loadSubthemes(theme) {
     if (!theme) {
       setSelectOptions($subtheme, [], gettext("Select Sub-theme"));
-      return;
+      return [];
     }
     const query = buildQuery({ theme, status: statusFilter });
     const data = await fetchJson(`${apiBase}/subthemes/?${query}`);
     setSelectOptions($subtheme, data, gettext("Select Sub-theme"));
+    return data;
+  }
+
+  function autoSelectHousingSubtheme(theme, subthemes) {
+    if (!theme || $subtheme.val()) {
+      return false;
+    }
+    const themeNorm = normalizeValue(theme);
+    if (!themeNorm.includes("housing") && !themeNorm.includes("house")) {
+      return false;
+    }
+    const match = subthemes.find((item) => {
+      const norm = normalizeValue(item);
+      return norm.includes("housing") || norm.includes("house");
+    });
+    if (!match) {
+      return false;
+    }
+    $subtheme.val(match).trigger("change.select2");
+    return true;
   }
 
   async function loadComponents(theme, subtheme) {
     if (!theme) {
       setSelectOptions($component, [], gettext("Select Component"));
+      return;
+    }
+    if (currentAssetMode === "housing" && housingSummaryRows.length) {
+      const options = housingSummaryRows
+        .map((row) => row.house_type || "")
+        .filter((value) => value);
+      setSelectOptions($component, options, gettext("Select Component"));
       return;
     }
     const query = buildQuery({
@@ -189,13 +270,23 @@
 
   function updateOperationsOptions() {
     const selectedComponent = normalizeValue($component.val());
+    const vulnerabilityType = getSelectedVulnerabilityType();
     const operations = getUnique(
       currentInterventions
         .filter((item) =>
-          selectedComponent
+          currentAssetMode === "housing"
+            ? true
+            : selectedComponent
             ? normalizeValue(item.vulnerable_asset) === selectedComponent
             : true
         )
+        .filter((item) => {
+          if (!vulnerabilityType || vulnerabilityType === "flood") {
+            return true;
+          }
+          const operationValue = normalizeValue(item.intervention_type);
+          return operationValue.includes("relocat");
+        })
         .map((item) => item.intervention_type)
         .filter(Boolean)
     );
@@ -249,7 +340,9 @@
     $quantity.val("");
     $unitCost.val("");
     $estimatedCost.val("");
+    currentAreaValue = 0;
     updateQuantityRemaining();
+    validateQuantity();
     resetUnitLabel();
   }
 
@@ -260,11 +353,15 @@
   }
 
   function setMitigationNote(note) {
-    if (!$interventionNote.length) {
+    if (!$interventionNoteBox.length) {
       return;
     }
     const text = note ? String(note).trim() : "";
-    $interventionNote.text(text);
+    if (!text) {
+      $interventionNoteBox.addClass("d-none").text("");
+      return;
+    }
+    $interventionNoteBox.removeClass("d-none").text(text);
   }
 
   function applyUnitBehavior(assetMode) {
@@ -276,6 +373,10 @@
     }
     $unit.prop("readonly", true);
     $unit.css("background-color", "#F2F4F6");
+    if (assetMode === "housing") {
+      $unitLabel.text(`${defaultUnitLabel} (Sqft)`);
+      return;
+    }
     resetUnitLabel();
   }
 
@@ -297,14 +398,17 @@
     const areaValue = parseNumber(selected.area);
     const unitLabel = selected.unit || "";
 
-    if (currentAssetMode === "housing" && areaValue) {
-      $unit.val(`${formatNumber(areaValue)} Sqft`);
+    if (currentAssetMode === "housing") {
+      $unit.val(`${formatNumber(housingUnitSqft)} Sqft`);
       $unitLabel.text(`${defaultUnitLabel} (Sqft)`);
+      currentAreaValue = housingUnitSqft;
     } else if (currentAssetMode === "road") {
       $unit.val(unitLabel || "Meter");
       resetUnitLabel();
+      currentAreaValue = areaValue || 1;
     } else {
       $unit.val(unitLabel || formatNumber(areaValue));
+      currentAreaValue = areaValue || parseAreaValue($unit.val()) || 1;
     }
 
     $quantity.val("");
@@ -314,15 +418,78 @@
     setMitigationNote(selected.display_note || "");
   }
 
-  function updateEstimatedCost() {
+  function getAreaValueForEstimate() {
+    if (currentAssetMode === "housing") {
+      return housingUnitSqft;
+    }
+    const inputArea = parseAreaValue($unit.val());
+    if (inputArea > 0) {
+      return inputArea;
+    }
+    return currentAreaValue || 0;
+  }
+
+  function calculateEstimatedCost() {
     const quantity = parseNumber($quantity.val());
     const unitCost = parseNumber($unitCost.val());
-    if (quantity <= 0 || unitCost <= 0) {
+    const areaValue = getAreaValueForEstimate();
+    if (quantity <= 0 || unitCost <= 0 || areaValue <= 0) {
+      return null;
+    }
+    return {
+      quantity,
+      unitCost,
+      areaValue,
+      estimated: areaValue * quantity * unitCost,
+    };
+  }
+
+  function updateEstimatedCost() {
+    const estimate = calculateEstimatedCost();
+    if (!estimate) {
       $estimatedCost.val("");
       return;
     }
-    const estimated = quantity * unitCost;
-    $estimatedCost.val(formatCurrency(estimated));
+    $estimatedCost.val(formatCurrency(estimate.estimated));
+  }
+
+  function setSubmitDisabled(disabled) {
+    if (!$submitBtn.length) {
+      return;
+    }
+    $submitBtn.prop("disabled", disabled);
+  }
+
+  function validateQuantity() {
+    if (!$quantityError.length) {
+      return true;
+    }
+    const quantity = parseNumber($quantity.val());
+    if (!Number.isFinite(totalAvailableCount)) {
+      $quantityError.text("");
+      setSubmitDisabled(false);
+      return true;
+    }
+    if (quantity > totalAvailableCount) {
+      const typology = $component.val() || gettext("selected typology");
+      const vulnerabilityText =
+        $vulnerabilityType.find("option:selected").text() ||
+        gettext("selected vulnerability");
+      $quantityError.text(
+        gettext(
+          `You can select up to ${formatNumber(
+            totalAvailableCount
+          )} ${typology} households for ${vulnerabilityText} vulnerability. Please enter ${formatNumber(
+            totalAvailableCount
+          )} or less.`
+        )
+      );
+      setSubmitDisabled(true);
+      return false;
+    }
+    $quantityError.text("");
+    setSubmitDisabled(false);
+    return true;
   }
 
   async function savePlanItem(payload) {
@@ -411,7 +578,8 @@
         <td>${intervention}</td>
         <td>${unit}</td>
         <td>${formatNumber(item.quantity)}</td>
-        <td>${formatNumber(item.unitCost)}</td>
+        <td>${formatCurrency(item.unitCost)}</td>
+        <td>${formatCurrency(item.estimatedCost)}</td>
         <td>
           <button type="button" class="btn btn-link p-0 edit-intervention" data-index="${index}" aria-label="${gettext(
             "Edit intervention"
@@ -508,7 +676,8 @@
         masterId: master.id,
         theme: master.theme || "",
         subtheme: master.subtheme || "",
-        component: master.vulnerable_asset || "",
+        component: item.typology || master.vulnerable_asset || "",
+        vulnerabilityType: item.vulnerability_type || "",
         operation: master.intervention_type || "",
         intervention: master.intervention_name || "",
         unit: master.unit || "",
@@ -537,6 +706,11 @@
     if (item.component) {
       $component.val(item.component).trigger("change.select2");
     }
+    if (item.vulnerabilityType) {
+      $vulnerabilityType
+        .val(String(item.vulnerabilityType))
+        .trigger("change.select2");
+    }
     updateOperationsOptions();
     if (item.operation) {
       $operations.val(item.operation).trigger("change.select2");
@@ -552,6 +726,7 @@
 
     if (item.unit) {
       $unit.val(item.unit);
+      currentAreaValue = parseAreaValue($unit.val()) || currentAreaValue;
     }
     if (Number.isFinite(item.quantity)) {
       $quantity.val(item.quantity);
@@ -602,6 +777,7 @@
       updateTotals();
       setSubmitMode(false);
       resetEditState();
+      updateQuantityRemaining();
       return;
     }
 
@@ -613,6 +789,48 @@
     updateTotals();
     setSubmitMode(false);
     resetEditState();
+    updateQuantityRemaining();
+  }
+
+  function getHousingCountBySelection() {
+    const vulnerabilityType = getSelectedVulnerabilityType();
+    if (!vulnerabilityType) {
+      return null;
+    }
+    const selectedComponent = normalizeValue($component.val());
+    const valueForRow = (row) => {
+      if (vulnerabilityType === "flood") {
+        return parseNumber(row.flood_vulnerable);
+      }
+      if (vulnerabilityType === "erosion") {
+        return parseNumber(row.erosion_vulnerable);
+      }
+      if (vulnerabilityType === "flood_erosion") {
+        return parseNumber(row.flood_erosion_vulnerable);
+      }
+      return 0;
+    };
+
+    if (selectedComponent) {
+      const match = housingSummaryRows.find(
+        (row) => normalizeHouseType(row.house_type) === selectedComponent
+      );
+      return match ? valueForRow(match) : 0;
+    }
+
+    return housingSummaryRows.reduce((sum, row) => sum + valueForRow(row), 0);
+  }
+
+  function updateTotalAvailableCount() {
+    if (currentAssetMode !== "housing") {
+      totalAvailableCount = null;
+      updateQuantityRemaining();
+      return;
+    }
+    const count = getHousingCountBySelection();
+    totalAvailableCount = Number.isFinite(count) ? count : null;
+    updateQuantityRemaining();
+    validateQuantity();
   }
 
   function updateQuantityRemaining() {
@@ -623,9 +841,35 @@
       $quantityRemaining.text("");
       return;
     }
-    const selectedQuantity = parseNumber($quantity.val());
-    const remaining = Math.max(totalAvailableCount - selectedQuantity, 0);
-    $quantityRemaining.text(`${formatNumber(remaining)} left`);
+    $quantityRemaining.text(`${formatNumber(totalAvailableCount)} left`);
+  }
+
+  function getPlannedQuantity(excludeIndex) {
+    return addedInterventions.reduce((sum, item, index) => {
+      if (Number.isFinite(excludeIndex) && index === excludeIndex) {
+        return sum;
+      }
+      return sum + parseNumber(item.quantity);
+    }, 0);
+  }
+
+  function warnRemainingBuildings() {
+    if (!Number.isFinite(totalAvailableCount)) {
+      return;
+    }
+    const plannedQuantity = getPlannedQuantity();
+    const remaining = Math.max(totalAvailableCount - plannedQuantity, 0);
+    if (remaining <= 0) {
+      return;
+    }
+    const message = `${gettext(
+      "Remaining buildings to be considered:"
+    )} ${formatNumber(remaining)}`;
+    if (window.Swal) {
+      Swal.fire({ icon: "warning", text: message });
+    } else {
+      alert(message);
+    }
   }
 
   function setTableHeader(headers) {
@@ -644,13 +888,20 @@
   function renderHousingSummary(rows) {
     setTableHeader([
       gettext("Typology"),
-      gettext("Buildings for flood mitigation"),
-      gettext("Buildings for erosion & flood mitigation"),
+      gettext("Flood vulnerable houses (High+Severe)"),
+      gettext("Erosion vulnerable houses (High+Severe)"),
+      gettext("Flood and erosion houses (High+Severe)"),
     ]);
     $vulnerableAssetsBody.empty();
-    if (!rows.length) {
+    housingSummaryRows = (Array.isArray(rows) ? rows : []).filter((row) => {
+      const flood = parseNumber(row.flood_vulnerable);
+      const erosion = parseNumber(row.erosion_vulnerable);
+      const both = parseNumber(row.flood_erosion_vulnerable);
+      return flood > 0 || erosion > 0 || both > 0;
+    });
+    if (!housingSummaryRows.length) {
       $vulnerableAssetsBody.append(
-        `<tr><td colspan="3" class="text-muted">${gettext(
+        `<tr><td colspan="4" class="text-muted">${gettext(
           "No data available."
         )}</td></tr>`
       );
@@ -658,22 +909,18 @@
       updateQuantityRemaining();
       return;
     }
-    totalAvailableCount = rows.reduce(
-      (sum, row) =>
-        sum +
-        parseNumber(row.flood_mitigation) +
-        parseNumber(row.erosion_flood_mitigation),
-      0
-    );
-    rows.forEach((row) => {
+    housingSummaryRows.forEach((row) => {
       const tr = document.createElement("tr");
       tr.innerHTML = `
         <td class="text-left">${row.house_type || "-"}</td>
         <td><span class="badge-blue">${formatNumber(
-          row.flood_mitigation
+          row.flood_vulnerable
         )}</span></td>
         <td><span class="badge-green">${formatNumber(
-          row.erosion_flood_mitigation
+          row.erosion_vulnerable
+        )}</span></td>
+        <td><span class="badge-blue">${formatNumber(
+          row.flood_erosion_vulnerable
         )}</span></td>
       `;
       $vulnerableAssetsBody.append(tr);
@@ -758,6 +1005,10 @@
     currentAssetMode = getAssetMode();
     availableComponents = new Set();
     availableComponentsNorm = new Set();
+    if (currentAssetMode !== "housing") {
+      $vulnerabilityType.val("").trigger("change.select2");
+      housingSummaryRows = [];
+    }
     if (!currentAssetMode || !villageId) {
       $vulnerableAssetsHead.empty();
       $vulnerableAssetsBody.empty();
@@ -772,6 +1023,7 @@
         `${apiBase}/housing-risk-summary/?${query}`
       );
       renderHousingSummary(Array.isArray(data) ? data : []);
+      await loadComponents($theme.val(), $subtheme.val());
       return;
     }
     if (currentAssetMode === "road") {
@@ -793,13 +1045,22 @@
 
   async function addIntervention() {
     const component = $component.val();
+    const vulnerabilityType = $vulnerabilityType.val();
     const operation = $operations.val();
     const interventionId = $mitigationIntervention.val();
     const villageId = $("#village").val();
 
-    if (!component || !operation || !interventionId || !villageId) {
+    if (
+      !component ||
+      !vulnerabilityType ||
+      !operation ||
+      !interventionId ||
+      !villageId
+    ) {
       showError(
-        gettext("Please select village, component, operation, and intervention.")
+        gettext(
+          "Please select village, typology, vulnerability type, mitigation type, and intervention."
+        )
       );
       return;
     }
@@ -812,11 +1073,21 @@
       return;
     }
 
-    const quantity = parseNumber($quantity.val());
-    const unitCost = parseNumber($unitCost.val());
-    const estimatedCost = quantity * unitCost;
+    if (!validateQuantity()) {
+      showError(gettext("Quantity exceeds available count."));
+      return;
+    }
+
+    const estimate = calculateEstimatedCost();
+    if (!estimate) {
+      showError(gettext("Please enter quantity and valid cost details."));
+      return;
+    }
+    const { quantity, unitCost, estimated: estimatedCost } = estimate;
     const payload = {
       master: selected.id,
+      typology: component,
+      vulnerability_type: vulnerabilityType,
       quantity,
       unit_cost_rs: unitCost,
       estimated_cost_rs: estimatedCost,
@@ -840,11 +1111,13 @@
     setSubmitMode(false);
     resetEditState();
     scrollToListing();
+    warnRemainingBuildings();
   }
 
   function resetInterventionFields() {
     $mitigationIntervention.val("").trigger("change.select2");
     resetCostFields();
+    setMitigationNote("");
   }
 
   function resetEditState() {
@@ -868,11 +1141,13 @@
     initializeSelect2("theme", gettext("Select Theme"));
     initializeSelect2("subtheme", gettext("Select Sub-theme"));
     initializeSelect2("component", gettext("Select Component"));
+    initializeSelect2("vulnerability_type", gettext("Select Vulnerability Type"));
     initializeSelect2("operations", gettext("Select Operation"));
     initializeSelect2("mitigation_intervention", gettext("Select Intervention"));
 
     await loadThemes();
     await loadSubthemes($theme.val());
+    loadVulnerabilityOptions();
     await loadComponents($theme.val(), $subtheme.val());
     await refreshInterventions();
   }
@@ -1039,7 +1314,8 @@
     await loadVulnerableAssets($("#village").val());
 
     $theme.on("change", async () => {
-      await loadSubthemes($theme.val());
+      const themeValue = $theme.val();
+      await loadSubthemes(themeValue);
       await loadComponents($theme.val(), $subtheme.val());
       await refreshInterventions();
       await loadVulnerableAssets($("#village").val());
@@ -1053,6 +1329,13 @@
 
     $component.on("change", async () => {
       await refreshInterventions();
+      updateTotalAvailableCount();
+    });
+
+    $vulnerabilityType.on("change select2:select", () => {
+      updateOperationsOptions();
+      updateMitigationOptions();
+      updateTotalAvailableCount();
     });
 
     $operations.on("change", () => {
@@ -1066,6 +1349,12 @@
     $quantity.on("input", () => {
       updateEstimatedCost();
       updateQuantityRemaining();
+      validateQuantity();
+    });
+
+    $unit.on("input", () => {
+      currentAreaValue = parseAreaValue($unit.val()) || currentAreaValue;
+      updateEstimatedCost();
     });
 
     $("#addInterventionBtn").on("click", async (event) => {
@@ -1089,6 +1378,7 @@
 
     $("#reviewModal").on("show.bs.modal", () => {
       updateReviewModal();
+      warnRemainingBuildings();
     });
 
     $addedBody.on("click", ".edit-intervention", async (event) => {
@@ -1149,6 +1439,7 @@
       addedInterventions.splice(index, 1);
       renderAddedInterventions();
       updateTotals();
+      updateQuantityRemaining();
     });
   });
 })();

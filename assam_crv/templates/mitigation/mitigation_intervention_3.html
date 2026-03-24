@@ -110,45 +110,52 @@
        <div class="mitigation-measures-wrapper">
       <div class="form-row-inline">
         <div>
-          <label class="form-label" for="component">{% trans "Component" %} *</label>
+          <label class="form-label" for="component">{% trans "Typology (Vulnerable House)" %} *</label>
           <select name="component" id="component" class="form-select select2">
             <option value="" selected disabled>{% trans "Select Component" %}</option>
           </select>
         </div>
         <div>
-          <label class="form-label" for="operations">{% trans "Operations" %} *</label>
+          <label class="form-label" for="vulnerability_type">{% trans "Vulnerability Type" %} *</label>
+          <select name="vulnerability_type" id="vulnerability_type" class="form-select select2">
+            <option value="" selected disabled>{% trans "Select Vulnerability Type" %}</option>
+          </select>
+        </div>
+        <div>
+          <label class="form-label" for="operations">{% trans "Mitigation Type" %} *</label>
           <select name="operations" id="operations" class="form-select select2">
             <option value="" selected disabled>{% trans "Select Operation" %}</option>
           </select>
         </div>
-        <div>
+        <div class="intervention-field">
           <label class="form-label" for="mitigation_intervention">{% trans "Mitigation Intervention" %} *</label>
           <select name="mitigation_intervention" id="mitigation_intervention" class="form-select select2">
             <option value="" selected disabled>{% trans "Select Intervention" %}</option>
           </select>
         </div>
       </div>
-      <div class="mt-2 text-muted small" id="intervention-note"></div>
+      <div id="intervention-note-box" class="alert alert-warning d-none intervention-note-full" role="alert"></div>
 <div class="mitigation-cost-wrapper">
       <div class="unit-cost-row">
         <div>
-          <label class="form-label" for="unit">{% trans "Unit" %} *</label>
+          <label class="form-label" for="unit">{% trans "Area" %} *</label>
           <input type="text" name="unit" id="unit" class="form-control" placeholder="Sq. ft." value="Sq. ft." readonly style="background-color: #F2F4F6;">
         </div>
         <div>
           <label class="form-label" for="quantity">{% trans "Quantity" %} *</label>
           <input type="number" name="quantity" id="quantity" class="form-control" value="">
           <small id="quantity-remaining" class="text-muted"></small>
+          <small id="quantity-error" class="text-danger d-block"></small>
         </div>
         <div>
-          <label class="form-label" for="unit_cost">{% trans "Unit Cost (ƒ,1)" %} <i class="fas fa-info-circle text-muted"></i></label>
+          <label class="form-label" for="unit_cost">{% trans "Unit Cost (INR)" %} <i class="fas fa-info-circle text-muted"></i></label>
           <input type="text" name="unit_cost" id="unit_cost" class="form-control" value="50,000" readonly style="background-color: #F2F4F6;">
         </div>
       </div>
 
       <div class="estimated-cost-row">
         <div>
-          <label class="form-label" for="estimated_cost">{% trans "Estimated Cost (ƒ,1)" %}</label>
+          <label class="form-label" for="estimated_cost">{% trans "Estimated Cost (INR)" %}</label>
           <input type="text" name="estimated_cost" id="estimated_cost" class="form-control" value="" readonly>
         </div>
       </div>
@@ -176,7 +183,8 @@
             <th>{% trans "Mitigation Intervention" %}</th>
             <th>{% trans "Unit" %}</th>
             <th>{% trans "Quantity" %}</th>
-            <th>{% trans "Unit Cost (ƒ,1)" %}</th>
+            <th>{% trans "Unit Cost (INR)" %}</th>
+            <th>{% trans "Estimated Cost (INR)" %}</th>
             <th>{% trans "Action" %}</th>
           </tr>
         </thead>

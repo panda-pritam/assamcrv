@@ -2387,6 +2387,11 @@ button#activityDropdown i {
   }
   .form-row-inline > div {
     flex: 1;
+    min-width: 0;
+  }
+  .form-row-inline .intervention-field {
+    flex: 1;
+    min-width: 0;
   }
   .form-row-inline select.form-select {
     appearance: none;
@@ -2398,14 +2403,38 @@ button#activityDropdown i {
     background-size: 12px;
     padding-right: 35px;
   }
+  .intervention-note-full {
+    width: 100%;
+    margin-top: 12px;
+    margin-bottom: 16px;
+    box-sizing: border-box;
+  }
   .unit-cost-row {
-    display: flex;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 15px;
-    align-items: end;
+    align-items: start;
   }
   .unit-cost-row > div {
-    flex: 1;
-    max-width: calc(33.333% - 10px);
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    min-width: 0;
+  }
+  .unit-cost-row > div > label {
+    min-height: 22px;
+  }
+  .unit-cost-row .form-control {
+    width: 100%;
+  }
+  #quantity-error {
+    min-height: 18px;
+    line-height: 18px;
+  }
+  @media (max-width: 768px) {
+    .unit-cost-row {
+      grid-template-columns: 1fr;
+    }
   }
   .lumpsum-cost-row {
     display: flex;

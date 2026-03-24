@@ -17,6 +17,8 @@ class MitigationPlanItemSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "village",
+            "typology",
+            "vulnerability_type",
             "master",
             "quantity",
             "unit_cost_rs",
