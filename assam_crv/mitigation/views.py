@@ -17,6 +17,33 @@ from .serializers import (
 )
 
 
+def _normalize_subtheme(subtheme):
+    if not subtheme:
+        return ""
+    return str(subtheme).strip().lower()
+
+
+def _apply_vulnerable_asset_filter(queryset, subtheme, vulnerable_asset):
+    if not vulnerable_asset:
+        return queryset
+    asset = str(vulnerable_asset).strip()
+    subtheme_norm = _normalize_subtheme(subtheme)
+    if subtheme_norm == "housing":
+        return queryset.filter(housing_type__house_type=asset)
+    if subtheme_norm == "road":
+        return queryset.filter(road_type__name=asset)
+    if subtheme_norm == "bridge":
+        return queryset.filter(bridge_type__name=asset)
+    if subtheme_norm in {"electric infrastructure", "electric"}:
+        return queryset.filter(electric_type__name=asset)
+    return queryset.filter(
+        Q(housing_type__house_type=asset)
+        | Q(road_type__name=asset)
+        | Q(bridge_type__name=asset)
+        | Q(electric_type__name=asset)
+    )
+
+
 class MitigationInterventionMasterViewSet(viewsets.ModelViewSet):
     queryset = MitigationInterventionMaster.objects.all()
     serializer_class = MitigationInterventionMasterSerializer
@@ -45,7 +72,9 @@ class MitigationInterventionMasterViewSet(viewsets.ModelViewSet):
         if subtheme:
             queryset = queryset.filter(subtheme=subtheme)
         if vulnerable_asset:
-            queryset = queryset.filter(vulnerable_asset=vulnerable_asset)
+            queryset = _apply_vulnerable_asset_filter(
+                queryset, subtheme, vulnerable_asset
+            )
         if status:
             queryset = queryset.filter(status=status)
 
@@ -151,12 +180,27 @@ def get_vulnerable_assets(request):
         queryset = queryset.filter(subtheme=subtheme)
     if status:
         queryset = queryset.filter(status=status)
-    assets = (
-        queryset.values_list("vulnerable_asset", flat=True)
-        .distinct()
-        .order_by("vulnerable_asset")
-    )
-    return Response([a for a in assets if a])
+    subtheme_norm = _normalize_subtheme(subtheme)
+    if subtheme_norm == "housing":
+        assets = queryset.values_list("housing_type__house_type", flat=True)
+    elif subtheme_norm == "road":
+        assets = queryset.values_list("road_type__name", flat=True)
+    elif subtheme_norm == "bridge":
+        assets = queryset.values_list("bridge_type__name", flat=True)
+    elif subtheme_norm in {"electric infrastructure", "electric"}:
+        assets = queryset.values_list("electric_type__name", flat=True)
+    else:
+        assets = (
+            queryset.values_list("housing_type__house_type", flat=True)
+            .union(
+                queryset.values_list("road_type__name", flat=True),
+                queryset.values_list("bridge_type__name", flat=True),
+                queryset.values_list("electric_type__name", flat=True),
+            )
+        )
+
+    assets = [a for a in assets if a]
+    return Response(sorted(set(assets)))
 
 
 @api_view(["GET"])
@@ -172,7 +216,9 @@ def get_interventions(request):
     if subtheme:
         queryset = queryset.filter(subtheme=subtheme)
     if vulnerable_asset:
-        queryset = queryset.filter(vulnerable_asset=vulnerable_asset)
+        queryset = _apply_vulnerable_asset_filter(
+            queryset, subtheme, vulnerable_asset
+        )
     if status:
         queryset = queryset.filter(status=status)
 

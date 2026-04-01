@@ -6,6 +6,7 @@ from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 
 from mitigation.models import MitigationInterventionMaster
+from vdmp_progress.models import BridgeType, ElectricType, RoadType, house_type
 
 
 DEFAULT_SHEET = "all themes intervention"
@@ -86,15 +87,33 @@ class Command(BaseCommand):
 
         existing_keys = set()
         if skip_existing:
-            existing_keys = set(
-                MitigationInterventionMaster.objects.values_list(
-                    "theme",
-                    "subtheme",
-                    "vulnerable_asset",
-                    "intervention_type",
-                    "intervention_name",
+            existing_keys = set()
+            for record in MitigationInterventionMaster.objects.values(
+                "theme",
+                "subtheme",
+                "intervention_type",
+                "intervention_name",
+                "housing_type__house_type",
+                "road_type__name",
+                "bridge_type__name",
+                "electric_type__name",
+            ):
+                vulnerable_asset = (
+                    record.get("housing_type__house_type")
+                    or record.get("road_type__name")
+                    or record.get("bridge_type__name")
+                    or record.get("electric_type__name")
+                    or ""
                 )
-            )
+                existing_keys.add(
+                    (
+                        record.get("theme"),
+                        record.get("subtheme"),
+                        vulnerable_asset,
+                        record.get("intervention_type"),
+                        record.get("intervention_name"),
+                    )
+                )
 
         records = []
         skipped = 0
@@ -116,15 +135,42 @@ class Command(BaseCommand):
             if not theme or not subtheme or not intervention_name:
                 continue
 
-            key = (theme, subtheme, vulnerable_asset, intervention_type, intervention_name)
+            key = (theme, subtheme, vulnerable_asset or "", intervention_type, intervention_name)
             if skip_existing and key in existing_keys:
                 skipped += 1
                 continue
 
+            housing_type_obj = None
+            road_type_obj = None
+            bridge_type_obj = None
+            electric_type_obj = None
+            subtheme_norm = subtheme.strip().lower()
+            if vulnerable_asset:
+                if subtheme_norm == "housing":
+                    housing_type_obj, _ = house_type.objects.get_or_create(
+                        house_type=vulnerable_asset,
+                        defaults={"per_unit_cost": Decimal("0.00")},
+                    )
+                elif subtheme_norm == "road":
+                    road_type_obj, _ = RoadType.objects.get_or_create(
+                        name=vulnerable_asset, defaults={"status": "active"}
+                    )
+                elif subtheme_norm == "bridge":
+                    bridge_type_obj, _ = BridgeType.objects.get_or_create(
+                        name=vulnerable_asset, defaults={"status": "active"}
+                    )
+                elif subtheme_norm in {"electric infrastructure", "electric"}:
+                    electric_type_obj, _ = ElectricType.objects.get_or_create(
+                        name=vulnerable_asset, defaults={"status": "active"}
+                    )
+
             record = MitigationInterventionMaster(
                 theme=theme,
                 subtheme=subtheme,
-                vulnerable_asset=vulnerable_asset,
+                housing_type=housing_type_obj,
+                road_type=road_type_obj,
+                bridge_type=bridge_type_obj,
+                electric_type=electric_type_obj,
                 intervention_type=intervention_type,
                 intervention_name=intervention_name,
                 display_note=clean_text(data.get("display_note")),

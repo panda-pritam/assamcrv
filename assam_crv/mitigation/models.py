@@ -1,12 +1,24 @@
 from django.db import models
 
 from village_profile.models import tblVillage
+from vdmp_progress.models import BridgeType, ElectricType, RoadType, house_type
 
 
 class MitigationInterventionMaster(models.Model):
     theme = models.CharField(max_length=200)
     subtheme = models.CharField(max_length=200)
-    vulnerable_asset = models.CharField(max_length=200, blank=True)
+    housing_type = models.ForeignKey(
+        house_type, on_delete=models.PROTECT, null=True, blank=True
+    )
+    road_type = models.ForeignKey(
+        RoadType, on_delete=models.PROTECT, null=True, blank=True
+    )
+    bridge_type = models.ForeignKey(
+        BridgeType, on_delete=models.PROTECT, null=True, blank=True
+    )
+    electric_type = models.ForeignKey(
+        ElectricType, on_delete=models.PROTECT, null=True, blank=True
+    )
     intervention_type = models.CharField(max_length=200, blank=True)
     intervention_name = models.TextField()
     display_note = models.TextField(blank=True)

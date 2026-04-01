@@ -62,6 +62,36 @@ class house_type(models.Model):
         return self.house_type
 
 
+class RoadType(models.Model):
+    name = models.CharField(max_length=200, unique=True)
+    status = models.CharField(max_length=50, default="active")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.name
+
+
+class BridgeType(models.Model):
+    name = models.CharField(max_length=200, unique=True)
+    status = models.CharField(max_length=50, default="active")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.name
+
+
+class ElectricType(models.Model):
+    name = models.CharField(max_length=200, unique=True)
+    status = models.CharField(max_length=50, default="active")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.name
+
+
 class CriticalFacilityUnitCost(models.Model):
     house_type = models.ForeignKey(house_type, on_delete=models.CASCADE)
     unit_cost_inr = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
