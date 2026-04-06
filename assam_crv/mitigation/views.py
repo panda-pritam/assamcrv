@@ -1,7 +1,11 @@
 from rest_framework import viewsets
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
-from rest_framework.decorators import api_view
+from rest_framework.decorators import (
+    api_view,
+    authentication_classes,
+    permission_classes,
+)
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
@@ -451,3 +455,20 @@ def get_road_risk_summary(request):
         )
 
     return Response(results)
+
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+@csrf_exempt
+@authentication_classes([])
+def finalize_plan_items(request):
+    village_id = request.data.get("village_id")
+    if not village_id:
+        return Response(
+            {"detail": "village_id is required."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+    updated = MitigationPlanItem.objects.filter(
+        village_id=village_id, status="draft"
+    ).update(status="submitted")
+    return Response({"updated": updated})

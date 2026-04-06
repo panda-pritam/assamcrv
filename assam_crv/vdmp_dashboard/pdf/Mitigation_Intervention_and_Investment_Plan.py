@@ -16,7 +16,22 @@ from django.db.models import Sum, Count
 import requests
 from collections import defaultdict
 from decimal import Decimal, ROUND_HALF_UP
-from .dummy_data import *
+from .dummy_data import (
+    getDevelopmentIssuesTable,
+    getResidentialVulnerabilityTable,
+    getRiverBankProtectionTable,
+    getEducationalFacilitiesTable,
+)
+from .mitigation_dynamic import (
+    getResilientHousingCostTable,
+    getRoadTypologyTable,
+    getRoadInterventionTable,
+    getRiverBankInterventionTable,
+    getEducationalInterventionTable,
+    getWASHInterventionTable,
+    getElectricInterventionTable,
+    getLivelihoodInterventionTable,
+)
 
 styles = getSampleStyleSheet()
 
@@ -95,7 +110,7 @@ def draw_mitigation_intervention_and_investment_plan(elements, village_id):
     elements.append(table_heading)
     elements.append(Spacer(1, 6))
     
-    housing_cost_data = getResilientHousingCostTable()
+    housing_cost_data = getResilientHousingCostTable(village_id)
     table = create_styled_table(housing_cost_data, [40, 150, 80, 60, 80, 90], False, True, srNoStyle, "Housing Cost")
     elements.append(table)
     elements.append(Spacer(1, 6))
@@ -113,7 +128,7 @@ def draw_mitigation_intervention_and_investment_plan(elements, village_id):
     elements.append(Paragraph(road_text, normal_style))
     elements.append(Spacer(1, 6))
     
-    road_typology_data = getRoadTypologyTable()
+    road_typology_data = getRoadTypologyTable(village_id)
     table = create_styled_table(road_typology_data, [40, 120, 80, 120, 140], False, True, srNoStyle, "Road Typology")
     elements.append(table)
     elements.append(Spacer(1, 12))
@@ -123,7 +138,7 @@ def draw_mitigation_intervention_and_investment_plan(elements, village_id):
     elements.append(sub_heading)
     elements.append(Spacer(1, 6))
     
-    road_intervention_data = getRoadInterventionTable()
+    road_intervention_data = getRoadInterventionTable(village_id)
     table = create_styled_table(road_intervention_data, [40, 100, 100, 60, 80, 80, 40], False, True, None, "Road Intervention")
     elements.append(table)
     elements.append(Spacer(1, 12))
@@ -143,7 +158,7 @@ def draw_mitigation_intervention_and_investment_plan(elements, village_id):
     elements.append(sub_heading)
     elements.append(Spacer(1, 6))
     
-    river_intervention_data = getRiverBankInterventionTable()
+    river_intervention_data = getRiverBankInterventionTable(village_id)
     table = create_styled_table(river_intervention_data, [40, 80, 120, 60, 80, 80, 40], False, True, None, "River Bank Intervention")
     elements.append(table)
     elements.append(Spacer(1, 12))
@@ -167,7 +182,7 @@ def draw_mitigation_intervention_and_investment_plan(elements, village_id):
     elements.append(sub_heading)
     elements.append(Spacer(1, 6))
     
-    edu_intervention_data = getEducationalInterventionTable()
+    edu_intervention_data = getEducationalInterventionTable(village_id)
     table = create_styled_table(edu_intervention_data, [30, 80, 90, 50, 70, 70, 110], False, True, None, "Educational Intervention")
     elements.append(table)
     elements.append(Spacer(1, 12))
@@ -191,7 +206,7 @@ def draw_mitigation_intervention_and_investment_plan(elements, village_id):
     elements.append(sub_heading)
     elements.append(Spacer(1, 6))
     
-    wash_intervention_data = getWASHInterventionTable()
+    wash_intervention_data = getWASHInterventionTable(village_id)
     table = create_styled_table(wash_intervention_data, [35, 85, 100, 45, 65, 65, 105], False, True, srNoStyle, "WASH Intervention")
     elements.append(table)
     elements.append(Spacer(1, 12))
@@ -206,7 +221,7 @@ def draw_mitigation_intervention_and_investment_plan(elements, village_id):
     elements.append(sub_heading)
     elements.append(Spacer(1, 6))
     
-    electric_intervention_data = getElectricInterventionTable()
+    electric_intervention_data = getElectricInterventionTable(village_id)
     table = create_styled_table(electric_intervention_data, [35, 85, 100, 45, 65, 65, 105], False, True, srNoStyle, "Electric Intervention")
     elements.append(table)
     elements.append(Spacer(1, 12))
@@ -221,7 +236,7 @@ def draw_mitigation_intervention_and_investment_plan(elements, village_id):
     elements.append(sub_heading)
     elements.append(Spacer(1, 6))
     
-    livelihood_intervention_data = getLivelihoodInterventionTable()
+    livelihood_intervention_data = getLivelihoodInterventionTable(village_id)
     table = create_styled_table(livelihood_intervention_data, [35, 85, 100, 45, 65, 65, 105], False, True, srNoStyle, "Livelihood Intervention")
     elements.append(table)
     elements.append(Spacer(1, 12))

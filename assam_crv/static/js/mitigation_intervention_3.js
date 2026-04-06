@@ -470,7 +470,11 @@
       setSubmitDisabled(false);
       return true;
     }
-    if (quantity > totalAvailableCount) {
+    const remaining = Math.max(
+      totalAvailableCount - getPlannedQuantityForSelection(editState.index),
+      0
+    );
+    if (quantity > remaining) {
       const typology = $component.val() || gettext("selected typology");
       const vulnerabilityText =
         $vulnerabilityType.find("option:selected").text() ||
@@ -478,9 +482,9 @@
       $quantityError.text(
         gettext(
           `You can select up to ${formatNumber(
-            totalAvailableCount
+            remaining
           )} ${typology} households for ${vulnerabilityText} vulnerability. Please enter ${formatNumber(
-            totalAvailableCount
+            remaining
           )} or less.`
         )
       );
@@ -561,6 +565,32 @@
     if (!response.ok) {
       throw new Error(`Request failed: ${response.status}`);
     }
+  }
+
+  async function finalizePlanItems(villageId) {
+    if (!villageId) {
+      throw new Error(gettext("Please select a village."));
+    }
+    const headers = {
+      "Content-Type": "application/json",
+      ...getCsrfHeaders(),
+    };
+    const response = await fetch(`${apiBase}/plan-items/finalize/`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ village_id: villageId }),
+    });
+    if (!response.ok) {
+      let detail = "";
+      try {
+        const data = await response.json();
+        detail = data.detail || JSON.stringify(data);
+      } catch (error) {
+        detail = "";
+      }
+      throw new Error(detail || `Request failed: ${response.status}`);
+    }
+    return response.json();
   }
 
   function renderAddedInterventions() {
@@ -661,6 +691,75 @@
     );
     $("#review-total-quantity").text(formatNumber(totalQuantity));
     $("#review-total-cost").text(formatCurrency(totalCost));
+  }
+
+  function updateWarningModal() {
+    const themeText = $theme.find("option:selected").text() || "-";
+    const subthemeText = $subtheme.find("option:selected").text() || "-";
+    $("#warning-theme").text(themeText);
+    $("#warning-subtheme").text(subthemeText);
+
+    const container = $("#warning-remaining-typologies");
+    container.empty();
+
+    if (currentAssetMode !== "housing" || !housingSummaryRows.length) {
+      container.append(
+        `<p class="text-muted mb-0">${gettext(
+          "Remaining counts are available for housing typologies."
+        )}</p>`
+      );
+      return;
+    }
+
+    const rows = housingSummaryRows
+      .map((row) => {
+        const typology = row.house_type || "-";
+        const remainingFlood = Math.max(
+          getHousingAvailableFor(row, "flood") -
+            getPlannedQuantityFor(typology, "flood"),
+          0
+        );
+        const remainingErosion = Math.max(
+          getHousingAvailableFor(row, "erosion") -
+            getPlannedQuantityFor(typology, "erosion"),
+          0
+        );
+        return { typology, remainingFlood, remainingErosion };
+      })
+      .filter((row) => row.remainingFlood > 0 || row.remainingErosion > 0);
+
+    if (!rows.length) {
+      container.append(
+        `<p class="text-muted mb-0">${gettext(
+          "All housing typologies are covered."
+        )}</p>`
+      );
+      return;
+    }
+
+    const table = document.createElement("table");
+    table.className = "w-100";
+    table.innerHTML = `
+      <thead>
+        <tr>
+          <th class="text-left">${gettext("Typology")}</th>
+          <th class="text-end">${gettext("Flood Remaining")}</th>
+          <th class="text-end">${gettext("Erosion Remaining")}</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    `;
+    const tbody = table.querySelector("tbody");
+    rows.forEach((row) => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td class="text-left">${row.typology}</td>
+        <td class="text-end">${formatNumber(row.remainingFlood)}</td>
+        <td class="text-end">${formatNumber(row.remainingErosion)}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+    container.append(table);
   }
 
   function buildAddedInterventionsFromPlanItems(items) {
@@ -792,33 +891,40 @@
     updateQuantityRemaining();
   }
 
+  function getHousingAvailableFor(row, vulnerabilityType) {
+    if (!row || !vulnerabilityType) {
+      return 0;
+    }
+    if (vulnerabilityType === "flood") {
+      return parseNumber(row.flood_vulnerable);
+    }
+    if (vulnerabilityType === "erosion") {
+      return parseNumber(row.erosion_vulnerable);
+    }
+    if (vulnerabilityType === "flood_erosion") {
+      return parseNumber(row.flood_erosion_vulnerable);
+    }
+    return 0;
+  }
+
   function getHousingCountBySelection() {
     const vulnerabilityType = getSelectedVulnerabilityType();
     if (!vulnerabilityType) {
       return null;
     }
     const selectedComponent = normalizeValue($component.val());
-    const valueForRow = (row) => {
-      if (vulnerabilityType === "flood") {
-        return parseNumber(row.flood_vulnerable);
-      }
-      if (vulnerabilityType === "erosion") {
-        return parseNumber(row.erosion_vulnerable);
-      }
-      if (vulnerabilityType === "flood_erosion") {
-        return parseNumber(row.flood_erosion_vulnerable);
-      }
-      return 0;
-    };
 
     if (selectedComponent) {
       const match = housingSummaryRows.find(
         (row) => normalizeHouseType(row.house_type) === selectedComponent
       );
-      return match ? valueForRow(match) : 0;
+      return match ? getHousingAvailableFor(match, vulnerabilityType) : 0;
     }
 
-    return housingSummaryRows.reduce((sum, row) => sum + valueForRow(row), 0);
+    return housingSummaryRows.reduce(
+      (sum, row) => sum + getHousingAvailableFor(row, vulnerabilityType),
+      0
+    );
   }
 
   function updateTotalAvailableCount() {
@@ -841,24 +947,52 @@
       $quantityRemaining.text("");
       return;
     }
-    $quantityRemaining.text(`${formatNumber(totalAvailableCount)} left`);
+    const remaining = Math.max(
+      totalAvailableCount - getPlannedQuantityForSelection(editState.index),
+      0
+    );
+    $quantityRemaining.text(`${formatNumber(remaining)} left`);
   }
 
-  function getPlannedQuantity(excludeIndex) {
+  function getPlannedQuantityFor(component, vulnerability, excludeIndex) {
+    const selectedComponent = normalizeHouseType(component || "");
+    const selectedVulnerability = normalizeValue(vulnerability || "");
     return addedInterventions.reduce((sum, item, index) => {
       if (Number.isFinite(excludeIndex) && index === excludeIndex) {
+        return sum;
+      }
+      if (
+        selectedComponent &&
+        normalizeHouseType(item.component) !== selectedComponent
+      ) {
+        return sum;
+      }
+      if (
+        selectedVulnerability &&
+        normalizeValue(item.vulnerabilityType) !== selectedVulnerability
+      ) {
         return sum;
       }
       return sum + parseNumber(item.quantity);
     }, 0);
   }
 
+  function getPlannedQuantityForSelection(excludeIndex) {
+    return getPlannedQuantityFor(
+      $component.val(),
+      $vulnerabilityType.val(),
+      excludeIndex
+    );
+  }
+
   function warnRemainingBuildings() {
     if (!Number.isFinite(totalAvailableCount)) {
       return;
     }
-    const plannedQuantity = getPlannedQuantity();
-    const remaining = Math.max(totalAvailableCount - plannedQuantity, 0);
+    const remaining = Math.max(
+      totalAvailableCount - getPlannedQuantityForSelection(editState.index),
+      0
+    );
     if (remaining <= 0) {
       return;
     }
@@ -1083,14 +1217,31 @@
       showError(gettext("Please enter quantity and valid cost details."));
       return;
     }
-    const { quantity, unitCost, estimated: estimatedCost } = estimate;
+    const { quantity, unitCost, areaValue } = estimate;
+    const matchingIndex = !editState.planItemId
+      ? addedInterventions.findIndex(
+          (item) =>
+            normalizeHouseType(item.component) ===
+              normalizeHouseType(component) &&
+            normalizeValue(item.vulnerabilityType) ===
+              normalizeValue(vulnerabilityType) &&
+            normalizeValue(item.operation) === normalizeValue(operation) &&
+            String(item.masterId || "") === String(selected.id)
+        )
+      : -1;
+    const existingItem =
+      matchingIndex >= 0 ? addedInterventions[matchingIndex] : null;
+    const mergedQuantity = existingItem
+      ? parseNumber(existingItem.quantity) + quantity
+      : quantity;
+    const mergedEstimatedCost = areaValue * mergedQuantity * unitCost;
     const payload = {
       master: selected.id,
       typology: component,
       vulnerability_type: vulnerabilityType,
-      quantity,
+      quantity: mergedQuantity,
       unit_cost_rs: unitCost,
-      estimated_cost_rs: estimatedCost,
+      estimated_cost_rs: mergedEstimatedCost,
       status: "draft",
     };
     payload.village = villageId;
@@ -1098,6 +1249,8 @@
     try {
       if (editState.planItemId) {
         await updatePlanItem(editState.planItemId, payload);
+      } else if (existingItem && existingItem.planItemId) {
+        await updatePlanItem(existingItem.planItemId, payload);
       } else {
         await savePlanItem(payload);
       }
@@ -1376,9 +1529,54 @@
       await loadVulnerableAssets(villageId);
     });
 
+    $("#warningModal").on("show.bs.modal", () => {
+      updateWarningModal();
+    });
+
     $("#reviewModal").on("show.bs.modal", () => {
       updateReviewModal();
       warnRemainingBuildings();
+    });
+
+    $("#warningConfirmBtn").on("click", () => {
+      const warningModal = bootstrap.Modal.getInstance(
+        document.getElementById("warningModal")
+      );
+      if (warningModal) {
+        warningModal.hide();
+      }
+      const reviewModalEl = document.getElementById("reviewModal");
+      if (!reviewModalEl) {
+        return;
+      }
+      const reviewModal = new bootstrap.Modal(reviewModalEl);
+      reviewModal.show();
+    });
+
+    $("#reviewConfirmBtn").on("click", async () => {
+      const villageId = $("#village").val();
+      try {
+        await finalizePlanItems(villageId);
+      } catch (error) {
+        showError(error.message || gettext("Unable to submit mitigation."));
+        return;
+      }
+      const reviewModal = bootstrap.Modal.getInstance(
+        document.getElementById("reviewModal")
+      );
+      if (reviewModal) {
+        reviewModal.hide();
+      }
+      if (window.Swal) {
+        Swal.fire({
+          icon: "success",
+          text: gettext("Mitigation submitted successfully."),
+        });
+      } else {
+        alert(gettext("Mitigation submitted successfully."));
+      }
+      await loadPlanItems(villageId);
+      resetInterventionFields();
     });
 
     $addedBody.on("click", ".edit-intervention", async (event) => {

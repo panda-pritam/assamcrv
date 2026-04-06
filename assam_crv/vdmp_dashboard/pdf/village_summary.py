@@ -26,7 +26,7 @@ from django.core.exceptions import FieldDoesNotExist
 
 
 
-from .dummy_data import  getMitigationIntervention
+from .mitigation_dynamic import getMitigationIntervention
 
 from .global_styles import blue_heading, underline_heading, notes_style, bold_center_style,normal_style,bold_12,blue_sub_heading,right_align_text,bold_12_center
 

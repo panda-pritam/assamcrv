@@ -205,7 +205,7 @@
         <h5 id="total-estimated-cost">ƒ,1 0</h5>
       </div> </div>
        <div class="submit-btn-wrapper">
-      <button class="btn" data-bs-toggle="modal" data-bs-target="#reviewModal">{% trans "Submit" %}</button>
+      <button class="btn" data-bs-toggle="modal" data-bs-target="#warningModal">{% trans "Submit" %}</button>
     </div>
     </div>
 
@@ -213,6 +213,42 @@
    
   </div></div>
 </section>
+</div>
+
+<!-- Warning Modal -->
+<div class="modal fade" id="warningModal" tabindex="-1" aria-labelledby="warningModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="card_header">
+        <h6 class="modal-title" id="warningModalLabel">{% trans "Final Submission Warning" %}</h6>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="bg-blue p-3 mb-3">
+          <h6 class="mb-3">{% trans "Selection Summary" %}</h6>
+          <div class="row">
+            <div class="col-md-6">
+              <p class="mb-2"><strong>{% trans "Theme/Sector:" %}</strong><br><span id="warning-theme">-</span></p>
+            </div>
+            <div class="col-md-6">
+              <p class="mb-2"><strong>{% trans "Sub-theme:" %}</strong><br><span id="warning-subtheme">-</span></p>
+            </div>
+          </div>
+        </div>
+
+        <h6 class="mb-3">{% trans "Remaining House Typology Counts" %}</h6>
+        <div id="warning-remaining-typologies" class="bg-darkgray p-3 rounded"></div>
+
+        <p class="text-danger small mt-3 mb-0" id="warning-message">
+          {% trans "This is the final submission for mitigation. After confirming, you cannot add interventions for this village." %}
+        </p>
+      </div>
+      <div class="modal-footer border-0">
+        <button type="button" class="btn edit_btn" data-bs-dismiss="modal">{% trans "Go Back" %}</button>
+        <button type="button" class="btn confirm_btn" id="warningConfirmBtn">{% trans "Confirm & Submit" %}</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- Review and Confirm Modal -->
@@ -241,7 +277,6 @@
 
         <!-- Planned Interventions -->
         <h6 class="mb-3">{% trans "Planned Interventions" %}</h6>
-        
         <div id="review-interventions"></div>
 
         <!-- Total -->
@@ -260,7 +295,7 @@
       </div>
       <div class="modal-footer border-0">
         <button type="button" class="btn  edit_btn" data-bs-dismiss="modal">{% trans "Edit" %}</button>
-        <button type="button" class="btn confirm_btn">{% trans "Confirm & Submit" %}</button>
+        <button type="button" class="btn confirm_btn" id="reviewConfirmBtn">{% trans "Confirm & Submit" %}</button>
       </div>
     </div>
   </div>

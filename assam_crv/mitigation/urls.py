@@ -10,6 +10,7 @@ from .views import (
     get_road_risk_summary,
     get_subthemes,
     get_themes,
+    finalize_plan_items,
     get_vulnerable_assets,
     get_vulnerable_assets_summary,
 )
@@ -19,7 +20,7 @@ router.register(r"master", MitigationInterventionMasterViewSet, basename="mitiga
 router.register(r"plan-items", MitigationPlanItemViewSet, basename="mitigation-plan-item")
 
 urlpatterns = [
-    path("", include(router.urls)),
+    path("plan-items/finalize/", finalize_plan_items, name="mitigation-plan-items-finalize"),
     path("themes/", get_themes, name="mitigation-themes"),
     path("subthemes/", get_subthemes, name="mitigation-subthemes"),
     path("vulnerable-assets/", get_vulnerable_assets, name="mitigation-vulnerable-assets"),
@@ -44,4 +45,5 @@ urlpatterns = [
         get_road_risk_summary,
         name="mitigation-road-risk-summary",
     ),
+    path("", include(router.urls)),
 ]
